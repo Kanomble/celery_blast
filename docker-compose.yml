@@ -1,0 +1,86 @@
+version: "3.8"
+   
+services:
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:latest
+    networks:
+      - main
+    ports:
+      - "5672:5672"
+    restart: on-failure
+
+  postgres:
+    hostname: posgres
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - main
+    restart: on-failure
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command:  sh -c "./wait-for postgres:5432 && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8080"
+    networks:
+      - main
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - postgres
+    image: blast_celery_snakemake_app
+    volumes:
+      - ./data:/blast/reciprocal_blast/media
+      - ./tmp:/blast/reciprocal_blast/tmp
+      - ./celery_blast:/blast/reciprocal_blast
+    ports:
+      - "8080:8080"
+
+  celery_worker:
+    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery -A celery_blast worker -l info"
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    image: blast_celery_snakemake_app
+    networks:
+      - main
+    restart: on-failure
+
+  panoptes:
+    command: sh -c "./wait-for web:8080 -- panoptes"
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    image: blast_celery_snakemake_app
+    ports:
+      - "5000:5000"
+    networks:
+      - main
+    restart: on-failure
+
+  flower:
+    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- flower -A celery_blast --port=5555"
+    networks:
+      - main
+    environment:
+      AMQP_HOST: 'rabbitmq.local'
+      AMQP_ADMIN_HOST: 'rabbitmq.local'
+    image: blast_celery_snakemake_app
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    ports:
+      - "5555:5555"
+    restart: on-failure
+
+networks:
+  main:

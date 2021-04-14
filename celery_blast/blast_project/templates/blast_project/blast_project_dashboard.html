@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %} BLAST Dashboard {% endblock %}
+
+{% block header %} SynMibi Reciprocal BLAST Project Dashboard {% endblock %}
+{% block page_header %} Welcome to your project dashboard, {{request.user}}! {% endblock %}
+
+{% block page_description %}
+    Monitor your current projects on the
+    <strong>Pipeline Dashboard</strong>, view your results on the projects
+    <strong>Detail Page</strong> or delete one of your projects by visiting the
+    <strong>Delete Project</strong> page.
+    If you want to create a completely new project or upload some genome databases take a look at the navigation bar
+    at the top of this page.
+{% endblock %}
+
+
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row" style="text-align: center">
+        <p class="col"> The Rest Is Inherited! </p>
+        <p class="col"> Test Engine Is Working!</p>
+    </div>
+</div>
+{% endblock %}
+
+

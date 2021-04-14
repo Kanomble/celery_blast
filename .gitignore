@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# repository files
+data/*
+.idea/*
+celery_blast/refseq_transactions/migrations/*
+celery_blast/blast_project/migrations/*
+
