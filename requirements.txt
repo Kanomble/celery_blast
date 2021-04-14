@@ -5,5 +5,5 @@ biopython==1.78
 panoptes-ui==0.2.0
 wget==3.2
 celery==4.4.7
-django-celery-results
-flower
+django-celery-results==2.0.1
+flower==0.9.7

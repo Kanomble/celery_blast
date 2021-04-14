@@ -30,7 +30,7 @@ services:
     command:  sh -c "./wait-for postgres:5432 && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8080"
     networks:
       - main
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - rabbitmq
       - postgres
@@ -51,7 +51,7 @@ services:
     image: blast_celery_snakemake_app
     networks:
       - main
-    restart: on-failure
+    restart: unless-stopped
 
   panoptes:
     command: sh -c "./wait-for web:8080 -- panoptes"
@@ -64,7 +64,7 @@ services:
       - "5000:5000"
     networks:
       - main
-    restart: on-failure
+    restart: unless-stopped
 
   flower:
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- flower -A celery_blast --port=5555"
@@ -80,7 +80,7 @@ services:
       - rabbitmq
     ports:
       - "5555:5555"
-    restart: on-failure
+    restart: unless-stopped
 
 networks:
   main:
