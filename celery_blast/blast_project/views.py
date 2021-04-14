@@ -3,7 +3,9 @@ from django.contrib import messages
 from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from .forms import CreateUserForm
+from .forms import CreateUserForm, CreateTaxonomicFileForm
+
+from .py_services import list_taxonomic_files
 
 ''' dashboard
 
@@ -31,7 +33,12 @@ view for creation of taxonomic files, produced by the get_species_taxids.sh scri
 '''
 @login_required(login_url='login')
 def create_taxonomic_file_view(request):
-    context={}
+    taxform = CreateTaxonomicFileForm(request.user)
+    if request.method == 'POST':
+        taxform = CreateTaxonomicFileForm(request.user,request.POST)
+
+    taxid_files = list_taxonomic_files()
+    context={'taxform':taxform,'taxid_files':taxid_files}
     return render(request,'blast_project/create_taxonomic_file.html',context)
 
 ''' registration, login and logout views
