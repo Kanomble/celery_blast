@@ -21,7 +21,7 @@ it can be used to create a taxonomic node file in the project media folder
 :returns Popen.wait(timeout=200) returncode
 '''
 @shared_task
-def get_species_taxids_into_file(taxonomic_node, taxids_filename):
+def write_species_taxids_into_file(taxonomic_node, taxids_filename):
     #full path in docker: blast/reciprocal_blast/celery_blast/media/taxonomic_node_files/
     filepath_species_taxids = os.getcwd() + '/media/taxonomic_node_files/' + taxids_filename
     logger.info('invoking get_spexies_taxids.sh script (e-direct tool) with parameter -t and input node {},'

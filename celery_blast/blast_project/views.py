@@ -4,7 +4,7 @@ from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm
-
+from .tasks import write_species_taxids_into_file
 from .py_services import list_taxonomic_files
 
 ''' dashboard
@@ -29,13 +29,21 @@ view for creation of taxonomic files, produced by the get_species_taxids.sh scri
     display available taxonomic files
 :POST
     create taxonomic files
-
+    synchronous call of write_species_taxids_into_file
 '''
 @login_required(login_url='login')
 def create_taxonomic_file_view(request):
     taxform = CreateTaxonomicFileForm(request.user)
     if request.method == 'POST':
         taxform = CreateTaxonomicFileForm(request.user,request.POST)
+
+        if taxform.is_valid():
+            species_name,taxonomic_node = taxform.cleaned_data['species_name']
+
+            try:
+                task = write_species_taxids_into_file(taxonomic_node,species_name+'.taxids')
+            except Exception as e:
+                return failure_view(request,e)
 
     taxid_files = list_taxonomic_files()
     context={'taxform':taxform,'taxid_files':taxid_files}
