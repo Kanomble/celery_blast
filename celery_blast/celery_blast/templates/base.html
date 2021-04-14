@@ -31,17 +31,22 @@
 
         <br>
 
-        <div class="container-fluid">
-            <div id="titles" class="header" style="text-align: center">
-                <h1> {% block header %} SynMibi Reciprocal BLAST {% endblock %}</h1>
+        {% block header %}
+        <div class="container-fluid" id="titles">
+            <div class="header" style="text-align: center">
+                <h1> {% block page_title %} SynMibi Reciprocal BLAST {% endblock %}</h1>
                 <hr>
                 <h2> {% block page_header %} Welcome To This Page! {% endblock %} </h2>
                 <hr>
             </div>
-            <p class="text-left"> {% block page_description %} Content of this website... {% endblock %} </p>
         </div>
+        {% endblock %}
 
-
+        {% block page_description_container %}
+        <div class="container-fluid" id="page_description">
+            <p class="text-left"> {% block page_description %} Content of this website... {% endblock %}</p>
+        </div>
+        {% endblock %}
 
 
         {% block content %}
