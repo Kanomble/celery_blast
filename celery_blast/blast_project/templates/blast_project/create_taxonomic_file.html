@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
+
 {% block title %} Create Taxonomic File {% endblock %}
 
-<!-- omit header section -->
+<!-- omit header section h1 h2 -->
 {% block header %}
 {% endblock %}
 
@@ -12,9 +13,18 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
 
 {% block content %}
     <hr>
+    <div class="row" style="display: none" id="loading_div">
+        <div style="text-align: center" >
+          <div class="container-fluid">
+              <p align="center"><iframe src="https://giphy.com/embed/11FuEnXyGsXFba" width="200" height="200" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></p>
+              <p><a href="https://giphy.com/gifs/icon-loading-beaker-11FuEnXyGsXFba"></a></p>
+          </div>
+        </div>
+    </div>
 
-    <div class="container-fluid">
-        <form method="post">
+    <!-- post form input fields: species_name and user_email -->
+    <div class="container-fluid" id="post_form_container">
+        <form method="post" onsubmit="showLoader('loading_div','post_form_container')">
             {% csrf_token %}
             <div class="form-group">
                 <label for="species_name"> Organism Name </label>
@@ -25,7 +35,7 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
                     </div>
                 {% endif %}
             </div>
-
+            <!-- if the user shouldn't be allowed to alter the email adress simplay add: style="display: none" to the next div element -->
             <div class="form-group">
                 <label for="user_email"> User Email </label>
                 <input type="text" class="form-control" id="user_email" name="user_email" value='{{taxform.user_email.value}}'>
@@ -41,6 +51,7 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
 
     <hr>
 
+    <!-- list of available taxonomic node files (.taxids) -->
     <div class="container-fluid">
         <p style="text-align: center"> Currently Available Taxonomic Node Files </p>
         <ul>
@@ -49,4 +60,6 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
             {% endfor %}
         </ul>
     </div>
+
 {% endblock %}
+

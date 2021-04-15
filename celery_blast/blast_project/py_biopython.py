@@ -8,6 +8,7 @@ utilization in the clean_species_name form field of CreateTaxonomicFileForm
     :type str
 :param scientific_name
     :type str
+:returns taxonomic node (int) defined in Entrez.esearch dictionary instance
 '''
 def get_species_taxid_by_name(user_email,scientific_name):
     try:
@@ -17,4 +18,4 @@ def get_species_taxid_by_name(user_email,scientific_name):
         taxid = record['IdList'][0]
         return taxid
     except Exception as e:
-        raise Exception("[-] There is no taxonomic node defined by your specified scientific name: {} Exception: {}".format(scientific_name,e))
+        raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
