@@ -1,3 +1,8 @@
+''' py_biopython.py
+
+functions that use the biopython package, more informations: https://biopython.org/wiki/Documentation
+
+'''
 from Bio import Entrez
 
 ''' get_species_taxid_by_name
