@@ -18,13 +18,22 @@ from django_celery_results.models import TaskResult
 class BlastProject(models.Model):
     project_title = models.CharField(max_length=200, blank=False, unique=True)
     search_strategy = models.CharField(max_length=20, choices=[('blastp', 'blastp'), ('blastn', 'blastn')], default='blastp')
-    project_username = models.ForeignKey(User,on_delete=models.CASCADE)
+    project_user = models.ForeignKey(User,on_delete=models.CASCADE)
     project_database = models.ForeignKey(BlastDatabase,on_delete=models.CASCADE)
+    
+    def get_project_username(self):
+        return self.project_user.name
+    
+    def get_project_useremail(self):
+        return self.project_user.email
+
+
 
 class BlastDatabase(models.Model):
     database_name = models.CharField(max_length=200, blank=False, unique=True)
     database_download_and_format_task = models.OneToOneField(TaskResult,on_delete=models.CASCADE,blank=True,null=True)
     database_description = models.CharField(max_length=200,unique=True)
+    #possibility to add a taxonomic file
     attached_taxonomic_node_file = models.CharField(max_length=300,blank=True,null=True)
     path_to_file = models.CharField(max_length=300,blank=True,null=True)
     #use the assembly_levels.SQL script for uploading the four existing assembly levels into the database
