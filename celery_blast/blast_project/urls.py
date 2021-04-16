@@ -8,11 +8,12 @@ from . import views
 registration_urls = [
     path('login', views.login_user, name='login'),
     path('logout', views.logout_user, name='logout'),
-    path('register', views.registration_view, name='register')
+    path('register', views.registration_view, name='register'),
 ]
 
 service_urls = [
-    path('create_taxonomic_file', views.create_taxonomic_file_view, name='species_taxids')
+    path('create_taxonomic_file', views.create_taxonomic_file_view, name='species_taxids'),
+    path('project_creation',views.project_creation_view,name='project_creation'),
 ]
 
 
@@ -25,4 +26,5 @@ urlpatterns = [
     path('', include(registration_urls)),
     path('', include(service_urls)),
     path('', include(success_failure_urls))
+
 ]

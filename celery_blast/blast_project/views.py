@@ -34,6 +34,14 @@ def dashboard_view(request):
     except Exception as e:
         return failure_view(request,e)
 
+@login_required(login_url='login')
+def project_creation_view(request):
+    try:
+        context = {}
+        return render(request,'blast_project/project_creation_dashboard.html',context)
+    except Exception as e:
+        return failure_view(request,e)
+
 ''' create_taxonomic_file_view
 
 view for creation of taxonomic files, produced by the get_species_taxids.sh script.
