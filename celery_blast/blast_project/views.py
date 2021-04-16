@@ -7,19 +7,32 @@ from .forms import CreateUserForm, CreateTaxonomicFileForm
 from .tasks import write_species_taxids_into_file
 from .py_services import list_taxonomic_files
 
+from .py_django_db_services import get_users_blast_projects, get_all_blast_databases
 ''' dashboard
 
 view for the first dashboard page, this page enables monitoring of blast_projects,
 created by the currently logged in user.
 
 :GET
+    Uses the get_users_blast_projects utility function which returns a BlastProject Query-Set.
+    The Query-Set inherits all projects from the currently logged in user.
+    Uses the get_all_blast_databases utility functions to load all BlastDatabase db entries.
     display blast_projects and links to other view functions
 
 '''
 @login_required(login_url='login')
 def dashboard_view(request):
-    context={}
-    return render(request,'blast_project/blast_project_dashboard.html',context)
+    try:
+        context = {}
+        if request.method == 'GET':
+            users_blast_projects = get_users_blast_projects(request.user.id)
+            available_blast_databases = get_all_blast_databases()
+            context['blast_projects'] = users_blast_projects
+            context['blast_databases'] = available_blast_databases
+
+        return render(request,'blast_project/blast_project_dashboard.html',context)
+    except Exception as e:
+        return failure_view(request,e)
 
 ''' create_taxonomic_file_view
 
@@ -33,21 +46,18 @@ view for creation of taxonomic files, produced by the get_species_taxids.sh scri
 '''
 @login_required(login_url='login')
 def create_taxonomic_file_view(request):
-    taxform = CreateTaxonomicFileForm(request.user)
-    if request.method == 'POST':
-        taxform = CreateTaxonomicFileForm(request.user,request.POST)
-
-        if taxform.is_valid():
-            species_name,taxonomic_node = taxform.cleaned_data['species_name']
-
-            try:
+    try:
+        taxform = CreateTaxonomicFileForm(request.user)
+        if request.method == 'POST':
+            taxform = CreateTaxonomicFileForm(request.user,request.POST)
+            if taxform.is_valid():
+                species_name,taxonomic_node = taxform.cleaned_data['species_name']
                 task = write_species_taxids_into_file(taxonomic_node,species_name+'.taxids')
-            except Exception as e:
-                return failure_view(request,e)
-
-    taxid_files = list_taxonomic_files()
-    context={'taxform':taxform,'taxid_files':taxid_files}
-    return render(request,'blast_project/create_taxonomic_file.html',context)
+        taxid_files = list_taxonomic_files()
+        context = {'taxform': taxform, 'taxid_files': taxid_files}
+        return render(request, 'blast_project/create_taxonomic_file.html', context)
+    except Exception as e:
+        return failure_view(request,e)
 
 ''' registration, login and logout views
 register an account with email and password, email can be used inside biopython functions
@@ -65,7 +75,7 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('main')
+            return redirect('blast_project_dashboard')
         else:
             messages.info(request,'Username OR password is incorrect')
             return render(request, 'blast_project/login.html')

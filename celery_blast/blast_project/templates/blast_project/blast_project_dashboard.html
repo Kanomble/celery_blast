@@ -5,6 +5,7 @@
 {% block page_title %} Reciprocal BLAST Project Dashboard {% endblock %}
 
 {% block infoheader %} BLAST Project Dashboard {% endblock %}
+
 {% block page_description %}
     Monitor your current projects on the
     <strong>Pipeline Dashboard</strong>, view your results on the projects
@@ -14,24 +15,57 @@
     at the top of this page.
 {% endblock %}
 
-
 {% block page_header %} Welcome to your project dashboard, {{request.user}}! {% endblock %}
-
-
-
 
 {% block content %}
 <div class="container-fluid">
+
     <div class="row" style="text-align: center">
         <div class="col dashboard_project_list_col">
+            
             <h3 class="col_header"> Your BLAST Projects </h3>
-            <p> The Rest Is Inherited! </p>
+                <hr>
+
+                {% for project in blast_projects %}
+                    <div class="row" style="text-align: left">
+                        <div class="col">
+                            Title: {{project.project_title|upper}}
+                        </div>
+                        <div class="col">
+                            Creation Time: {{project.timestamp}}
+                        </div>
+                    </div>
+                {% endfor %}
+
         </div>
+
         <div class="col dashboard_project_list_col">
             <h3 class="col_header"> Available Databases </h3>
-            <p> Database Numero Uno </p>
+            <hr>
+
+            {% for database in blast_databases %}
+                <div class="row" style="text-align: left">
+                    <div class="col">
+                        Title: {{database.database_name|upper}}
+                    </div>
+                    <div class="col">
+                        Creation Time: {{database.timestamp}}
+                    </div>
+                    <div class="col">
+
+                        {% for assembly_level in database.assembly_levels.all %}
+                            <div class="row">
+                                {{assembly_level.assembly_level|upper}}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+                </div>
+            {% endfor %}
+
         </div>
     </div>
+
 </div>
 {% endblock %}
 

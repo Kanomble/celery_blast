@@ -2,6 +2,9 @@ from django.db import models
 
 # example for model manager that is invoked as __init__ for the blastproject model
 # allows customization of queries for the database
+''' BlastProjectManager
+    
+'''
 class BlastProjectManager(models.Manager):
     # functions
     def create_blast_project(
@@ -24,6 +27,13 @@ class BlastProjectManager(models.Manager):
 
         return blast_project
 
+    '''
+    Functions returning Query-Sets
+    '''
     # returns all executed projects
     def get_executed_projects(self):
         return self.filter(project_execution_snakemake_task__isnull=False)
+
+    # return projects from username
+    def get_blast_projects_by_userid(self, userid):
+        return self.filter(project_user__id=userid)

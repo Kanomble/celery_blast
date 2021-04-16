@@ -137,7 +137,7 @@ class BlastProject(models.Model):
     # overwritten functions
     def __str__(self):
         return "Reciprocal BLAST Project, created {} by {} with fw db {} and bw db {}".format(
-            self.timestamp, self.project_user.name,
+            self.timestamp, self.project_user.username,
             self.project_forward_database.database_name,
             self.project_backward_database.database_name)
 
