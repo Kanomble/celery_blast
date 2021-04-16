@@ -158,7 +158,15 @@ class BlastProject(models.Model):
         else:
             return None
 
-    # invoke like: project.objects.initialize_project_directory()
+    #
+    ''' initialize_project_directory
+    
+        invokation is done with BlastProject.objects.initialize_project_directory() or 
+        within the BlastProjectManager with blast_project.iniialize_project_directory()
+        
+        this function is executed within the create_blast_project function of the manager, 
+        it directly creates a directory for the project
+    '''
     def initialize_project_directory(self):
         # check if blast_project was previously created / check if media/blast_project directory exists
         if (isdir('media/blast_projects/' + str(self.id)) or isdir('media/blast_projects/') == False):
