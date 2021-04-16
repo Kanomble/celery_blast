@@ -18,8 +18,9 @@
         <body class="body_bg">
 
         {% block navbar %}
-        <nav class="navbar navbar-dark bg-dark" style="background-color: lightskyblue">
+        <nav class="navbar navbar-dark bg-dark">
             <a class="navbar-brand" href="{% url 'blast_project_dashboard'%}">Home</a>
+                <h1 class="navbar_title"> {% block page_title %} SynMibi Reciprocal BLAST {% endblock %}</h1>
                   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                   </button>
@@ -35,24 +36,46 @@
         </nav>
         {% endblock %}
 
-        <br>
+        {% block page_description_container %}
+        <div class="container-fluid" id="page_description">
+            <div style="text-align: right">
+                 <button type="button" class="btn btn-primary btn-dark" data-toggle="modal" data-target="#infobox" style="margin-right: 0">
+                    Display Informations On This Website
+                </button>
+            </div>
 
-        {% block header %}
-        <div class="container-fluid" id="titles">
-            <div class="header base_header">
-                <h1> {% block page_title %} SynMibi Reciprocal BLAST {% endblock %}</h1>
-                <hr>
-                <h2> {% block page_header %} Welcome To This Page! {% endblock %} </h2>
-                <hr>
+            <div class="modal" id="infobox">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <h4> Informations on {% block infoheader %} SynMibi {% endblock %}</h4>
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            </div>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-left"> {% block page_description %} Content of this website... {% endblock %}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         {% endblock %}
 
-        {% block page_description_container %}
-        <div class="container-fluid" id="page_description">
-            <p class="text-left"> {% block page_description %} Content of this website... {% endblock %}</p>
+        {% block header %}
+        <div class="container-fluid" id="titles">
+            <div class="header base_header">
+                <br>
+                <h2> {% block page_header %} Welcome To This Page! {% endblock %} </h2>
+            </div>
         </div>
         {% endblock %}
+
+
+
 
 
         {% block content %}

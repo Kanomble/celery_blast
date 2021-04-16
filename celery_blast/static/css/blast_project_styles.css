@@ -18,6 +18,11 @@ div.base_header {
     margin-right: auto;
 }
 
+h1.navbar_title {
+    font-family: "Courier New";
+    color: whitesmoke;
+}
+
 h3.col_header {
     font-family: "Courier New";
 }
@@ -25,4 +30,3 @@ h3.col_header {
 body.body_bg {
     background: url(../images/dna_background.jpg);
 }
-

@@ -2,9 +2,9 @@
 
 {% block title %} BLAST Dashboard {% endblock %}
 
-{% block page_title %} SynMibi Reciprocal BLAST Project Dashboard {% endblock %}
-{% block page_header %} Welcome to your project dashboard, {{request.user}}! {% endblock %}
+{% block page_title %} Reciprocal BLAST Project Dashboard {% endblock %}
 
+{% block infoheader %} BLAST Project Dashboard {% endblock %}
 {% block page_description %}
     Monitor your current projects on the
     <strong>Pipeline Dashboard</strong>, view your results on the projects
@@ -15,9 +15,12 @@
 {% endblock %}
 
 
+{% block page_header %} Welcome to your project dashboard, {{request.user}}! {% endblock %}
+
+
+
 
 {% block content %}
-<hr>
 <div class="container-fluid">
     <div class="row" style="text-align: center">
         <div class="col dashboard_project_list_col">
