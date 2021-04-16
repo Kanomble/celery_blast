@@ -1,0 +1,28 @@
+div.dashboard_project_list_col {
+    background-color: lightgray;
+
+    border: 2px solid lightslategray;
+    border-radius: 5px;
+
+    margin-top: 15px;
+    margin-bottom: 15px;
+    margin-left: 30px;
+    margin-right: 30px;
+
+    padding: 20px;
+}
+
+div.base_header {
+    font-family: "Courier New";
+    text-align: right;
+    margin-right: auto;
+}
+
+h3.col_header {
+    font-family: "Courier New";
+}
+
+body.body_bg {
+    background: url(../images/dna_background.jpg);
+}
+
