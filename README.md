@@ -1,33 +1,48 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
 ## TODO
+- [ ] correct tomezone in the docker image
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [ ] think about multiple species_name inputs ...
+    
+## TODO Database Models
 - [ ] create models:
     - BlastProject
+    - [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
     - BlastDatabase
     - BlastSettings
+    - AssemblyLevels
+- [ ] add validation
 
 ## database models
 Django models that are translated to database tables. Documentation about the django.db.models package can be found [here](https://docs.djangoproject.com/en/2.2/topics/db/models/).
+Relationships between models are managed with django model functions. The `models.ForeignKey()` function is used for OneToMany / ManyToOne relations. Additionally there are the `models.OneToOneField()` and 
+`models.ManyToManyField()` functions. Relationships can get further described with `related_name` and `related_query_name` parameters, described in
+[this](https://docs.djangoproject.com/en/2.2/ref/models/fields/#django.db.models.ForeignKey.related_query_name) Django documentation section.
 
 ````python
+from os.path import isdir
+from os import mkdir
 from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
+from django.core.exceptions import ValidationError
 
 class BlastProject(models.Model):
     BLAST_SEARCH_PROGRAMS = [('blastp', 'blastp'), ('blastn', 'blastn')]
     
     #attribute fields
-    project_title = models.CharField(
-                verbose_name="project title", 
-                max_length=200, blank=False, unique=True)
+    project_title = models.CharField( 
+                max_length=200, blank=False, unique=True,
+                verbose_name="title of this blast project")
     search_strategy = models.CharField(
-                verbose_name="BLAST program that is used inside snakemake execution",
                 max_length=20, 
                 choices=BLAST_SEARCH_PROGRAMS, 
-                default='blastp')
+                default='blastp',
+                verbose_name="BLAST program that is used inside snakemake execution")
+    project_query_sequences = models.CharField(
+                max_length=200,
+                verbose_name="query sequence filepath for the forward BLAST")
     timestamp = models.DateTimeField(auto_now=True)
     
     #relationships
@@ -64,6 +79,8 @@ class BlastProject(models.Model):
                 blank=True,null=True,
                 verbose_name="django_celery_results taskresult model for this project")
     
+    #customized initialization can be added in BlastProjectManager (e.g. direct creation of project directory
+    objects = BlastProjectManager()
     #overwritten functions
     def __str__(self):
         return "Reciprocal BLAST Project, created {} by {} with fw db {} and bw db {}".format(
@@ -71,16 +88,15 @@ class BlastProject(models.Model):
                 self.project_forward_database.database_name,
                 self.project_backward_database.database_name)
 
-    #functions
-    def get_project_username(self):
+     def get_project_username(self):
         return self.project_user.name
     
     def get_project_useremail(self):
         return self.project_user.email
-    
+       
     def get_project_dir(self):
         return 'media/blast_projects/' + str(self.id)
-    
+
     def if_executed_return_associated_taskresult_model(self):
         #executed
         if self.project_execution_snakemake_task != None:
@@ -88,6 +104,46 @@ class BlastProject(models.Model):
         #not executed
         else:
             return None
+    
+    #invoke like: project.objects.initialize_project_directory()
+    def initialize_project_directory(self):
+        #check if blast_project was previously created / check if media/blast_project directory exists 
+        if(isdir('media/blast_projects/' + str(self.id)) or isdir('media/blast_projects/')  == False):
+            raise ValidationError("project directory exists")
+        else:
+            try:
+                mkdir('media/blast_projects/' + str(self.id))
+            except Exception as e:
+                raise ValidationError("couldnt create project directory : {}".format(e))
+        
+#example for model manager that is invoked as __init__ for the blastproject model
+#allows customization of queries for the database
+class BlastProjectManager(models.Manager):
+    #functions
+    def create_blast_project(
+                    self,project_title,
+                    search_strategy,
+                    project_query_sequences,
+                    timestamp,
+                    project_user,
+                    project_forward_settings,project_backward_settings,
+                    project_forward_database,project_backward_database):
+        
+        #calling the create method (objects.create) ..
+        blast_project = self.create(
+            project_title=project_title,search_strategy=search_strategy,
+            project_query_sequences=project_query_sequences,
+            timestamp=timestamp,project_user=project_user,
+            project_forward_settings=project_forward_settings,project_backward_settings=project_backward_settings,
+            project_forward_database=project_forward_database,project_backward_database=project_backward_database)
+                
+        blast_project.initialize_project_directory()
+
+        return blast_project
+
+    #returns all executed projects
+    def get_executed_projects(self):
+        return self.filter(project_execution_snakemake_task__isnull=False) 
 
 
 class BlastDatabase(models.Model):
@@ -118,12 +174,42 @@ class BlastDatabase(models.Model):
                 verbose_name="after makeblastdb task has finished this field is set automatically with the path to the BLAST database")
     
     #relationships
-    database_download_and_format_task = models.OneToOneField(TaskResult,on_delete=models.CASCADE,blank=True,null=True)
+    database_download_and_format_task = models.OneToOneField(
+                TaskResult,
+                on_delete=models.CASCADE,
+                blank=True,null=True,
+                verbose_name="django_celery_results taskresult model for download and formatting procedure")
+
     #use the assembly_levels.SQL script for uploading the four existing assembly levels into the database
-    assembly_levels = models.ManyToManyField(to=AssemblyLevels)
+    assembly_levels = models.ManyToManyField(
+                to=AssemblyLevels,
+                verbose_name="possible assembly levels within this BLAST database")
+    
+    #functions
+    def __str__(self):
+        return "BLAST database: {}, created {} with {} entries.\n\t Database description: {}".format(
+                self.database_name,
+                self.timestamp,
+                self.assembly_entries,
+                self.database_description)
 
 class BlastSettings(models.Model):
-    pass
+    e_value = models.DecimalField(
+                max_digits=30, 
+                decimal_places=15,
+                default=0.0001)
+    word_size = models.IntegerField(
+                default=3)
+    num_threads = models.IntegerField(
+                default=1)
+
+    num_alignments = models.IntegerField()
+    max_target_seqs = models.IntegerField()
+    max_hsps = models.IntegerField()
+    
+class AssemblyLevles(models.Model):
+    assembly_level = models.CharField(max_length=50)
+
 ...
 ````
 
