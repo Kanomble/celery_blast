@@ -37,12 +37,14 @@
         {% endblock %}
 
         {% block page_description_container %}
+
+        <div style="text-align: right">
+             <button type="button" class="btn btn-primary btn-dark" data-toggle="modal" data-target="#infobox">
+                Display Informations On This Website
+            </button>
+        </div>
+
         <div class="container-fluid" id="page_description">
-            <div style="text-align: right">
-                 <button type="button" class="btn btn-primary btn-dark" data-toggle="modal" data-target="#infobox" style="margin-right: 0">
-                    Display Informations On This Website
-                </button>
-            </div>
 
             <div class="modal" id="infobox">
                 <div class="modal-dialog">
