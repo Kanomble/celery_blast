@@ -8,6 +8,7 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
     - [x] TODO Database Models for dashboard functionality (base functionality)
     - [ ] add links to Detail View, Delete View and Execution View
 - [ ] check out the BLAST Database software
+- [ ] check out the .pal files from BLAST databases
 
 ## TODO Database Models
 - [X] create models:
