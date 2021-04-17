@@ -1,10 +1,13 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
 ## TODO
-- [ ] correct tomezone in the docker image
+- [ ] correct timezone in the docker image
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [ ] think about multiple species_name inputs ...
-- [ ] integrate blast_project_dashboard functionality 
+- [ ] integrate blast_project_dashboard functionality
+    - [x] TODO Database Models for dashboard functionality (base functionality)
+    - [ ] add links to Detail View, Delete View and Execution View
+- [ ] check out the BLAST Database software
 
 ## TODO Database Models
 - [X] create models:
@@ -39,3 +42,4 @@ Wrap database transactions inside `with transactions.atomic()` blocks.
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
 - [Celery Project Documentation](https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html)
+- [BLAST DB](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html) FTP server description
