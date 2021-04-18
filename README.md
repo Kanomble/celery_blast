@@ -11,6 +11,8 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
     - [ ] assembly download, `makeblastdb` execution and creation of `.pal` blast database alias files with snakemake
     - [ ] check out how to monitor snakemake execution
 - [ ] integrate project_creation dashboard functionality
+- [ ] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously to check celery tasks execution process
+- [ ] use [celery-progress](https://github.com/czue/celery-progress) for monitoring the celery tasks execution process in the backend
 - [X] check out the .pal files from BLAST databases
 
 ## TODO Database Models
@@ -62,4 +64,5 @@ blastp -query .\test.faa -db combined_db -out blast_out.table
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
 - [Celery Project Documentation](https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html)
 - Documentation for [snakemake](https://snakemake.readthedocs.io/en/stable/index.html)
+- Documentation for [celery-progress](https://github.com/czue/celery-progress)
 - [BLAST DB](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html) FTP server description
