@@ -54,7 +54,14 @@ makeblastdb -in .\prot_2_db.faa -dbtype prot -taxid 1844971 -blastdb_version 5
 blastdb_aliastool -dblist 'prot_1_db.faa prot_2_db.faa' -dbtype prot -title combined_db -out combined_db
 blastp -query .\test.faa -db combined_db -out blast_out.table
 ````
-
+Example of the `combined_db.pal` file:
+````Text
+#
+# Alias file created 04/17/2021 12:50:29
+#
+TITLE combined_db
+DBLIST "prot_1_db.faa" "prot_2_db.faa" 
+````
 ## POSTGRESQL database transactions
 
 ## blast_project dashboard
