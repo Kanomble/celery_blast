@@ -7,8 +7,11 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
 - [ ] integrate blast_project_dashboard functionality
     - [x] TODO Database Models for dashboard functionality (base functionality)
     - [ ] add links to Detail View, Delete View and Execution View
-- [ ] check out the BLAST Database software
-- [ ] check out the .pal files from BLAST databases
+- [ ] integrate blastdb_creation dashboard functionality
+    - [ ] assembly download, `makeblastdb` execution and creation of `.pal` blast database alias files with snakemake
+    - [ ] check out how to monitor snakemake execution
+- [ ] integrate project_creation dashboard functionality
+- [X] check out the .pal files from BLAST databases
 
 ## TODO Database Models
 - [X] create models:
@@ -20,6 +23,7 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
 - [ ] add validation
 - [ ] write tests
 - [ ] refactor models
+- [ ] wrap database transactions inside `with transactions.atomic()` blocks
 
 ## database models
 Django models reside inside project specific `models.py` files. Models are translated to database tables. 
@@ -35,7 +39,21 @@ Manager classes are responsible for specific creation functions, such as ``creat
 Those functions can be used to trigger side effect during initialization of the database entry.
 E.g. creation of blast project directories or filepath settings...
 
-Wrap database transactions inside `with transactions.atomic()` blocks. 
+## BLAST Databases
+With the `makeblastdb` module we can create custom BLAST databases. The `makeblastdb` cmd is executed inside a snakemake script, that is executed as a celery `@shared task`.
+Per default it will create a database for the input sequences, e.g. if you submit following cmd: 
+`makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5` you will create a database for the bw_prot_db.faa.
+The `-taxid` parameter is used to assign the taxonomic node 1140 (*Synechococcus elongatus* 7492) to all sequences that reside in the `bw_prot_db.faa` fasta file.
+If you have mutliple fasta files that needs to get formatted with the `makeblastdb` program, there are two options. First, you can path multiple fasta files to the `-in` parameter. Secondly, after formatting each fasta individually, you can create a `.pal` database alias file that lists all existing databases or you can use the `blastdb_aliastool` program to create this alias file for you. If they have the same taxonomic node you can parse the taxid with the `-taxid` parameter to the program, if not use the `-taxid_map` parameter. 
+
+```` Shell
+makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5
+makeblastdb -in .\prot_2_db.faa -dbtype prot -taxid 1844971 -blastdb_version 5
+blastdb_aliastool -dblist 'prot_1_db.faa prot_2_db.faa' -dbtype prot -title combined_db -out combined_db
+blastp -query .\test.faa -db combined_db -out blast_out.table
+````
+
+## POSTGRESQL database transactions
 
 ## blast_project dashboard
 
@@ -43,4 +61,5 @@ Wrap database transactions inside `with transactions.atomic()` blocks.
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
 - [Celery Project Documentation](https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html)
+- Documentation for [snakemake](https://snakemake.readthedocs.io/en/stable/index.html)
 - [BLAST DB](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html) FTP server description
