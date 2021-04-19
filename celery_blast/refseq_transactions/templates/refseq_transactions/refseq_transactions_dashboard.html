@@ -4,6 +4,10 @@
 BLAST Dashboard
 {% endblock %}
 
+{% block add_headers %}
+{% load static %}
+<link rel="stylesheet"  href="{%  static  'css/refseq_transactions_styles.css'  %}">
+{% endblock %}
 {% block infoheader %} SynMibi Refseq Transaction Dashboard {% endblock %}
 
 {% block page_header %}
@@ -27,6 +31,11 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
         </div>
 
     </div>
+
+    <div class="transparent-box">
+        {% include "refseq_transactions/form_refseq_database_download.html" %}
+    </div>
+
 </div>
 
 {% endblock %}

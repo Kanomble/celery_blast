@@ -9,3 +9,4 @@ from os.path import isfile
 '''
 def refseq_file_exists():
     return isfile('media/databases/refseq_summary_file/assembly_summary_refseq.txt')
+

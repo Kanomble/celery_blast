@@ -1,0 +1,83 @@
+<form action="{% url 'download_refseq_assemblies' %}"
+      method = "POST" enctype="multipart/form-data"
+      onsubmit="showLoader('loading_div','post_form_container')">
+
+    {% csrf_token %}
+    <div class="form-row" style="text-align: center; padding: 30px">
+
+        <div class="col">
+             <div class="form-group">
+                <label for="database_name">Database Name</label>
+                <input type="text" class="form-control" id="database_name" name="database_name">
+                {% if RefseqDatabaseForm.database_name.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{RefseqDatabasesForm.database_name.errors}}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col">
+             <div class="form-group">
+                <label for="database_description">Database Description</label>
+                <input type="text" class="form-control" id="database_description" name="database_description">
+                {% if RefseqDatabaseForm.database_description.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{RefseqDatabasesForm.database_description.errors}}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="form-group" style="text-align: left">
+
+                <label for="assembly_levels"> Assembly Completness Level </label>
+
+                {{RefseqDatabaseForm.assembly_levels}}
+
+                {% if RefseqDatabaseForm.assembly_levels.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{RefseqDatabaseForm.assembly_levels.errors}}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <label for="taxid_file">Optional File For Limiting BLAST Databases By Taxonomy</label>
+                <input type="file" class="form-control-file" id="taxid_file" name="taxid_file">
+                {% if RefseqDatabaseForm.taxid_file.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{RefseqDatabaseForm.taxid_file.errors}}</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="taxid_uploaded_file">Select Taxonomic File:</label>
+              <select class="form-control" id="taxid_uploaded_file" name="taxid_uploaded_file">
+                      <option value=""> </option>
+                  {% for taxid_uploaded_file,option in  RefseqDatabaseForm.taxid_uploaded_file.field.choices %}
+                      <option value="{{ taxid_uploaded_file }}">{{ taxid_uploaded_file }}</option>
+                  {% endfor %}
+              </select>
+                {% if RefseqDatabaseForm.taxid_uploaded_file.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{RefseqDatabaseForm.taxid_uploaded_file.errors}}</strong>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-row" style="text-align: center; padding: 30px">
+        <div class="col">
+            <input type = "submit" value = "Submit" class="btn btn-primary btn-dark">
+        </div>
+    </div>
+
+    <!-- <input type="hidden" value="upload" id="project_type" name="project_type"> -->
+
+</form>
+

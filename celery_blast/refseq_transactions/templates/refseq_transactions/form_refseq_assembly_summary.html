@@ -3,16 +3,21 @@
     <div class="form-group">
 
         <a href="#" data-toggle="tooltip"
-
             {% if refseq_exists %}
                 title="RefSeq assembly summary exists, but you can download a newer version!"
             {% else %}
                 title="RefSeq assembly summary does not exists, download it by pressing the button!"
             {% endif %}
-
         >
 
-            <input type="submit" value="Download New RefSeq Assembly Summary" class="btn btn-primary btn-dark">
+            <input type="submit"
+                {% if refseq_exists %}
+                   value="Download Newest RefSeq Assembly Summary"
+               {% else %}
+                   value="Download RefSeq Assembly Summary"
+               {% endif %}
+                   class="btn btn-primary btn-dark">
         </a>
+
     </div>
 </form>
