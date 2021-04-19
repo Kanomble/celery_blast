@@ -25,7 +25,8 @@ from django.views.decorators.csrf import csrf_exempt
     download button for the refseq assembly summary file
     
     url: refseq_transactions_dashboard
-
+    template: refseq_transactions_dashboard.html
+    context: BlastDatabase instances, defined by their TaskResult status
 '''
 @login_required(login_url='login')
 def dashboard(request):
@@ -54,6 +55,7 @@ def dashboard(request):
     redirects to the refseq_transactions_dashboard url e.g. the dashboard view above
     
     url: download_refseq_assembly_summary
+    redirect: refseq_transactions_dashboard.html
     
 '''
 @login_required(login_url='login')
@@ -64,13 +66,21 @@ def download_refseq_assembly_summary_view(request):
     except Exception as e:
         return failure_view(request,e)
 
-''' download_refseq_assemblies_view
+''' create_blast_database_model_and_directory
     
-    triggers a @shared function in order to start a snakemake task
+    creates the blast database model, saves it into the database and 
+    simultaneously creates a directory with a summary file of the blast database.
+    
+    this summary file is used as input for snakemake execution, it lists the assembly_accession, 
+    organism_name, taxid, species_taxid, assembly_level and ftp_path.
+    
     if the form is valid the user gets redirected to the refseq_transactions_dashboard
-    if not the form validation errors are rendered
+    if not the form validation errors are rendered and parsed into the refseq_transactions_dashboard.html template
     
     url: download_refseq_assemblies
+    redirect: refseq_transactions_dashboard.html
+    template: refseq_transactions_dashboard.html
+    method: POST
 '''
 @login_required(login_url='login')
 def create_blast_database_model_and_directory(request):
@@ -88,18 +98,45 @@ def create_blast_database_model_and_directory(request):
                 #user stays at the page because of validation errors
                 context['RefseqDatabaseForm'] = refseq_database_form
                 return render(request,'refseq_transactions/refseq_transactions_dashboard.html',context)
-
+        # should never been executed
+        else:
+            return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request,e)
 
+''' delete_blast_database_model_and_directory
+    
+    triggered by button form submit in the refseq_transactions_dashboard.html template
+    
+    url: delete_blast_database database_id
+    redirect: refseq_transactions_dashboard.html
+    method: POST
+'''
 @login_required(login_url='login')
 def delete_blast_database_model_and_directory(request,database_id):
     try:
-        delete_blastdb_and_associated_directories_by_id(database_id)
-        return redirect('refseq_transactions_dashboard')
+        if request.method == "POST":
+            delete_blastdb_and_associated_directories_by_id(database_id)
+            return redirect('refseq_transactions_dashboard')
+        # should never been executed
+        else:
+            return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request,e)
 
+''' display_blast_database_details_view
+    
+    this view displays informations about the underlying database. 
+    the template uses the datatable package https://datatables.net/ in combination with ajax 
+    to asynchronously load the summary file assembly entries of the associated blast database into 
+    a html table, that is rendered by datatables on the client side.
+    
+    url: database_details database_id
+    template: datatable_blast_database_details.html
+    context: One BlastDatabase instance, lists the summary file in a Datatable
+    method: GET
+
+'''
 @login_required(login_url='login')
 def display_blast_database_details_view(request,database_id):
     try:
@@ -110,6 +147,16 @@ def display_blast_database_details_view(request,database_id):
     except Exception as e:
         return failure_view(request,e)
 
+''' ajax_call_for_database_details
+    
+    ajax call of the datatable "ajax" function, take a look at the template.
+    reads the blast database summary file with pandas, 
+    transforms the dataframe to a json object and send it back to the client
+    
+    url: ajax_call database_id
+    template: datatable_blast_database_details.html
+    method: GET
+'''
 @csrf_exempt
 def ajax_call_for_database_details(request, database_id):
     try:

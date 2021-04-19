@@ -1,10 +1,12 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
 ## TODO
-- [ ] refactor the refseq_transactions_dashboard in order to allow creation of a database directory with a csv table file, and tables for deletion download and details functions
+- [ ] write documentation for added functions
+- [ ] refactor the create_blastdatabase_table_and_directory function (too long)
+- [X] refactor the refseq_transactions_dashboard in order to allow creation of a database directory with a csv table file, and tables for deletion download and details functions
     - [ ] add table for not downloaded databases with delete and download button (download button triggers snakemake)
-    - [ ] add table for downloaded databases with deletion button
-    - [ ] add table for downloaded databases with errors and with a deletion button
+    - [X] add table for downloaded databases with deletion button
+    - [X] add table for downloaded databases with errors and with a deletion button
 - [ ] correct timezone in the docker image
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [ ] think about multiple species_name inputs ...
@@ -15,7 +17,8 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
     - [ ] assembly download, `makeblastdb` execution and creation of `.pal` blast database alias files with snakemake
     - [ ] check out how to monitor snakemake execution
 - [ ] integrate project_creation dashboard functionality
-- [ ] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously to check celery tasks execution process
+- [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously
+    - [ ] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously to check celery tasks execution process
 - [ ] use [celery-progress](https://github.com/czue/celery-progress) for monitoring the celery tasks execution process in the backend
 - [X] check out the .pal files from BLAST databases
 

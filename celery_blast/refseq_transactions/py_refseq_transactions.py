@@ -6,12 +6,32 @@ from os.path import isfile
 import pandas as pd
 from django.db import IntegrityError, transaction
 
+''' 
+transactions with models (manager)
+'''
 def get_databases_without_tasks():
     return BlastDatabase.objects.get_databases_without_executed_tasks()
 
 def get_databases_with_tasks():
     return BlastDatabase.objects.get_databases_with_executed_tasks()
 
+#TODO this function needs to get refactored
+''' create_blastdatabase_table_and_directory
+    
+    Processes the form data of the create_blast_database_model_and_directory view POST request.
+    It checks wether a database is limited by taxonomy. 
+    Therefore the valid form can inherit a taxonomy file or can use a present taxonomy file (media/taxonomic_node_files).
+    If a filehandle is provided it gets uploaded into the media/taxonomic_node_files folder.
+    Then the assembly summary file with the filepath media/refseq_summary_file/assembly_summary_refseq.txt gets transformed into 
+    a pandas table with the read_current_assembly_summary_with_pandas(assembly_levels) function. Assembly levels come from the form.
+    The table gets either limited by taxonomy or not. A BlastDatabase instance is created and saved into the database with the 
+    create_and_save_refseq_database_model(...) function. With the create_blastdatabase_directory(database_id) and 
+    write_pandas_table_to_project_dir(...) function, a database directory with the associated summary file is created.
+    
+    :param valid_blastdatabase_form
+        :django.form.is_valid() == True
+    :returns None
+'''
 def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
     try:
         with transaction.atomic():
@@ -35,7 +55,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                     raise IntegrityError("the database doesnt contain any entries, pls apply an other filter method!")
 
                 # create new refseq database model and save it into the database
-                new_blastdatabase = create_and_save_refseq_database_model(
+                new_blastdb = create_and_save_refseq_database_model(
                     database_name=database_name,
                     database_description=database_description,
                     assembly_levels=assembly_levels,
@@ -43,7 +63,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                     attached_taxonomic_file=taxid_file_path)
 
                 # create directory in media/databases/
-                refseq_database_table_path = create_blastdatabase_directory(new_blastdatabase.id)
+                refseq_database_table_path = create_blastdatabase_directory(new_blastdb.id)
 
                 write_pandas_table_to_project_dir(refseq_database_table_path,
                                                   filtered_table,
@@ -61,27 +81,27 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                     raise IntegrityError("the database doesnt contain any entries, pls apply an other filter method!")
 
                     # create new refseq database model and save it into the database
-                new_blastdatabase = create_and_save_refseq_database_model(
+                new_blastdb = create_and_save_refseq_database_model(
                     database_name=database_name,
                     database_description=database_description,
                     assembly_levels=assembly_levels,
                     assembly_entries=len(filtered_table),
                     attached_taxonomic_file=taxid_file_path)
-                # create directory in media/databases/refseq_databases
-                refseq_database_table_path = create_blastdatabase_directory(new_blastdatabase.id)
+                # create directory in media/databases
+                refseq_database_table_path = create_blastdatabase_directory(new_blastdb.id)
 
                 write_pandas_table_to_project_dir(refseq_database_table_path,
                                                   filtered_table,
                                                   database_name)
             else:
                 filtered_table = read_current_assembly_summary_with_pandas(assembly_levels)
-                new_blastdatabase = create_and_save_refseq_database_model(
+                new_blastdb = create_and_save_refseq_database_model(
                     database_name=database_name,
                     database_description=database_description,
                     assembly_levels=assembly_levels,
                     assembly_entries=len(filtered_table))
 
-                refseq_database_table_path = create_blastdatabase_directory(new_blastdatabase.id)
+                refseq_database_table_path = create_blastdatabase_directory(new_blastdb.id)
 
                 write_pandas_table_to_project_dir(refseq_database_table_path,
                                                   filtered_table,
@@ -90,7 +110,19 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
         raise IntegrityError('couldnt create blastdatabase : {}'.format(e))
 
 
-def read_current_assembly_summary_with_pandas(refseq_level_checklist):
+''' read_current_assembly_summary_with_pandas
+    
+    Transforms the blast database refseq summary file into a pandas dataframe.
+    It then filters that dataframe against the assembly_levels that have been chosen by the user and
+    relevant fields. Thereby it transforms the ftp_path field into a real ftp path for the assembly
+    protein sequence files. The returned dataframe has six columns: 
+    ['assembly_accession', 'organism_name', 'taxid', 'species_taxid','assembly_level', 'ftp_path'].
+    
+    :param assembly_levels
+        :type list with str objects
+    :returns pandas dataframe
+'''
+def read_current_assembly_summary_with_pandas(assembly_levels):
     summary_file_path = 'media/databases/refseq_summary_file/assembly_summary_refseq.txt'
     if(isfile(summary_file_path) == False):
         raise ValueError('assembly summary file does not exist!')
@@ -115,20 +147,28 @@ def read_current_assembly_summary_with_pandas(refseq_level_checklist):
     #extract necessary data fields: assembly number, names, taxids and the correct ftp_filepath for downloading with gzip
     try:
         refseq_table = refseq_table[['assembly_accession', 'organism_name', 'taxid', 'species_taxid','assembly_level', 'ftp_path']]
+        #python lambda function applied to each row in the dataframe
         refseq_table['ftp_path'] = refseq_table['ftp_path'].apply(lambda row: set_protein_assembly_file(row))
 
         pandas_genome_level_dataframes = []
-        for genome_level in refseq_level_checklist:
+        for genome_level in assembly_levels:
             pandas_genome_level_dataframes.append(refseq_table[refseq_table['assembly_level'] == genome_level])
 
         desired_refseq_genomes_dataframe = pd.concat(pandas_genome_level_dataframes)
+        return desired_refseq_genomes_dataframe
 
-        #tuple list for dropdown menu, not implemented yet
-        #html_input_list = tuple(zip(refseq_table['assembly_accession'], refseq_table['organism_name']))
     except Exception as e:
         raise ValueError("exception during extraction of smaller dataframe from refseq_table dataframe ...\n\tException: {}".format(e))
-    return desired_refseq_genomes_dataframe
 
+
+''' read_taxonomy_table
+
+    Transforms a taxonomic node file into a pandas dataframe (with one column).
+    
+    :param taxfilename
+        :type str (filename)
+    :returns pandas dataframe
+'''
 def read_taxonomy_table(taxfilename):
     filepath = 'media/taxonomic_node_files/' + taxfilename
     if (isfile(filepath) == False):
@@ -139,12 +179,29 @@ def read_taxonomy_table(taxfilename):
     taxonomy_file.columns = ['species_taxid']
     return taxonomy_file
 
+''' filter_table_by_taxonomy
+    
+    uses the pandas.Dataframe.merge() method to create a dataframe filtered on the species_taxid column.
+    
+    :param refseq_table
+        :type pandas dataframe
+    :param taxonomy_table
+        :type pandas dataframe
+    :returns pandas dataframe
+'''
 def filter_table_by_taxonomy(refseq_table, taxonomy_table):
-    # species_taxid
+    #on field can be changed to on=['taxid']
     return refseq_table.merge(taxonomy_table, how='inner', on=['species_taxid'])
 
+''' read_database_table_by_database_id_and_return_json
+    
+    This function is called by the ajax call in the datatable_blast_database_details.html template.
+    
+    :param database_id
+        :type int
+    :returns jsonarray
+'''
 def read_database_table_by_database_id_and_return_json(database_id):
-
     blastdb = get_database_by_id(database_id)
     tablefile_name = blastdb.database_name.replace(' ', '_').upper()
     table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name,header=0,index_col=0)

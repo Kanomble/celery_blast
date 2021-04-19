@@ -53,7 +53,7 @@ def create_blastdatabase_directory(database_id):
         raise IntegrityError(
             'something went wrong during database directory creation: {}'.format(e))
 
-
+#TODO documentation
 def upload_file(project_file, destination):
     try:
         with open(destination, 'wb+') as dest:
