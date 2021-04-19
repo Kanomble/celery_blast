@@ -16,14 +16,13 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
 - [X] check out the .pal files from BLAST databases
 
 ## TODO Database Models
-- [X] create models:
-    - BlastProject
-    - [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
-    - BlastDatabase
-    - BlastDatabaseManager
-          - [ ] Add Functions  
-    - BlastSettings
-    - AssemblyLevels
+- [ ] create models:
+    - [X] BlastProject
+    - [X] [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
+    - [X] BlastDatabase
+    - [ ] BlastDatabaseManager
+    - [X] BlastSettings
+    - [X] AssemblyLevels
 - [ ] add validation
 - [ ] write tests
 - [ ] refactor models
