@@ -20,7 +20,12 @@ def get_users_blast_projects(userid):
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
 
-
+def get_database_by_id(database_id):
+    try:
+        blastdb=BlastDatabase.objects.get(id=database_id)
+        return blastdb
+    except Exception as e:
+        raise IntegrityError('there is no database with this {} id : {}'.format(database_id,e))
 
 def create_and_save_refseq_database_model(database_name,database_description,assembly_levels,assembly_entries,attached_taxonomic_file=None):
     try:

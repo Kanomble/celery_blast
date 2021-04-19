@@ -1,7 +1,7 @@
 from blast_project.models import BlastDatabase
 from blast_project.py_services import create_blastdatabase_directory, upload_file
-from blast_project.py_django_db_services import create_and_save_refseq_database_model
-from .py_services import write_pandas_table_to_project_dir
+from blast_project.py_django_db_services import create_and_save_refseq_database_model, get_database_by_id
+from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict
 from os.path import isfile
 import pandas as pd
 from django.db import IntegrityError, transaction
@@ -142,3 +142,12 @@ def read_taxonomy_table(taxfilename):
 def filter_table_by_taxonomy(refseq_table, taxonomy_table):
     # species_taxid
     return refseq_table.merge(taxonomy_table, how='inner', on=['species_taxid'])
+
+def read_database_table_by_database_id_and_return_json(database_id):
+
+    blastdb = get_database_by_id(database_id)
+    tablefile_name = blastdb.database_name.replace(' ', '_').upper()
+    table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name,header=0,index_col=0)
+    json = transform_data_table_to_json_dict(table)
+    return json
+

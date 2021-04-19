@@ -10,6 +10,7 @@
                     <th>Attached Taxonomic File</th>
                     <th>Delete Database</th>
                     <th>Download Database</th>
+                    <th>Database Details</th>
                 </tr>
             </thead>
             <tbody id="unactiveDatabaseTableBody">
@@ -41,6 +42,14 @@
                         </td>
                         <td>
                             <input type="submit" value="Download Database" class="btn btn-dark">
+                        </td>
+                         <td>
+                             <form class="col"
+                                   action="{% url 'database_details' database_id=database.id%}"
+                                   method="GET">
+                                {% csrf_token %}
+                                <input type="submit" value="Database Details" class="btn btn-dark">
+                            </form>
                         </td>
                     </tr>
                 {% endfor %}

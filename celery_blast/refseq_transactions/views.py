@@ -3,13 +3,21 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.core import serializers
+
+
 from .py_refseq_transactions import get_databases_with_tasks, create_blastdatabase_table_and_directory, \
-                                    get_databases_without_tasks
+                                    get_databases_without_tasks, read_database_table_by_database_id_and_return_json
 from .py_services import refseq_file_exists
 from .forms import RefseqDatabaseForm
 from .tasks import download_refseq_assembly_summary_file
+
+from blast_project.py_django_db_services import get_database_by_id
 from blast_project.views import failure_view
 from blast_project.py_services import delete_blastdb_and_associated_directories_by_id
+from django.views.decorators.csrf import csrf_exempt
+
 
 ''' dashboard
     
@@ -68,10 +76,7 @@ def download_refseq_assembly_summary_view(request):
 def create_blast_database_model_and_directory(request):
     try:
         if request.method == 'POST':
-
             context = {}
-
-
             refseq_database_form = RefseqDatabaseForm(request.POST,request.FILES)
             #validate form
             if refseq_database_form.is_valid():
@@ -94,3 +99,22 @@ def delete_blast_database_model_and_directory(request,database_id):
         return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request,e)
+
+@login_required(login_url='login')
+def display_blast_database_details_view(request,database_id):
+    try:
+        context={}
+        blastdb = get_database_by_id(database_id)
+        context['Database'] = blastdb
+        return render(request,'refseq_transactions/datatable_blast_database_details.html',context)
+    except Exception as e:
+        return failure_view(request,e)
+
+@csrf_exempt
+def ajax_call_for_database_details(request, database_id):
+    try:
+        if request.is_ajax and request.method == "GET":
+            table_data = read_database_table_by_database_id_and_return_json(database_id)
+            return JsonResponse({"data":table_data}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
