@@ -21,18 +21,11 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
 
 <div class="container-fluid" id="post_form_container">
     <div class="row">
+
         <div class="col" style="text-align: right">
-
-            <form action="{% url 'download_refseq_assembly_summary' %}" method="post" onsubmit="showLoader('loading_div','post_form_container')">
-                {% csrf_token %}
-                <div class="form-group">
-                    <a href="#" data-toggle="tooltip" {% if refseq_exists %} title="RefSeq assembly summary exists, but you can download a newer version!" {% endif %}>
-                        <input type="submit" value="Download New RefSeq Assembly Summary" class="btn btn-primary btn-dark">
-                    </a>
-                </div>
-            </form>
-
+            {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
         </div>
+
     </div>
 </div>
 
