@@ -20,6 +20,8 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
     - BlastProject
     - [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
     - BlastDatabase
+    - BlastDatabaseManager
+          - [ ] Add Functions  
     - BlastSettings
     - AssemblyLevels
 - [ ] add validation
