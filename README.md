@@ -72,6 +72,8 @@ During execution the underlying database (e.g. BlastDatabase or BlastProject) mo
 This allows interaction with the associated celery task and can be used for displaying the progress of the task. 
 Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enables snakemake communication with [Panoptes](https://github.com/panoptes-organization/monitor-schema). In addition [Flower](https://flower.readthedocs.io/en/latest/) can be used to monitor the celery tasks.
 ### TODO snakemake
+- [ ] design a snakefile for downloading blast databases
+- [ ] design a snakefile for reciprocal BLAST analysis
 - [ ] messages during tasks execution to [celery-progress](https://github.com/czue/celery-progress)
 
 ## POSTGRESQL database transactions
