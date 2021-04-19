@@ -37,3 +37,10 @@ class BlastProjectManager(models.Manager):
     # return projects from username
     def get_blast_projects_by_userid(self, userid):
         return self.filter(project_user__id=userid)
+
+class BlastDatabaseManager(models.Manager):
+    '''
+    Functions returning Query-Sets
+    '''
+    def get_databases_with_executed_tasks(self):
+        return self.filter(database_download_and_format_task__isnull=False)

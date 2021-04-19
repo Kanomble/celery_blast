@@ -7,7 +7,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
 from django.core.exceptions import ValidationError
-from .managers import BlastProjectManager
+from .managers import BlastProjectManager, BlastDatabaseManager
 
 class BlastSettings(models.Model):
     e_value = models.DecimalField(
@@ -65,6 +65,8 @@ class BlastDatabase(models.Model):
     assembly_levels = models.ManyToManyField(
         to=AssemblyLevels,
         verbose_name="possible assembly levels within this BLAST database")
+
+    objects = BlastDatabaseManager()
 
     # functions
     def __str__(self):
