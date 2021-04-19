@@ -1,6 +1,7 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
 ## TODO
+- [ ] refactor the refseq_transactions_dashboard in order to first allow creation of database directory with a csv table file, and a table with listed databases that have to get downloaded 
 - [ ] correct timezone in the docker image
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [ ] think about multiple species_name inputs ...
