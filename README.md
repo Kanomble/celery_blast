@@ -1,6 +1,10 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
 ## TODO
+- [ ] refactor the refseq_transactions_dashboard in order to allow creation of a database directory with a csv table file, and tables for deletion download and details functions
+    - [ ] add table for not downloaded databases with delete and download button (download button triggers snakemake)
+    - [ ] add table for downloaded databases with deletion button
+    - [ ] add table for downloaded databases with errors and with a deletion button
 - [ ] correct timezone in the docker image
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [ ] think about multiple species_name inputs ...
@@ -16,12 +20,13 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct a
 - [X] check out the .pal files from BLAST databases
 
 ## TODO Database Models
-- [X] create models:
-    - BlastProject
-    - [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
-    - BlastDatabase
-    - BlastSettings
-    - AssemblyLevels
+- [ ] create models:
+    - [X] BlastProject
+    - [X] [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
+    - [X] BlastDatabase
+    - [ ] BlastDatabaseManager
+    - [X] BlastSettings
+    - [X] AssemblyLevels
 - [ ] add validation
 - [ ] write tests
 - [ ] refactor models
@@ -62,6 +67,19 @@ Example of the `combined_db.pal` file:
 TITLE combined_db
 DBLIST "prot_1_db.faa" "prot_2_db.faa" 
 ````
+## SNAKEMAKE tasks with celery
+In order to allow reproducability and allow an easy workflow understanding, the workflow engine snakemake is used. 
+Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/`. 
+Different snakefiles are designed to execute the desired workflow. Execution of snakemake is wrapped in functions of the `tasks.py` files,
+which are decorated with the celery `@shared_task` decorator. Those function use the `subprocess.Popen` interface to spawn the snakemake process.
+During execution the underlying database (e.g. BlastDatabase or BlastProject) model OneToOne field gets updated with the appropriate `TaskResult` model.
+This allows interaction with the associated celery task and can be used for displaying the progress of the task. 
+Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enables snakemake communication with [Panoptes](https://github.com/panoptes-organization/monitor-schema). In addition [Flower](https://flower.readthedocs.io/en/latest/) can be used to monitor the celery tasks.
+### TODO snakemake
+- [ ] design a snakefile for downloading blast databases
+- [ ] design a snakefile for reciprocal BLAST analysis
+- [ ] messages during tasks execution to [celery-progress](https://github.com/czue/celery-progress)
+
 ## POSTGRESQL database transactions
 
 ## blast_project dashboard
