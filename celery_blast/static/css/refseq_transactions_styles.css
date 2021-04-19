@@ -2,9 +2,16 @@ div.transparent-box {
     background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
     background: rgba(204, 204, 204, 0.5);
     border: 1px solid black;
+    padding: 10px;
 }
 
 div.transparent-box label {
+    font-family: "Courier New";
+    font-weight: bold;
+    color: #000000;
+}
+
+div.transparent-box table {
     font-family: "Courier New";
     font-weight: bold;
     color: #000000;

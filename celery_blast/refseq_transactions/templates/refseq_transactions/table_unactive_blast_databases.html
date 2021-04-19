@@ -1,0 +1,49 @@
+<div class="table">
+    <table class="table table-hover" id="unactiveDatabasesTable">
+            <thead>
+                <tr>
+                    <th>Database Name</th>
+                    <th>Database Description</th>
+                    <th>Creation Timestamp</th>
+                    <th>Assembly Entries</th>
+                    <th>Assembly Levels</th>
+                    <th>Attached Taxonomic File</th>
+                    <th>Delete Database</th>
+                    <th>Download Database</th>
+                </tr>
+            </thead>
+            <tbody id="unactiveDatabaseTableBody">
+                {% for database in UnactiveBlastDatabases %}
+                    <tr>
+                        <td>{{database.database_name}}</td>
+                        <td>{{database.database_description}}</td>
+                        <td>{{database.timestamp}}</td>
+                        <td>{{database.assembly_entries}}</td>
+                        <td>
+                        <table>
+                            <tr>
+                            {% for assembly_level in database.assembly_levels.all %}
+                                <tr><td>{{assembly_level.assembly_level}}</td></tr>
+                            {% endfor %}
+                            </tr>
+
+                        </table>
+                        </td>
+                        <td>{{database.attached_taxonomic_node_file}}</td>
+                        <td>
+                             <form class="col"
+                                   action="{% url 'delete_blast_database' database_id=database.id%}"
+                                   method="POST"
+                                   onSubmit="return confirm('Are you sure you wish to delete?');" >
+                                {% csrf_token %}
+                                <input type="submit" value="Delete Blast Database" class="btn btn-warning">
+                            </form>
+                        </td>
+                        <td>
+                            <input type="submit" value="Download Database" class="btn btn-dark">
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+</div>

@@ -44,3 +44,6 @@ class BlastDatabaseManager(models.Manager):
     '''
     def get_databases_with_executed_tasks(self):
         return self.filter(database_download_and_format_task__isnull=False)
+
+    def get_databases_without_executed_tasks(self):
+        return self.filter(database_download_and_format_task__isnull=True)

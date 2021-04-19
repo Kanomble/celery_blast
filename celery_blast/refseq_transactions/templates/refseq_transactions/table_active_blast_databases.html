@@ -1,0 +1,37 @@
+<div class="table">
+    <table class="table table-hover" id="activeDatabasesTable">
+            <thead>
+                <tr>
+                    <th>Database Name</th>
+                    <th>Database Description</th>
+                    <th>Creation Timestamp</th>
+                    <th>Assembly Entries</th>
+                    <th>Assembly Levels</th>
+                    <th>Attached Taxonomic File</th>
+                    <th>Status Of Associated Process</th>
+                </tr>
+            </thead>
+            <tbody id="activeDatabaseTableBody">
+                {% for database in ActiveBlastDatabases %}
+                    <tr>
+                        <td>{{database.database_name}}</td>
+                        <td>{{database.database_description}}</td>
+                        <td>{{database.timestamp}}</td>
+                        <td>{{database.assembly_entries}}</td>
+                        <td>
+                        <table>
+                            <tr>
+                            {% for assembly_level in database.assembly_levels.all %}
+                                <tr><td>{{assembly_level.assembly_level}}</td></tr>
+                            {% endfor %}
+                            </tr>
+
+                        </table>
+                        </td>
+                        <td>{{database.attached_taxonomic_node_file}}</td>
+                        <td>{{database.database_download_and_format_task.status}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+</div>

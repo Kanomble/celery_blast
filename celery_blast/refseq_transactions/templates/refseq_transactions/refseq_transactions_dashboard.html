@@ -26,17 +26,31 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
 {% block content %}
 
 <div class="container-fluid" id="post_form_container">
-    <div class="row">
 
+    <div class="row">
         <div class="col" style="text-align: right">
             {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
         </div>
-
     </div>
+
 
     <div class="transparent-box">
-        {% include "refseq_transactions/form_refseq_database_download.html" %}
+        {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
     </div>
+
+
+    {% if ActiveBlastDatabases.count > 0 %}
+    <br>
+        <div class="transparent-box" style="margin-bottom: 30px">
+            {% include "refseq_transactions/table_active_blast_databases.html" %}
+        </div>
+    {% endif %}
+
+    {% if UnactiveBlastDatabases.count > 0 %}
+        <div class="transparent-box" style="margin-bottom: 30px">
+            {% include "refseq_transactions/table_unactive_blast_databases.html" %}
+        </div>
+    {% endif %}
 
 </div>
 

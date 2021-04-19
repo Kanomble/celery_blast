@@ -1,3 +1,4 @@
+{% if refseq_exists is not null %}
 <form action="{% url 'download_refseq_assembly_summary' %}" method="post" onsubmit="showLoader('loading_div','post_form_container')">
     {% csrf_token %}
     <div class="form-group">
@@ -21,3 +22,4 @@
 
     </div>
 </form>
+{% endif %}
