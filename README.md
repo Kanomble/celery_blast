@@ -5,8 +5,7 @@ Installation can be done with `docker-compose up`. To activate the E-Direct tool
 ```` Bash
 docker exec -it celery_blast /bin/bash
 #in the docker shell:
-cd ../edirect
-sh ./setup.sh
+cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 ## TODO
@@ -74,7 +73,7 @@ Per default it will create a database for the input sequences, e.g. if you submi
 The `-taxid` parameter is used to assign the taxonomic node 1140 (*Synechococcus elongatus* 7492) to all sequences that reside in the `bw_prot_db.faa` fasta file.
 If you have mutliple fasta files that needs to get formatted with the `makeblastdb` program, there are two options. First, you can path multiple fasta files to the `-in` parameter. Secondly, after formatting each fasta individually, you can create a `.pal` database alias file that lists all existing databases or you can use the `blastdb_aliastool` program to create this alias file for you. If they have the same taxonomic node you can parse the taxid with the `-taxid` parameter to the program, if not use the `-taxid_map` parameter. 
 
-```` Shell
+```` Bash
 makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5
 makeblastdb -in .\prot_2_db.faa -dbtype prot -taxid 1844971 -blastdb_version 5
 blastdb_aliastool -dblist 'prot_1_db.faa prot_2_db.faa' -dbtype prot -title combined_db -out combined_db
