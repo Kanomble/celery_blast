@@ -114,5 +114,5 @@ Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enab
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
 - [Celery Project Documentation](https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html)
 - Documentation for [snakemake](https://snakemake.readthedocs.io/en/stable/index.html)
-- Documentation for [celery-progress](https://github.com/czue/celery-progress)
+- Documentation for [celery-progress](https://github.com/czue/celery-progress) - tutorial [celery-progress](https://www.youtube.com/watch?v=BbPswIqn2VI)
 - [BLAST DB](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html) FTP server description
