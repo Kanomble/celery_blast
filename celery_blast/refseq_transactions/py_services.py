@@ -1,5 +1,6 @@
 from os.path import isfile
 from django.db import IntegrityError
+from blast_project.py_django_db_services import get_database_by_id
 import pandas as pd
 import json
 ''' refseq_file_exists
@@ -26,3 +27,13 @@ def transform_data_table_to_json_dict(df):
     data = []
     data = json.loads(json_records)
     return data
+
+#TODO documentation
+def write_blastdatabase_snakemake_configfile(database_id):
+    try:
+        bdb_summary_table_name = get_database_by_id(database_id).get_pandas_table_name()
+        configfile_path = 'media/databases/' + str(database_id) + '/snakefile_config'
+        with open(configfile_path,'w') as cf_file:
+            cf_file.write('db_summary: '+bdb_summary_table_name+"\n")
+    except Exception as e:
+        raise IntegrityError('exception during writing snakemake configfile with exception : {}'.format(e))

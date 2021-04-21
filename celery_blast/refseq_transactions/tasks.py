@@ -2,11 +2,28 @@ from os import getcwd, chdir, mkdir, remove
 from os.path import isdir, isfile
 from subprocess import Popen
 
+from blast_project.py_django_db_services import get_database_by_id
+from .py_services import write_blastdatabase_snakemake_configfile
+
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
+
+@shared_task
+def download_blast_databases(database_id):
+    blast_database_summary_table = get_database_by_id(database_id).get_pandas_table_name()
+    logger.info('load blastdatabase: {} from database'.format(blast_database_summary_table))
+
+    #check if blast summary file is available
+    bdb_summary_table_path = 'media/databases/'+str(database_id)+'/'+blast_database_summary_table
+    if(isfile(bdb_summary_table_path ) == False):
+        logger.warning('there is no database table with path : {}',format(bdb_summary_table_path))
+        raise Exception("couldnt download assembly files, there is no summary table with path : {}".format(bdb_summary_table_path ))
+
+    write_blastdatabase_snakemake_configfile(database_id)
+
 
 ''' download_refseq_assembly_summary_file
     

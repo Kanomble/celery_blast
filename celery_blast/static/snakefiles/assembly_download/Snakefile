@@ -1,0 +1,57 @@
+import pandas as pd
+
+configfile: "./snakefile_config"
+
+def get_ftp_paths_from_summary_file(filename):
+    table = pd.read_table(filename,header=0,index_col=0,delimiter=",")
+    ftp_paths = table['ftp_path'].to_list()
+    return set(ftp_paths)
+
+def get_taxids_from_summary_file(filename):
+    table = pd.read_table(filename,header=0,index_col=0,delimiter=",")
+    taxids = table['taxid'].to_list()
+    return set(taxids)
+
+transform_ftp_path = lambda file: file.split('/')[-1].rstrip(file[-3:])
+
+FASTA_FILES = [transform_ftp_path(ftp_path) for ftp_path in get_ftp_paths_from_summary_file(config['db_summary'])]
+DATABASES = [download+'.pdb' for download in FASTA_FILES]
+
+rule all:
+    input: FASTA_FILES, DATABASES
+    run:
+        #TITLE combined_db
+        #DBLIST "prot_1_db.faa" "prot_2_db.faa"
+        alias_file_name = config['db_summary']+'.database'
+        alias_file=open(alias_file_name,'w')
+        alias_file.write("TITLE {}\n".format(alias_file_name))
+        alias_file.write("DBLIST")
+        for database in FASTA_FILES:
+            alias_file.write(" \""+database+"\"")
+        alias_file.write("\n")
+        alias_file.close()
+
+rule download_and_decompress:
+    input: config['db_summary']
+    output: FASTA_FILES
+    run:
+        for file in get_ftp_paths_from_summary_file(input[0]):
+             for attempt in range(10):
+                try:
+                    gunzip_output = transform_ftp_path(file)
+                    shell("wget -qO- {file} | gzip -d > {gunzip_output}")
+                except:
+                    print("Exception occurred in download attempt : {}".format(attempt))
+                else:
+                    break
+            else:
+                raise Exception
+
+
+rule format_fasta_files_to_blast_databases:
+    input: config['db_summary'], FASTA_FILES
+    output: DATABASES
+    run:
+        for fastafile,taxid in zip(FASTA_FILES,get_taxids_from_summary_file(config['db_summary'])):
+            #print(fastafile,"\t--------->\t",taxid)
+            shell("makeblastdb -in {fastafile} -dbtype prot -out {fastafile} -taxid {taxid}")

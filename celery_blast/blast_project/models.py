@@ -76,6 +76,8 @@ class BlastDatabase(models.Model):
             self.assembly_entries,
             self.database_description)
 
+    def get_pandas_table_name(self):
+        return self.database_name.replace(' ','_').upper()
 
 class BlastProject(models.Model):
     BLAST_SEARCH_PROGRAMS = [('blastp', 'blastp'), ('blastn', 'blastn')]
