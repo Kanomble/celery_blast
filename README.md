@@ -1,7 +1,7 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
 ## Installation
-Installation can be done with `docker-compose up`. This should result into three different images. 
+Installation can be done with `docker-compose up`. This should result into three different images and six containers.
 To activate the E-Direct tool do following:
 ```` Bash
 docker exec -it celery_blast /bin/bash
