@@ -78,8 +78,9 @@ If you have mutliple fasta files that needs to get formatted with the `makeblast
 makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5
 makeblastdb -in .\prot_2_db.faa -dbtype prot -taxid 1844971 -blastdb_version 5
 blastdb_aliastool -dblist 'prot_1_db.faa prot_2_db.faa' -dbtype prot -title combined_db -out combined_db
-blastp -query .\test.faa -db combined_db -out blast_out.table
+blastp -query .\test.faa -db combined_db -out blast_out.table -outfmt "6 qseqid sseqid evalue bitscore qgi sgi sacc pident nident mismatch gaps qcovhsp staxids sscinames scomnames sskingdoms  stitle"
 ````
+BLASTP `-outfmt 6` output formats are descriped [here](http://www.metagenomics.wiki/tools/blast/blastn-output-format-6).
 Example of the `combined_db.pal` file:
 ````Text
 #
