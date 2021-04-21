@@ -51,7 +51,7 @@ E.g. creation of blast project directories or filepath settings...
 
 ## BLAST Databases
 ### BLAST database preparation
-Currently BLAST databases are downloaded from the BLAST FTP site provided by the NCBI. First the software downloads the refseq assembly summary file from the refseq (FTP)[ftp://ftp.ncbi.nih.gov/genomes/refseq/] directory. This summary file inherits 226337 assembly entries. The application loads this summary file into a pandas dataframe, that gets processed. As a first step of database creation, the user has to define the level of assembly completeness (e.g. 'Complete Genome','Chromosome','Contig' and 'Scaffold') and optionally a taxonomic node file. Based on the `assembly_level` and (if the taxonomic node file is provided) `taxid` columns the summary file gets filtered. For example the user could specify the completeness levels 'Complete Genome' and 'Chromosome' and the `apes.taxids` file, then the summary file gets filtered by the provided taxids, which reside in the `apes.taxids` file and the assembly levels, which results into an table with 6 entries (20.04.2021).
+Currently BLAST databases are downloaded from the BLAST FTP site provided by the NCBI. First the software downloads the refseq assembly summary file from the refseq [FTP](ftp://ftp.ncbi.nih.gov/genomes/refseq/) directory. This summary file inherits 226337 assembly entries. The application loads this summary file into a pandas dataframe, that gets processed. As a first step of database creation, the user has to define the level of assembly completeness (e.g. 'Complete Genome', 'Chromosome', 'Contig' and 'Scaffold') and optionally a taxonomic node file. Based on the `assembly_level` and (if the taxonomic node file is provided) `taxid` columns the summary file gets filtered. For example, the user could specify the assembly levels of the new database as `Complete Genome` and `Chromosome` and the `apes.taxids` file as taxonomy limitation. According to this setup, the summary file gets filtered by the provided taxids (which reside in the `apes.taxids` file) and the assembly levels, which results into an table with 6 entries (20.04.2021).
 
 If the user submits the form, a `BlastDatabase` model instance and a database directory with a file, that contains the filtered table, is created. The model is saved into the database without an associated `TaskResult`, thus yet it is not downloaded and formatted. 
 
@@ -91,7 +91,7 @@ During execution the underlying database (e.g. BlastDatabase or BlastProject) mo
 This allows interaction with the associated celery task and can be used for displaying the progress of the task. 
 Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enables snakemake communication with [Panoptes](https://github.com/panoptes-organization/monitor-schema). In addition [Flower](https://flower.readthedocs.io/en/latest/) can be used to monitor the celery tasks.
 ### TODO snakemake
-- [ ] design a snakefile for downloading blast databases
+- [X] design a snakefile for downloading blast databases
 - [ ] design a snakefile for reciprocal BLAST analysis
 - [ ] messages during tasks execution to [celery-progress](https://github.com/czue/celery-progress)
 
