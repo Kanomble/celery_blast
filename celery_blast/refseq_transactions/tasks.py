@@ -1,6 +1,6 @@
 from os import getcwd, chdir, mkdir, remove
 from os.path import isdir, isfile
-from subprocess import Popen
+from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT
 
 from blast_project.py_django_db_services import get_database_by_id
 from .py_services import write_blastdatabase_snakemake_configfile
@@ -23,7 +23,23 @@ def download_blast_databases(database_id):
         raise Exception("couldnt download assembly files, there is no summary table with path : {}".format(bdb_summary_table_path ))
 
     write_blastdatabase_snakemake_configfile(database_id)
-
+    try:
+        snakemake_working_dir = 'media/databases/' + str(database_id) + '/'
+        snakemake_config_file = 'media/databases/' + str(database_id) + '/snakefile_config'
+        snakefile_dir = 'static/snakefiles/assembly_download/Snakefile'
+        #snakemake --snakefile 'static/snakefiles/assembly_download/Snakefile' --cores 2 --configfile 'media/databases/12/snakefile_config' --directory 'media/databases/12/' --wms-monitor 'http://172.23.0.6:5000' --latency-wait 10 --dry-run
+        snakemake_process = Popen(['snakemake','--snakefile',snakefile_dir,'--wms-monitor','http://172.23.0.6:5000','--cores','1','--configfile',snakemake_config_file,'--directory',snakemake_working_dir,'--latency-wait',10], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+        logger.info(
+            'waiting for popen snakemake instance {} to finish'
+                .format(snakemake_process.pid))
+        returncode = snakemake_process.wait(timeout=2000)
+        logger.info('returncode : {}'.format(returncode))
+        logger.info('blast database download and formatting completed')
+        if(returncode != 0):
+            logger.warning('subprocess Popen snakemake instance resulted in an error!')
+        return returncode
+    except Exception as e:
+        raise Exception("couldnt download assembly files, error during execution of snakemake, with exception : ".format(e))
 
 ''' download_refseq_assembly_summary_file
     

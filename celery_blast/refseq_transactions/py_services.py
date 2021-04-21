@@ -34,6 +34,6 @@ def write_blastdatabase_snakemake_configfile(database_id):
         bdb_summary_table_name = get_database_by_id(database_id).get_pandas_table_name()
         configfile_path = 'media/databases/' + str(database_id) + '/snakefile_config'
         with open(configfile_path,'w') as cf_file:
-            cf_file.write('db_summary: '+bdb_summary_table_name+"\n")
+            cf_file.write('db_summary: '+"\""+bdb_summary_table_name+"\""+"\n")
     except Exception as e:
         raise IntegrityError('exception during writing snakemake configfile with exception : {}'.format(e))
