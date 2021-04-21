@@ -88,7 +88,7 @@ Example of the `combined_db.pal` file:
 TITLE combined_db
 DBLIST "prot_1_db.faa" "prot_2_db.faa"
 ````
-The `.pal` file combines different formatted BLAST databases so that they can be used like one combined database. 
+The `.pal` file combines different formatted BLAST databases so that they can be used as one combined database. 
 This is useful for databases with duplicate sequences, they normally have an identifier (accession number) that starts with `WP`.
 
 ## SNAKEMAKE tasks with celery
