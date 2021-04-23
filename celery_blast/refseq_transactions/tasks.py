@@ -13,21 +13,28 @@ from celery_progress.backend import ProgressRecorder
 logger = get_task_logger(__name__)
 
 #TODO documentation
-@shared_task(bind=True)
+#task_track_started --> no need for celery-progress?
+@shared_task(bind=True, ignore_result=True)
 def download_blast_databases(self, database_id):
 
-    blast_database_summary_table = get_database_by_id(database_id).get_pandas_table_name()
-    logger.info('load blastdatabase: {} from database'.format(blast_database_summary_table))
 
     progress_recorder = ProgressRecorder(self)
     progress_recorder.set_progress(0, 100,"started process")
 
+    try:
+        update_blast_database_with_task_result_model(database_id, str(self.request.id))
+    except Exception as e:
+        logger.warning("couldnt save taskresult into blastdatabase ... ")
+        raise Exception("coulndt save taskresult into blastdatabase ...")
 
     #check if blast summary file is available
-    bdb_summary_table_path = 'media/databases/'+str(database_id)+'/'+blast_database_summary_table
-    if(isfile(bdb_summary_table_path ) == False):
-        logger.warning('there is no database table with path : {}',format(bdb_summary_table_path))
-        raise Exception("couldnt download assembly files, there is no summary table with path : {}".format(bdb_summary_table_path ))
+    blast_database_summary_table = get_database_by_id(database_id).get_pandas_table_name()
+    logger.info('load blastdatabase: {} from database'.format(blast_database_summary_table))
+    bdb_summary_table_path = 'media/databases/' + str(database_id) + '/' + blast_database_summary_table
+    if (isfile(bdb_summary_table_path) == False):
+        logger.warning('there is no database table with path : {}', format(bdb_summary_table_path))
+        raise Exception(
+            "couldnt download assembly files, there is no summary table with path : {}".format(bdb_summary_table_path))
 
     # summary file and ProgressRecord
     try:
@@ -36,12 +43,8 @@ def download_blast_databases(self, database_id):
         logger.warning("couldnt write snakemake configuration file")
         raise Exception("couldnt write snakemake configuration file")
 
-    try:
-        update_blast_database_with_task_result_model(database_id, str(self.request.id))
-        progress_recorder.set_progress(20, 100, "starting snakemake process")
-    except Exception as e:
-        logger.warning("couldnt save taskresult into blastdatabase ... ")
-        raise Exception("coulndt save taskresult into blastdatabase ...")
+
+    progress_recorder.set_progress(20, 100, "starting snakemake process")
 
     try:
         snakemake_working_dir = 'media/databases/' + str(database_id) + '/'

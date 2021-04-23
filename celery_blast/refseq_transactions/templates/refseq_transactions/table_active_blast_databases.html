@@ -9,6 +9,7 @@
                     <th>Assembly Levels</th>
                     <th>Attached Taxonomic File</th>
                     <th>Status Of Associated Process</th>
+                    <th>Progress</th>
                 </tr>
             </thead>
             <tbody id="activeDatabaseTableBody">
@@ -30,6 +31,12 @@
                         </td>
                         <td>{{database.attached_taxonomic_node_file}}</td>
                         <td>{{database.database_download_and_format_task.status}}</td>
+                        <td>
+                            <button class="btn btn-dark" disabled>
+                                <span class="spinner-grow spinner-grow-sm"></span>
+                                    <p><span class="progress-{{database.id}}"></span></p>
+                            </button>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

@@ -9,9 +9,9 @@ from django.core import serializers
 
 from .py_refseq_transactions import get_databases_with_tasks, create_blastdatabase_table_and_directory, \
                                     get_databases_without_tasks, read_database_table_by_database_id_and_return_json
-from .py_services import refseq_file_exists
+from .py_services import refseq_file_exists, read_database_download_and_format_logfile
 from .forms import RefseqDatabaseForm
-from .tasks import download_refseq_assembly_summary_file
+from .tasks import download_refseq_assembly_summary_file, download_blast_databases
 
 from blast_project.py_django_db_services import get_database_by_id
 from blast_project.views import failure_view
@@ -166,3 +166,20 @@ def ajax_call_for_database_details(request, database_id):
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+
+#TODO documentation
+def ajax_call_for_database_download_progress(request, database_id):
+    try:
+        if request.is_ajax and request.method == "GET":
+            progress = read_database_download_and_format_logfile(database_id)
+            return JsonResponse({"progress":progress},status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
+
+#TODO documentation
+def download_and_format_blast_database(request, database_id):
+    try:
+        task = download_blast_databases.delay(database_id)
+        return redirect('refseq_transactions_dashboard')
+    except Exception as e:
+        return failure_view(request,e)

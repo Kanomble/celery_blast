@@ -1,4 +1,4 @@
-from os.path import isfile
+from os.path import isfile, isdir
 from django.db import IntegrityError
 from blast_project.py_django_db_services import get_database_by_id
 import pandas as pd
@@ -48,3 +48,21 @@ def write_blastdatabase_snakemake_configfile(database_id,task_id):
             cf_file.write('task_id: '+"\""+task_id+"\""+"\n")
     except Exception as e:
         raise IntegrityError('exception during writing snakemake configfile with exception : {}'.format(e))
+
+#TODO documentation
+def read_database_download_and_format_logfile(database_id):
+    try:
+        database_file_path = 'media/databases/'+str(database_id)
+        snakemake_logfile_path = database_file_path + '/snakemake_progress.log'
+        if(isdir(database_file_path)):
+            if(isfile(snakemake_logfile_path)):
+                fd = open(snakemake_logfile_path, 'r')
+                progress = round(float(fd.readlines()[-1]), 3)
+                fd.close()
+                return progress
+            else:
+                return 0
+        else:
+            raise Exception
+    except Exception as e:
+        raise Exception("unable to track progress out of logfile ...")

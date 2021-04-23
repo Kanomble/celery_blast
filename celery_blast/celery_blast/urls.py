@@ -22,6 +22,8 @@ favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path(r'^favicon\.ico$', favicon_view),
+    re_path(r'^celery-progress/', include('celery_progress.urls')),
+
     path('blast_project/', include('blast_project.urls')),
     path('refseq_transactions/',include('refseq_transactions.urls')),
 ]
