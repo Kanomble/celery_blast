@@ -15,6 +15,15 @@ def get_databases_without_tasks():
 def get_databases_with_tasks():
     return BlastDatabase.objects.get_databases_with_executed_tasks()
 
+def get_downloaded_databases():
+    return BlastDatabase.objects.get_databases_with_succeeded_tasks()
+
+def get_failed_tasks():
+    return BlastDatabase.objects.get_databases_with_failed_tasks()
+
+def get_databases_in_progress():
+    return BlastDatabase.objects.get_databases_with_task_on_progress()
+
 #TODO this function needs to get refactored
 ''' create_blastdatabase_table_and_directory
     

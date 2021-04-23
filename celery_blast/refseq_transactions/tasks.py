@@ -14,7 +14,7 @@ logger = get_task_logger(__name__)
 
 #TODO documentation
 #task_track_started --> no need for celery-progress?
-@shared_task(bind=True, ignore_result=True)
+@shared_task(bind=True)
 def download_blast_databases(self, database_id):
 
 
@@ -55,7 +55,7 @@ def download_blast_databases(self, database_id):
         snakemake_process = Popen(['snakemake','--snakefile',snakefile_dir,'--wms-monitor','http://172.23.0.5:5000','--cores','1','--configfile',snakemake_config_file,'--directory',snakemake_working_dir,'--latency-wait','10'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
         logger.info('waiting for popen snakemake instance {} to finish'.format(snakemake_process.pid))
         progress_recorder.set_progress(40, 100, "waiting for snakemake to finish")
-        returncode = snakemake_process.wait(timeout=2000)
+        returncode = snakemake_process.wait(timeout=4000) # 66 Minutes
 
         if (returncode != 0):
             logger.warning('subprocess Popen snakemake instance resulted in an error!')

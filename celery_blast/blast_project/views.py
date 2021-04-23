@@ -8,6 +8,8 @@ from .tasks import write_species_taxids_into_file
 from .py_services import list_taxonomic_files
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases
+
+from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 ''' dashboard
 
 view for the first dashboard page, this page enables monitoring of blast_projects,
@@ -26,9 +28,9 @@ def dashboard_view(request):
         context = {}
         if request.method == 'GET':
             users_blast_projects = get_users_blast_projects(request.user.id)
-            available_blast_databases = get_all_blast_databases()
+            available_blast_databases = get_downloaded_databases()
             context['blast_projects'] = users_blast_projects
-            context['blast_databases'] = available_blast_databases
+            context['ActiveBlastDatabases'] = available_blast_databases
 
         return render(request,'blast_project/blast_project_dashboard.html',context)
     except Exception as e:

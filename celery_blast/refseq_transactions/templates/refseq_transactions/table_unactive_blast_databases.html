@@ -1,4 +1,4 @@
-<div class="table">
+<div class="table-responsive">
     <table class="table table-hover" id="unactiveDatabasesTable">
             <thead>
                 <tr>
@@ -41,7 +41,13 @@
                             </form>
                         </td>
                         <td>
-                            <input type="submit" value="Download Database" class="btn btn-dark">
+                             <form class="col"
+                                   action="{% url 'download_and_format_task' database_id=database.id%}"
+                                   method="POST"
+                                   onSubmit="return confirm('Are you sure you wish to download this database with all {{database.assembly_entries}} entries?');" >
+                                {% csrf_token %}
+                                <input type="submit" value="Download Database" class="btn btn-dark">
+                            </form>
                         </td>
                          <td>
                              <form class="col"

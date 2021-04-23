@@ -42,7 +42,8 @@
         <div class="col dashboard_project_list_col">
             <h3 class="col_header"> Available Databases </h3>
             <hr>
-
+            {% include "blast_project/table_downloaded_and_formatted_blast_databases.html" %}
+            <!--
             {% for database in blast_databases %}
                 <div class="row" style="text-align: left">
                     <div class="col">
@@ -61,7 +62,7 @@
 
                     </div>
                 </div>
-            {% endfor %}
+            {% endfor %} -->
 
         </div>
     </div>

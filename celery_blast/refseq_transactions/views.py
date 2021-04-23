@@ -7,8 +7,9 @@ from django.http import JsonResponse
 from django.core import serializers
 
 
-from .py_refseq_transactions import get_databases_with_tasks, create_blastdatabase_table_and_directory, \
-                                    get_databases_without_tasks, read_database_table_by_database_id_and_return_json
+from .py_refseq_transactions import get_downloaded_databases, get_failed_tasks, get_databases_in_progress,\
+                                    get_databases_without_tasks, create_blastdatabase_table_and_directory, \
+                                    read_database_table_by_database_id_and_return_json
 from .py_services import refseq_file_exists, read_database_download_and_format_logfile
 from .forms import RefseqDatabaseForm
 from .tasks import download_refseq_assembly_summary_file, download_blast_databases
@@ -37,11 +38,13 @@ def dashboard(request):
             context['refseq_exists'] = True
 
         refseq_database_form = RefseqDatabaseForm()
-        executed_databases = get_databases_with_tasks()
+        executed_databases = get_downloaded_databases()
         not_executed_databases = get_databases_without_tasks()
+        download_in_progress_databases = get_databases_in_progress()
 
         context['RefseqDatabaseForm'] = refseq_database_form
         context['ActiveBlastDatabases'] = executed_databases
+        context['DownloadInProgressBlastDatabases'] = download_in_progress_databases
         context['UnactiveBlastDatabases'] = not_executed_databases
 
         return render(request, 'refseq_transactions/refseq_transactions_dashboard.html', context)

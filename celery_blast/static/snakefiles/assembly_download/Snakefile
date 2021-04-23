@@ -61,6 +61,12 @@ onstart:
     progress_log.write(str(progress)+'\n')
     progress_log.close()
 
+onerror:
+    progress_log = open('snakemake_progress.log','w')
+    progress = "ERROR"
+    progress_log.write(str(progress)+'\n')
+    progress_log.close()
+
 rule all:
     input: FASTA_FILES, DATABASES#expand(["{database}"],database=[file+".pdb" for file in FASTA_FILES]) #
     run:
@@ -69,7 +75,7 @@ rule all:
         #DBLIST "prot_1_db.faa" "prot_2_db.faa"
         #update_taskresult_model()
         #sleep(20)
-        alias_file_name = config['db_summary']+'.database'
+        alias_file_name = config['db_summary']+'.database.pal'
         alias_file=open(alias_file_name,'w')
         alias_file.write("TITLE {}\n".format(alias_file_name))
         alias_file.write("DBLIST")

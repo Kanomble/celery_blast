@@ -47,3 +47,12 @@ class BlastDatabaseManager(models.Manager):
 
     def get_databases_without_executed_tasks(self):
         return self.filter(database_download_and_format_task__isnull=True)
+
+    def get_databases_with_succeeded_tasks(self):
+        return self.filter(database_download_and_format_task__status='SUCCESS')
+
+    def get_databases_with_failed_tasks(self):
+        return self.filter(database_download_and_format_task__status='FAILURE')
+
+    def get_databases_with_task_on_progress(self):
+        return self.filter(database_download_and_format_task__status='PROGRESS')

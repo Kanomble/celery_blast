@@ -7,9 +7,6 @@
                     <th>Creation Timestamp</th>
                     <th>Assembly Entries</th>
                     <th>Assembly Levels</th>
-                    <th>Attached Taxonomic File</th>
-                    <th>Status Of Associated Process</th>
-                    <th>Delete Database</th>
                     <th>Database Details</th>
                 </tr>
             </thead>
@@ -27,22 +24,8 @@
                                 <tr><td>{{assembly_level.assembly_level}}</td></tr>
                             {% endfor %}
                             </tr>
-
                         </table>
                         </td>
-                        <td>{{database.attached_taxonomic_node_file}}</td>
-                        <td>{{database.database_download_and_format_task.status}}</td>
-
-                        <td>
-                            <form class="col"
-                                   action="{% url 'delete_blast_database' database_id=database.id%}"
-                                   method="POST"
-                                   onSubmit="return confirm('Are you sure you wish to delete?');" >
-                                {% csrf_token %}
-                                <input type="submit" value="Delete Blast Database" class="btn btn-warning">
-                            </form>
-                        </td>
-
                          <td>
                              <form class="col"
                                    action="{% url 'database_details' database_id=database.id%}"
