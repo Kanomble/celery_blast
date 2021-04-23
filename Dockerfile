@@ -69,7 +69,6 @@ RUN chmod u+x wait-for
 
 COPY requirements.txt /blast/reciprocal_blast
 RUN pip install -r requirements.txt
-
 EXPOSE 8080
 # Delete not required packages etc..
 RUN apt-get autoremove --purge --yes && apt-get clean && rm -rf /var/lib/apt/lists/*

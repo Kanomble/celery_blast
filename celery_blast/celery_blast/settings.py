@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'blast_project',
     'django_celery_results',
-    'refseq_transactions'
+    'refseq_transactions',
+    'celery_progress'
 ]
 
 MIDDLEWARE = [
@@ -138,6 +139,8 @@ FILE_UPLOAD_TEMP_DIR = '/tmp'
 #celery settings from celery projects website and following github repo: https://github.com/chrisk314/django-celery-docker-example/tree/master/mysite/settings
 CELERY_BROKER_URL= 'pyamqp://rabbitmq:5672'
 CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 #CELERY_RESULT_BACKEND = 'django-cache'
 '''
 # django setting.

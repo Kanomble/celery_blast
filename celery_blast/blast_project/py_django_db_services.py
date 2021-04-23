@@ -1,5 +1,7 @@
 from .models import BlastProject, BlastDatabase, AssemblyLevels
+from django_celery_results.models import TaskResult
 from django.db import IntegrityError
+from celery.result import AsyncResult
 
 #following functions are utilized in the dashboard_view
 ''' get_users_blast_projects
@@ -19,6 +21,16 @@ def get_users_blast_projects(userid):
 '''
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
+
+#TODO documentation
+def update_blast_database_with_task_result_model(database_id,task_id):
+    try:
+        blastdb = BlastDatabase.objects.get(id=database_id)
+        taskresult = TaskResult.objects.get(task_id=task_id)
+        blastdb.database_download_and_format_task = taskresult
+        blastdb.save()
+    except Exception as e:
+        raise IntegrityError('problem during updating of database model with task result instance exception : {}'.format(e))
 
 #TODO documentation
 def get_database_by_id(database_id):

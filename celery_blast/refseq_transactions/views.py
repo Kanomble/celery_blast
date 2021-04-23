@@ -165,3 +165,4 @@ def ajax_call_for_database_details(request, database_id):
             return JsonResponse({"data":table_data}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
+

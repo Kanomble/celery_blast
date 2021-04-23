@@ -13,6 +13,16 @@ import json
 def refseq_file_exists():
     return isfile('media/databases/refseq_summary_file/assembly_summary_refseq.txt')
 
+
+def filter_duplicates_by_ftp_path(pandas_table):
+    try:
+        pandas_table = pandas_table[pandas_table['ftp_path'].duplicated() == False]
+        if(len(pandas_table) == 0):
+            raise Exception('there are no entries in the pandas table')
+        return pandas_table
+    except Exception as e:
+        raise IntegrityError('couldnt filter pandas table by duplicates Exception : {}'.format(e))
+
 #TODO documentation
 def write_pandas_table_to_project_dir(blastdatabase_path, pandas_table, database_name):
     try:
@@ -29,11 +39,12 @@ def transform_data_table_to_json_dict(df):
     return data
 
 #TODO documentation
-def write_blastdatabase_snakemake_configfile(database_id):
+def write_blastdatabase_snakemake_configfile(database_id,task_id):
     try:
         bdb_summary_table_name = get_database_by_id(database_id).get_pandas_table_name()
         configfile_path = 'media/databases/' + str(database_id) + '/snakefile_config'
         with open(configfile_path,'w') as cf_file:
             cf_file.write('db_summary: '+"\""+bdb_summary_table_name+"\""+"\n")
+            cf_file.write('task_id: '+"\""+task_id+"\""+"\n")
     except Exception as e:
         raise IntegrityError('exception during writing snakemake configfile with exception : {}'.format(e))

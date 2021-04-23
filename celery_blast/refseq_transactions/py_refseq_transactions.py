@@ -1,7 +1,7 @@
 from blast_project.models import BlastDatabase
 from blast_project.py_services import create_blastdatabase_directory, upload_file
 from blast_project.py_django_db_services import create_and_save_refseq_database_model, get_database_by_id
-from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict
+from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict, filter_duplicates_by_ftp_path
 from os.path import isfile
 import pandas as pd
 from django.db import IntegrityError, transaction
@@ -51,6 +51,9 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                 taxonomy_table = read_taxonomy_table(taxid_file.name)
                 filtered_table = filter_table_by_taxonomy(refseq_table, taxonomy_table)
 
+                filtered_table = filter_duplicates_by_ftp_path(filtered_table)
+
+
                 if len(filtered_table) == 0:
                     raise IntegrityError("the database doesnt contain any entries, pls apply an other filter method!")
 
@@ -76,6 +79,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                 refseq_table = read_current_assembly_summary_with_pandas(assembly_levels)
                 taxonomy_table = read_taxonomy_table(taxid_file)
                 filtered_table = filter_table_by_taxonomy(refseq_table, taxonomy_table)
+                filtered_table = filter_duplicates_by_ftp_path(filtered_table)
 
                 if len(filtered_table) == 0:
                     raise IntegrityError("the database doesnt contain any entries, pls apply an other filter method!")
@@ -95,6 +99,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                                                   database_name)
             else:
                 filtered_table = read_current_assembly_summary_with_pandas(assembly_levels)
+                filtered_table = filter_duplicates_by_ftp_path(filtered_table)
                 new_blastdb = create_and_save_refseq_database_model(
                     database_name=database_name,
                     database_description=database_description,

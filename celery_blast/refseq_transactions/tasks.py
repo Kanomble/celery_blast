@@ -2,19 +2,26 @@ from os import getcwd, chdir, mkdir, remove
 from os.path import isdir, isfile
 from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT
 
-from blast_project.py_django_db_services import get_database_by_id
+from blast_project.py_django_db_services import get_database_by_id, update_blast_database_with_task_result_model
 from .py_services import write_blastdatabase_snakemake_configfile
-
-from celery import shared_task
+from django_celery_results.models import TaskResult
+from time import sleep
+from celery import shared_task, task, current_task
 from celery.utils.log import get_task_logger
-
+from celery_progress.backend import ProgressRecorder
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
-@shared_task
-def download_blast_databases(database_id):
+#TODO documentation
+@shared_task(bind=True)
+def download_blast_databases(self, database_id):
+
     blast_database_summary_table = get_database_by_id(database_id).get_pandas_table_name()
     logger.info('load blastdatabase: {} from database'.format(blast_database_summary_table))
+
+    progress_recorder = ProgressRecorder(self)
+    progress_recorder.set_progress(0, 100,"started process")
+
 
     #check if blast summary file is available
     bdb_summary_table_path = 'media/databases/'+str(database_id)+'/'+blast_database_summary_table
@@ -22,21 +29,38 @@ def download_blast_databases(database_id):
         logger.warning('there is no database table with path : {}',format(bdb_summary_table_path))
         raise Exception("couldnt download assembly files, there is no summary table with path : {}".format(bdb_summary_table_path ))
 
-    write_blastdatabase_snakemake_configfile(database_id)
+    # summary file and ProgressRecord
+    try:
+        write_blastdatabase_snakemake_configfile(database_id, str(self.request.id))
+    except Exception as e:
+        logger.warning("couldnt write snakemake configuration file")
+        raise Exception("couldnt write snakemake configuration file")
+
+    try:
+        update_blast_database_with_task_result_model(database_id, str(self.request.id))
+        progress_recorder.set_progress(20, 100, "starting snakemake process")
+    except Exception as e:
+        logger.warning("couldnt save taskresult into blastdatabase ... ")
+        raise Exception("coulndt save taskresult into blastdatabase ...")
+
     try:
         snakemake_working_dir = 'media/databases/' + str(database_id) + '/'
         snakemake_config_file = 'media/databases/' + str(database_id) + '/snakefile_config'
         snakefile_dir = 'static/snakefiles/assembly_download/Snakefile'
-        #snakemake --snakefile 'static/snakefiles/assembly_download/Snakefile' --cores 2 --configfile 'media/databases/12/snakefile_config' --directory 'media/databases/12/' --wms-monitor 'http://172.23.0.6:5000' --latency-wait 10 --dry-run
-        snakemake_process = Popen(['snakemake','--snakefile',snakefile_dir,'--wms-monitor','http://172.23.0.6:5000','--cores','1','--configfile',snakemake_config_file,'--directory',snakemake_working_dir,'--latency-wait',10], shell=False, stdout=subPIPE, stderr=subSTDOUT)
-        logger.info(
-            'waiting for popen snakemake instance {} to finish'
-                .format(snakemake_process.pid))
+        #cmd to copy
+        #snakemake --snakefile 'static/snakefiles/assembly_download/Snakefile' --cores 2 --configfile 'media/databases/12/snakefile_config' --directory 'media/databases/12/' --wms-monitor 'http://172.23.0.5:5000' --latency-wait 10 --dry-run
+        snakemake_process = Popen(['snakemake','--snakefile',snakefile_dir,'--wms-monitor','http://172.23.0.5:5000','--cores','1','--configfile',snakemake_config_file,'--directory',snakemake_working_dir,'--latency-wait','10'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+        logger.info('waiting for popen snakemake instance {} to finish'.format(snakemake_process.pid))
+        progress_recorder.set_progress(40, 100, "waiting for snakemake to finish")
         returncode = snakemake_process.wait(timeout=2000)
+
+        if (returncode != 0):
+            logger.warning('subprocess Popen snakemake instance resulted in an error!')
+            raise Exception('Popen hasnt succeeded ...')
+
         logger.info('returncode : {}'.format(returncode))
         logger.info('blast database download and formatting completed')
-        if(returncode != 0):
-            logger.warning('subprocess Popen snakemake instance resulted in an error!')
+        progress_recorder.set_progress(100, 100, "complete")
         return returncode
     except Exception as e:
         raise Exception("couldnt download assembly files, error during execution of snakemake, with exception : ".format(e))
