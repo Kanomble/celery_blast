@@ -56,7 +56,7 @@ Relationships can get further described with `related_name` and `related_query_n
 Model managers reside inside project specific `managers.py` files. 
 Manager classes are responsible for specific creation functions, such as ``create_blast_project(fields=values ...)``.
 Those functions can be used to trigger side effect during initialization of the database entry.
-E.g. creation of blast project directories or filepath settings...
+E.g. creation of blast project directories or filesettings...
 
 ## BLAST Databases
 ### BLAST database preparation
@@ -72,7 +72,7 @@ With the `makeblastdb` module we can create custom BLAST databases. The `makebla
 Per default it will create a database for the input sequences, e.g. if you submit following cmd: 
 `makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5` you will create a database for the bw_prot_db.faa.
 The `-taxid` parameter is used to assign the taxonomic node 1140 (*Synechococcus elongatus* 7492) to all sequences that reside in the `bw_prot_db.faa` fasta file.
-If you have mutliple fasta files that needs to get formatted with the `makeblastdb` program, there are two options. First, you can path multiple fasta files to the `-in` parameter. Secondly, after formatting each fasta individually, you can create a `.pal` database alias file that lists all existing databases or you can use the `blastdb_aliastool` program to create this alias file for you. If they have the same taxonomic node you can parse the taxid with the `-taxid` parameter to the program, if not use the `-taxid_map` parameter. 
+If you have mutliple fasta files that needs to get formatted with the `makeblastdb` program, there are two options. First, you can pass multiple fasta files to the `-in` parameter. Secondly, after formatting each fasta individually, you can create a `.pal` database alias file that lists all existing databases or you can use the `blastdb_aliastool` program to create this alias file for you. If they have the same taxonomic node you can pass the taxid with the `-taxid` parameter to the program, if not use the `-taxid_map` parameter. 
 
 ```` Bash
 makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5
@@ -114,5 +114,6 @@ Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enab
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
 - [Celery Project Documentation](https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html)
 - Documentation for [snakemake](https://snakemake.readthedocs.io/en/stable/index.html)
-- Documentation for [celery-progress](https://github.com/czue/celery-progress) - tutorial [celery-progress](https://www.youtube.com/watch?v=BbPswIqn2VI)
+- Documentation for [celery-progress](https://github.com/czue/celery-progress) - youtube tutorial [celery-progress](https://www.youtube.com/watch?v=BbPswIqn2VI)
 - [BLAST DB](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html) FTP server description
+- [E-Direct](https://www.ncbi.nlm.nih.gov/books/NBK179288/) 
