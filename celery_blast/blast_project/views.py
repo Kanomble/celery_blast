@@ -3,7 +3,8 @@ from django.contrib import messages
 from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from .forms import CreateUserForm, CreateTaxonomicFileForm
+from .forms import CreateUserForm, CreateTaxonomicFileForm,\
+    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward
 from .tasks import write_species_taxids_into_file
 from .py_services import list_taxonomic_files
 
@@ -39,7 +40,14 @@ def dashboard_view(request):
 @login_required(login_url='login')
 def project_creation_view(request):
     try:
-        context = {}
+        project_creation_form = ProjectCreationForm(request.user)
+        blast_settings_forward_form = BlastSettingsFormForward()
+        blast_settings_backward_form = BlastSettingsFormBackward()
+
+        context = {'ProjectCreationForm':project_creation_form,
+                   'BlastSettingsForwardForm':blast_settings_forward_form,
+                   'BlastSettingsBackwardForm':blast_settings_backward_form}
+
         return render(request,'blast_project/project_creation_dashboard.html',context)
     except Exception as e:
         return failure_view(request,e)

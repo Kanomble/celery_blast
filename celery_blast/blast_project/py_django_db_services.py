@@ -41,6 +41,10 @@ def get_database_by_id(database_id):
         raise IntegrityError('there is no database with this {} id : {}'.format(database_id,e))
 
 #TODO documentation
+def get_all_succeeded_databases():
+    return BlastDatabase.objects.get_databases_with_succeeded_tasks()
+
+#TODO documentation
 def create_and_save_refseq_database_model(database_name,database_description,assembly_levels,assembly_entries,attached_taxonomic_file=None):
     try:
 

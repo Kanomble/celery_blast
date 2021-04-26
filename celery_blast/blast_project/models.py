@@ -114,20 +114,17 @@ class BlastProject(models.Model):
         verbose_name="settings for the backward BLAST execution",
         related_name='project_backward_settings')
 
-    # forward database and backward database
-    # each project can have ONE forward and ONE backward BlastDatabase
-    # --> two foreign keys
-    project_forward_database = models.ForeignKey(
+    #each project can have one blast_database
+    project_database = models.ForeignKey(
         BlastDatabase,
         on_delete=models.CASCADE,
-        verbose_name="associated forward BLAST database",
-        related_name="project_forward_database")
+        verbose_name="associated forward BLAST database")
 
-    project_backward_database = models.ForeignKey(
-        BlastDatabase,
-        on_delete=models.CASCADE,
-        verbose_name="associated backward BLAST database",
-        related_name="project_backward_database")
+    species_name_for_backward_blast = models.CharField(
+        max_length=200, blank=False,
+        verbose_name="species name for the backward database and query sequences"
+    )
+
     # one to one relationship
     project_execution_snakemake_task = models.OneToOneField(
         TaskResult,
