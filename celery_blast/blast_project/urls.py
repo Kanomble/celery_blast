@@ -18,7 +18,8 @@ service_urls = [
 
 
 success_failure_urls = [
-    path('failure', views.failure_view, name='failure_view')
+    path('failure', views.failure_view, name='failure_view'),
+    path('success',views.success_view,name='success_view')
 ]
 urlpatterns = [
     path('', views.dashboard_view, name='blast_project_dashboard'),

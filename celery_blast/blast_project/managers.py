@@ -14,14 +14,15 @@ class BlastProjectManager(models.Manager):
             timestamp,
             project_user,
             project_forward_settings, project_backward_settings,
-            project_forward_database, project_backward_database):
+            project_database, species_name_for_backward_blast):
         # calling the create method (objects.create) ..
         blast_project = self.create(
             project_title=project_title, search_strategy=search_strategy,
             project_query_sequences=project_query_sequences,
             timestamp=timestamp, project_user=project_user,
             project_forward_settings=project_forward_settings, project_backward_settings=project_backward_settings,
-            project_forward_database=project_forward_database, project_backward_database=project_backward_database)
+            project_database=project_database,
+            species_name_for_backward_blast=species_name_for_backward_blast)
 
         blast_project.initialize_project_directory()
 

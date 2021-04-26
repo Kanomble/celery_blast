@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block title %} RecBlast Project Creation {% endblock %}
-
+{% block add_headers %}
+{% load static %}
+<link rel="stylesheet"  href="{%  static  'css/refseq_transactions_styles.css'  %}">
+{% endblock %}
 {% block page_title %} Reciprocal Blast Project Creation {% endblock %}
 
 {% block infoheader %} Project Creation {% endblock %}
@@ -13,5 +16,7 @@ Create a project based on available BLAST databases.
 {% block page_header %}{% endblock %}
 
 {% block content %}
-{% include "blast_project/form_project_creation.html" %}
+<div class="transparent-box" id="post_form_container">
+    {% include "blast_project/form_project_creation.html" %}
+</div>
 {% endblock %}

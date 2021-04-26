@@ -1,5 +1,67 @@
-<form action="#" method="post">
+<form action="{% url 'project_creation' %}"
+      method="post"
+      enctype="multipart/form-data"
+      onsubmit="showLoader('loading_div','post_form_container')">
+
     {% csrf_token %}
-    {{ ProjectCreationForm }}
-    <input type="submit" value="Submit">
+
+     <div class="form-group">
+        <label for="project_title">Project Title</label>
+        <input type="text" class="form-control" id="project_title" name="project_title">
+        {% if ProjectCreationForm.project_title.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ ProjectCreationForm.project_title.errors }}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+
+    <div class="form-group">
+        <label for="query_sequence_file"> Query Sequences as FASTA File </label>
+            <!--
+            <span class="badge badge-info">  In FASTA format (with sequence name)
+            </span></label>
+            -->
+        <input type="file" class="form-control-file" id="query_sequence_file" name="query_sequence_file">
+        {% if ProjectCreationForm.query_sequence_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ ProjectCreationForm.query_sequence_file.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="project_database"> Select a BLAST Database </label>
+        <select class="form-control" id="project_database" name="project_database">
+            {% for database in ProjectCreationForm.project_database %}
+                <option value="database.pk">{{database}}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+     <div class="form-group">
+        <label for="species_name_for_backward_blast">Species Name for the Backward BLAST</label>
+        <input type="text" class="form-control" id="species_name_for_backward_blast" name="species_name_for_backward_blast">
+        {% if ProjectCreationForm.species_name_for_backward_blast.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ ProjectCreationForm.species_name_for_backward_blast.errors }}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="form-row">
+        <div class="col">
+            {{ BlastSettingsForwardForm.as_table }}
+        </div>
+        <div class="col">
+            {{ BlastSettingsBackwardForm.as_table }}
+        </div>
+    </div>
+
+    {{ProjectCreationForm.errors}}
+    {{BlastSettingsBackwardForm.errors}}
+    {{BlastSettingsForwardForm.errors}}
+
+    <br>
+    <input type="submit" value="Submit" class="btn btn-dark">
 </form>

@@ -37,12 +37,25 @@ def dashboard_view(request):
     except Exception as e:
         return failure_view(request,e)
 
+#TODO documentation
 @login_required(login_url='login')
 def project_creation_view(request):
     try:
-        project_creation_form = ProjectCreationForm(request.user)
-        blast_settings_forward_form = BlastSettingsFormForward()
-        blast_settings_backward_form = BlastSettingsFormBackward()
+        if request.method == 'POST':
+            project_creation_form = ProjectCreationForm(request.user, request.POST, request.FILES)
+            blast_settings_forward_form = BlastSettingsFormForward(request.POST)
+            blast_settings_backward_form = BlastSettingsFormBackward(request.POST)
+
+            if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() and blast_settings_backward_form.is_valid():
+                #1. save settings
+
+                #2. save project (by writing snakemake configfile) and use upload_file
+
+                return success_view(request)
+        else:
+            project_creation_form = ProjectCreationForm(request.user)
+            blast_settings_forward_form = BlastSettingsFormForward()
+            blast_settings_backward_form = BlastSettingsFormBackward()
 
         context = {'ProjectCreationForm':project_creation_form,
                    'BlastSettingsForwardForm':blast_settings_forward_form,
@@ -134,3 +147,8 @@ returned if an exception ocurred within execution of view functions.
 def failure_view(request,exception):
     context={'exception':exception}
     return render(request,'blast_project/failure.html', context)
+
+#TODO documentation
+@login_required(login_url='login')
+def success_view(request):
+    return render(request,'blast_project/success.html')

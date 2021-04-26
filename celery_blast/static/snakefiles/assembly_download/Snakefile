@@ -77,7 +77,7 @@ rule all:
         #sleep(20)
         alias_file_name = config['db_summary']+'.database.pal'
         alias_file=open(alias_file_name,'w')
-        alias_file.write("TITLE {}\n".format(alias_file_name))
+        alias_file.write("TITLE {}\n".format(config['db_summary']+'.database'))
         alias_file.write("DBLIST")
         for database in FASTA_FILES:
             alias_file.write(" \""+database+"\"")

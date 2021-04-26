@@ -2,6 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.forms import ModelChoiceField
 
 from .py_biopython import get_species_taxid_by_name
 from .py_django_db_services import get_all_succeeded_databases
@@ -47,33 +48,20 @@ class CreateUserForm(UserCreationForm):
         model = User
         fields = ['username','email','password1','password2']
 
-class BlastSettingsFormForward(forms.Form):
-    fw_e_value = forms.DecimalField(label="FW E-Value", required=False, initial=0.001)
-    fw_word_size = forms.IntegerField(label="FW Word Size", required=False, initial=3)
-    fw_num_alignments = forms.IntegerField(label="FW Number of possible alignment outputs", required=False,
-                                           initial=10000)
-    fw_num_descriptions = forms.IntegerField(label="FW Number of possible alignment description outputs",
-                                             required=False, initial=500)
-    fw_num_threads = forms.IntegerField(label="Number of threads used for executing this BLAST search", required=False,
-                                        initial=1)
-
-class BlastSettingsFormBackward(forms.Form):
-    bw_e_value = forms.DecimalField(label="BW E-Value", required=False, initial=0.001)
-    bw_word_size = forms.IntegerField(label="BW Word Size", required=False,initial=3)
-    bw_num_alignments = forms.IntegerField(label="BW Number of possible alignment outputs",required=False, initial=1)
-    bw_num_descriptions = forms.IntegerField(label="FW Number of possible alignment description outputs",
-                                              required=False, initial=1)
-    bw_num_threads = forms.IntegerField(label="Number of threads used for executing this BLAST search", required=False,
-                                         initial=1)
-
+#TODO documentation
 class ProjectCreationForm(forms.Form):
+    class BlastDatabaseModelChoiceField(ModelChoiceField):
+        def label_from_instance(self, blast_database):
+            return str(blast_database.database_name)
 
     project_title = forms.CharField(
         label="Project title",
         error_messages={
             'required': "A project title is required for saving project metadata into the database"})
 
+    #for now just blastp is possible this field is not included in the html form
     search_strategy = forms.ChoiceField(
+        required=False,
         choices=(('blastp', 'blastp'), ('blastn', 'blastn')),
         label="Search strategy",
         error_messages={
@@ -83,8 +71,9 @@ class ProjectCreationForm(forms.Form):
         error_messages={
             'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
 
-    project_database = forms.ModelChoiceField(
-        queryset=get_all_succeeded_databases()
+    project_database = BlastDatabaseModelChoiceField(
+        queryset=get_all_succeeded_databases(),
+        empty_label=None
     )
 
     species_name_for_backward_blast = forms.CharField(
@@ -93,7 +82,9 @@ class ProjectCreationForm(forms.Form):
         error_messages={
             'required':"Specify a Scientific Name for your backward BLAST - use a comma separated list - names will be converted to taxids that will be written to a file which will serve as the -taxidlist parameter of your backward BLAST"})
 
-    user_email = forms.CharField(max_length=200)
+    user_email = forms.CharField(
+        max_length=200,
+        required=False)
 
     def __init__(self, user, *args, **kwargs):
         super(ProjectCreationForm, self).__init__(*args, **kwargs)
@@ -101,15 +92,45 @@ class ProjectCreationForm(forms.Form):
         self.fields['user_email'].initial = user.email
 
     def clean_species_name_for_backward_blast(self):
-        species_name = self.cleaned_data['species_name']
+        species_name = self.cleaned_data['species_name_for_backward_blast']
         user_email = self.fields['user_email'].charfield
         try:
             taxonomic_node = get_species_taxid_by_name(user_email, species_name)
-            if(len(taxonomic_node) > 1):
-                raise ValidationError(
-                    "pls specify just one scientific name"
-                )
             return species_name, taxonomic_node
         except Exception as e:
             raise ValidationError(
                 "validation error in clean_species_name pls check your provided scientific name : {}".format(e))
+
+    def clean_query_sequence_file(self):
+        query_file = self.cleaned_data['query_sequence_file']
+        if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
+            raise ValidationError("please upload only fasta files!")
+        else:
+            return query_file
+
+
+#TODO documentation
+class BlastSettingsFormForward(forms.Form):
+    fw_e_value = forms.DecimalField(
+        label="FW E-Value", initial=0.001)
+    fw_word_size = forms.IntegerField(
+        label="FW Word Size", initial=3)
+    fw_num_alignments = forms.IntegerField(
+        label="FW Number of possible alignment outputs", initial=10000)
+    fw_num_descriptions = forms.IntegerField(
+        label="FW Number of possible alignment description outputs", initial=500)
+    fw_num_threads = forms.IntegerField(
+        label="FW Threads", initial=1)
+
+#TODO documentation
+class BlastSettingsFormBackward(forms.Form):
+    bw_e_value = forms.DecimalField(
+        label="BW E-Value", initial=0.001)
+    bw_word_size = forms.IntegerField(
+        label="BW Word Size", initial=3)
+    bw_num_alignments = forms.IntegerField(
+        label="BW Number of possible alignment outputs",initial=1)
+    bw_num_descriptions = forms.IntegerField(
+        label="BW Number of possible alignment description outputs", initial=1)
+    bw_num_threads = forms.IntegerField(
+        label="BW Threads",initial=1)

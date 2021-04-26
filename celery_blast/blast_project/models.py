@@ -6,7 +6,7 @@ from os import mkdir
 from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
-from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from .managers import BlastProjectManager, BlastDatabaseManager
 
 class BlastSettings(models.Model):
@@ -23,6 +23,17 @@ class BlastSettings(models.Model):
     max_target_seqs = models.IntegerField()
     max_hsps = models.IntegerField()
 
+    #TODO documentation
+    def values_as_fw_or_bw_dict(self,fwOrBw):
+        settings_dict = {
+            fwOrBw+'_e_value' : str(self.e_value),
+            fwOrBw+'_word_site' : str(self.word_size),
+            fwOrBw+'_num_threads' : str(self.num_threads),
+            fwOrBw+'_num_alignments' : str(self.num_alignments),
+            fwOrBw+'_max_target_seqs' : str(self.max_target_seqs),
+            fwOrBw+'_max_hsps' : str(self.max_hsps)
+        }
+        return settings_dict
 
 class AssemblyLevels(models.Model):
     assembly_level = models.CharField(max_length=50)
@@ -78,6 +89,9 @@ class BlastDatabase(models.Model):
 
     def get_pandas_table_name(self):
         return self.database_name.replace(' ','_').upper()
+
+    def get_database_palfile_for_snakemake_config(self):
+        return self.path_to_database_file + '/' + self.database_name.replace(' ','_').upper() + '.database.pal'
 
 class BlastProject(models.Model):
     BLAST_SEARCH_PROGRAMS = [('blastp', 'blastp'), ('blastn', 'blastn')]
@@ -171,11 +185,30 @@ class BlastProject(models.Model):
     def initialize_project_directory(self):
         # check if blast_project was previously created / check if media/blast_project directory exists
         if (isdir('media/blast_projects/' + str(self.id)) or isdir('media/blast_projects/') == False):
-            raise ValidationError("project directory exists")
+            raise IntegrityError("project directory exists")
         else:
             try:
                 mkdir('media/blast_projects/' + str(self.id))
             except Exception as e:
-                raise ValidationError("couldnt create project directory : {}".format(e))
+                raise IntegrityError("couldnt create project directory : {}".format(e))
 
+    #TODO documentation
+    def write_snakemake_configuration_file(self):
+        try:
+            snk_config_file = open('media/blast_projects/' + str(self.id)+'/snakefile_config','w')
+            snk_config_file.write('blastdb: '+"\"" + self.project_database.get_database_palfile_for_snakemake_config() + "\"\n")
+            snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
+            snk_config_file.write('fw_e_value: '+"\""+str(self.project_forward_settings.e_value)+"\"\n")
 
+            bw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('bw')
+            fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
+            for key_bw in bw_dict.keys():
+                snk_config_file.write(key_bw+': '+"\""+bw_dict[key_bw]+"\"\n")
+
+            for key_fw in fw_dict.keys():
+                snk_config_file.write(key_fw+': '+"\""+fw_dict[key_fw]+"\"\n")
+
+            snk_config_file.close()
+
+        except Exception as e:
+            raise IntegrityError("couldnt write snakemake configuration file in directory with exception : {}".format(e))
