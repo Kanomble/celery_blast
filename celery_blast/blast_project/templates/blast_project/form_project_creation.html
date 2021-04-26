@@ -49,19 +49,137 @@
         {% endif %}
     </div>
 
-    <div class="form-row">
-        <div class="col">
-            {{ BlastSettingsForwardForm.as_table }}
-        </div>
-        <div class="col">
-            {{ BlastSettingsBackwardForm.as_table }}
+    <div class="form-row" id="advanced_settings" style="display: none">
+            <hr>
+            <h3 style="font-family: 'Courier New';text-align: center;
+                margin-bottom: 5px;
+                font-weight: bold;">
+                Forward BLAST Settings </h3>
+
+            <div class="col">
+                <div class="form-group">
+                    <label for="fw_e_value">FW E-Value</label>
+                    <input type="number" class="form-control"  id="fw_e_value" name="fw_e_value" value="0.001">
+                    {% if BlastSettingsForwardForm.fw_e_value.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_e_value.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="fw_word_size">FW Word Size </label>
+                    <input type="number" class="form-control"  id="fw_word_size" name="fw_word_size" value="3">
+                    {% if BlastSettingsForwardForm.fw_word_size.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_word_size.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="fw_num_alignments">FW Num Alignments </label>
+                    <input type="number" class="form-control"  id="fw_num_alignments" name="fw_num_alignments" value="10000">
+                    {% if BlastSettingsForwardForm.fw_num_alignments.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_num_alignments.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="fw_max_target_seqs">FW Num Alignments </label>
+                    <input type="number" class="form-control"  id="fw_max_target_seqs" name="fw_max_target_seqs" value="10000">
+                    {% if BlastSettingsForwardForm.fw_max_target_seqs.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_max_target_seqs.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="fw_num_threads">FW Num Threads </label>
+                    <input type="number" class="form-control"  id="fw_num_threads" name="fw_num_threads" value="1">
+                    {% if BlastSettingsForwardForm.fw_num_threads.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_num_threads.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="fw_max_hsps">FW Max Hsps </label>
+                    <input type="number" class="form-control"  id="fw_max_hsps" name="fw_max_hsps" value="500">
+                    {% if BlastSettingsForwardForm.fw_max_hsps.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_max_hsps.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+
+            <h3 style="font-family: 'Courier New';text-align: center;
+                margin-bottom: 5px;
+                font-weight: bold;">
+                Backward BLAST Settings </h3>
+
+
+
+            <div class="col">
+                <div class="form-group">
+                    <label for="bw_e_value">BW E-Value</label>
+                    <input type="number" class="form-control"  id="bw_e_value" name="bw_e_value" value="0.001">
+                    {% if BlastSettingsBackwardForm.bw_e_value.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_e_value_blast.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="bw_word_size">BW Word Size </label>
+                    <input type="number" class="form-control"  id="bw_word_size" name="bw_word_size" value="3">
+                    {% if BlastSettingsBackwardForm.bw_word_size.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_word_size_blast.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="bw_num_alignments">BW Num Alignments </label>
+                    <input type="number" class="form-control"  id="bw_num_alignments" name="bw_num_alignments" value="1">
+                    {% if BlastSettingsBackwardForm.bw_num_alignments.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_num_alignments_blast.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="bw_max_target_seqs">BW Num Alignments </label>
+                    <input type="number" class="form-control"  id="bw_max_target_seqs" name="bw_max_target_seqs" value="1">
+                    {% if BlastSettingsBackwardForm.bw_max_target_seqs.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_max_target_seqs.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="bw_num_threads">BW Num Threads </label>
+                    <input type="number" class="form-control"  id="bw_num_threads" name="bw_num_threads" value="1">
+                    {% if BlastSettingsBackwardForm.bw_num_threads.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_num_threads.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="bw_max_hsps">BW Max Hsps </label>
+                    <input type="number" class="form-control" id="bw_max_hsps" name="bw_max_hsps" value="500">
+                    {% if BlastSettingsBackwardForm.bw_max_hsps.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_max_hsps.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
         </div>
     </div>
-
-    {{ProjectCreationForm.errors}}
-    {{BlastSettingsBackwardForm.errors}}
-    {{BlastSettingsForwardForm.errors}}
-
     <br>
     <input type="submit" value="Submit" class="btn btn-dark">
 </form>

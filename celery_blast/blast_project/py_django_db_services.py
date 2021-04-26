@@ -1,4 +1,4 @@
-from .models import BlastProject, BlastDatabase, AssemblyLevels
+from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError
 from celery.result import AsyncResult
@@ -21,6 +21,46 @@ def get_users_blast_projects(userid):
 '''
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
+
+#TODO documentation
+def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,query_sequence_filename):
+    try:
+        blast_project = BlastProject.objects.create_blast_project(
+            project_title=valid_project_form.cleaned_data['project_title'],
+            search_strategy='blastp',
+            project_query_sequences=query_sequence_filename,
+            project_user=user,
+            project_forward_settings=fw_settings,
+            project_backward_settings=bw_settings,
+            project_database=valid_project_form.cleaned_data['project_database'],
+            species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast']
+        )
+        return blast_project
+    except Exception as e:
+        raise IntegrityError('couldnt create blast project with exception : {}'.format(e))
+#TODO documentation
+def create_blast_settings_from_form(fwOrBw,valid_settings_form):
+    try:
+        if(fwOrBw == 'fw'):
+            blast_settings = BlastSettings.objects.create(e_value=valid_settings_form.cleaned_data['fw_e_value'],
+                                            word_size=valid_settings_form.cleaned_data['fw_e_value'],
+                                            num_alignments=valid_settings_form.cleaned_data['fw_e_value'],
+                                            max_target_seqs=valid_settings_form.cleaned_data['fw_e_value'],
+                                            num_threads=valid_settings_form.cleaned_data['fw_e_value'],
+                                            max_hsps=valid_settings_form.cleaned_data['fw_max_hsps'])
+        elif(fwOrBw == 'bw'):
+            blast_settings = BlastSettings.objects.create(e_value=valid_settings_form.cleaned_data['bw_e_value'],
+                                            word_size=valid_settings_form.cleaned_data['bw_e_value'],
+                                            num_alignments=valid_settings_form.cleaned_data['bw_e_value'],
+                                            max_target_seqs=valid_settings_form.cleaned_data['bw_e_value'],
+                                            num_threads=valid_settings_form.cleaned_data['bw_e_value'],
+                                            max_hsps=valid_settings_form.cleaned_data['bw_max_hsps'])
+        else:
+            raise IntegrityError('fwOrBw is wrong ...')
+
+        return blast_settings
+    except Exception as e:
+        raise IntegrityError('something went wrong during creation of blastsettings with Exception : {}'.format(e))
 
 #TODO documentation
 def update_blast_database_with_task_result_model(database_id,task_id):

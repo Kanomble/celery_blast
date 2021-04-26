@@ -117,10 +117,13 @@ class BlastSettingsFormForward(forms.Form):
         label="FW Word Size", initial=3)
     fw_num_alignments = forms.IntegerField(
         label="FW Number of possible alignment outputs", initial=10000)
-    fw_num_descriptions = forms.IntegerField(
-        label="FW Number of possible alignment description outputs", initial=500)
+    fw_max_target_seqs = forms.IntegerField(
+        label="FW max_target_seqs of possible alignment description outputs", initial=10000)
     fw_num_threads = forms.IntegerField(
         label="FW Threads", initial=1)
+    fw_max_hsps = forms.IntegerField(
+        label='FW max hsps', initial=500
+    )
 
 #TODO documentation
 class BlastSettingsFormBackward(forms.Form):
@@ -130,7 +133,10 @@ class BlastSettingsFormBackward(forms.Form):
         label="BW Word Size", initial=3)
     bw_num_alignments = forms.IntegerField(
         label="BW Number of possible alignment outputs",initial=1)
-    bw_num_descriptions = forms.IntegerField(
-        label="BW Number of possible alignment description outputs", initial=1)
+    bw_max_target_seqs = forms.IntegerField(
+        label="BW max_target_seqs of possible alignment description outputs", initial=1)
     bw_num_threads = forms.IntegerField(
         label="BW Threads",initial=1)
+    bw_max_hsps = forms.IntegerField(
+        label='BW max hsps', initial=500
+    )

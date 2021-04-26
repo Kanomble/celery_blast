@@ -11,7 +11,6 @@ class BlastProjectManager(models.Manager):
             self, project_title,
             search_strategy,
             project_query_sequences,
-            timestamp,
             project_user,
             project_forward_settings, project_backward_settings,
             project_database, species_name_for_backward_blast):
@@ -19,12 +18,13 @@ class BlastProjectManager(models.Manager):
         blast_project = self.create(
             project_title=project_title, search_strategy=search_strategy,
             project_query_sequences=project_query_sequences,
-            timestamp=timestamp, project_user=project_user,
+            project_user=project_user,
             project_forward_settings=project_forward_settings, project_backward_settings=project_backward_settings,
             project_database=project_database,
             species_name_for_backward_blast=species_name_for_backward_blast)
 
         blast_project.initialize_project_directory()
+        blast_project.write_snakemake_configuration_file()
 
         return blast_project
 

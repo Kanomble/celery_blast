@@ -6,7 +6,9 @@ from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm,\
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward
 from .tasks import write_species_taxids_into_file
-from .py_services import list_taxonomic_files
+from .py_services import list_taxonomic_files, upload_file
+from .py_project_creation import create_blast_project
+from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases
 
@@ -47,10 +49,21 @@ def project_creation_view(request):
             blast_settings_backward_form = BlastSettingsFormBackward(request.POST)
 
             if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() and blast_settings_backward_form.is_valid():
-                #1. save settings
+                query_sequences = request.FILES['query_sequence_file']
+                try:
+                    with transaction.atomic():
 
-                #2. save project (by writing snakemake configfile) and use upload_file
-
+                        blast_project = create_blast_project(
+                            user=request.user,
+                            query_file_name=query_sequences.name,
+                            project_form=project_creation_form,
+                            fw_settings_form=blast_settings_forward_form,
+                            bw_settings_form=blast_settings_backward_form)
+                        path_to_query_file = 'media/blast_projects/' + str(
+                            blast_project.id) + '/' + query_sequences.name
+                        upload_file(query_sequences, path_to_query_file)
+                except IntegrityError as e:
+                    return failure_view(request,e)
                 return success_view(request)
         else:
             project_creation_form = ProjectCreationForm(request.user)

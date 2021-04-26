@@ -13,7 +13,7 @@ import json
 def refseq_file_exists():
     return isfile('media/databases/refseq_summary_file/assembly_summary_refseq.txt')
 
-
+#TODO documentation
 def filter_duplicates_by_ftp_path(pandas_table):
     try:
         pandas_table = pandas_table[pandas_table['ftp_path'].duplicated() == False]
@@ -38,7 +38,7 @@ def transform_data_table_to_json_dict(df):
     data = json.loads(json_records)
     return data
 
-#TODO documentation
+#TODO documentation (blastdatabase model - without taks_id ..)
 def write_blastdatabase_snakemake_configfile(database_id,task_id):
     try:
         bdb_summary_table_name = get_database_by_id(database_id).get_pandas_table_name()

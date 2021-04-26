@@ -24,7 +24,7 @@ def get_failed_tasks():
 def get_databases_in_progress():
     return BlastDatabase.objects.get_databases_with_task_on_progress()
 
-#TODO this function needs to get refactored
+#TODO this function needs to get refactored maybe put some functionality in the form and model for BlastDatabase
 ''' create_blastdatabase_table_and_directory
     
     Processes the form data of the create_blast_database_model_and_directory view POST request.

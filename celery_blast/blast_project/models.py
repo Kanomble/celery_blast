@@ -196,7 +196,7 @@ class BlastProject(models.Model):
     def write_snakemake_configuration_file(self):
         try:
             snk_config_file = open('media/blast_projects/' + str(self.id)+'/snakefile_config','w')
-            snk_config_file.write('blastdb: '+"\"" + self.project_database.get_database_palfile_for_snakemake_config() + "\"\n")
+            snk_config_file.write('blastdb: '+"\"" +"media/databases/"+str(self.project_database.id)+"/"+self.project_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
             snk_config_file.write('fw_e_value: '+"\""+str(self.project_forward_settings.e_value)+"\"\n")
 
