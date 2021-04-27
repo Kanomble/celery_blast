@@ -21,49 +21,20 @@
 <div class="container-fluid">
 
     <div class="row" style="text-align: center">
-        <div class="col dashboard_project_list_col">
+        <div class="col">
+          <div class="dashboard_project_list_col">
 
-            <h3 class="col_header"> Your BLAST Projects </h3>
+                <h3 class="col_header"> Your BLAST Projects </h3>
                 <hr>
-
-                {% for project in blast_projects %}
-                    <div class="row" style="text-align: left">
-                        <div class="col">
-                            Title: {{project.project_title|upper}}
-                        </div>
-                        <div class="col">
-                            Creation Time: {{project.timestamp}}
-                        </div>
-                    </div>
-                {% endfor %}
-
+                {% include "blast_project/table_blast_projects.html" %}
+            </div>
         </div>
+
 
         <div class="col dashboard_project_list_col">
             <h3 class="col_header"> Available Databases </h3>
             <hr>
             {% include "blast_project/table_downloaded_and_formatted_blast_databases.html" %}
-            <!--
-            {% for database in blast_databases %}
-                <div class="row" style="text-align: left">
-                    <div class="col">
-                        Title: {{database.database_name|upper}}
-                    </div>
-                    <div class="col">
-                        Creation Time: {{database.timestamp}}
-                    </div>
-                    <div class="col">
-
-                        {% for assembly_level in database.assembly_levels.all %}
-                            <div class="row">
-                                {{assembly_level.assembly_level|upper}}
-                            </div>
-                        {% endfor %}
-
-                    </div>
-                </div>
-            {% endfor %} -->
-
         </div>
     </div>
 

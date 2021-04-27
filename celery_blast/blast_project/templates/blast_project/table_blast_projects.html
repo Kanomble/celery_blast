@@ -1,0 +1,20 @@
+<div class="table-responsive">
+    <table class="table table-hover" id="blastProjectTable">
+            <thead>
+                <tr>
+                    <th>Project Title</th>
+                    <th>Database Name</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="blastProjectTableBody">
+                {% for project in blast_projects %}
+                    <tr>
+                        <td>{{project.project_title}}</td>
+                        <td>{{project.project_database.database_name}}</td>
+                        <td>{{project.timestamp}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+</div>
