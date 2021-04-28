@@ -5,12 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm,\
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward
-from .tasks import write_species_taxids_into_file
-from .py_services import list_taxonomic_files, upload_file
+from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project
+from .py_services import list_taxonomic_files, upload_file, delete_project_and_associated_directories_by_id
 from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
-from .py_django_db_services import get_users_blast_projects, get_all_blast_databases
+from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id
 
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 ''' dashboard
@@ -62,6 +62,7 @@ def project_creation_view(request):
                         path_to_query_file = 'media/blast_projects/' + str(
                             blast_project.id) + '/' + query_sequences.name
                         upload_file(query_sequences, path_to_query_file)
+
                 except IntegrityError as e:
                     return failure_view(request,e)
                 return success_view(request)
@@ -75,6 +76,36 @@ def project_creation_view(request):
                    'BlastSettingsBackwardForm':blast_settings_backward_form}
 
         return render(request,'blast_project/project_creation_dashboard.html',context)
+    except Exception as e:
+        return failure_view(request,e)
+
+#TODO documentation
+@login_required(login_url='login')
+def project_details_view(request, project_id):
+    try:
+        blast_project = get_project_by_id(project_id)
+        context = {'BlastProject':blast_project,
+                    'Database':blast_project.project_database}
+        return render(request,'blast_project/project_details_dashboard.html',context)
+    except Exception as e:
+        return failure_view(request,e)
+
+#TODO documentation
+@login_required()
+def execute_reciprocal_blast_project_view(request, project_id):
+    try:
+        if request.method == 'POST':
+            execute_reciprocal_blast_project.delay(project_id)
+        return success_view(request)
+    except Exception as e:
+        return failure_view(request,e)
+
+#TODO documentation
+@login_required(login_url='login')
+def project_delete_view(request, project_id):
+    try:
+        delete_project_and_associated_directories_by_id(project_id)
+        return success_view(request)
     except Exception as e:
         return failure_view(request,e)
 

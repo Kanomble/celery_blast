@@ -5,6 +5,7 @@
                     <th>Project Title</th>
                     <th>Database Name</th>
                     <th>Timestamp</th>
+                    <th>Project Details</th>
                 </tr>
             </thead>
             <tbody id="blastProjectTableBody">
@@ -13,7 +14,18 @@
                         <td>{{project.project_title}}</td>
                         <td>{{project.project_database.database_name}}</td>
                         <td>{{project.timestamp}}</td>
+                        <td>
+                             <form class="col"
+                                   action="{% url 'project_details' project_id=project.id%}"
+                                   method="GET">
+                                {% csrf_token %}
+                                <input type="submit" value="Project Details" class="btn btn-dark">
+                            </form>
+                        </td>
+
                     </tr>
+
+
                 {% endfor %}
             </tbody>
         </table>

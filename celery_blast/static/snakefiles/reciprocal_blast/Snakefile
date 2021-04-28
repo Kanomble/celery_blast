@@ -1,0 +1,52 @@
+configfile: "./snakefile_config"
+import pandas as pd
+
+rule all:
+	input:
+		"reciprocal_results.html"
+
+rule forward_blast:
+	input: fw_queries=config['query_sequence']
+	output: "blastp_fw_out.table"
+	params: word_size=config['fw_word_size'], e_value=config['fw_e_value'], num_alignments=config['fw_num_alignments'], num_threads=config['fw_num_threads'], database=config['blastdb']
+	shell:
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries}"
+
+#collects the subject id's of the forward BLAST and writes those id's into a file that is used by the next rule
+rule fw_result_processing:
+	input: fw_res="blastp_fw_out.table"
+	output: gi_list="bw_queries_gi_list_for_blastdbcmd.txt"
+	run:
+		fw_results = pd.read_table(input[0], header=None)
+		out = open(output[0],"w+")
+		for gi in fw_results[6][:].unique():
+			out.write(gi+"\n")
+		out.close()
+
+
+#prepares the backward query fasta file
+rule bw_query_preparation:
+	input: "bw_queries_gi_list_for_blastdbcmd.txt"
+	output: "bw_queries.faa"
+	params: database=config["blastdb"]
+	shell:
+		"blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
+
+rule backward_blast:
+	input: bw_queries="bw_queries.faa"
+	output: "blastp_bw_out.table"
+	params: word_size=config['bw_word_size'], e_value=config['bw_e_value'], num_alignments=config['bw_num_alignments'], max_hsps=config['bw_max_hsps'], num_threads=config['bw_num_threads'], taxid=config['bw_taxid'], database=config['blastdb']
+	shell:
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output[0]} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {input.bw_queries}"
+
+rule reciprocal_best_hits:
+	input: bw_res="blastp_bw_out.table", fw_res="blastp_fw_out.table"
+	output: rec_best_hits="reciprocal_best_hits_protein_ids.txt"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/extract_reciprocal_best_hits.py"
+
+rule blast_tables_to_html:
+	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt"
+	output: rec_html="reciprocal_results.html"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"

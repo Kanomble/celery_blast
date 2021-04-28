@@ -23,6 +23,10 @@ def get_all_blast_databases():
     return BlastDatabase.objects.all()
 
 #TODO documentation
+def get_project_by_id(project_id):
+    return BlastProject.objects.get(id=project_id)
+
+#TODO documentation
 def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,query_sequence_filename):
     try:
         blast_project = BlastProject.objects.create_blast_project(
@@ -43,17 +47,17 @@ def create_blast_settings_from_form(fwOrBw,valid_settings_form):
     try:
         if(fwOrBw == 'fw'):
             blast_settings = BlastSettings.objects.create(e_value=valid_settings_form.cleaned_data['fw_e_value'],
-                                            word_size=valid_settings_form.cleaned_data['fw_e_value'],
-                                            num_alignments=valid_settings_form.cleaned_data['fw_e_value'],
-                                            max_target_seqs=valid_settings_form.cleaned_data['fw_e_value'],
-                                            num_threads=valid_settings_form.cleaned_data['fw_e_value'],
+                                            word_size=valid_settings_form.cleaned_data['fw_word_size'],
+                                            num_alignments=valid_settings_form.cleaned_data['fw_num_alignments'],
+                                            max_target_seqs=valid_settings_form.cleaned_data['fw_max_target_seqs'],
+                                            num_threads=valid_settings_form.cleaned_data['fw_num_threads'],
                                             max_hsps=valid_settings_form.cleaned_data['fw_max_hsps'])
         elif(fwOrBw == 'bw'):
             blast_settings = BlastSettings.objects.create(e_value=valid_settings_form.cleaned_data['bw_e_value'],
-                                            word_size=valid_settings_form.cleaned_data['bw_e_value'],
-                                            num_alignments=valid_settings_form.cleaned_data['bw_e_value'],
-                                            max_target_seqs=valid_settings_form.cleaned_data['bw_e_value'],
-                                            num_threads=valid_settings_form.cleaned_data['bw_e_value'],
+                                            word_size=valid_settings_form.cleaned_data['bw_word_size'],
+                                            num_alignments=valid_settings_form.cleaned_data['bw_num_alignments'],
+                                            max_target_seqs=valid_settings_form.cleaned_data['bw_max_target_seqs'],
+                                            num_threads=valid_settings_form.cleaned_data['bw_num_threads'],
                                             max_hsps=valid_settings_form.cleaned_data['bw_max_hsps'])
         else:
             raise IntegrityError('fwOrBw is wrong ...')
@@ -61,6 +65,16 @@ def create_blast_settings_from_form(fwOrBw,valid_settings_form):
         return blast_settings
     except Exception as e:
         raise IntegrityError('something went wrong during creation of blastsettings with Exception : {}'.format(e))
+
+#TODO documentation
+def update_blast_project_with_task_result_model(project_id,task_id):
+    try:
+        blast_project = BlastProject.objects.get(id=project_id)
+        taskresult = TaskResult.objects.get(task_id=task_id)
+        blast_project.project_execution_snakemake_task = taskresult
+        blast_project.save()
+    except Exception as e:
+        raise IntegrityError('problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
 #TODO documentation
 def update_blast_database_with_task_result_model(database_id,task_id):
@@ -91,13 +105,13 @@ def create_and_save_refseq_database_model(database_name,database_description,ass
         #create model refseq genome objects (s. models.py file)
         #path_to_database_file = 'media/' + 'databases/' + 'refseq_databases/' + database_description.replace(' ','_').upper() + '.database.faa'
         if attached_taxonomic_file != None:
-            new_refseq_genome = BlastDatabase.objects.create(
+            blast_database = BlastDatabase.objects.create(
                 database_name=database_name,
                 database_description=database_description,
                 assembly_entries=assembly_entries,
                 attached_taxonomic_node_file=attached_taxonomic_file)
         else:
-            new_refseq_genome = BlastDatabase.objects.create(
+            blast_database = BlastDatabase.objects.create(
                 database_name=database_name,
                 database_description=database_description,
                 assembly_entries=assembly_entries)
@@ -107,10 +121,10 @@ def create_and_save_refseq_database_model(database_name,database_description,ass
         assembly_levels_models = AssemblyLevels.objects.filter(assembly_level__in=assembly_levels)
 
         for assembly_level in assembly_levels_models:
-            new_refseq_genome.assembly_levels.add(assembly_level)
+            blast_database.assembly_levels.add(assembly_level)
 
-        new_refseq_genome.path_to_database_file = 'media/databases/' + str(new_refseq_genome.id)
-        new_refseq_genome.save()
-        return new_refseq_genome
+        blast_database.path_to_database_file = 'media/databases/' + str(blast_database.id)
+        blast_database.save()
+        return blast_database
     except Exception as e:
         raise IntegrityError('couldnt save refseq genome model into database with exception : {}'.format(e))

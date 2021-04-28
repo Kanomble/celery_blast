@@ -27,7 +27,7 @@ class BlastSettings(models.Model):
     def values_as_fw_or_bw_dict(self,fwOrBw):
         settings_dict = {
             fwOrBw+'_e_value' : str(self.e_value),
-            fwOrBw+'_word_site' : str(self.word_size),
+            fwOrBw+'_word_size' : str(self.word_size),
             fwOrBw+'_num_threads' : str(self.num_threads),
             fwOrBw+'_num_alignments' : str(self.num_alignments),
             fwOrBw+'_max_target_seqs' : str(self.max_target_seqs),
@@ -151,10 +151,9 @@ class BlastProject(models.Model):
 
     # overwritten functions
     def __str__(self):
-        return "Reciprocal BLAST Project, created {} by {} with fw db {} and bw db {}".format(
+        return "Reciprocal BLAST Project, created {} by {} with fw db {}".format(
             self.timestamp, self.project_user.username,
-            self.project_forward_database.database_name,
-            self.project_backward_database.database_name)
+            self.project_database.database_name)
 
     def get_project_username(self):
         return self.project_user.name
@@ -196,17 +195,20 @@ class BlastProject(models.Model):
     def write_snakemake_configuration_file(self):
         try:
             snk_config_file = open('media/blast_projects/' + str(self.id)+'/snakefile_config','w')
-            snk_config_file.write('blastdb: '+"\"" +"media/databases/"+str(self.project_database.id)+"/"+self.project_database.get_pandas_table_name() + ".database\"\n")
+            #database path from media/blast_projects/project_id as working directory for snakemake
+            snk_config_file.write('blastdb: '+"\"" +"../../databases/"+str(self.project_database.id)+"/"+self.project_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
-            snk_config_file.write('fw_e_value: '+"\""+str(self.project_forward_settings.e_value)+"\"\n")
+            snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
 
             bw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('bw')
+
+            print(bw_dict)
             fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
             for key_bw in bw_dict.keys():
-                snk_config_file.write(key_bw+': '+"\""+bw_dict[key_bw]+"\"\n")
+                snk_config_file.write(key_bw+': '+bw_dict[key_bw]+"\n")
 
             for key_fw in fw_dict.keys():
-                snk_config_file.write(key_fw+': '+"\""+fw_dict[key_fw]+"\"\n")
+                snk_config_file.write(key_fw+': '+fw_dict[key_fw]+"\n")
 
             snk_config_file.close()
 

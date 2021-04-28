@@ -1,4 +1,4 @@
-from .models import BlastDatabase
+from .models import BlastDatabase, BlastProject
 from os.path import isdir
 from os import mkdir, listdir
 from shutil import rmtree
@@ -36,7 +36,18 @@ def delete_blastdb_and_associated_directories_by_id(database_id):
                 rmtree('media/databases/' + str(database_id))
             blastdatabase.delete()
     except Exception as e:
-        raise IntegrityError("couldnt delete refseqgenome entry : {}".format(e))
+        raise IntegrityError("couldnt delete blast database entry : {}".format(e))
+
+#TODO documentation
+def delete_project_and_associated_directories_by_id(project_id):
+    try:
+        with transaction.atomic():
+            project = BlastProject.objects.get(id=project_id)
+            if isdir('media/blast_projects/' + str(project_id)):
+                rmtree('media/blast_projects/' + str(project_id))
+            project.delete()
+    except Exception as e:
+        raise IntegrityError("couldnt delete blast project entry : {}".format(e))
 
 ''' create_blastdatabase_directory
     

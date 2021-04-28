@@ -52,7 +52,7 @@ def download_blast_databases(self, database_id):
         snakefile_dir = 'static/snakefiles/assembly_download/Snakefile'
         #cmd to copy
         #snakemake --snakefile 'static/snakefiles/assembly_download/Snakefile' --cores 2 --configfile 'media/databases/12/snakefile_config' --directory 'media/databases/12/' --wms-monitor 'http://172.23.0.5:5000' --latency-wait 10 --dry-run
-        snakemake_process = Popen(['snakemake','--snakefile',snakefile_dir,'--wms-monitor','http://172.23.0.7:5000','--cores','1','--configfile',snakemake_config_file,'--directory',snakemake_working_dir,'--latency-wait','10'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+        snakemake_process = Popen(['snakemake','--snakefile',snakefile_dir,'--wms-monitor','http://172.23.0.5:5000','--cores','1','--configfile',snakemake_config_file,'--directory',snakemake_working_dir,'--latency-wait','10'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
         logger.info('waiting for popen snakemake instance {} to finish'.format(snakemake_process.pid))
         progress_recorder.set_progress(40, 100, "waiting for snakemake to finish")
         returncode = snakemake_process.wait(timeout=4000) # 66 Minutes
