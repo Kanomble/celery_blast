@@ -1,5 +1,5 @@
 from .models import BlastDatabase, BlastProject
-from os.path import isdir
+from os.path import isdir, isfile
 from os import mkdir, listdir
 from shutil import rmtree
 from django.db import IntegrityError, transaction
@@ -74,3 +74,19 @@ def upload_file(project_file, destination):
         raise IntegrityError(
             'exception during file upload of : {} : exception : {}'.format(project_file.name,e))
 
+#TODO documentation
+#loads the reciprocal results table that is written with one of the last rules in the snakefiles
+def get_html_results(project_id,filename):
+    try:
+        with open("media/blast_projects/"+str(project_id)+"/"+filename) as res:
+            data = res.readlines()
+        return data
+    except Exception as e:
+        raise FileNotFoundError("Couldn't read file {} with Exception: {}".format(e))
+
+#TODO documentation
+def html_table_exists(project_id,filename):
+    if(isfile("media/blast_projects/"+str(project_id)+"/"+filename)):
+        return True
+    else:
+        return False

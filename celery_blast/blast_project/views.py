@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
 from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
@@ -6,7 +6,8 @@ from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm,\
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project
-from .py_services import list_taxonomic_files, upload_file, delete_project_and_associated_directories_by_id
+from .py_services import list_taxonomic_files, upload_file, \
+    delete_project_and_associated_directories_by_id, get_html_results
 from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
@@ -91,7 +92,7 @@ def project_details_view(request, project_id):
         return failure_view(request,e)
 
 #TODO documentation
-@login_required()
+@login_required(login_url='login')
 def execute_reciprocal_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
@@ -99,6 +100,15 @@ def execute_reciprocal_blast_project_view(request, project_id):
         return success_view(request)
     except Exception as e:
         return failure_view(request,e)
+
+#TODO documentation
+@login_required(login_url='login')
+def load_reciprocal_result_html_table_view(request, project_id):
+    try:
+        html_data = get_html_results(project_id, "reciprocal_results.html")
+        return HttpResponse(html_data)
+    except Exception as e:
+        return failure_view(request, e)
 
 #TODO documentation
 @login_required(login_url='login')

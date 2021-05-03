@@ -15,53 +15,55 @@ Project Details
     <div class="dashboard_project_list_col">
         <div class="table-responsive">
             <table class="table table-hover" id="blastProjectTable">
-                    <thead>
-                        <tr>
-                            <th>Project Title</th>
-                            <th>Database</th>
-                            <th>Timestamp</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="blastProjectTableBody">
+                <thead>
+                    <tr>
+                        <th>Project Title</th>
+                        <th>Database</th>
+                        <th>Timestamp</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="blastProjectTableBody">
 
-                        <tr>
-                            <td>{{BlastProject.project_title}}</td>
-                            <td>
-                                <table>
-                                    <tr>
-                                        <tr> <td>Title: {{BlastProject.project_database.database_name}}</td></tr>
-                                        <tr> <td>Entries: {{BlastProject.project_database.assembly_entries}}</td></tr>
+                    <tr>
+                        <td>{{BlastProject.project_title}}</td>
+                        <td>
+                            <table>
+                                <tr>
+                                    <tr> <td>Title: {{BlastProject.project_database.database_name}}</td></tr>
+                                    <tr> <td>Entries: {{BlastProject.project_database.assembly_entries}}</td></tr>
 
-                                    </tr>
-                                </table>
-                            </td>
+                                </tr>
+                            </table>
+                        </td>
 
-                            <td>{{BlastProject.timestamp}}</td>
+                        <td>{{BlastProject.timestamp}}</td>
 
-                            <td>
-                                 <form class="col"
-                                       action="{% url 'project_deletion' project_id=BlastProject.id%}"
-                                       method="GET">
-                                    {% csrf_token %}
-                                    <input type="submit" value="Delete Blast Project" class="btn btn-danger">
-                                </form>
-                            </td>
-                            <td>
-                                 <form class="col"
-                                       action="{% url 'project_execution' project_id=BlastProject.id%}"
-                                       method="POST">
-                                    {% csrf_token %}
-                                    <input type="submit" value="Execute Snakemake" class="btn btn-dark">
-                                </form>
-                            </td>
-                            {% if BlastProject.project_execution_snakemake_task %}
-                                <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
-                            {% endif %}
-                        </tr>
-
-                    </tbody>
-                </table>
+                        <td>
+                            <form class="col"
+                                   action="{% url 'project_deletion' project_id=BlastProject.id%}"
+                                   method="GET">
+                                {% csrf_token %}
+                                <input type="submit" value="Delete Blast Project" class="btn btn-danger">
+                            </form>
+                        </td>
+                        <td>
+                            <form class="col"
+                                   action="{% url 'project_execution' project_id=BlastProject.id%}"
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit" value="Execute Snakemake" class="btn btn-dark">
+                            </form>
+                        </td>
+                        {% if BlastProject.project_execution_snakemake_task %}
+                            <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
+                        {% endif %}
+                        {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
+                        {% endif %}
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <br>
