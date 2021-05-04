@@ -10,6 +10,7 @@ cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 ## TODO
+- [ ] error handling if ftp_path does not exist e.g.: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/893/775/GCF_000893775.1_ViralProj70005/GCF_000893775.1_ViralProj70005_protein.faa.gz
 - [ ] write documentation for added functions
 - [ ] refactor the create_blastdatabase_table_and_directory function (too long)
 - [X] refactor the refseq_transactions_dashboard in order to allow creation of a database directory with a csv table file, and tables for deletion download and details functions
