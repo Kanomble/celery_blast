@@ -38,6 +38,7 @@ def transform_data_table_to_json_dict(df):
     data = json.loads(json_records)
     return data
 
+
 #TODO documentation (blastdatabase model - without taks_id ..)
 def write_blastdatabase_snakemake_configfile(database_id,task_id):
     try:
@@ -66,3 +67,45 @@ def read_database_download_and_format_logfile(database_id):
             raise Exception
     except Exception as e:
         raise Exception("unable to track progress out of logfile ...")
+
+#TODO documentation
+def get_bdb_summary_table_name(database_id):
+    try:
+        return get_database_by_id(database_id).get_pandas_table_name()
+    except Exception as e:
+        raise Exception('couldnt read blast database pandas table name with exception : {} and id : {}'.format(e,database_id))
+
+#TODO documentation
+#SETUP UTILITY FUNCTIONS
+def get_ftp_paths_and_taxids_from_summary_file(database_id):
+    try:
+        bdb_summary_table_name = get_database_by_id(database_id).get_pandas_table_name()
+        filepath = 'media/databases/' + str(database_id) + '/' + bdb_summary_table_name
+        dataframe = pd.read_table(filepath,header=0,index_col=0,delimiter=",")
+        #there shouldnt be any duplicates
+        dataframe = dataframe[dataframe['ftp_path'].duplicated() == False]
+        return dict(zip(dataframe['ftp_path'],dataframe['taxid']))
+    except Exception as e:
+        raise Exception('couldnt read database summary table with exception : {}'.format(e))
+
+#TODO documentation
+def write_progress_database_transactions(database_id, progress):
+    try:
+        filepath = 'media/databases/' + str(database_id) + '/task_progress.log'
+        progress_log = open(filepath,'a')
+        progress_log.write(str(progress)+'\n')
+        progress_log.close()
+        return progress
+    except Exception as e:
+        raise Exception("error writing logfile exception : {}".format(e))
+
+#TODO documentation
+def get_current_progress_database_transactions(database_id):
+    try:
+        filepath = 'media/databases/' + str(database_id) + '/task_progress.log'
+        fd = open(filepath,'r')
+        progress = round(float(fd.readlines()[-1]),3)
+        fd.close()
+        return progress
+    except Exception as e:
+        raise Exception("error reading logfile exception : {}".format(e))
