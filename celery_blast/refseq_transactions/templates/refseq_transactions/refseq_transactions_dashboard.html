@@ -32,9 +32,11 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
         </div>
     </div>
 
+    {% if refseq_exists %}
     <div class="transparent-box" style="margin-bottom: 30px">
         {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
     </div>
+    {% endif %}
 
     {% if DownloadInProgressBlastDatabases.count > 0 %}
         <div class="transparent-box" style="margin-bottom: 30px">

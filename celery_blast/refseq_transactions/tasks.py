@@ -115,12 +115,15 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         logger.info('working dir : {}'.format(working_dir))
         path_to_database = 'media/databases/' + str(database_id) + '/'
 
-        logger.info('trying to update blast database with current task')
-        update_blast_database_with_task_result_model(database_id, str(self.request.id))
+
 
 
         progress_recorder.set_progress(0,100,"started downloading")
+
         dictionary_ftp_paths_taxids = get_ftp_paths_and_taxids_from_summary_file(database_id)
+
+        logger.info('trying to update blast database with current task')
+        update_blast_database_with_task_result_model(database_id, str(self.request.id))
 
         dictionary_ftp_paths_taxids = download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
 
@@ -223,7 +226,7 @@ def download_refseq_assembly_summary_file():
     try:
         refseq_url = "ftp://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
         current_working_directory = getcwd() #/blast/reciprocal_blast
-        path_to_assembly_file_location = current_working_directory + '/media/databases/refseq_summary_file'
+        path_to_assembly_file_location = current_working_directory + '/media/databases/refseq_summary_file/'
         timeout=300
 
         logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
@@ -233,14 +236,14 @@ def download_refseq_assembly_summary_file():
             logger.warning('path_to_assembly_file_location : {} does not exists, trying to create it with mkdir ...')
             mkdir(path_to_assembly_file_location)
 
-        chdir(path_to_assembly_file_location)
-
-        if(isfile('assembly_summary_refseq.txt')):
+        path_to_assembly_file = path_to_assembly_file_location+'assembly_summary_refseq.txt'
+        if(isfile(path_to_assembly_file)):
             logger.warning('assembly_summary_refseq.txt exists deleting it in order to download a newer version')
-            remove('assembly_summary_refseq.txt')
+            remove(path_to_assembly_file)
 
         # invoke wget program
-        wget_process = Popen(['wget', refseq_url])
+
+        wget_process = Popen(['wget', refseq_url,'-O',path_to_assembly_file])
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(
@@ -249,8 +252,6 @@ def download_refseq_assembly_summary_file():
         returncode = wget_process.wait(timeout=timeout)
         logger.info('returncode : {}'.format(returncode))
 
-
-        chdir(current_working_directory)
 
         logger.info('download completed')
 

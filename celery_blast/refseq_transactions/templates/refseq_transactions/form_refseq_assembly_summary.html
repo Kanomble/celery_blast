@@ -1,4 +1,3 @@
-{% if refseq_exists is not null %}
 <form action="{% url 'download_refseq_assembly_summary' %}" method="post" onsubmit="showLoader('loading_div','post_form_container')">
     {% csrf_token %}
     <div class="form-group">
@@ -12,7 +11,7 @@
         >
 
             <input type="submit"
-                {% if refseq_exists %}
+                {% if not refseq_exists %}
                    value="Download Newest RefSeq Assembly Summary"
                {% else %}
                    value="Download RefSeq Assembly Summary"
@@ -22,4 +21,3 @@
 
     </div>
 </form>
-{% endif %}

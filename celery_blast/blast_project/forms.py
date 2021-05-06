@@ -50,7 +50,7 @@ class CreateUserForm(UserCreationForm):
 
 #TODO documentation
 class ProjectCreationForm(forms.Form):
-    class BlastDatabaseModelChoiceField(ModelChoiceField):
+    class BlastDatabaseModelChoiceField(forms.ModelChoiceField):
         def label_from_instance(self, blast_database):
             return str(blast_database.database_name)
 

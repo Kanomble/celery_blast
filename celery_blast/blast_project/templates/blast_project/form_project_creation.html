@@ -33,9 +33,11 @@
     <div class="form-group">
         <label for="project_database"> Select a BLAST Database </label>
         <select class="form-control" id="project_database" name="project_database">
+
             {% for database in ProjectCreationForm.project_database %}
-                <option value="database.pk">{{database}}</option>
+                {{database}}
             {% endfor %}
+
         </select>
     </div>
 
@@ -182,4 +184,5 @@
     </div>
     <br>
     <input type="submit" value="Submit" class="btn btn-dark">
+
 </form>

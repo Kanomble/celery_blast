@@ -14,6 +14,20 @@ def refseq_file_exists():
     return isfile('media/databases/refseq_summary_file/assembly_summary_refseq.txt')
 
 #TODO documentation
+def get_database_download_and_formatting_task_result(database_id):
+    try:
+        blastdb = get_database_by_id(database_id)
+        results = blastdb.database_download_and_format_task.result
+        try:
+            progress = json.loads(results)['percent']
+            return progress
+        except Exception as e:
+            return 'DONE'
+    except Exception as e:
+        raise Exception("couldnt read progress with exception : {}".format(e))
+
+
+#TODO documentation
 def filter_duplicates_by_ftp_path(pandas_table):
     try:
         pandas_table = pandas_table[pandas_table['ftp_path'].duplicated() == False]
