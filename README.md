@@ -2,7 +2,7 @@
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
 ## Installation
 Installation can be done with `docker-compose up`. This should result into three different images and six containers.
-To activate the E-Direct tool do following:
+If you run into any error during `docker-compose up` or if you recreate the container you need to activate the E-Direct tool. This can be achieved by submitting following command inside the docker container:
 ```` Bash
 docker exec -it celery_blast /bin/bash
 #in the docker shell:
@@ -110,7 +110,6 @@ Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enab
 ## POSTGRESQL database transactions
 
 ## blast_project dashboard
-
 
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
