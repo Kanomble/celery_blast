@@ -190,7 +190,7 @@ def read_taxonomy_table(taxfilename):
     taxonomy_file = pd.read_table(filepath, header=None)
     # species_taxid and taxid should normally be interchangeable, the species_taxid may inherit more informations
     # to current strain (have a look at the README description of the refseq summary file)
-    taxonomy_file.columns = ['species_taxid']
+    taxonomy_file.columns = ['taxid']
     return taxonomy_file
 
 ''' filter_table_by_taxonomy
@@ -205,7 +205,7 @@ def read_taxonomy_table(taxfilename):
 '''
 def filter_table_by_taxonomy(refseq_table, taxonomy_table):
     #on field can be changed to on=['taxid']
-    return refseq_table.merge(taxonomy_table, how='inner', on=['species_taxid'])
+    return refseq_table.merge(taxonomy_table, how='inner', on=['taxid'])
 
 ''' read_database_table_by_database_id_and_return_json
     

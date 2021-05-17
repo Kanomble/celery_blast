@@ -10,7 +10,15 @@ cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 ## TODO
-- [ ] error handling if ftp_path does not exist e.g.: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/893/775/GCF_000893775.1_ViralProj70005/GCF_000893775.1_ViralProj70005_protein.faa.gz
+- [ ] integrate result views
+    - [ ] result view for the forward blast
+    - [ ] result view for the backward blast
+    - [ ] result view for the reciprocal results
+    - [ ] plots (none-interactive) for downloading
+- [ ] refactor blast_project_dashboard and project creation
+- [ ] check if there is too much redundancy for specific organisms (ask nic)
+- [X] error handling if ftp_path does not exist e.g.: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/893/775/GCF_000893775.1_ViralProj70005/GCF_000893775.1_ViralProj70005_protein.faa.gz
+    - [ ] refactor error handling
 - [ ] write documentation for added functions
 - [ ] refactor the create_blastdatabase_table_and_directory function (too long)
 - [X] refactor the refseq_transactions_dashboard in order to allow creation of a database directory with a csv table file, and tables for deletion download and details functions
@@ -20,26 +28,10 @@ cd ../edirect && sh ./setup.sh
 - [ ] correct timezone in the docker image
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [ ] think about multiple species_name inputs ...
-- [ ] integrate blast_project_dashboard functionality
-    - [x] TODO Database Models for dashboard functionality (base functionality)
-    - [ ] add links to Detail View, Delete View and Execution View
-- [ ] integrate blastdb_creation dashboard functionality
-    - [ ] assembly download, `makeblastdb` execution and creation of `.pal` blast database alias files with snakemake
-    - [ ] check out how to monitor snakemake execution
-- [ ] integrate project_creation dashboard functionality
-- [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously
-    - [ ] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously to check celery tasks execution process
-- [ ] use [celery-progress](https://github.com/czue/celery-progress) for monitoring the celery tasks execution process in the backend
-- [X] check out the .pal files from BLAST databases
+
 
 ## TODO Database Models
-- [ ] create models:
-    - [X] BlastProject
-    - [X] [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
-    - [X] BlastDatabase
-    - [ ] BlastDatabaseManager
-    - [X] BlastSettings
-    - [X] AssemblyLevels
+
 - [ ] add validation
 - [ ] write tests
 - [ ] refactor models
@@ -102,15 +94,33 @@ During execution the underlying database (e.g. BlastDatabase or BlastProject) mo
 This allows interaction with the associated celery task and can be used for displaying the progress of the task. 
 Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enables snakemake communication with [Panoptes](https://github.com/panoptes-organization/monitor-schema). In addition [Flower](https://flower.readthedocs.io/en/latest/) can be used to monitor the celery tasks.
 ### TODO snakemake
-- [X] design a snakefile for downloading blast databases
-- [ ] design a snakefile for reciprocal BLAST analysis
-- [ ] messages during tasks execution to [celery-progress](https://github.com/czue/celery-progress)
+- [X] design a snakefile for reciprocal BLAST analysis
+    - [ ] messages during tasks execution to [celery-progress](https://github.com/czue/celery-progress)
 
 ## POSTGRESQL database transactions
 
 ## blast_project dashboard
 
-
+## DONE
+- [X] integrate blast_project_dashboard functionality
+    - [x] TODO Database Models for dashboard functionality (base functionality)
+    - [X] add links to Detail View, Delete View and Execution View
+- [X] integrate blastdb_creation dashboard functionality
+    - [X] assembly download, `makeblastdb` execution and creation of `.pal` blast database alias files with snakemake
+    - [X] check out how to monitor snakemake execution - monitoring with celery
+- [X] integrate project_creation dashboard functionality
+- [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously
+    - [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously to check celery tasks execution process
+- [X] use [celery-progress](https://github.com/czue/celery-progress) for monitoring the celery tasks execution process in the backend
+- [X] check out the .pal files from BLAST databases
+- [X] create models:
+    - [X] BlastProject
+    - [X] [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
+    - [X] BlastDatabase
+    - [X] BlastDatabaseManager
+    - [X] BlastSettings
+    - [X] AssemblyLevels
+    
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
 - [Celery Project Documentation](https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html)
