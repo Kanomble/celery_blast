@@ -70,6 +70,7 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
                 progress += progress_steps
                 progress_recorder.set_progress(progress, 100, "downloaded {}".format(gunzip_output))
             elif(isfile(path_to_database + gunzip_output) == False):
+                #0 ... 9 attempts
                 for attempt in range(10):
                     try:
 
@@ -81,14 +82,18 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
                         #downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
                         #logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
 
-
+                    #catch exception raised if the subproccess failed e.g. gzip failure due to invalid download
                     except Exception as e:
                         logger.warning("download exception : {}".format(e))
                         error_log.write("{} {}\n".format(file, attempt))
                         logger.warning('next download attempt of file : {} with attempt : {}'.format(file,attempt))
-                        if attempt == 9:
+                        if(attempt == 9):
                             error_log.write('couldnt download: {} '.format(file))
                             logger.warning('couldnt download: {} after 10 attempts'.format(file))
+                            if(isfile(path_to_database + gunzip_output) == True):
+                                remove(path_to_database + gunzip_output)
+                                logger.warning("removed empty file: {}".format(gunzip_output))
+
                             progress += progress_steps
                             progress_recorder.set_progress(progress, 100, "failed trying to download {}".format(file))
                     else:
@@ -97,7 +102,7 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
                         progress += progress_steps
                         progress_recorder.set_progress(progress, 100, "downloaded {}".format(gunzip_output))
                         break
-            
+
         error_log.close()
         return downloaded_files
     except Exception as e:
