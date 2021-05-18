@@ -1,6 +1,8 @@
 from os import getcwd, chdir, mkdir, remove
 from os.path import isdir, isfile
 from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT
+import pandas as pd
+import math
 
 from blast_project.py_django_db_services import get_database_by_id, update_blast_database_with_task_result_model
 from .py_services import write_blastdatabase_snakemake_configfile,\
@@ -13,6 +15,137 @@ from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 #logger for celery worker instances
 logger = get_task_logger(__name__)
+
+@shared_task()
+def write_alias_file(alias_filename,available_databases):
+    try:
+        #logger.info('starting to write database alias file : {}'.format(alias_filename))
+        alias_file = open(alias_filename,'w')
+        database_title = ''.join(alias_filename.split("/")[3].split(".")[0:2])
+        alias_file.write("TITLE {}\n".format(database_title))
+        alias_file.write("DBLIST")
+        for database_file in available_databases:
+            alias_file.write(" \""+database_file.split("/")[3]+"\"")
+        alias_file.write("\n")
+        alias_file.close()
+        return 0
+    except Exception as e:
+        logger.warning("error during creation of aliasfile with exception : {}".format(e))
+        raise Exception("error during creation of aliasfile with exception : {}".format(e))
+
+@shared_task()
+def format_blast_databases(path_to_database,chunks, progress_recorder):
+    try:
+        errorlist=[]
+        available_databases=[]
+
+        progress = 75
+        # to 75 %
+        steps = 100 / len(chunks) / 4
+        logger.info("starting to format database chunks")
+        progress_recorder.set_progress(progress, 100, "starting to format database chunks")
+
+        for chunk in chunks:
+            database = path_to_database + "database_chunk_{}.faa".format(chunk)
+            taxonomic_mapfile = path_to_database + "acc_taxmap_file_{}.table".format(chunk)
+            proc = Popen(["makeblastdb","-in",database,
+                                     '-dbtype','prot',
+                                     '-taxid_map',taxonomic_mapfile,
+                                     '-parse_seqids',
+                                     '-out',database,'-blastdb_version','5'])
+            returncode = proc.wait(timeout=6000)
+            if(returncode != 0):
+                print("ERROR during database creation of chunk {}".format(chunk))
+                errorlist.append(chunk)
+            else:
+                available_databases.append(database)
+                logger.info("\tprocessed database chunk {}".format(chunk))
+                progress += steps
+                progress_recorder.set_progress(progress, 100, "formatted chunk {}".format(chunk))
+
+        progress_recorder.set_progress(99, 100, "formatted chunk {}".format(chunk))
+        return available_databases,errorlist
+
+    except Exception as e:
+        logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
+        raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
+
+@shared_task()
+def create_chunks_of_databases(df, path_to_database, progress_recorder):
+    try:
+        total_formatted = 0
+        chunk = 1
+        chunks = []
+
+        progress = 50
+        #to 75 %
+        steps = 100 / len(df['ftp_path']) / 4
+        logger.info("starting to concatenate available fasta assemblies")
+        progress_recorder.set_progress(progress, 100, "concatenate available fasta assemblies")
+
+        iteration_steps = 500
+        if round(len(df['ftp_path']) / iteration_steps) > 35:
+            iteration_steps = math.ceil( len(df['ftp_path']) / 35)
+
+        logger.info("set iteration steps to : {}".format(iteration_steps))
+        while total_formatted < len(df['ftp_path']):
+            iteration_end = total_formatted + iteration_steps
+            if (iteration_end > len(df['ftp_path'])):
+                iteration_end = len(df['ftp_path'])
+
+
+            logger.info("looping from {} to {}".format(total_formatted, iteration_end))
+
+            if (isfile(path_to_database + "acc_taxmap_file_{}.table".format(chunk)) == True and
+                    isfile(path_to_database + "database_chunk_{}.faa".format(chunk)) == True):
+                logger.info("Skipping chunk creation, database exists")
+                # previous format process of assemblies : df['ftp_path'][total_formatted:iteration_end]
+                total_formatted = iteration_end
+                for it in range(iteration_steps):
+                    progress += steps
+                progress_recorder.set_progress(progress, 100, "skipped available chunk")
+                logger.info("total formatted assembly_files: {}".format(total_formatted))
+                chunks.append(chunk)
+                chunk += 1
+            else:
+                acc_to_tax = open(path_to_database + "acc_taxmap_file_{}.table".format(chunk), 'w')
+                database_chunk = open(path_to_database + "database_chunk_{}.faa".format(chunk), 'w')
+
+                for ftp_path, taxid in zip(df['ftp_path'][total_formatted:iteration_end],
+                                           df['taxid'][total_formatted:iteration_end]):
+                    assembly_name = ftp_path
+                    logger.info('\tworking with {}'.format(assembly_name))
+
+                    fasta_header = '_'.join(assembly_name.split('_')[0:3])
+                    genome_file = open(path_to_database + assembly_name, 'r')
+
+                    lines = genome_file.readlines()
+                    genome_file.close()
+                    remove(path_to_database+assembly_name)
+
+                    for line in lines:
+                        if line[0] == ">":
+                            split = line.split(" ")
+                            header = ' '.join(split[1:])
+                            acc_id = split[0].split(">")[1] + "_" + fasta_header
+                            acc_to_tax.write(acc_id[0:49] + "\t" + str(taxid) + "\n")
+                            line = '>' + acc_id[0:49] + ' ' + header
+                        database_chunk.write(line)
+
+                    total_formatted += 1
+                    progress += steps
+                    progress_recorder.set_progress(progress, 100, "processed chunk {}".format(chunk))
+
+                logger.info("\tdone writing database chunk {}".format(chunk))
+                database_chunk.close()
+                chunks.append(chunk)
+                chunk += 1
+                acc_to_tax.close()
+    except Exception as e:
+        logger.warning('couldnt create database chunks with exception : {}'.format(e))
+        raise Exception('couldnt create database chunks with exception : {}'.format(e))
+    return chunks
+
 
 #TODO documentation task 3
 @shared_task()
@@ -96,6 +229,7 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
 
                             progress += progress_steps
                             progress_recorder.set_progress(progress, 100, "failed trying to download {}".format(file))
+                            #break
                     else:
                         logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
                         downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
@@ -119,9 +253,6 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         logger.info('working dir : {}'.format(working_dir))
         path_to_database = 'media/databases/' + str(database_id) + '/'
 
-
-
-
         progress_recorder.set_progress(0,100,"started downloading")
 
         dictionary_ftp_paths_taxids = get_ftp_paths_and_taxids_from_summary_file(database_id)
@@ -131,11 +262,19 @@ def download_blast_databases_based_on_summary_file(self, database_id):
 
         dictionary_ftp_paths_taxids = download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
 
-        database_files = format_available_databases(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
+        pandas_ftp_paths_taxids_df = pd.DataFrame(dictionary_ftp_paths_taxids.items(), columns=['ftp_path', 'taxid'])
+        available_database_chunks = create_chunks_of_databases(pandas_ftp_paths_taxids_df,path_to_database,progress_recorder)
+        databases = format_blast_databases(path_to_database,available_database_chunks,progress_recorder)
+
+        #database_files = format_available_databases(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
         progress_recorder.set_progress(99, 100, "writing alias file")
         database_pandas_table_name = get_bdb_summary_table_name(database_id)
         alias_filename = 'media/databases/' + str(database_id) + '/' + database_pandas_table_name+'.database.pal'
+
         logger.info('starting to write database alias file : {}'.format(alias_filename))
+
+        returncode = write_alias_file(alias_filename,databases[0])
+        '''
         alias_file = open(alias_filename,'w')
         alias_file.write("TITLE {}\n".format(database_pandas_table_name+'.database'))
         alias_file.write("DBLIST")
@@ -143,8 +282,10 @@ def download_blast_databases_based_on_summary_file(self, database_id):
             alias_file.write(" \""+database_file+"\"")
         alias_file.write("\n")
         alias_file.close()
+        '''
+
         progress_recorder.set_progress(100, 100, "writing alias file")
-        return 0
+        return returncode
     except Exception as e:
         logger.warning('couldnt perform task because of exception : {}'.format(e))
         raise Exception('couldnt perform compute ftp path task with exception {}'.format(e))

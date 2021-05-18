@@ -7,6 +7,7 @@ fw_res.columns=["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", 
                   "stitle"]
 
 fw_res['qseqid'] = fw_res['qseqid'].map(lambda line: line.split('.')[0])
+fw_res['sacc'] = fw_res['sacc'].map(lambda line: line.split('.')[0])
 rec_prot = rec_prot.rename(columns={"forward_genome_id": "sacc"})
 rec_prot = rec_prot.rename(columns={"backward_genome_id": "qseqid"})
 result_data = rec_prot.merge(fw_res,how='inner', on=['sacc','qseqid'])
