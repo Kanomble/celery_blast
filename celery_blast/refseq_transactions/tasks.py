@@ -21,7 +21,7 @@ def write_alias_file(alias_filename,available_databases):
     try:
         #logger.info('starting to write database alias file : {}'.format(alias_filename))
         alias_file = open(alias_filename,'w')
-        database_title = ''.join(alias_filename.split("/")[3].split(".")[0:2])
+        database_title = '.'.join(alias_filename.split("/")[3].split(".")[0:2])
         alias_file.write("TITLE {}\n".format(database_title))
         alias_file.write("DBLIST")
         for database_file in available_databases:
@@ -55,7 +55,7 @@ def format_blast_databases(path_to_database,chunks, progress_recorder):
                                      '-out',database,'-blastdb_version','5'])
             returncode = proc.wait(timeout=6000)
             if(returncode != 0):
-                print("ERROR during database creation of chunk {}".format(chunk))
+                logger.warning("ERROR during database creation of chunk {}".format(chunk))
                 errorlist.append(chunk)
             else:
                 available_databases.append(database)
@@ -128,6 +128,7 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
                             split = line.split(" ")
                             header = ' '.join(split[1:])
                             acc_id = split[0].split(">")[1] + "_" + fasta_header
+                            #accession header max length for makeblastdb is 50
                             acc_to_tax.write(acc_id[0:49] + "\t" + str(taxid) + "\n")
                             line = '>' + acc_id[0:49] + ' ' + header
                         database_chunk.write(line)
@@ -147,38 +148,23 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
     return chunks
 
 
-#TODO documentation task 3
-@shared_task()
-def format_available_databases(path_to_database, database_files_taxids_dict, progress_recorder):
-    try:
-        progress_steps = 100 / ((len(database_files_taxids_dict.keys())) * 2)
-        progress = 50
-        progress_recorder.set_progress(progress, 100, "starting makeblastdb processes")
-        for assembly_file in database_files_taxids_dict.keys():
-            database = path_to_database + assembly_file
-            taxid = database_files_taxids_dict[assembly_file]
-            cmd = "makeblastdb -in {} -dbtype prot -out {} -taxid {}".format(database,database,taxid)
-
-            if (isfile(database+'.pdb') == True):
-                logger.info('file {} exists, scipping formatting'.format(database))
-            else:
-                proc = Popen("makeblastdb -in {} -dbtype prot -out {} -taxid {} -parse_seqids"
-                             .format(database,database,taxid), shell=True)
-                returncode = proc.wait(timeout=600)#10*60 Sec.
-                logger.info('processed database with makeblastdb : {}'.format(cmd))
-                if(returncode != 0):
-                    logger.warning("something went wrong during creation of database: {}".format(database))
-
-            progress += progress_steps
-            progress_recorder.set_progress(progress, 100, "starting makeblastdb processes")
-
-        progress_recorder.set_progress(99, 100, "ended database formatting")
-        return database_files_taxids_dict.keys()
-    except Exception as e:
-        logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
-        raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
-
-#TODO documentation task 2
+''' download_wget_ftp_paths
+    
+    Downloads assembly files that reside in the Database summary table by their corresponding ftp_path. 
+    Assemblies are directly decompressed with gzip. This function gets executed by download_blast_databases_based_on_summary_file.
+    The returned dictionary can be used to concatenate the fasta files into database chunks.
+    
+    :param path_to_database
+        type: str - e.g. media/databases/2/
+    :param dictionary_ftp_paths_taxids
+        type: dict - dictionary with ftp_paths as keys and taxids as values
+    :param progress_recorder
+        type: class ProgressRecorder - celery progress bars class
+        
+    :returns downloaded_files
+        type: dict - dictionary of downloaded filenames and their corresponding taxids as values
+    
+'''
 @shared_task()
 def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progress_recorder):
     try:
@@ -243,6 +229,26 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
         logger.warning('couldnt download assemblies with exception : {}'.format(e))
         raise Exception('couldnt download assemblies with exception : {}'.format(e))
 
+
+''' download_blast_databases_based_on_summary_file
+    
+    Main download and database formatting function, that manages temporary output.
+    
+    :param self
+        :type asynchronous task - used for the TaskResult model
+    :param database_id
+        :type int -  
+    
+    summary of important functions and variables inside this task:
+        db_path = media/databases/2/
+        progress_recorder = CeleryProgressBar Class
+        dict = get_ftp_paths_and_taxids_from_summary_file(database_id)
+        dict = download_blast_databases_based_on_summary_file(db_path,dict,progress_recorder)
+        df = pd.DictToDf(dict)
+        chunks = create_chunks_of_databases(db_path,df,progress_recorder)
+        available_db_chunks, errorlist = format_blast_databases(db_path,chunks,progress_recorder)
+        
+'''
 #TODO documentation task 1
 @shared_task(bind=True)
 def download_blast_databases_based_on_summary_file(self, database_id):
@@ -255,15 +261,21 @@ def download_blast_databases_based_on_summary_file(self, database_id):
 
         progress_recorder.set_progress(0,100,"started downloading")
 
+        #loads the desired database summary table into an dictionary with the 'ftp_path' column as key
+        #and 'taxid' as value
         dictionary_ftp_paths_taxids = get_ftp_paths_and_taxids_from_summary_file(database_id)
 
         logger.info('trying to update blast database with current task')
         update_blast_database_with_task_result_model(database_id, str(self.request.id))
 
+        #download
         dictionary_ftp_paths_taxids = download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
 
+        #build pandas dataframe from dictionary that is returned by the download function
         pandas_ftp_paths_taxids_df = pd.DataFrame(dictionary_ftp_paths_taxids.items(), columns=['ftp_path', 'taxid'])
         available_database_chunks = create_chunks_of_databases(pandas_ftp_paths_taxids_df,path_to_database,progress_recorder)
+
+        #execute makeblastdb
         databases = format_blast_databases(path_to_database,available_database_chunks,progress_recorder)
 
         #database_files = format_available_databases(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
@@ -403,3 +415,37 @@ def download_refseq_assembly_summary_file():
         return refseq_url.split('/')[-1]
     except Exception as e:
         raise Exception("couldn't download assembly_summary_refseq.txt file : {}".format(e))
+
+
+'''
+#TODO documentation
+@shared_task()
+def format_available_databases(path_to_database, database_files_taxids_dict, progress_recorder):
+    try:
+        progress_steps = 100 / ((len(database_files_taxids_dict.keys())) * 2)
+        progress = 50
+        progress_recorder.set_progress(progress, 100, "starting makeblastdb processes")
+        for assembly_file in database_files_taxids_dict.keys():
+            database = path_to_database + assembly_file
+            taxid = database_files_taxids_dict[assembly_file]
+            cmd = "makeblastdb -in {} -dbtype prot -out {} -taxid {}".format(database,database,taxid)
+
+            if (isfile(database+'.pdb') == True):
+                logger.info('file {} exists, scipping formatting'.format(database))
+            else:
+                proc = Popen("makeblastdb -in {} -dbtype prot -out {} -taxid {} -parse_seqids"
+                             .format(database,database,taxid), shell=True)
+                returncode = proc.wait(timeout=600)#10*60 Sec.
+                logger.info('processed database with makeblastdb : {}'.format(cmd))
+                if(returncode != 0):
+                    logger.warning("something went wrong during creation of database: {}".format(database))
+
+            progress += progress_steps
+            progress_recorder.set_progress(progress, 100, "starting makeblastdb processes")
+
+        progress_recorder.set_progress(99, 100, "ended database formatting")
+        return database_files_taxids_dict.keys()
+    except Exception as e:
+        logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
+        raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
+'''
