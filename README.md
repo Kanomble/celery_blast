@@ -10,6 +10,7 @@ cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 ## TODO
+- [ ] reciprocal BLAST results, sequence in output and string of taxonomy; EXAMPLE: https://docs.google.com/spreadsheets/d/1EBwEp-C0ocCUBx3zVaCtxrMlTKGTZHx19lPq8q7W_bE/edit#gid=649158632
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [X] error handling if ftp_path does not exist e.g.: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/893/775/GCF_000893775.1_ViralProj70005/GCF_000893775.1_ViralProj70005_protein.faa.gz
 - [ ] write documentation for added functions
