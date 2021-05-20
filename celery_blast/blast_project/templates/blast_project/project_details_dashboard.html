@@ -66,9 +66,35 @@ Project Details
             </table>
         </div>
     </div>
+
+
     <br>
+    <div class="dashboard_project_list_col">
+        <div class="container-fluid">
+            <table class="table table-hover" id="blastdatabase">
+                <thead>
+                 <tr>
+                    <th>Index</th>
+                     <th> Assembly Accession</th>
+                     <th> Organism Name</th>
+                     <th> Taxid </th>
+                     <th> Species Taxid </th>
+                     <th> Assembly Level </th>
+                     <th> FTP Path </th>
+                 </tr>
+                </thead>
+                <tbody>
+                 <tr>
+                 </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
     {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
-    <div class="container-fluid dashboard_project_list_col">
+    <br>
+    <div class="dashboard_project_list_col">
         <div id="demo" class="carousel slide" data-ride="carousel">
 
             <!-- Indicators -->
@@ -100,31 +126,8 @@ Project Details
 
         </div>
     </div>
-    <br>
+
     {% endif %}
-
-    <div class="dashboard_project_list_col">
-        <div class="container-fluid">
-            <table class="table table-hover" id="blastdatabase">
-                <thead>
-                 <tr>
-                    <th>Index</th>
-                     <th> Assembly Accession</th>
-                     <th> Organism Name</th>
-                     <th> Taxid </th>
-                     <th> Species Taxid </th>
-                     <th> Assembly Level </th>
-                     <th> FTP Path </th>
-                 </tr>
-                </thead>
-                <tbody>
-                 <tr>
-                 </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 </div>
 {% endblock %}
 
