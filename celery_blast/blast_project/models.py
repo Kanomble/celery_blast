@@ -179,7 +179,7 @@ class BlastProject(models.Model):
         within the BlastProjectManager with blast_project.iniialize_project_directory()
         
         this function is executed within the create_blast_project function of the manager, 
-        it directly creates a directory for the project
+        it directly creates a directory for the project and a directory for result images in the static folder
     '''
     def initialize_project_directory(self):
         # check if blast_project was previously created / check if media/blast_project directory exists
@@ -188,14 +188,18 @@ class BlastProject(models.Model):
         else:
             try:
                 mkdir('media/blast_projects/' + str(self.id))
+                if(isdir('static/images/result_images/'+str(self.id)) == False):
+                    mkdir('static/images/result_images/'+str(self.id))
             except Exception as e:
                 raise IntegrityError("couldnt create project directory : {}".format(e))
+
 
     #TODO documentation
     def write_snakemake_configuration_file(self):
         try:
             snk_config_file = open('media/blast_projects/' + str(self.id)+'/snakefile_config','w')
             #database path from media/blast_projects/project_id as working directory for snakemake
+            snk_config_file.write('project_id: '+str(self.id)+"\n")
             snk_config_file.write('blastdb: '+"\"" +"../../databases/"+str(self.project_database.id)+"/"+self.project_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
             snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")

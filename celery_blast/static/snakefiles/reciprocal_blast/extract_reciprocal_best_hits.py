@@ -1,5 +1,8 @@
 #this script is used to identify RBHs it converts the queries and subjects of the forward and backward BLAST output tables into dictionaries
 #and compares both dictionaries in order to identify RBHs, a detailed description is given in the bachelor-thesis of this project
+#extracting reciprocal best hits is partially done with pandas, thus, keep in mind, that the BLAST outfmt is crucial for correct
+#table reading. Especially df[0] and df[6] ... qseqid and sacc are needed ...
+
 import pandas as pd
 import numpy as np
 import itertools as it

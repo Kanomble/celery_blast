@@ -3,7 +3,7 @@ import pandas as pd
 
 rule all:
 	input:
-		"reciprocal_results.html"
+		"reciprocal_results.html","plot_amount_hits_of_target_taxon.png","plot_evalue_distribution.png"
 
 rule forward_blast:
 	input: fw_queries=config['query_sequence']
@@ -50,3 +50,12 @@ rule blast_tables_to_html:
 	output: rec_html="reciprocal_results.html"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"
+
+rule blast_tables_to_plots:
+	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt",query_file=config['query_sequence']
+	params:
+		plot_hits_organisms_png="../../../static/images/result_images/" + str(config['project_id']) + '/plot_amount_hits_of_target_taxon.png',
+		plot_evalues="../../../static/images/result_images/" + str(config['project_id']) + '/plot_evalue_distribution.png'
+	output: taxids_hits_plot="plot_amount_hits_of_target_taxon.png",evalue_plot="plot_evalue_distribution.png"
+	script:
+		  "../../../static/snakefiles/reciprocal_blast/plot_reciprocal_results.py"

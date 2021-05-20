@@ -134,3 +134,17 @@ data/*
 celery_blast/refseq_transactions/migrations/*
 celery_blast/blast_project/migrations/*
 
+celery_blast/static/images/result_images/6/plot_evalue_distribution.png
+celery_blast/static/images/result_images/5/plot_amount_hits_of_target_taxon.png
+celery_blast/static/images/result_images/5/plot_evalue_distribution.png
+celery_blast/static/images/result_images/6/plot_amount_hits_of_target_taxon.png
+celery_blast/static/images/result_images/7/plot_amount_hits_of_target_taxon.png
+celery_blast/static/images/result_images/7/plot_evalue_distribution.png
+celery_blast/.idea/workspace.xml
+celery_blast/.idea/vcs.xml
+celery_blast/.idea/modules.xml
+celery_blast/.idea/misc.xml
+celery_blast/.idea/inspectionProfiles/Project_Default.xml
+celery_blast/.idea/inspectionProfiles/profiles_settings.xml
+celery_blast/.idea/celery_blast.iml
+celery_blast/.idea
