@@ -74,7 +74,7 @@ if len(queries) > 1:
     fig.supylabel("index of reciprocal hit")
     fig.supxlabel("evalue ranging from 0 to 0.001")
     plt.savefig(snakemake.output['evalue_plot'],dpi=300)
-    plt.savefig(snakemake.params['plot_evalues'],dpi=300)
+    plt.savefig(snakemake.params['plot_evalues'],dpi=300,transparent=True)
     # fig.tight_layout()
 else:
     axs.grid()
@@ -85,7 +85,7 @@ else:
     # axs.get_xaxis().set_visible(False)
     # axs.get_yaxis().set_visible(False)
     plt.savefig(snakemake.output['evalue_plot'],dpi=300)
-    plt.savefig(snakemake.params['plot_evalues'], dpi=300)
+    plt.savefig(snakemake.params['plot_evalues'], dpi=300,transparent=True)
 
 
 fig, axs = plt.subplots(rows, columns, figsize=(15, 6),
@@ -132,7 +132,7 @@ if len(queries) > 1:
     fig.supylabel("number of distinct taxids")
     fig.supxlabel("amount of hits in backward genome")
     plt.savefig(snakemake.output['taxids_hits_plot'],dpi=300)
-    plt.savefig(snakemake.params['plot_hits_organisms_png'], dpi=300)
+    plt.savefig(snakemake.params['plot_hits_organisms_png'], dpi=300,transparent=True)
 else:
     hit_distribution = {}
     for hit in accid_taxids[queries[0]]['staxids'].unique():
@@ -156,6 +156,6 @@ else:
     axs.set_xticks(range(1, max(list(hit_distribution.keys())) + 1, 1))
     # axs.get_yaxis().set_visible(False)
     plt.savefig(snakemake.output['taxids_hits_plot'],dpi=300)
-    plt.savefig(snakemake.params['plot_hits_organisms_png'], dpi=300)
+    plt.savefig(snakemake.params['plot_hits_organisms_png'], dpi=300,transparent=True)
 
     # axs.set_xlim(0, 0.001)
