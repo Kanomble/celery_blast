@@ -11,13 +11,18 @@ fw_res['sacc'] = fw_res['sacc'].map(lambda line: line.split('.')[0])
 rec_prot = rec_prot.rename(columns={"forward_genome_id": "sacc"})
 rec_prot = rec_prot.rename(columns={"backward_genome_id": "qseqid"})
 result_data = rec_prot.merge(fw_res,how='inner', on=['sacc','qseqid'])
+#the backward blast is currently limited to output only the best match, but the best match can contain several hsps,
+#thus it is possible that there are multiple lines of one qseqid present, which gets loaded by reading the dictionary for
+#filtering reciprocal best hits
 result_data = result_data.drop_duplicates('sacc', keep='first')
 result_data = result_data.reset_index(drop=True)
 
+'''
 for i in range(0, len(result_data), 1):
     taxids = result_data.iat[i, 7]
     scientific_names = result_data.iat[i, 8]
     common_names = result_data.iat[i, 9]
+'''
 
 pd.set_option('colheader_justify', 'left')
 html_string = '''
