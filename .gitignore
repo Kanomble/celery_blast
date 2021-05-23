@@ -149,3 +149,10 @@ celery_blast/.idea/inspectionProfiles/profiles_settings.xml
 celery_blast/.idea/celery_blast.iml
 celery_blast/.idea
 celery_blast/static/images/result_images
+celery_blast/comamonadaceae.faa
+celery_blast/curvibacter_synechococcus_gene_candidates.faa
+celery_blast/e_coli_mg1655.faa
+celery_blast/entrez_bash
+celery_blast/synechococcus_elongatus.faa
+celery_blast/b_proteobacteria_1.faa
+celery_blast/b_proteobacteria.faa
