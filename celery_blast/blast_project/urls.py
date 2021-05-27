@@ -20,6 +20,9 @@ service_urls = [
     path('<int:project_id>/project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results')
 ]
 
+ajax_urls = [
+    path('<int:project_id>/ajax_wp_to_links',views.ajax_wp_to_links,name='ajax_wp_to_links')
+]
 
 success_failure_urls = [
     path('failure', views.failure_view, name='failure_view'),
@@ -28,6 +31,7 @@ success_failure_urls = [
 urlpatterns = [
     path('', views.dashboard_view, name='blast_project_dashboard'),
 
+    path('', include(ajax_urls)),
     path('', include(registration_urls)),
     path('', include(service_urls)),
     path('', include(success_failure_urls))

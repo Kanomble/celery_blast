@@ -36,7 +36,9 @@ html_string = '''
   </head>
 
   <body>
-    {table}
+    <div id="blast_results_table" style="display:none">
+        {table}
+    </div>
   </body>
 
     <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
@@ -63,6 +65,8 @@ html_string = '''
                 select: true
             }}
         );
+        var result_table = document.getElementById('blast_results_table');
+        result_table.style.display = "block";
     }});
     </script>
 

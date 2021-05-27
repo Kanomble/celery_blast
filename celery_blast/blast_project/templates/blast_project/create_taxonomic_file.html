@@ -30,15 +30,15 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
             </div>
             <!-- if the user shouldn't be allowed to alter the email adress simplay add: style="display: none" to the next div element -->
             <div class="form-group">
-                <label for="user_email"> User Email </label>
-                <input type="text" class="form-control" id="user_email" name="user_email" value='{{taxform.user_email.value}}'>
+                <!-- <label for="user_email"> User Email </label> -->
+                <input type="hidden" class="form-control" id="user_email" name="user_email" value='{{taxform.user_email.value}}'>
                 {% if taxform.user_email.errors %}
                     <div class="alert alert-danger">
                         <strong>{{taxform.user_email.errors}}</strong>
                     </div>
                 {% endif %}
             </div>
-            <input type = "submit" value = "Submit" class="btn btn-primary">
+            <input type = "submit" value = "Submit" class="btn btn-dark">
         </form>
     </div>
 

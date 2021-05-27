@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
+from django.http import JsonResponse
 from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -12,7 +13,7 @@ from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id
-
+from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 ''' dashboard
 
@@ -85,11 +86,25 @@ def project_creation_view(request):
 def project_details_view(request, project_id):
     try:
         blast_project = get_project_by_id(project_id)
+        #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'BlastProject':blast_project,
-                    'Database':blast_project.project_database}
+                    'Database':blast_project.project_database,}
+                   #'ProtPfam':prot_to_pfam}
         return render(request,'blast_project/project_details_dashboard.html',context)
     except Exception as e:
         return failure_view(request,e)
+
+#TODO documentation
+def ajax_wp_to_links(request, project_id):
+    try:
+        if request.is_ajax and request.method == "GET":
+            print("YES")
+            #progress = read_database_download_and_format_logfile(database_id)
+            prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
+            return JsonResponse(prot_to_pfam,status=200)
+        return JsonResponse({"ERROR":"NOT OK"},status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
 
 #TODO documentation
 @login_required(login_url='login')

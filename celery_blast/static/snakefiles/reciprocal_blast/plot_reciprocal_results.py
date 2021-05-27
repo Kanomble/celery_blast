@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib._color_data as mcd
+# from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import math
 import random
@@ -64,7 +65,7 @@ if len(queries) > 1:
 
         if i == axisticks_boolean:
             axisticks_boolean += math.ceil(math.sqrt(len(queries)))
-            axs[i].set_xticks([0, 0.0005, 0.001])
+            axs[i].set_xticks([0, 0.0005, 0.001])#0, 0.0005, 0.001
             axs[i].set_xticklabels([0, 0.0005, 0.001])
         else:
             axs[i].get_xaxis().set_visible(False)
@@ -87,7 +88,6 @@ else:
     plt.savefig(snakemake.output['evalue_plot'],dpi=300)
     plt.savefig(snakemake.params['plot_evalues'], dpi=300,transparent=True)
 
-
 fig, axs = plt.subplots(rows, columns, figsize=(15, 6),
                         facecolor='w', edgecolor='k', constrained_layout=True)
 
@@ -104,10 +104,12 @@ if len(queries) > 1:
             hit_distribution = {}
             for hit in accid_taxids[queries[i]]['staxids'].unique():
                 val = accid_taxids[queries[i]][accid_taxids[queries[i]]['staxids'] == hit]['qseqid'].count()
-                if val not in hit_distribution.keys():
-                    hit_distribution[val] = 1
-                else:
-                    hit_distribution[val] += 1
+                if val <= 20:
+                    if val not in hit_distribution.keys():
+                        hit_distribution[val] = 1
+                    else:
+                        hit_distribution[val] += 1
+
             xvalues = []
             yvalues = []
             for key in sorted(hit_distribution.keys()):
@@ -119,8 +121,11 @@ if len(queries) > 1:
                        edgecolor="black")
             axs[i].set_title(str(queries[i]))
             # axs[i].get_xaxis().set_visible(False)
-            axs[i].set_xticks(range(1, max(list(hit_distribution.keys())) + 1, 1))
+            # if(max(list(hit_distribution.keys())) > 15):
+            # axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
 
+            if len(list(hit_distribution.keys())) == 1:
+                axs[i].set_xticks(range(1, max(list(hit_distribution.keys())) + 1, 1))
             if len(list(hit_distribution.keys())) >= 10:
                 axs[i].tick_params('x', labelrotation=45)
             # axs[i].get_yaxis().set_visible(False)
@@ -128,9 +133,9 @@ if len(queries) > 1:
             axs[i].grid()
             axs[i].set_title(str(queries[i]))
 
-    fig.suptitle("Amount of hits in database organisms", fontsize=16)
+    fig.suptitle("Amount of hits in database organisms (limit 20)", fontsize=16)
     fig.supylabel("number of distinct taxids")
-    fig.supxlabel("amount of hits in backward genome")
+    fig.supxlabel("amount of hits in backward genome (limit 20)")
     plt.savefig(snakemake.output['taxids_hits_plot'],dpi=300)
     plt.savefig(snakemake.params['plot_hits_organisms_png'], dpi=300,transparent=True)
 else:
@@ -157,5 +162,3 @@ else:
     # axs.get_yaxis().set_visible(False)
     plt.savefig(snakemake.output['taxids_hits_plot'],dpi=300)
     plt.savefig(snakemake.params['plot_hits_organisms_png'], dpi=300,transparent=True)
-
-    # axs.set_xlim(0, 0.001)
