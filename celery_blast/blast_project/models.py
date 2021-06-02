@@ -1,5 +1,3 @@
-from django.db import models
-
 # Create your models here.
 from os.path import isdir
 from os import mkdir

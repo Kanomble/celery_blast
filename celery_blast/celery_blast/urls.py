@@ -26,4 +26,5 @@ urlpatterns = [
 
     path('blast_project/', include('blast_project.urls')),
     path('refseq_transactions/',include('refseq_transactions.urls')),
+    path('one_way_blast/',include('one_way_blast.urls'))
 ]

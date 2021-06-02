@@ -75,7 +75,7 @@ def execute_reciprocal_blast_project(self,project_id):
         reciprocal_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.24.0.5:5000',
+             '--wms-monitor','http://172.18.0.5:5000',
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
@@ -89,7 +89,7 @@ def execute_reciprocal_blast_project(self,project_id):
 
     try:
         logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(reciprocal_blast_snakemake.pid, 4000))
-        returncode = reciprocal_blast_snakemake.wait(timeout=4000) #66 min
+        returncode = reciprocal_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
         logger.info('returncode : {}'.format(returncode))
         progress_recorder.set_progress(100, 100, "SUCCESS")
         return returncode
