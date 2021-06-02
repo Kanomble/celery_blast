@@ -95,6 +95,15 @@ def project_details_view(request, project_id):
         return failure_view(request,e)
 
 #TODO documentation
+@login_required(login_url='login')
+def project_delete_view(request, project_id):
+    try:
+        delete_project_and_associated_directories_by_id(project_id)
+        return success_view(request)
+    except Exception as e:
+        return failure_view(request,e)
+
+#TODO documentation
 def ajax_wp_to_links(request, project_id):
     try:
         if request.is_ajax and request.method == "GET":
@@ -125,14 +134,7 @@ def load_reciprocal_result_html_table_view(request, project_id):
     except Exception as e:
         return failure_view(request, e)
 
-#TODO documentation
-@login_required(login_url='login')
-def project_delete_view(request, project_id):
-    try:
-        delete_project_and_associated_directories_by_id(project_id)
-        return success_view(request)
-    except Exception as e:
-        return failure_view(request,e)
+
 
 ''' create_taxonomic_file_view
 
