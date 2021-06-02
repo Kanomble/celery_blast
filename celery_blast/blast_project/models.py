@@ -33,6 +33,16 @@ class BlastSettings(models.Model):
         }
         return settings_dict
 
+    def get_values_as_dict(self):
+        settings_dict = {
+            'e_value' : str(self.e_value),
+            'word_size' : str(self.word_size),
+            'num_threads' : str(self.num_threads),
+            'num_alignments' : str(self.num_alignments),
+            'max_hsps' : str(self.max_hsps)
+        }
+        return settings_dict
+
 class AssemblyLevels(models.Model):
     assembly_level = models.CharField(max_length=50)
 
