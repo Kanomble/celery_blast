@@ -51,6 +51,7 @@ def delete_project_and_associated_directories_by_id(project_id):
     except Exception as e:
         raise IntegrityError("couldnt delete blast project entry : {}".format(e))
 
+
 ''' create_blastdatabase_directory
     
     creates an directory with the name database_id in the /media/databases folder 
