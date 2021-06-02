@@ -112,7 +112,7 @@ class BlastProject(models.Model):
     project_user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name="user who created the project")
+        verbose_name="user who created this project")
 
     project_forward_settings = models.OneToOneField(
         BlastSettings,
