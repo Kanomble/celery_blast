@@ -6,5 +6,5 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('', views.one_way_blast_dashboard, name='one_way_blast_dashboard'),
+    path('blast_project_creation',views.create_one_way_blast_project,name='one_way_project_creation')
 ]

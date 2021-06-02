@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %} BLAST Dashboard {% endblock %}
+{% block add_headers %}
+{% load static %}
+<link rel="stylesheet"  href="{%  static  'css/refseq_transactions_styles.css'  %}">
+{% endblock %}
+{% block page_title %} BLAST Project Dashboard {% endblock %}
+
+{% block infoheader %} One Way BLAST Project Dashboard {% endblock %}
+
+{% block page_description %}
+{% endblock %}
+
+{% block page_header %} Welcome to your one way BLAST project dashboard, {{request.user}}! {% endblock %}
+
+{% block content %}
+<div class="transparent-box" id="post_form_one_way_blast_container">
+    {% include "one_way_blast/form_one_way_blast_project_creation.html" %}
+    <button class="btn btn-dark" onclick="displayBlastSettings()">Advanced BLAST Settings </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+   function displayBlastSettings() {
+      var settingsForm = document.getElementById("advanced_settings");
+      if (settingsForm.style.display == "none") {
+        settingsForm.style.display = "block";
+      } else {
+        settingsForm.style.display = "none";
+      }
+   }
+</script>
+{% endblock %}
+
+
