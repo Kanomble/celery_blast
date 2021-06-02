@@ -1,7 +1,7 @@
 <form action="{% url 'one_way_project_creation' %}"
       method="post"
       enctype="multipart/form-data"
-      onsubmit="showLoader('loading_div','post_form_container')">
+      onsubmit="showLoader('loading_div','post_form_one_way_blast_container')">
 
     {% csrf_token %}
 
@@ -31,7 +31,7 @@
     </div>
 
     <div class="form-group">
-        <label for="project_database"> Select a BLAST Database </label>
+        <label for="project_database">Select a BLAST Database </label>
         <select class="form-control" id="project_database" name="project_database">
 
             {% for database in OneWayProjectCreationForm.project_database %}

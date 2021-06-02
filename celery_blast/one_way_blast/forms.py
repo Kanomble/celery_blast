@@ -27,7 +27,7 @@ class OneWayProjectCreationForm(forms.Form):
         required=False)
 
     def __init__(self, user, *args, **kwargs):
-        super(ProjectCreationForm, self).__init__(*args, **kwargs)
+        super(OneWayProjectCreationForm, self).__init__(*args, **kwargs)
         self.fields['user_email'].charfield = user.email
         self.fields['user_email'].initial = user.email
 

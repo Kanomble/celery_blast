@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
 from blast_project.models import BlastSettings, BlastDatabase
+from .managers import OneWayBlastProjectManager
 from django.db import IntegrityError
 # Create your models here.
 
@@ -45,6 +46,8 @@ class OneWayBlastProject(models.Model):
     )
 
     timestamp = models.DateTimeField(auto_now=True)
+
+    objects = OneWayBlastProjectManager()
 
     def __str__(self):
         return "One Way BLAST Project, created {} by {} with database {}".format(

@@ -26,9 +26,11 @@ def one_way_blast_project_creation_view(request):
                             query_file_name=query_sequences.name,
                             project_form=project_creation_form,
                             settings_form=blast_settings_form)
+
                         path_to_query_file = 'media/one_way_blast/' + str(
                             blast_project.id) + '/' + query_sequences.name
-                        #upload_file(query_sequences, path_to_query_file)
+
+                        upload_file(query_sequences, path_to_query_file)
 
                 except IntegrityError as e:
                     return failure_view(request,e)
