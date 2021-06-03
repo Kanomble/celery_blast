@@ -87,8 +87,8 @@
                     </div>
                     {% endif %}
                 </div>
-                <div class="form-group">
-                    <label for="fw_max_target_seqs">FW Num Alignments </label>
+                <div class="form-group" style="display: none">
+                    <label for="fw_max_target_seqs">FW Max Target Sequences </label>
                     <input type="number" class="form-control"  id="fw_max_target_seqs" name="fw_max_target_seqs" value="10000">
                     {% if BlastSettingsForwardForm.fw_max_target_seqs.errors %}
                     <div class="alert alert-danger">
@@ -153,8 +153,8 @@
                     </div>
                     {% endif %}
                 </div>
-                <div class="form-group">
-                    <label for="bw_max_target_seqs">BW Num Alignments </label>
+                <div class="form-group" style="display: none">
+                    <label for="bw_max_target_seqs">BW Max Target Seqs </label>
                     <input type="number" class="form-control"  id="bw_max_target_seqs" name="bw_max_target_seqs" value="1">
                     {% if BlastSettingsBackwardForm.bw_max_target_seqs.errors %}
                     <div class="alert alert-danger">

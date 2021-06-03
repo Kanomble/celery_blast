@@ -6,14 +6,25 @@ from django.db import IntegrityError, transaction
 
 '''list_taxonomic_files
 
-utilization in create_taxonomic_file_view
-returns a list of all files in the media/taxonomic_node_files folder that end with .taxids
+utilization in create_taxonomic_file_view and refseqdatabaseform 
+returns a list of all files and their corresponding total line length in the media/taxonomic_node_files folder that end with .taxids
 
 '''
 def list_taxonomic_files():
     try:
         files_in_taxonomic_node_files = listdir('media/taxonomic_node_files/')
-        return [file for file in files_in_taxonomic_node_files if file.endswith('.taxids')]
+        files = []
+        length = []
+        for file in files_in_taxonomic_node_files:
+            lines = 0
+            with open('media/taxonomic_node_files/'+file) as f:
+                for line in f:
+                    lines = lines + 1
+            if file.endswith('.taxids'):
+                files.append(file)
+                length.append(lines)
+        #[file for file in files_in_taxonomic_node_files if file.endswith('.taxids')]
+        return files, length
     except Exception as e:
         raise Exception('exception ocurred in blast_project/py_services.list_taxonomic_files : {}'.format(e))
 

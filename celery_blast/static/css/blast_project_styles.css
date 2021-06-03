@@ -16,6 +16,7 @@ div.base_header {
     font-family: "Courier New";
     text-align: right;
     margin-right: auto;
+    color: black;
 }
 
 h1.navbar_title {
@@ -25,9 +26,47 @@ h1.navbar_title {
 
 h3.col_header {
     font-family: "Courier New";
+    font-weight: bold;
+    color: black;
 }
 
 body.body_bg {
     background: url(../images/dna_background.jpg);
 }
 
+div.transparent-box {
+    background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
+    background: rgba(204, 204, 204, 0.5);
+    border: 1px solid #000000;
+    padding: 10px;
+}
+
+div.transparent-box label {
+    font-family: "Courier New";
+    font-weight: bold;
+    color: #000000;
+}
+
+div.transparent-box table {
+    font-family: "Courier New";
+    font-weight: bold;
+    color: #000000;
+}
+
+h3.project-creation-header {
+    font-family: "Courier New";
+    font-weight: bold;
+    text-align: center;
+    color: black;
+}
+
+.modal-title {
+    text-align: center;
+}
+
+#taxonomy-files-header {
+    font-family: "Courier New";
+    font-weight: bold;
+    background-color: white;
+    text-align: center;
+}

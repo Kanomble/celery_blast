@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from blast_project.py_services import list_taxonomic_files
 
 def get_taxonomic_files_tuple():
-    taxid_files_list = list_taxonomic_files()
+    taxid_files_list = list_taxonomic_files()[0]
     form_choice_field_input = tuple(zip(taxid_files_list,taxid_files_list))
     return form_choice_field_input
 
@@ -57,7 +57,7 @@ class RefseqDatabaseForm(forms.Form):
            self.add_error('taxid_file','Just use a previously uploaded file if you dont specify a file to upload!')
 
         if taxid_file != None:
-            for line in list_taxonomic_files():
+            for line in list_taxonomic_files()[0]:
                 if taxid_file.name == line:
                     self.add_error('taxid_file',"This taxid_file already exist!")
 

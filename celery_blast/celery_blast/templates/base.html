@@ -5,8 +5,10 @@
     <head>
     <title> {% block title %} SynMibi Reciprocal BLAST {% endblock %} </title>
     <link rel="shortcut icon" href="/static/favicon.ico">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-    <link rel="stylesheet"  href="{%  static  'css/blast_project_styles.css'  %}">
+
+        <link rel="stylesheet"  href="{%  static  'css/blast_project_styles.css'  %}">
     <script src="{% static 'javascript/utils.js' %}"></script>
 
     {% block add_headers %}{% endblock %}
@@ -53,8 +55,8 @@
                         <div class="modal-header">
                             <div class="modal-title">
                                 <h4> Informations on {% block infoheader %} SynMibi {% endblock %}</h4>
-                                <button type="button" class="close" data-dismiss="modal">&times;</button>
                             </div>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
                         <div class="modal-body">
                             <p class="text-left"> {% block page_description %} Content of this website... {% endblock %}</p>

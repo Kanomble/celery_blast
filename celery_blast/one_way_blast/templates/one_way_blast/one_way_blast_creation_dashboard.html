@@ -2,8 +2,7 @@
 
 {% block title %} BLAST Dashboard {% endblock %}
 {% block add_headers %}
-{% load static %}
-<link rel="stylesheet"  href="{%  static  'css/refseq_transactions_styles.css'  %}">
+
 {% endblock %}
 {% block page_title %} BLAST Project Dashboard {% endblock %}
 
@@ -12,10 +11,14 @@
 {% block page_description %}
 {% endblock %}
 
-{% block page_header %} Welcome to your one way BLAST project dashboard, {{request.user}}! {% endblock %}
+<!-- Welcome to your one way BLAST project dashboard, request.user!-->
+{% block page_header %}  {% endblock %}
 
 {% block content %}
 <div class="transparent-box" id="post_form_one_way_blast_container">
+    <br>
+    <h3 class="project-creation-header"> BLAST Project Creation </h3>
+    <br>
     {% include "one_way_blast/form_one_way_blast_project_creation.html" %}
     <button class="btn btn-dark" onclick="displayBlastSettings()">Advanced BLAST Settings </button>
 </div>

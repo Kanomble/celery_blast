@@ -14,6 +14,6 @@ div.transparent-box label {
 div.transparent-box table {
     font-family: "Courier New";
     font-weight: bold;
-    color: #000000;
+    font-size: large;
+    color: black;
 }
-

@@ -1,20 +1,18 @@
 {% extends "base.html" %}
 
 
-{% block title %} Create Taxonomic File {% endblock %}
+{% block title %} Create Taxonomic Files {% endblock %}
 
 <!-- omit header section h1 h2 -->
 {% block header %}
 {% endblock %}
-
+{% block infoheader %} Create Taxonomic Files {% endblock %}
 {% block page_description %}
 Create a taxonomic nodes file by utilization of the get_species_taxids.sh script from the NCBI E-Direct tool suite.
 {% endblock %}
 
 {% block content %}
     <hr>
-
-
     <!-- post form input fields: species_name and user_email -->
     <div class="container-fluid" id="post_form_container">
         <form method="post" onsubmit="showLoader('loading_div','post_form_container')">
@@ -46,10 +44,11 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
 
     <!-- list of available taxonomic node files (.taxids) -->
     <div class="container-fluid">
-        <p style="text-align: center"> Currently Available Taxonomic Node Files </p>
-        <ul>
+
+        <ul class="list-group">
+            <li class="list-group-item" id="taxonomy-files-header"> Currently Available Taxonomic Node Files </li>
             {% for taxfile in taxid_files %}
-                <li>{{taxfile}}</li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">{{taxfile.0}}<span class="badge badge-primary badge-pill">{{ taxfile.1 }}</span></li>
             {% endfor %}
         </ul>
     </div>

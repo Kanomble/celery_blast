@@ -156,6 +156,7 @@ def create_taxonomic_file_view(request):
                 species_name,taxonomic_node = taxform.cleaned_data['species_name']
                 task = write_species_taxids_into_file(taxonomic_node,species_name+'.taxids')
         taxid_files = list_taxonomic_files()
+        taxid_files = zip(taxid_files[0],taxid_files[1])
         context = {'taxform': taxform, 'taxid_files': taxid_files}
         return render(request, 'blast_project/create_taxonomic_file.html', context)
     except Exception as e:
