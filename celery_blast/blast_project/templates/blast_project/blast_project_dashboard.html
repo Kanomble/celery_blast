@@ -24,9 +24,15 @@
         <div class="col">
           <div class="dashboard_project_list_col">
 
-                <h3 class="col_header"> Your BLAST Projects </h3>
+                <h3 class="col_header"> Your Reciprocal BLAST Projects </h3>
                 <hr>
                 {% include "blast_project/table_blast_projects.html" %}
+            </div>
+
+            <div class="dashboard_project_list_col">
+                <h3 class="col_header"> Your One Way Remote BLAST Projects</h3>
+                <hr>
+                {% include "blast_project/table_one_way_remote_blast_projects.html" %}
             </div>
         </div>
 
@@ -38,7 +44,11 @@
                 {% include "blast_project/table_downloaded_and_formatted_blast_databases.html" %}
 
             </div>
-
+            <div class="dashboard_project_list_col">
+                <h3 class="col_header"> Your One Way BLAST Projects</h3>
+                <hr>
+                {% include "blast_project/table_one_way_blast_projects.html" %}
+            </div>
         </div>
     </div>
 

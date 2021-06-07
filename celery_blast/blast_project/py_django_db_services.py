@@ -22,6 +22,8 @@ def get_users_blast_projects(userid):
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
 
+
+
 #TODO documentation
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)

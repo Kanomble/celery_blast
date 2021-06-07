@@ -13,6 +13,7 @@ from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id
+from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 ''' dashboard
@@ -34,8 +35,12 @@ def dashboard_view(request):
         if request.method == 'GET':
             users_blast_projects = get_users_blast_projects(request.user.id)
             available_blast_databases = get_downloaded_databases()
+            one_way_blast_projects = get_users_one_way_blast_projects(request.user.id)
+            one_way_remote_blast_projects = get_users_one_way_remote_blast_projects(request.user.id)
             context['blast_projects'] = users_blast_projects
             context['ActiveBlastDatabases'] = available_blast_databases
+            context['OneWayBlastProjects'] = one_way_blast_projects
+            context['OneWayRemoteBlastProjects'] = one_way_remote_blast_projects
 
         return render(request,'blast_project/blast_project_dashboard.html',context)
     except Exception as e:
@@ -107,7 +112,6 @@ def project_delete_view(request, project_id):
 def ajax_wp_to_links(request, project_id):
     try:
         if request.is_ajax and request.method == "GET":
-            print("YES")
             #progress = read_database_download_and_format_logfile(database_id)
             prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
             return JsonResponse(prot_to_pfam,status=200)

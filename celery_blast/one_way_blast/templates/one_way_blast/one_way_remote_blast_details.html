@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %} RecBlast Project Details {% endblock %}
+{% block add_headers %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.2/css/select.dataTables.min.css" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
+{% endblock %}
+
+{% block page_title %} Reciprocal Blast Project Details {% endblock %}
+
+{% block infoheader %} Project Details {% endblock %}
+
+{% block page_description %}
+Project Details
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="dashboard_project_list_col">
+        <div class="table-responsive">
+            <table class="table table-hover" id="blastProjectTable">
+                <thead>
+                    <tr>
+                        <th>Project Title</th>
+                        <th>Database</th>
+                        <th>Timestamp</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="blastProjectTableBody">
+                    <tr>
+                        <td>{{OneWayRemoteBlastProject.r_project_title}}</td>
+                        <td>{{OneWayRemoteBlastProject.r_project_database}}</td>
+
+                        <td>{{OneWayRemoteBlastProject.r_timestamp}}</td>
+
+                        <td>
+                            <form class="col"
+                                   action="{% url 'one_way_remote_project_deletion' project_id=OneWayRemoteBlastProject.id%}"
+                                   method="GET">
+                                {% csrf_token %}
+                                <input type="submit" value="Delete Blast Project" class="btn btn-danger">
+                            </form>
+                        </td>
+                        <td>
+                            <form class="col"
+                                   action="#"
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit" value="Execute Snakemake" class="btn btn-dark">
+                            </form>
+                        </td>
+                        {% if OneWayRemoteBlastProject.r_project_execution_snakemake_task %}
+                            <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
+                        {% endif %}
+                        {% if OneWayRemoteBlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
+                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=OneWayRemoteBlastProject.id %}"> Reciprocal Results Table </a></td>
+                        {% endif %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <br>
+
+    <div class="dashboard_project_list_col" id="QUERY_INFO">
+    </div>
+
+    <br>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+{%  load static %}
+<script src="{% static 'javascript/load_ajax_table.js' %}"></script>
+<script>
+    $(document).ready(function(){
+        {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+
+            var query_info = document.getElementById('QUERY_INFO');
+
+            var data=this.responseText;
+            var jsonResponse = JSON.parse(data);
+
+
+
+            var elementList =createElementListForTable(jsonResponse)
+
+            var table = buildHtmlTable(elementList);
+            table.className = 'table table-hover';
+            query_info.appendChild(table)
+            }
+        };
+        xhttp.open("GET", "{% url 'ajax_one_way_wp_to_links' project_id=OneWayRemoteBlastProject.id remote=1 %}", true);
+        xhttp.send();
+        }
+    });
+</script>
+{% endblock %}

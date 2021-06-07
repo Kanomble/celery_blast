@@ -1,0 +1,140 @@
+<form action="{% url 'one_way_project_creation'  %}"
+      method="post"
+      enctype="multipart/form-data"
+      onsubmit="showLoader('loading_div','post_form_one_way_remote_blast_container')">
+
+    {% csrf_token %}
+
+     <div class="form-group">
+        <label for="r_project_title">Project Title</label>
+        <input type="text" class="form-control" id="r_project_title" name="r_project_title">
+        {% if OneWayRemoteProjectCreationForm.r_project_title.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ OneWayRemoteProjectCreationForm.r_project_title.errors }}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+
+    <div class="form-group">
+        <label for="r_query_sequence_file"> Query Sequences as FASTA File </label>
+            <!--
+            <span class="badge badge-info">  In FASTA format (with sequence name)
+            </span></label>
+            -->
+        <input type="file" class="form-control-file" id="r_query_sequence_file" name="r_query_sequence_file">
+        {% if OneWayRemoteProjectCreationForm.r_query_sequence_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ OneWayRemoteProjectCreationForm.r_query_sequence_file.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="r_project_database">Select a BLAST Database </label>
+        <select class="form-control" id="r_project_database" name="r_project_database">
+            {% for database in OneWayRemoteProjectCreationForm.r_project_database %}
+                {{database}}
+            {% endfor %}
+
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="r_search_strategy">Select a Search Strategy </label>
+        <select class="form-control" id="r_search_strategy" name="r_search_strategy">
+            {% for strategy in OneWayRemoteProjectCreationForm.r_search_strategy %}
+                {{strategy}}
+            {% endfor %}
+
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="r_taxid_file">Optional File For Limiting BLAST Searches By Taxonomy</label>
+        <input type="file" class="form-control-file" id="r_taxid_file" name="r_taxid_file">
+        {% if OneWayRemoteProjectCreationForm.r_taxid_file.errors %}
+        <div class="alert alert-danger">
+            <strong>{{OneWayRemoteProjectCreationForm.r_taxid_file.errors}}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="r_taxid_uploaded_file">Select A Taxonomic File:</label>
+      <select class="form-control" id="r_taxid_uploaded_file" name="r_taxid_uploaded_file">
+        <option value=""></option>
+          {% for taxid_uploaded_file,option in  OneWayRemoteProjectCreationForm.r_taxid_uploaded_file.field.choices %}
+              <option value="{{ taxid_uploaded_file }}">{{ taxid_uploaded_file }}</option>
+          {% endfor %}
+      </select>
+        {% if OneWayRemoteProjectCreationForm.r_taxid_uploaded_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{OneWayRemoteProjectCreationForm.r_taxid_uploaded_file.errors}}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-row" id="advanced_remote_settings" style="display: none">
+            <hr>
+            <h3 style="font-family: 'Courier New';text-align: center;
+                margin-bottom: 5px;
+                font-weight: bold;">
+                BLAST Settings </h3>
+
+            <div class="col">
+                <div class="form-group">
+                    <label for="e_value">E-Value</label>
+                    <input type="number" class="form-control"  id="e_value" name="e_value" value="0.001">
+                    {% if BlastRemoteSettingsForm.e_value.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastRemoteSettingsForm.e_value.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="word_size">Word Size </label>
+                    <input type="number" class="form-control"  id="word_size" name="word_size" value="3">
+                    {% if BlastRemoteSettingsForm.word_size.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastRemoteSettingsForm.word_size.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="num_alignments">Num Alignments </label>
+                    <input type="number" class="form-control"  id="num_alignments" name="num_alignments" value="10000">
+                    {% if BlastRemoteSettingsForm.num_alignments.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastRemoteSettingsForm.num_alignments.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="num_threads">Num Threads </label>
+                    <input type="number" class="form-control"  id="num_threads" name="num_threads" value="1">
+                    {% if BlastRemoteSettingsForm.num_threads.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastRemoteSettingsForm.num_threads.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="max_hsps">Max Hsps </label>
+                    <input type="number" class="form-control"  id="max_hsps" name="max_hsps" value="500">
+                    {% if BlastRemoteSettingsForm.max_hsps.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastRemoteSettingsForm.max_hsps.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+
+    </div>
+    <br>
+    <input type="hidden" value="remote" id="project_type" name="project_type">
+    <input type="submit" value="Submit" class="btn btn-dark">
+
+</form>

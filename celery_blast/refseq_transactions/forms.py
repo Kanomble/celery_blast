@@ -16,7 +16,7 @@ class RefseqDatabaseForm(forms.Form):
         ('Complete Genome','Complete Genome')]
 
     assembly_levels = forms.MultipleChoiceField(
-        label="Assembly Completness Level",
+        label="Assembly Completeness Level",
         required=False,
         choices=ASSEMBLY_LEVELS,
         widget=forms.CheckboxSelectMultiple()

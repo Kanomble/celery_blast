@@ -17,7 +17,7 @@
     </head>
     {% endblock %}
 
-        <body class="body_bg">
+        <body class="body_bg" {% block extend_body %}{% endblock %}>
 
         {% block navbar %}
         <nav class="navbar navbar-dark bg-dark">

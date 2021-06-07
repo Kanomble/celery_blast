@@ -1,6 +1,7 @@
 div.dashboard_project_list_col {
-    background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
-    background: rgba(204, 204, 204, 0.5);
+    //background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
+    //background: rgba(204, 204, 204, 0.5);
+    background: linear-gradient(whitesmoke,lightblue);
     border: 1px solid #000000;
     padding: 10px;
 
@@ -31,12 +32,15 @@ h3.col_header {
 }
 
 body.body_bg {
+    //background: white;
+    //background: linear-gradient(whitesmoke,darkgreen);
     background: url(../images/dna_background.jpg);
 }
 
 div.transparent-box {
-    background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
-    background: rgba(204, 204, 204, 0.5);
+    //background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
+    //background: rgba(204, 204, 204, 0.5);
+    background: linear-gradient(whitesmoke,lightblue);
     border: 1px solid #000000;
     padding: 10px;
 }
@@ -69,4 +73,9 @@ h3.project-creation-header {
     font-weight: bold;
     background-color: white;
     text-align: center;
+}
+
+#one_way_project_creation_form {
+    font-family: "Courier New";
+    font-weight: bold;
 }

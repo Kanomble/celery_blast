@@ -7,3 +7,12 @@ function showLoader(idLoadingDiv,idHidingDiv) {
     hidingDiv.style.display = "none";
     loadingDiv.style.display = "block";
 };
+
+function displayBlastSettings(divElement) {
+  var settingsForm = document.getElementById(divElement);
+  if (settingsForm.style.display == "none") {
+    settingsForm.style.display = "block";
+  } else {
+    settingsForm.style.display = "none";
+  }
+}

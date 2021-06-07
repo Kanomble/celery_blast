@@ -13,27 +13,54 @@
 
 <!-- Welcome to your one way BLAST project dashboard, request.user!-->
 {% block page_header %}  {% endblock %}
-
+{%  block extend_body %} {% if OneWayRemoteProjectCreationForm.errors %} onload="loadTemplate('remote')" {% endif %} {% if OneWayProjectCreationForm.errors %} onload="loadTemplate('local')" {% endif %} {% endblock %}
 {% block content %}
-<div class="transparent-box" id="post_form_one_way_blast_container">
+
+<div class="container-fluid text-center transparent-box">
+    <form name="project_creation_menu" action="javascript:void(0)" id="one_way_project_creation_form">
+        <div class="custom-control custom-radio custom-control-inline">
+            <input class="custom-control-input" type="radio" id="local" name="local_search_button" value="local" onchange="loadTemplate(this.value)">
+            <label class="custom-control-label" for="local">Search Against Available Local BLAST Databases</label>
+        </div>
+
+        <div class="custom-control custom-radio custom-control-inline">
+            <input class="custom-control-input" type="radio" id="remote" name="remote_search_button" value="remote" onchange="loadTemplate(this.value)">
+            <label class="custom-control-label" for="remote">Search Against Available Remote BLAST Databases</label>
+        </div>
+    </form>
+</div>
+
+<br>
+<div class="transparent-box" id="project_creation_local" style="display: none">
     <br>
     <h3 class="project-creation-header"> BLAST Project Creation </h3>
     <br>
     {% include "one_way_blast/form_one_way_blast_project_creation.html" %}
-    <button class="btn btn-dark" onclick="displayBlastSettings()">Advanced BLAST Settings </button>
+    <button class="btn btn-dark" onclick="displayBlastSettings('advanced_settings')">Advanced BLAST Settings </button>
+</div>
+
+<div class="transparent-box" id="project_creation_remote" style="display: none">
+    <br>
+    <h3 class="project-creation-header"> Remote BLAST Project Creation </h3>
+    <br>
+    {% include "one_way_blast/form_one_way_remote_blast_project_creation.html" %}
+    <button class="btn btn-dark" onclick="displayBlastSettings('advanced_remote_settings')">Advanced BLAST Settings </button>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-   function displayBlastSettings() {
-      var settingsForm = document.getElementById("advanced_settings");
-      if (settingsForm.style.display == "none") {
-        settingsForm.style.display = "block";
-      } else {
-        settingsForm.style.display = "none";
-      }
-   }
+function loadTemplate(project_type) {
+    document.getElementById('project_creation_' + project_type).style.display = "block";
+    if (project_type == 'remote') {
+        document.getElementById('project_creation_local').style.display = 'none'
+        document.getElementById('local').checked = false
+
+    } else if (project_type == 'local') {
+        document.getElementById('project_creation_remote').style.display = 'none'
+        document.getElementById('remote').checked = false
+    }
+}
 </script>
 {% endblock %}
 
