@@ -7,10 +7,10 @@
 {% block infoheader %} BLAST Project Dashboard {% endblock %}
 
 {% block page_description %}
-    Monitor your current projects on the
-    <strong>Pipeline Dashboard</strong>, view your results on the projects
-    <strong>Detail Page</strong> or delete one of your projects by visiting the
-    <strong>Delete Project</strong> page.
+    This dashboard lists all available local databases, remote one way BLAST, local one way BLAST and
+    reciprocal BLAST projects of the current user (logged in as: {{ request.user }}.
+    Monitor and execute your current projects or view your results on the projects
+    <strong>Detail Page</strong>.
     If you want to create a completely new project or upload some genome databases take a look at the navigation bar
     at the top of this page.
 {% endblock %}
@@ -30,7 +30,7 @@
             </div>
 
             <div class="dashboard_project_list_col">
-                <h3 class="col_header"> Your One Way Remote BLAST Projects</h3>
+                <h3 class="col_header"> Your Remote BLAST Projects</h3>
                 <hr>
                 {% include "blast_project/table_one_way_remote_blast_projects.html" %}
             </div>
@@ -39,13 +39,13 @@
 
         <div class="col">
             <div class="dashboard_project_list_col">
-                 <h3 class="col_header"> Available Databases </h3>
+                 <h3 class="col_header"> Local Available Databases </h3>
                 <hr>
                 {% include "blast_project/table_downloaded_and_formatted_blast_databases.html" %}
 
             </div>
             <div class="dashboard_project_list_col">
-                <h3 class="col_header"> Your One Way BLAST Projects</h3>
+                <h3 class="col_header"> Your local BLAST Projects</h3>
                 <hr>
                 {% include "blast_project/table_one_way_blast_projects.html" %}
             </div>

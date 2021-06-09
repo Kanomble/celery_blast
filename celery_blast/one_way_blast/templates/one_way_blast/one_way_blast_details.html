@@ -95,6 +95,13 @@ Project Details
             </table>
         </div>
     </div>
+
+  {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
+    <div class="dashboard_project_list_col">
+        {% include GenusPlotTemplate %}
+    </div>
+  {% endif %}
+
 </div>
 {% endblock %}
 

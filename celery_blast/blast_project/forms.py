@@ -111,7 +111,7 @@ class ProjectCreationForm(forms.Form):
 
 #TODO documentation
 class BlastSettingsFormForward(forms.Form):
-    fw_e_value = forms.DecimalField(
+    fw_e_value = forms.FloatField(
         label="FW E-Value", initial=0.001)
     fw_word_size = forms.IntegerField(
         label="FW Word Size", initial=3)
@@ -127,7 +127,7 @@ class BlastSettingsFormForward(forms.Form):
 
 #TODO documentation
 class BlastSettingsFormBackward(forms.Form):
-    bw_e_value = forms.DecimalField(
+    bw_e_value = forms.FloatField(
         label="BW E-Value", initial=0.001)
     bw_word_size = forms.IntegerField(
         label="BW Word Size", initial=3)

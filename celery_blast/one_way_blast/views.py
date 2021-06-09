@@ -70,10 +70,12 @@ def one_way_blast_project_creation_view(request):
 def one_way_project_details_view(request, project_id):
     try:
         blast_project = get_one_way_project_by_id(project_id)
-        print("[*******] ",blast_project.project_execution_task_result)
+        #print("[*******] ",blast_project.project_execution_task_result)
+        genus_plot_template = "one_way_blast/"+str(blast_project.id)+'/genus_bars.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'BlastProject':blast_project,
-                    'Database':blast_project.project_database,}
+                    'Database':blast_project.project_database,
+                   'GenusPlotTemplate':genus_plot_template}
                    #'ProtPfam':prot_to_pfam}
         return render(request,'one_way_blast/one_way_blast_details.html',context)
     except Exception as e:
@@ -83,6 +85,7 @@ def one_way_project_details_view(request, project_id):
 def one_way_remote_project_details_view(request, project_id):
     try:
         blast_project = get_one_way_remote_project_by_id(project_id)
+        genus_plot_template = "one_way_blast/remote_searches/"+str(blast_project.id)+'/genus_bars.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'OneWayRemoteBlastProject':blast_project}
                    #'ProtPfam':prot_to_pfam}

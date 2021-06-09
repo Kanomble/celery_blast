@@ -70,6 +70,11 @@ Project Details
     <div class="dashboard_project_list_col" id="QUERY_INFO">
     </div>
 
+    {% if OneWayRemoteBlastProject.project_execution_task_result.status == 'SUCCESS' %}
+    <div class="dashboard_project_list_col">
+        {% include GenusPlotTemplate %}
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
 

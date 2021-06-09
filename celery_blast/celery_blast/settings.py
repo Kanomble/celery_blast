@@ -59,7 +59,7 @@ ROOT_URLCONF = 'celery_blast.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['celery_blast/templates'],
+        'DIRS': ['celery_blast/templates','static/images/result_images'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

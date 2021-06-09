@@ -61,7 +61,7 @@
             <div class="col">
                 <div class="form-group">
                     <label for="fw_e_value">FW E-Value</label>
-                    <input type="number" class="form-control"  id="fw_e_value" name="fw_e_value" value="0.001">
+                    <input type="number" class="form-control" step=any id="fw_e_value" name="fw_e_value" value="0.001">
                     {% if BlastSettingsForwardForm.fw_e_value.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsForwardForm.fw_e_value.errors }}</strong>
@@ -127,7 +127,7 @@
             <div class="col">
                 <div class="form-group">
                     <label for="bw_e_value">BW E-Value</label>
-                    <input type="number" class="form-control"  id="bw_e_value" name="bw_e_value" value="0.001">
+                    <input type="number" class="form-control" step=any id="bw_e_value" name="bw_e_value" value="0.001">
                     {% if BlastSettingsBackwardForm.bw_e_value.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsBackwardForm.bw_e_value_blast.errors }}</strong>

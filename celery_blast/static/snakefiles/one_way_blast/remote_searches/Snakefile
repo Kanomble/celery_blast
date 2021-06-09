@@ -9,7 +9,7 @@ rule blast:
 	output: results="blast_results.table"
 	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb'], entrez_query=config['entrez_query']
 	run:
-		if(params.entrez_query != None):
+		if(params.entrez_query != ""):
 			cmd_string = "blastp -db "+params.database+\
 			" -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
@@ -17,8 +17,8 @@ rule blast:
 			" -evalue "+str(params.e_value)+\
 			" -num_alignments "+str(params.num_alignments)+\
 			" -query "+input.queries+\
-			" -entrez_query "+params.entrez_query+\
-			" -remote"
+			" -remote"+\
+			" -entrez_query "+params.entrez_query
 			shell(cmd_string)
 		else:
 			cmd_string = "blastp -db "+params.database+\

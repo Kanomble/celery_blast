@@ -2,7 +2,7 @@ configfile: "./snakefile_config"
 
 rule all:
 	input:
-		"blast_results.table", "blast_results.html"
+		"genus_bars.html"
 
 rule blast:
 	input: queries=config['query_sequence']
@@ -17,3 +17,11 @@ rule blast_table_to_html:
 	output: html_table="blast_results.html"
 	script:
 		"../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
+
+
+rule blast_results_to_plots:
+	input: blast_results="blast_results.table", query_file=config['query_sequence']
+	params: genus_bars_static="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + '/genus_bars.html'
+	output: genus_bars="genus_bars.html"
+	script:
+		"../../../static/snakefiles/one_way_blast/plot_results.py"

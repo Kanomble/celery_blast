@@ -42,7 +42,7 @@ class OneWayProjectCreationForm(forms.Form):
 
 #TODO documentation
 class BlastSettingsForm(forms.Form):
-    e_value = forms.DecimalField(
+    e_value = forms.FloatField(
         label="E-Value", initial=0.001)
     word_size = forms.IntegerField(
         label="Word Size", initial=3)

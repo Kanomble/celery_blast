@@ -10,7 +10,7 @@ cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 ## TODO
-- [ ] add more options to BlastSettings
+- [ ] add more options to BlastSettings - Alter BlastSettings model and forms
 - [ ] add configuration environment variables for SNAKEMAKE
 - [ ] check if backward organism is in database
 - [ ] reciprocal BLAST results, sequence in output and string of taxonomy; EXAMPLE: https://docs.google.com/spreadsheets/d/1EBwEp-C0ocCUBx3zVaCtxrMlTKGTZHx19lPq8q7W_bE/edit#gid=649158632
