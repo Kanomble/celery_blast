@@ -1,1 +1,38 @@
 configfile: "./snakefile_config"
+
+rule all:
+	input:
+		"blast_results.table","blast_results.html"
+
+rule blast:
+	input: queries=config['query_sequence']
+	output: results="blast_results.table"
+	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb'], entrez_query=config['entrez_query']
+	run:
+		if(params.entrez_query != None):
+			cmd_string = "blastp -db "+params.database+\
+			" -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
+			" -out "+output.results+\
+			" -word_size "+str(params.word_size)+\
+			" -evalue "+str(params.e_value)+\
+			" -num_alignments "+str(params.num_alignments)+\
+			" -query "+input.queries+\
+			" -entrez_query "+params.entrez_query+\
+			" -remote"
+			shell(cmd_string)
+		else:
+			cmd_string = "blastp -db "+params.database+\
+			" -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
+			" -out "+output.results+\
+			" -word_size "+str(params.word_size)+\
+			" -evalue "+str(params.e_value)+\
+			" -num_alignments "+str(params.num_alignments)+\
+			" -query "+input.queries+\
+			" -remote"
+			shell(cmd_string)
+
+rule blast_table_to_html:
+	input: res="blast_results.table"
+	output: html_table="blast_results.html"
+	script:
+		"../../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"

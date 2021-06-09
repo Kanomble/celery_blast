@@ -61,7 +61,6 @@ def update_one_way_blast_project_with_task_result_model(project_id,task_id):
     try:
         blast_project = OneWayBlastProject.objects.get(id=project_id)
         taskresult = TaskResult.objects.get(task_id=task_id)
-        print("[!!!!!!!!]",taskresult )
         blast_project.project_execution_task_result = taskresult
         blast_project.save()
     except Exception as e:

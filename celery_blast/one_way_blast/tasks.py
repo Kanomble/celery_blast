@@ -5,7 +5,9 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 
-from .py_django_db_services import update_one_way_blast_project_with_task_result_model
+from .py_django_db_services import update_one_way_blast_project_with_task_result_model,\
+    update_one_way_remote_blast_project_with_task_result_model
+
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
@@ -29,7 +31,7 @@ def execute_one_way_blast_project(self,project_id):
         one_way_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.7:5000',
+             '--wms-monitor','http://172.23.0.5:5000',
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
@@ -67,7 +69,7 @@ def execute_one_way_remote_blast_project(self,project_id):
     progress_recorder.set_progress(0, 100,"started process")
 
     try:
-        update_one_way_blast_project_with_task_result_model(project_id, str(self.request.id))
+        update_one_way_remote_blast_project_with_task_result_model(project_id, str(self.request.id))
     except Exception as e:
         logger.warning('couldnt update blastproject with exception : {}'.format(e))
         raise Exception('couldnt update blastproject with exception : {}'.format(e))
@@ -77,7 +79,7 @@ def execute_one_way_remote_blast_project(self,project_id):
         one_way_remote_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.7:5000',
+             '--wms-monitor','http://172.23.0.5:5000',
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,

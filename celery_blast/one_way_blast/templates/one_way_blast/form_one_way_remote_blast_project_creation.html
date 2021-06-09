@@ -51,27 +51,12 @@
     </div>
 
     <div class="form-group">
-        <label for="r_taxid_file">Optional File For Limiting BLAST Searches By Taxonomy</label>
-        <input type="file" class="form-control-file" id="r_taxid_file" name="r_taxid_file">
-        {% if OneWayRemoteProjectCreationForm.r_taxid_file.errors %}
+        <label for="r_entrez_query">Optional Query For Limiting BLAST Searches By Taxonomy</label>
+        <input type="text" class="form-control"  id="r_entrez_query" name="r_entrez_query">
+        {% if OneWayRemoteProjectCreationForm.r_entrez_query.errors %}
         <div class="alert alert-danger">
-            <strong>{{OneWayRemoteProjectCreationForm.r_taxid_file.errors}}</strong>
+            <strong>{{OneWayRemoteProjectCreationForm.r_entrez_query.errors}}</strong>
         </div>
-        {% endif %}
-    </div>
-
-    <div class="form-group">
-      <label for="r_taxid_uploaded_file">Select A Taxonomic File:</label>
-      <select class="form-control" id="r_taxid_uploaded_file" name="r_taxid_uploaded_file">
-        <option value=""></option>
-          {% for taxid_uploaded_file,option in  OneWayRemoteProjectCreationForm.r_taxid_uploaded_file.field.choices %}
-              <option value="{{ taxid_uploaded_file }}">{{ taxid_uploaded_file }}</option>
-          {% endfor %}
-      </select>
-        {% if OneWayRemoteProjectCreationForm.r_taxid_uploaded_file.errors %}
-            <div class="alert alert-danger">
-                <strong>{{OneWayRemoteProjectCreationForm.r_taxid_uploaded_file.errors}}</strong>
-            </div>
         {% endif %}
     </div>
 
@@ -102,21 +87,23 @@
                     {% endif %}
                 </div>
 
+                <!-- Not Displayed -->
+                <div class="form-group" style="display: none">
+                    <label for="num_threads">Num Threads </label>
+                    <input type="number" class="form-control"  id="num_threads" name="num_threads" value="1">
+                    {% if BlastSettingsForm.num_threads.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForm.num_threads.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
                 <div class="form-group">
                     <label for="num_alignments">Num Alignments </label>
                     <input type="number" class="form-control"  id="num_alignments" name="num_alignments" value="10000">
                     {% if BlastRemoteSettingsForm.num_alignments.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastRemoteSettingsForm.num_alignments.errors }}</strong>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="num_threads">Num Threads </label>
-                    <input type="number" class="form-control"  id="num_threads" name="num_threads" value="1">
-                    {% if BlastRemoteSettingsForm.num_threads.errors %}
-                    <div class="alert alert-danger">
-                        <strong>{{ BlastRemoteSettingsForm.num_threads.errors }}</strong>
                     </div>
                     {% endif %}
                 </div>

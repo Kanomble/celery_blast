@@ -14,6 +14,7 @@ service_urls = [
     path('<int:project_id>/one_way_remote_project_deletion', views.one_way_remote_project_delete_view,
          name='one_way_remote_project_deletion'),
     path('<int:project_id>/one_way_project_execution', views.execute_one_way_blast_project_view, name='one_way_project_execution'),
+    path('<int:project_id>/one_way_remote_project_execution', views.execute_one_way_remote_blast_project_view, name='one_way_remote_project_execution'),
     path('<int:remote>/<int:project_id>/BLAST_results',views.load_one_way_result_html_table_view, name='one_way_html_results')
     #path('<int:project_id>/one_way_project_execution',views.execute_reciprocal_blast_project_view,name='project_execution'),
     #path('<int:project_id>/one_way_project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results')

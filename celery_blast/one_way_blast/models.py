@@ -145,7 +145,7 @@ class OneWayRemoteBlastProject(models.Model):
     )
 
     #path to taxonomic node file ...
-    r_attached_taxonomic_node_file = models.CharField(
+    r_entrez_query = models.CharField(
         max_length=300,
         blank=True, null=True,
         verbose_name="associated taxonomic file, which was used to limit assembly entries in db creation by taxids")
@@ -187,6 +187,7 @@ class OneWayRemoteBlastProject(models.Model):
             snk_config_file.write('project_id: ' + str(self.id) + "\n")
             snk_config_file.write('blastdb: '  + str(self.r_project_database) + "\n")
             snk_config_file.write('query_sequence: ' + "\"" + self.r_project_query_sequences + "\"\n")
+            snk_config_file.write('entrez_query:'+"\n")
 
 
             settings_dict = self.r_project_settings.get_values_as_dict()

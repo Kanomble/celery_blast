@@ -25,15 +25,19 @@ Project Details
                         <th>Project Title</th>
                         <th>Database</th>
                         <th>Timestamp</th>
-                        <th></th>
+                        {% if OneWayRemoteBlastProject.r_entrez_query %}
+                        <th>Entrez Query (Optional)</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody id="blastProjectTableBody">
                     <tr>
                         <td>{{OneWayRemoteBlastProject.r_project_title}}</td>
                         <td>{{OneWayRemoteBlastProject.r_project_database}}</td>
-
                         <td>{{OneWayRemoteBlastProject.r_timestamp}}</td>
+                        {% if OneWayRemoteBlastProject.r_entrez_query %}
+                        <td>{{OneWayRemoteBlastProject.r_entrez_query}}</td>
+                        {% endif %}
 
                         <td>
                             <form class="col"
@@ -45,29 +49,27 @@ Project Details
                         </td>
                         <td>
                             <form class="col"
-                                   action="#"
+                                   action="{% url 'one_way_remote_project_execution' project_id=OneWayRemoteBlastProject.id %}"
                                    method="POST">
                                 {% csrf_token %}
                                 <input type="submit" value="Execute Snakemake" class="btn btn-dark">
                             </form>
                         </td>
-                        {% if OneWayRemoteBlastProject.r_project_execution_snakemake_task %}
+                        {% if OneWayRemoteBlastProject.r_project_execution_task_result %}
                             <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
                         {% endif %}
-                        {% if OneWayRemoteBlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=OneWayRemoteBlastProject.id %}"> Reciprocal Results Table </a></td>
+                        {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
+                            <td><a class="btn btn-dark" href="{% url 'one_way_html_results' project_id=OneWayRemoteBlastProject.id remote=1%}"> Reciprocal Results Table </a></td>
                         {% endif %}
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
-    <br>
 
     <div class="dashboard_project_list_col" id="QUERY_INFO">
     </div>
 
-    <br>
 </div>
 {% endblock %}
 
