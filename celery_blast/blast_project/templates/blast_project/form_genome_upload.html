@@ -1,0 +1,109 @@
+<div class="post_form_container">
+    <form action="{% url 'upload_genomes' %}"
+      method="post"
+      enctype="multipart/form-data"
+      onsubmit="showLoader('loading_div','post_form_container')">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="database_title">Database Title</label>
+            <input type="text" class="form-control" id="database_title" name="database_title">
+            {% if UploadGenomeForm.database_title.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.database_title.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+         <div class="form-group">
+            <label for="database_description">Database Description</label>
+            <input type="text" class="form-control" id="database_description" name="database_description">
+            {% if UploadGenomeForm.database_description.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.database_description.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+         <div class="form-group">
+            <label for="genome_fasta_file">Genome FASTA File Upload</label>
+            <input type="file" class="form-control-file" id="genome_fasta_file" name="genome_fasta_file">
+            {% if UploadGenomeForm.genome_fasta_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.genome_fasta_file.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="assembly_accession"> Assembly Accession Name (Optional)</label>
+            <input type="text" class="form-control" id="assembly_accession" name="assembly_accession" >
+            {% if UploadGenomeForm.assembly_accession.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.assembly_accession.errors }}</strong>
+            </div>
+
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="assembly_level"> Select the Assembly Level </label>
+            <select class="form-control" id="assembly_level" name="assembly_level">
+                {% for level in UploadGenomeForm.assembly_level %}
+                    {{level}}
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="organism_name"> Organism Name </label>
+            <input type="text" class="form-control" id="organism_name" name="organism_name" >
+            {% if UploadGenomeForm.organism_name.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.organism_name.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="taxonomic_node"> Taxonomic ID </label>
+            <input type="number" class="form-control" id="taxonomic_node" name="taxonomic_node" >
+            {% if UploadGenomeForm.taxonomic_node.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.taxonomic_node.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+        <br>
+        <hr>
+        <div class="form-group">
+            <label for="taxmap_file">Taxmap File (optional) if Taxonomic Node specified </label>
+            <input type="file" class="form-control-file" id="taxmap_file" name="taxmap_file">
+            {% if UploadGenomeForm.taxmap_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.taxmap_file.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="organism_name_file">File with Organism Names (sep. by lines)</label>
+            <input type="file" class="form-control-file" id="organism_name_file" name="organism_name_file">
+            {% if UploadGenomeForm.organism_name_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.organism_name_file.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="assembly_accessions_file">File with Assembly Accessions (sep. by lines)</label>
+            <input type="file" class="form-control-file" id="assembly_accessions_file" name="assembly_accessions_file">
+            {% if UploadGenomeForm.assembly_accessions_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.assembly_accessions_file.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+        <br>
+        <input type="submit" value="Submit" class="btn btn-dark">
+    </form>
+
+</div>

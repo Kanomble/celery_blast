@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %} Upload Genomes Dashboard {% endblock %}
+{% block add_headers %}
+{% load static %}
+<link rel="stylesheet"  href="{%  static  'css/refseq_transactions_styles.css'  %}">
+{% endblock %}
+{% block page_title %} Upload Genomes Dashboard {% endblock %}
+
+{% block infoheader %} Genome Upload {% endblock %}
+
+{% block page_description %}
+Upload your own FASTA files and format them to BLAST databases.
+{% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<div class="transparent-box" id="post_form_container">
+    {% include "blast_project/form_genome_upload.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

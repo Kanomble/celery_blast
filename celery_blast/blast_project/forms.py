@@ -71,7 +71,7 @@ class ProjectCreationForm(forms.Form):
         error_messages={
             'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
 
-    project_database = BlastDatabaseModelChoiceField(
+    project_forward_database = BlastDatabaseModelChoiceField(
         queryset=get_all_succeeded_databases(),
         empty_label=None
     )
@@ -140,3 +140,66 @@ class BlastSettingsFormBackward(forms.Form):
     bw_max_hsps = forms.IntegerField(
         label='BW max hsps', initial=500
     )
+
+class UploadGenomeForm(forms.Form):
+    genome_fasta_file = forms.FileField(error_messages={
+                'required':"Upload a genome FASTA file with protein sequences, that can get formatted to a BLAST database."})
+
+    database_title = forms.CharField(max_length=200, required=True)
+    database_description = forms.CharField(max_length=200, required=True)
+
+    assembly_accession = forms.CharField(max_length=200,required=False)
+
+    assembly_level = forms.ChoiceField(
+        choices=(("Chromosome","Chromosome"),("Complete Genome","Complete Genome"),("Scaffold","Scaffold"),("Contig","Contig")),
+        required=True)
+
+    organism_name = forms.CharField(
+        label="Organism Name", required=False
+    )
+
+    taxonomic_node = forms.IntegerField(
+        min_value=2,
+        label="Taxonomic ID", required=False)
+
+    taxmap_file = forms.FileField(
+        required=False
+    )
+
+    organism_name_file = forms.FileField(
+        required=False
+    )
+
+    assembly_accessions_file = forms.FileField(
+        required=False
+    )
+
+    def __init__(self,data=None,*args,**kwargs):
+        super(UploadGenomeForm,self).__init__(data,*args,**kwargs)
+        '''
+                print("+++++++", data)
+        if data:
+            print(data.get('taxmap_file'))
+            if data.get('taxmap_file', None) != '':
+                self.fields['taxmap_file'].required = True
+                self.fields['taxonomic_node'].required = False
+
+        '''
+
+
+
+    def clean(self):
+        cleaned_data = super().clean()
+        taxmap_file = cleaned_data['taxmap_file']
+        taxonomic_node = cleaned_data['taxonomic_node']
+        organism_file = cleaned_data['organism_name_file']
+        if taxmap_file == None and taxonomic_node == None:
+           self.add_error('taxonomic_node','specify a taxonomic node for the formatting procedure')
+           self.add_error('taxmap_file','specify a taxmap file for the formatting procedure')
+
+        elif taxmap_file != None and taxonomic_node != None:
+            self.add_error('taxonomic_node', 'just specify one, a taxonomic node or a taxmap file')
+            self.add_error('taxmap_file', 'just specify one, a taxonomic node or a taxmap file')
+
+        if taxmap_file != None and organism_file == None:
+            self.add_error('organism_name_file','if you upload a taxmap file you should also upload a file that contains the organism names of target genomes, separated by lines')

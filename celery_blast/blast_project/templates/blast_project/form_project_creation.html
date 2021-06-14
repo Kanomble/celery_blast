@@ -31,10 +31,10 @@
     </div>
 
     <div class="form-group">
-        <label for="project_database"> Select a BLAST Database </label>
-        <select class="form-control" id="project_database" name="project_database">
+        <label for="project_forward_database"> Select a BLAST Database </label>
+        <select class="form-control" id="project_forward_database" name="project_forward_database">
 
-            {% for database in ProjectCreationForm.project_database %}
+            {% for database in ProjectCreationForm.project_forward_database %}
                 {{database}}
             {% endfor %}
 

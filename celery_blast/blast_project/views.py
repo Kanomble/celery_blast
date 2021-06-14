@@ -5,7 +5,7 @@ from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm,\
-    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward
+    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project
 from .py_services import list_taxonomic_files, upload_file, \
     delete_project_and_associated_directories_by_id, get_html_results
@@ -165,6 +165,24 @@ def create_taxonomic_file_view(request):
         return render(request, 'blast_project/create_taxonomic_file.html', context)
     except Exception as e:
         return failure_view(request,e)
+
+@login_required(login_url='login')
+def upload_genome_view(request):
+    try:
+        if request.method == "POST":
+            upload_genome_form = UploadGenomeForm(request.POST, request.FILES)
+            if upload_genome_form.is_valid():
+                print("It's valid")
+                return success_view(request)
+        else:
+            upload_genome_form = UploadGenomeForm()
+
+        #files = request.FILES.getlist('genome_fasta_files')
+        context = {'UploadGenomeForm':upload_genome_form}
+        return render(request,'blast_project/upload_genome_files_dashboard.html',context)
+    except Exception as e:
+        return failure_view(request,e)
+
 
 ''' registration, login and logout views
 register an account with email and password, email can be used inside biopython functions
