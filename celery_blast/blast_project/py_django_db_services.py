@@ -38,7 +38,7 @@ def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,que
             project_user=user,
             project_forward_settings=fw_settings,
             project_backward_settings=bw_settings,
-            project_database=valid_project_form.cleaned_data['project_database'],
+            project_forward_database=valid_project_form.cleaned_data['project_database'],
             species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast']
         )
         return blast_project

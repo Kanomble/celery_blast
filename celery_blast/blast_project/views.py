@@ -93,7 +93,7 @@ def project_details_view(request, project_id):
         blast_project = get_project_by_id(project_id)
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'BlastProject':blast_project,
-                    'Database':blast_project.project_database,}
+                    'Database':blast_project.project_forward_database, }
                    #'ProtPfam':prot_to_pfam}
         return render(request,'blast_project/project_details_dashboard.html',context)
     except Exception as e:

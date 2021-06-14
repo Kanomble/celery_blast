@@ -98,6 +98,8 @@ class BlastDatabase(models.Model):
     def get_pandas_table_name(self):
         return self.database_name.replace(' ','_').upper()
 
+    #can be deleted?
+    #TODO deprecated
     def get_database_palfile_for_snakemake_config(self):
         return self.path_to_database_file + '/' + self.database_name.replace(' ','_').upper() + '.database.pal'
 
@@ -136,11 +138,20 @@ class BlastProject(models.Model):
         verbose_name="settings for the backward BLAST execution",
         related_name='project_backward_settings')
 
-    #each project can have one blast_database
-    project_database = models.ForeignKey(
+    #each project can have one forward BlastDatabase
+    project_forward_database = models.ForeignKey(
         BlastDatabase,
         on_delete=models.CASCADE,
-        verbose_name="associated forward BLAST database")
+        verbose_name="associated forward BLAST database",
+        related_name="project_database"
+    )
+
+    project_backward_database = models.ForeignKey(
+        BlastDatabase,
+        on_delete=models.CASCADE,
+        verbose_name="associated backward BLAST database",
+        related_name="project_backward_database"
+    )
 
     species_name_for_backward_blast = models.CharField(
         max_length=200, blank=False,
@@ -161,7 +172,7 @@ class BlastProject(models.Model):
     def __str__(self):
         return "Reciprocal BLAST Project, created {} by {} with fw db {}".format(
             self.timestamp, self.project_user.username,
-            self.project_database.database_name)
+            self.project_forward_database.database_name)
 
     def get_project_username(self):
         return self.project_user.name
@@ -208,7 +219,8 @@ class BlastProject(models.Model):
             snk_config_file = open('media/blast_projects/' + str(self.id)+'/snakefile_config','w')
             #database path from media/blast_projects/project_id as working directory for snakemake
             snk_config_file.write('project_id: '+str(self.id)+"\n")
-            snk_config_file.write('blastdb: '+"\"" +"../../databases/"+str(self.project_database.id)+"/"+self.project_database.get_pandas_table_name() + ".database\"\n")
+            snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
+            snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
             snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
 
