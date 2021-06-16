@@ -7,10 +7,10 @@ div.dashboard_project_list_col {
 
     border-radius: 5px;
 
-    margin-top: 15px;
-    margin-bottom: 15px;
-    margin-left: 30px;
-    margin-right: 30px;
+    margin-top: 15px !important;
+    margin-bottom: 15px !important;
+    margin-left: 30px !important;
+    margin-right: 30px !important;
 }
 
 div.base_header {
@@ -79,3 +79,4 @@ h3.project-creation-header {
     font-family: "Courier New";
     font-weight: bold;
 }
+

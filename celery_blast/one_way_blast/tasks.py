@@ -31,7 +31,7 @@ def execute_one_way_blast_project(self,project_id):
         one_way_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.3:5000',
+             '--wms-monitor','http://172.23.0.5:5000',
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
@@ -79,7 +79,7 @@ def execute_one_way_remote_blast_project(self,project_id):
         one_way_remote_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.3:5000',
+             '--wms-monitor','http://172.23.0.5:5000',
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,

@@ -34,7 +34,10 @@
             </div>
             {% endif %}
         </div>
-
+        <br>
+        <hr>
+            <h3 class="project-creation-header"> Additional Informations for Genome FASTA File Upload </h3>
+        <hr>
         <div class="form-group">
             <label for="assembly_accession"> Assembly Accession Name (Optional)</label>
             <input type="text" class="form-control" id="assembly_accession" name="assembly_accession" >
@@ -75,6 +78,8 @@
         </div>
         <br>
         <hr>
+            <h3 class="project-creation-header"> Additional Informations For Concatenated GENOME FASTA File Upload </h3>
+        <hr>
         <div class="form-group">
             <label for="taxmap_file">Taxmap File (optional) if Taxonomic Node specified </label>
             <input type="file" class="form-control-file" id="taxmap_file" name="taxmap_file">
@@ -99,6 +104,16 @@
             {% if UploadGenomeForm.assembly_accessions_file.errors %}
             <div class="alert alert-danger">
                 <strong>{{ UploadGenomeForm.assembly_accessions_file.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="assembly_level_file">File with Assembly Levels (sep. by lines)</label>
+            <input type="file" class="form-control-file" id="assembly_level_file" name="assembly_level_file">
+            {% if UploadGenomeForm.assembly_level_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.assembly_level_file.errors }}</strong>
             </div>
             {% endif %}
         </div>

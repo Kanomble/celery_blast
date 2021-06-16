@@ -170,12 +170,12 @@ def create_taxonomic_file_view(request):
 def upload_genome_view(request):
     try:
         if request.method == "POST":
-            upload_genome_form = UploadGenomeForm(request.POST, request.FILES)
+            upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
             if upload_genome_form.is_valid():
                 print("It's valid")
                 return success_view(request)
         else:
-            upload_genome_form = UploadGenomeForm()
+            upload_genome_form = UploadGenomeForm(request.user)
 
         #files = request.FILES.getlist('genome_fasta_files')
         context = {'UploadGenomeForm':upload_genome_form}

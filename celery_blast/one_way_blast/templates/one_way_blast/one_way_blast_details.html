@@ -7,7 +7,7 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
 {% endblock %}
 
-{% block page_title %} Reciprocal Blast Project Details {% endblock %}
+{% block page_title %} One Way Blast Project Details {% endblock %}
 
 {% block infoheader %} Project Details {% endblock %}
 
@@ -96,12 +96,14 @@ Project Details
         </div>
     </div>
 
-  {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
-    <div class="dashboard_project_list_col">
-        {% include GenusPlotTemplate %}
-    </div>
-  {% endif %}
+    <div class="container-fluid">
 
+      {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
+        <div class="dashboard_project_list_col">
+            {% include GenusPlotTemplate %}
+        </div>
+      {% endif %}
+    </div>
 </div>
 {% endblock %}
 

@@ -71,11 +71,11 @@ def execute_reciprocal_blast_project(self,project_id):
         raise Exception('couldnt update blastproject with exception : {}'.format(e))
     try:
         logger.info('trying to start snakemake reciprocal BLAST workflow')
-        #snakemake --snakefile 'static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/blast_projects/4/snakefile_config' --directory 'media/blast_projects/4/'
+        #snakemake --snakefile '../../../static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/one_way_blast/remote_searches/1/snakefile_config'
         reciprocal_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.3:5000',
+             '--wms-monitor','http://172.23.0.4:5000',
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,

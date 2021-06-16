@@ -27,6 +27,20 @@ def get_species_taxid_by_name(user_email,scientific_name):
         raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
 
 #TODO documentation
+def check_given_taxonomic_node(user_email, taxid):
+    try:
+        Entrez.email = user_email
+        handle = Entrez.efetch(db="taxonomy", id=taxid, retmode="xml")
+        record = Entrez.read(handle)
+        handle.close()
+        if(len(record) != 0):
+            return taxid
+        else:
+            raise Exception("there is no scientific name defined by your procided taxonomic node")
+    except Exception as e:
+        raise Exception("exception occured during validation of taxonomic node : {}".format(e))
+
+#TODO documentation
 def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
     try:
         project = get_project_by_id(project_id)

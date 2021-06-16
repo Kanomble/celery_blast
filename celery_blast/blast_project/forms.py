@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.forms import ModelChoiceField
 
-from .py_biopython import get_species_taxid_by_name
+from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node
 from .py_django_db_services import get_all_succeeded_databases
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
@@ -142,8 +142,10 @@ class BlastSettingsFormBackward(forms.Form):
     )
 
 class UploadGenomeForm(forms.Form):
-    genome_fasta_file = forms.FileField(error_messages={
-                'required':"Upload a genome FASTA file with protein sequences, that can get formatted to a BLAST database."})
+    genome_fasta_file = forms.FileField(
+        error_messages={
+                'required':"Upload a genome FASTA file with protein sequences, that can get formatted to a BLAST database."}
+    )
 
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
@@ -174,25 +176,39 @@ class UploadGenomeForm(forms.Form):
         required=False
     )
 
-    def __init__(self,data=None,*args,**kwargs):
-        super(UploadGenomeForm,self).__init__(data,*args,**kwargs)
-        '''
-                print("+++++++", data)
-        if data:
-            print(data.get('taxmap_file'))
-            if data.get('taxmap_file', None) != '':
-                self.fields['taxmap_file'].required = True
-                self.fields['taxonomic_node'].required = False
+    assembly_level_file = forms.FileField(
+        required=False
+    )
 
-        '''
+    user_email = forms.CharField(max_length=200)
 
+    def __init__(self,user,*args,**kwargs):
+        super(UploadGenomeForm,self).__init__(*args,**kwargs)
+        self.fields['user_email'].charfield = user.email
+        self.fields['user_email'].initial = user.email
 
+    def clean_genome_fasta_file(self):
+        genome_fasta_file = self.cleaned_data['genome_fasta_file']
+        if genome_fasta_file.name.endswith('.faa') != True and genome_fasta_file.name.endswith('.fasta') != True:
+            raise ValidationError('specify a valid fasta file (with .faa or .fasta file name extension)')
+        else:
+            return genome_fasta_file
 
     def clean(self):
         cleaned_data = super().clean()
+        print(cleaned_data)
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
         organism_file = cleaned_data['organism_name_file']
+
+        user_email = self.fields['user_email'].charfield
+
+        if taxonomic_node != None:
+            try:
+                check_given_taxonomic_node(user_email,taxonomic_node)
+            except Exception as e:
+                self.add_error('taxonomic_node','there is no organism with your specified taxonomic node')
+
         if taxmap_file == None and taxonomic_node == None:
            self.add_error('taxonomic_node','specify a taxonomic node for the formatting procedure')
            self.add_error('taxmap_file','specify a taxmap file for the formatting procedure')
