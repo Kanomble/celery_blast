@@ -1,4 +1,5 @@
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
+from .py_services import  create_blastdatabase_directory
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError
 from celery.result import AsyncResult
@@ -130,3 +131,19 @@ def create_and_save_refseq_database_model(database_name,database_description,ass
         return blast_database
     except Exception as e:
         raise IntegrityError('couldnt save refseq genome model into database with exception : {}'.format(e))
+
+#TODO implementation documentation
+def upload_and_save_uploaded_genomes(database_title,database_description,genome_file,
+                                     assembly_level,taxonomic_node,assembly_accession=None,
+                                     organism_name=None,taxmap_file=None,organism_file=None,
+                                     assembly_accession_file=None,assembly_level_file=None):
+
+    try:
+        #write ,assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path in line
+        #write("{},{},{},{},{},{}\n".format())
+        pass
+    except Exception as e:
+        raise IntegrityError('couldnt save uploaded genome model into database with exception : {}'.format(e))
+
+    # create_blastdatabase_directory(blast_database.id)
+    return None

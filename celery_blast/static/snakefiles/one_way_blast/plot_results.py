@@ -108,17 +108,23 @@ for query in unique_queries:
 result_df = pd.concat(dataframes)
 
 #cols = math.ceil(math.sqrt(len(result_df['qseqid'].unique())))
+rf = result_df.drop_duplicates(subset='genus', keep="first")
 bars = []
+selection = alt.selection_multi(fields=['genus'])
 for df in dataframes:
-    bar = alt.Chart(df).mark_bar().encode(
-        alt.Y("count()"),
-        alt.X("genus"),
-        color="genus",
-        tooltip=["count()"]
-    ).facet(facet='query_info')
-    bars.append(bar)
+    # make_selector = alt.Chart(df).mark_rect().encode(y='genus', color='genus').add_selection(selection)
+    bar = alt.Chart(df).mark_bar(tooltip=True).encode(
+        alt.X("count()"),
+        alt.Y("genus"),
+        color=alt.Color('genus', legend=None),
+        tooltip=['count()', 'mean(bitscore)', 'mean(evalue)'],
+    ).transform_filter(selection).interactive().facet(facet='query_info')
 
-graphics = bars[0]
+    graph = bar
+    bars.append(graph)
+
+make_selector = alt.Chart(rf).mark_rect().encode(y='genus', color='genus').add_selection(selection)
+graphics = make_selector | bars[0]
 if len(bars) > 1:
     for bar in bars[1:]:
         graphics |= bar
@@ -132,8 +138,9 @@ charts_template = """
 <head>
   <style>
     #visCustom {{
-      overflow-y: auto;
-      overflow-x: auto;
+      overflow-y: scroll;
+      overflow-x: scroll;
+      max-height: inherit;
       }}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/vega@{vega_version}"></script>
@@ -166,3 +173,63 @@ with open(snakemake.params['genus_bars_static'], 'w') as f:
         vegaembed_version=alt.VEGAEMBED_VERSION,
         spec=graphics.to_json(indent=None),
     ))
+
+
+pd.set_option('colheader_justify', 'left')
+html_string = '''
+<html>
+  <head>
+    <title>BLAST Result Table</title>
+    <!-- DataTables stylesheets-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.2/css/select.dataTables.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
+  </head>
+
+  <body>
+    <div id="blast_results_table" style="display:none">
+        {table}
+    </div>
+  </body>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <!-- input scripts for DataTables: https://datatables.net/ -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.3.2/js/dataTables.select.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
+    <script>
+    $(document).ready(function(){{
+        var table = document.getElementsByTagName('table');
+        table[0].id='myTable'
+        $('#myTable').DataTable(
+            {{
+                dom: 'Bfrtip',
+                "lengthMenu": [ 100 ],
+                buttons: [
+                    'copy',
+                    'csv',
+                    'selectAll',
+                    'selectNone',
+                    'selectRows'
+                ],
+                select: true
+            }}
+        );
+        var result_table = document.getElementById('blast_results_table');
+        result_table.style.display = "block";
+    }});
+    </script>
+
+</html>
+'''
+
+# OUTPUT AN HTML FILE
+# with open('fw_results.html', 'w') as f:
+#    f.write(html_string.format(table=fw_res.to_html(classes='mystyle')))
+
+# with open('bw_results.html', 'w') as f:
+#    f.write(html_string.format(table=bw_res.to_html(classes='mystyle')))
+
+with open(snakemake.output['html_table'], 'w') as f:
+    f.write(html_string.format(table=result_df.to_html(classes='mystyle')))

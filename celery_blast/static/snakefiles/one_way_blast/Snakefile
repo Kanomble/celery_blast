@@ -11,17 +11,17 @@ rule blast:
 	shell:
 		"blastp -db {params.database} -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries}"
 
-
+'''
 rule blast_table_to_html:
 	input: res="blast_results.table"
 	output: html_table="blast_results.html"
 	script:
 		"../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
-
+'''
 
 rule blast_results_to_plots:
 	input: blast_results="blast_results.table", query_file=config['query_sequence']
 	params: genus_bars_static="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + '/genus_bars.html'
-	output: genus_bars="genus_bars.html"
+	output: genus_bars="genus_bars.html",html_table="blast_results.html"
 	script:
 		"../../../static/snakefiles/one_way_blast/plot_results.py"
