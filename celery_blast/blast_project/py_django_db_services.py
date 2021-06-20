@@ -40,6 +40,7 @@ def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,que
             project_forward_settings=fw_settings,
             project_backward_settings=bw_settings,
             project_forward_database=valid_project_form.cleaned_data['project_forward_database'],
+            project_backward_database=valid_project_form.cleaned_data['project_backward_database'],
             species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast']
         )
         return blast_project
@@ -133,7 +134,7 @@ def create_and_save_refseq_database_model(database_name,database_description,ass
         raise IntegrityError('couldnt save refseq genome model into database with exception : {}'.format(e))
 
 #TODO implementation documentation
-def upload_and_save_uploaded_genomes(database_title,database_description,genome_file,
+def save_uploaded_genomes_into_database(database_title,database_description,genome_file,
                                      assembly_level,taxonomic_node,assembly_accession=None,
                                      organism_name=None,taxmap_file=None,organism_file=None,
                                      assembly_accession_file=None,assembly_level_file=None):

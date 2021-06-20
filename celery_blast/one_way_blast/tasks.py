@@ -103,4 +103,4 @@ def execute_one_way_remote_blast_project(self,project_id):
         one_way_remote_blast_snakemake.kill()
 
         raise Exception(
-            'exception during waiting for popen instance : {} \n\t returncode of popen.wait : {}'.format(e, returncode))
+            'exception during waiting for popen instance : {} \n\t returncode of popen.wait > 0'.format(e))

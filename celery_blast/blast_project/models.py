@@ -220,14 +220,13 @@ class BlastProject(models.Model):
             #database path from media/blast_projects/project_id as working directory for snakemake
             snk_config_file.write('project_id: '+str(self.id)+"\n")
             snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
-            snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
+            snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_backward_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
             snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
 
             bw_dict=self.project_backward_settings.values_as_fw_or_bw_dict('bw')
-
-            #print(bw_dict)
             fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
+
             for key_bw in bw_dict.keys():
                 snk_config_file.write(key_bw+': '+bw_dict[key_bw]+"\n")
 

@@ -35,7 +35,7 @@ rule bw_query_preparation:
 rule backward_blast:
 	input: bw_queries="bw_queries.faa"
 	output: "blastp_bw_out.table"
-	params: word_size=config['bw_word_size'], e_value=config['bw_e_value'], num_alignments=config['bw_num_alignments'], max_hsps=config['bw_max_hsps'], num_threads=config['bw_num_threads'], taxid=config['bw_taxid'], database=config['blastdb']
+	params: word_size=config['bw_word_size'], e_value=config['bw_e_value'], num_alignments=config['bw_num_alignments'], max_hsps=config['bw_max_hsps'], num_threads=config['bw_num_threads'], taxid=config['bw_taxid'], database=config['backwarddb']
 	shell:
 		"blastp -db {params.database} -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output[0]} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {input.bw_queries}"
 

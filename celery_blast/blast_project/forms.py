@@ -76,6 +76,11 @@ class ProjectCreationForm(forms.Form):
         empty_label=None
     )
 
+    project_backward_database = BlastDatabaseModelChoiceField(
+        queryset=get_all_succeeded_databases(),
+        empty_label=None
+    )
+
     species_name_for_backward_blast = forms.CharField(
         required=True,
         label='Scientific Names (conversion to Taxonomic Nodes) for Backward BLAST',
@@ -91,6 +96,7 @@ class ProjectCreationForm(forms.Form):
         self.fields['user_email'].charfield = user.email
         self.fields['user_email'].initial = user.email
 
+    #TODO check if backward organism reside in the backward blast database
     def clean_species_name_for_backward_blast(self):
         species_name = self.cleaned_data['species_name_for_backward_blast']
         user_email = self.fields['user_email'].charfield
@@ -194,12 +200,14 @@ class UploadGenomeForm(forms.Form):
         else:
             return genome_fasta_file
 
+    #TODO add controll
     def clean(self):
         cleaned_data = super().clean()
-        print(cleaned_data)
+        #print(cleaned_data)
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
         organism_file = cleaned_data['organism_name_file']
+        genome_fasta_file = cleaned_data['genome_fasta_file']
 
         user_email = self.fields['user_email'].charfield
 
@@ -207,15 +215,30 @@ class UploadGenomeForm(forms.Form):
             try:
                 check_given_taxonomic_node(user_email,taxonomic_node)
             except Exception as e:
-                self.add_error('taxonomic_node','there is no organism with your specified taxonomic node')
+                self.add_error('taxonomic_node','there is no organism with your specified taxonomic node, exception : {}'.format(e))
 
         if taxmap_file == None and taxonomic_node == None:
            self.add_error('taxonomic_node','specify a taxonomic node for the formatting procedure')
            self.add_error('taxmap_file','specify a taxmap file for the formatting procedure')
 
-        elif taxmap_file != None and taxonomic_node != None:
-            self.add_error('taxonomic_node', 'just specify one, a taxonomic node or a taxmap file')
-            self.add_error('taxmap_file', 'just specify one, a taxonomic node or a taxmap file')
+        if taxmap_file != None:
 
-        if taxmap_file != None and organism_file == None:
-            self.add_error('organism_name_file','if you upload a taxmap file you should also upload a file that contains the organism names of target genomes, separated by lines')
+            if taxonomic_node != None:
+                self.add_error('taxonomic_node', 'just specify one, a taxonomic node or a taxmap file')
+                self.add_error('taxmap_file', 'just specify one, a taxonomic node or a taxmap file')
+
+            if organism_file == None:
+                self.add_error('organism_name_file','if you upload a taxmap file you should also upload a file that contains the organism names of target genomes, separated by lines')
+
+            protein_ids = 0
+            for chunk in genome_fasta_file.chunks():
+                protein_ids += chunk.decode().count(">")
+
+            taxmap_ids = 0
+            for chunk in taxmap_file.chunks():
+                taxmap_ids += chunk.decode().count('\n')
+
+            if taxmap_ids != protein_ids:
+                self.add_error('taxmap_file','the amount of provided acc_ids: {} does not match the provided amount of protein_ids: {}'.format(taxmap_ids,protein_ids))
+
+            #print(protein_ids)
