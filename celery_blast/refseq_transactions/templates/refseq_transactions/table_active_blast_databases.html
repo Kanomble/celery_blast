@@ -8,6 +8,7 @@
                     <th>Assembly Entries</th>
                     <th>Assembly Levels</th>
                     <th>Attached Taxonomic File</th>
+                    <th>Uploaded Database</th>
                     <th>Status Of Associated Process</th>
                     <th>Delete Database</th>
                     <th>Database Details</th>
@@ -18,7 +19,7 @@
                     <tr>
                         <td>{{database.database_name}}</td>
                         <td>{{database.database_description}}</td>
-                        <td>{{database.timestamp}}</td>
+                        <td>{{database.timestamp|date:'d.m.Y, h:m:s'}}</td>
                         <td>{{database.assembly_entries}}</td>
                         <td>
                         <table>
@@ -31,6 +32,8 @@
                         </table>
                         </td>
                         <td>{{database.attached_taxonomic_node_file}}</td>
+                        <td>{{ database.uploaded_files }}</td>
+
                         <td>{{database.database_download_and_format_task.status}}</td>
 
                         <td>

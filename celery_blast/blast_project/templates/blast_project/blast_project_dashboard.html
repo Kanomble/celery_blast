@@ -8,11 +8,29 @@
 
 {% block page_description %}
     This dashboard lists all available local databases, remote one way BLAST, local one way BLAST and
-    reciprocal BLAST projects of the current user (logged in as: {{ request.user }}.
-    Monitor and execute your current projects or view your results on the projects
-    <strong>Detail Page</strong>.
+    reciprocal BLAST projects of the current user (logged in as: <strong>{{ request.user }}</strong>).
+    Monitor and execute your current projects or view your results on the
+    <strong>Project Details </strong> pages. Manage and view available local databases by pressing the <strong>Database Details</strong>
+    button.
     If you want to create a completely new project or upload some genome databases take a look at the navigation bar
     at the top of this page.
+    <br>
+    <h2> Content of this Web-Tool </h2>
+    <ul>
+        <li> <a href="{% url 'project_creation' %}">  Reciprocal BLAST pipeline project creation </a></li>
+        <li> <a href="{% url 'one_way_project_creation' %}"> One-way BLAST project creation </a></li>
+        <ul>
+            <li> based on remotely available NCBI-Databases </li>
+            <li> based on locally downloaded or uploaded BLAST databases </li>
+        </ul>
+        <li> BLAST Database creation</li>
+        <ul>
+            <li> <a href="refseq_transactions_dashboard"> based on remotely available NCBI-Databases </a></li>
+            <li> <a href="upload_genome_files_dashboard.html"> based on locally downloaded or uploaded BLAST databases </a></li>
+        </ul>
+        <li> <a href="create_taxonomic_file.html"> Create files with taxonomic nodes for limiting your BLAST databases by taxonomic informations </a></li>
+
+    </ul>
 {% endblock %}
 
 {% block page_header %} Welcome to your project dashboard, {{request.user}}! {% endblock %}
@@ -21,7 +39,7 @@
 <div class="container-fluid">
 
     <div class="row" style="text-align: center">
-        <div class="col">
+        <div class="col" style="max-width: 50%">
           <div class="dashboard_project_list_col">
 
                 <h3 class="col_header"> Your Reciprocal BLAST Projects </h3>
@@ -37,7 +55,7 @@
         </div>
 
 
-        <div class="col">
+        <div class="col" style="max-width: 50%">
             <div class="dashboard_project_list_col">
                  <h3 class="col_header"> Local Available Databases </h3>
                 <hr>

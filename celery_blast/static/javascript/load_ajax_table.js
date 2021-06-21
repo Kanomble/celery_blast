@@ -15,7 +15,7 @@ function buildHtmlTable(arr) {
             cellValue = arr[i][columns[j]];
 
             if(arr[i][columns[j]].includes('href')){
-                console.log(arr[i][columns[j]]);
+                //console.log(arr[i][columns[j]]);
                 var link = document.createElement('a');
                 link.innerHTML = arr[i][columns[j]];
                 td.appendChild(link)
@@ -55,7 +55,9 @@ function createElementListForTable(jsonResponse){
     for(var i = 0;i < jsonResponse["QUERIES"].length;i++) {
         //var pElem = document.createElement('p');
         //pElem.innerHTML = jsonResponse["QUERIES"][i];
-        var links = {'TIGR': 'no entries', 'PFAM': 'no entries',
+        var links = {'TIGR': 'no entries', 'PFAM': 'no entries','CDD': 'no entries',
+            'Definition': jsonResponse['Definition'][jsonResponse["QUERIES"][i]],
+            'Length': jsonResponse['Length'][jsonResponse["QUERIES"][i]],
             'REFSEQ' : `<a href="${jsonResponse['REFSEQ'][jsonResponse["QUERIES"][i]]}">${jsonResponse['REFSEQ'][jsonResponse["QUERIES"][i]]}</a>`,
             'WP_NUMBER': jsonResponse["QUERIES"][i]}
 
@@ -69,6 +71,10 @@ function createElementListForTable(jsonResponse){
             links['PFAM'] = link;
         }
 
+        if (jsonResponse['CDD'][jsonResponse["QUERIES"][i]]){
+            var link = `<a href="${jsonResponse['CDD'][jsonResponse["QUERIES"][i]]}">${jsonResponse['CDD'][jsonResponse["QUERIES"][i]]}</a>`
+            links['CDD'] = link;
+        }
         elementList.push(links)
     }
 

@@ -1,5 +1,5 @@
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
-from .py_services import  create_blastdatabase_directory
+from .py_services import create_blastdatabase_directory, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError
 from celery.result import AsyncResult
@@ -22,8 +22,6 @@ def get_users_blast_projects(userid):
 '''
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
-
-
 
 #TODO documentation
 def get_project_by_id(project_id):
@@ -134,17 +132,57 @@ def create_and_save_refseq_database_model(database_name,database_description,ass
         raise IntegrityError('couldnt save refseq genome model into database with exception : {}'.format(e))
 
 #TODO implementation documentation
-def save_uploaded_genomes_into_database(database_title,database_description,genome_file,
-                                     assembly_level,taxonomic_node,assembly_accession=None,
+def save_uploaded_genomes_into_database(database_title,database_description,genome_file,assembly_entries,
+                                     assembly_level,taxonomic_node,user_email,assembly_accession=None,
                                      organism_name=None,taxmap_file=None,organism_file=None,
                                      assembly_accession_file=None,assembly_level_file=None):
 
     try:
-        #write ,assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path in line
-        #write("{},{},{},{},{},{}\n".format())
-        pass
+        blast_database = BlastDatabase.objects.create(database_name=database_title,
+                                                      database_description=database_description,
+                                                      assembly_entries=assembly_entries,
+                                                      uploaded_files=True)
+        #blast_database.path_to_database_file = 'media/databases/' + str(blast_database.id)
+        assembly_levels = AssemblyLevels.objects.filter(assembly_level__contains=assembly_level)
+        for assembly_lvl in assembly_levels:
+            blast_database.assembly_levels.add(assembly_lvl)
+
+        if taxmap_file != None:
+            create_database_directory_and_upload_files(blast_database,
+                                                       genome_file,
+                                                       taxmap_file=taxmap_file)
+
+            write_pandas_table_for_uploaded_genomes(blast_database,
+                                                    assembly_accession_file,
+                                                    assembly_level_file,
+                                                    organism_file,
+                                                    user_email)
+        elif taxmap_file == None:
+            create_database_directory_and_upload_files(blast_database,
+                                                       genome_file)
+
+            write_pandas_table_for_one_genome_file(blast_database,
+                                                   organism_name,
+                                                   assembly_level,
+                                                   taxonomic_node,
+                                                   assembly_accession)
+
+        blast_database.path_to_database_file = "media/databases/"+str(blast_database.id)
+        blast_database.save()
+        return blast_database
     except Exception as e:
         raise IntegrityError('couldnt save uploaded genome model into database with exception : {}'.format(e))
 
-    # create_blastdatabase_directory(blast_database.id)
-    return None
+#TODO documentation
+def create_database_directory_and_upload_files(blast_database,genome_file,taxmap_file=None):
+    try:
+
+        path_to_database = 'media/databases/' + str(blast_database.id) + '/'
+
+        create_blastdatabase_directory(database_id=blast_database.id)
+
+        if taxmap_file != None:
+            upload_file(taxmap_file, path_to_database+'acc_taxmap.table')
+        upload_file(genome_file, path_to_database + blast_database.database_name.replace(' ','_').upper()+'.database')
+    except Exception as e:
+        raise IntegrityError('couldnt upload genome or taxmap file into database directory with exception : {}'.format(e))

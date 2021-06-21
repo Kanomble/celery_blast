@@ -26,6 +26,16 @@
         </div>
 
          <div class="form-group">
+            <label for="assembly_entries">Number of Assembly Entries</label>
+            <input type="number" class="form-control" id="assembly_entries" name="assembly_entries">
+            {% if UploadGenomeForm.assembly_entries.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.assembly_entries.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+         <div class="form-group">
             <label for="genome_fasta_file">Genome FASTA File Upload</label>
             <input type="file" class="form-control-file" id="genome_fasta_file" name="genome_fasta_file">
             {% if UploadGenomeForm.genome_fasta_file.errors %}

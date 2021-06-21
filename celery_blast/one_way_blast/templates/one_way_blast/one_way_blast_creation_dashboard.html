@@ -1,14 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %} BLAST Dashboard {% endblock %}
+{% block title %} One-Way BLAST Project Creation {% endblock %}
 {% block add_headers %}
 
 {% endblock %}
-{% block page_title %} BLAST Project Dashboard {% endblock %}
+{% block page_title %} One-Way BLAST Project Creation {% endblock %}
 
-{% block infoheader %} One Way BLAST Project Dashboard {% endblock %}
+{% block infoheader %} One-Way BLAST Project Creation Dashboard {% endblock %}
 
 {% block page_description %}
+    This website can be used for creation of simple unidirectional BLAST sequence similarity searches. There are two options that can be used.
+    The first option allows you to create BLAST projects based on <strong>local protein databases</strong> and the second option allows you to create
+    BLAST projects based on databases that reside on <strong>NCBI-Servers</strong>. The second option is achieved by using the <strong>-remote</strong>
+    parameter of the <a href="https://www.ncbi.nlm.nih.gov/books/NBK279690/">BLAST-C++</a> software package.
+    <br>
+    <h2> Informations on advanced BLAST settings </h2>
+    <ul>
+        <li> Turn the <strong>Thread</strong> parameter to the number of your available CPU cores to enhance the search speed (only available for local BLAST searches) </li>
+        <li> If you search against very small local databases increase the <strong> E-Value </strong> parameter (<a href="https://www.metagenomics.wiki/tools/blast/evalue">E-Value informations</a>)</li>
+        <li> Changing the <strong>Word Size</strong> parameter will effect the amount of High-Scoring-Pairs and increases (higher word-size) or decreases (lower word-size) the search speed</li>
+        <li> You can provide an <strong>Entrez Query</strong> to your remote BLAST projects, this will limit your BLAST search based on your query (e.g. apes[organism] - more <a href="https://www.ncbi.nlm.nih.gov/books/NBK3837/">informations</a>)</li>
+        <li> The <strong> Max Hsps </strong> parameter is used to control the amount of HSPs on your subject sequences.
+            HSPs are assigned if the scoring value between the aligned sequences is above a certain threshold, thus subject sequences with more than one region of similarity will have multiple HSPs. </li>
+    </ul>
 {% endblock %}
 
 <!-- Welcome to your one way BLAST project dashboard, request.user!-->

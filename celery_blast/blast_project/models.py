@@ -63,6 +63,11 @@ class BlastDatabase(models.Model):
         verbose_name="date of database creation")
 
     # nullable fields
+
+    uploaded_files = models.BooleanField(
+        default=False,blank=True,null=True
+    )
+
     # possibility to add a taxonomic file
     attached_taxonomic_node_file = models.CharField(
         max_length=300,

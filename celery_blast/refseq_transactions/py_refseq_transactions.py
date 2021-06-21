@@ -149,7 +149,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
 
     #init parsing refseq table with pandas
     try:
-        refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None)
+        refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None, usecols=range(22))
         header = ["assembly_accession", "bioproject", "biosample", "wgs_master", "refseq_category", "taxid",
                   "species_taxid", "organism_name", "infraspecific_name", "isolate", "version_status", "assembly_level",
                   "release_type", "genome_rep", "seq_rel_date", "asm_name", "submitter", "gbrs_paired_asm",
@@ -218,7 +218,9 @@ def filter_table_by_taxonomy(refseq_table, taxonomy_table):
 def read_database_table_by_database_id_and_return_json(database_id):
     blastdb = get_database_by_id(database_id)
     tablefile_name = blastdb.database_name.replace(' ', '_').upper()
+    print("[++++++]",tablefile_name)
     table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name,header=0,index_col=0)
+    print(table)
     json = transform_data_table_to_json_dict(table)
     return json
 

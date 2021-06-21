@@ -13,7 +13,7 @@
                     <tr>
                         <td>{{project.r_project_title}}</td>
                         <td>{{project.r_project_database}}</td>
-                        <td>{{project.r_timestamp}}</td>
+                        <td>{{project.r_timestamp |date:'d.m.Y, h:m:s' }}</td>
                         <td>
                              <form class="col"
                                    action="{% url 'one_way_remote_project_details' project_id=project.id %}"

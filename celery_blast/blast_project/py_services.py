@@ -3,6 +3,7 @@ from os.path import isdir, isfile
 from os import mkdir, listdir
 from shutil import rmtree
 from django.db import IntegrityError, transaction
+from blast_project import py_biopython as pyb
 
 '''list_taxonomic_files
 
@@ -104,3 +105,93 @@ def html_table_exists(project_id,filename):
         return True
     else:
         return False
+
+#TODO documentation
+def write_pandas_table_for_one_genome_file(blast_database,organism_name,assembly_level,taxonomic_node,assembly_accession):
+    try:
+
+        path_to_database = 'media/databases/' + str(blast_database.id) + '/'
+
+        if assembly_accession == None:
+            assembly_accession = 'not provided'
+        if organism_name == None:
+            organism_name = 'not provided'
+
+        pandas_table_file = open(path_to_database + blast_database.get_pandas_table_name(), 'w')
+        pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+        pandas_table_file.write('0,{},{},{},{},{},{}\n'.format(
+            assembly_accession,organism_name,taxonomic_node,taxonomic_node,assembly_level,'uploaded genome'
+        ))
+        pandas_table_file.close()
+    except Exception as e:
+        raise IntegrityError("Couldnt write pandas dataframe for your uploaded genome file, with exception : {}".format(e))
+
+#TODO documentation
+def write_pandas_table_for_uploaded_genomes(blast_database,
+                                            assembly_accessions_file,
+                                            assembly_levels_file,
+                                            organisms_file,
+                                            user_email):
+    try:
+        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
+
+        taxonomic_nodes,organisms = get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email)
+
+        assembly_accessions = []
+        assembly_levels = []
+
+        if assembly_accessions_file != None:
+            for line in assembly_accessions_file:
+                line = line.decode().rstrip()
+                if line != '' and line != '\r':
+                    assembly_accessions.append(line)
+
+            if assembly_levels_file != None:
+                for line in assembly_levels_file:
+                    line = line.decode().rstrip()
+                    if line != '' and line != '\r':
+                        assembly_levels.append(line)
+            else:
+                for line in range(len(taxonomic_nodes)):
+                    assembly_levels.append('not provided')
+
+        elif assembly_accessions_file == None:
+            for line in range(len(taxonomic_nodes)):
+                assembly_accessions.append('not provided')
+            if assembly_levels_file != None:
+                for line in assembly_levels_file:
+                    line = line.decode().rstrip()
+                    if line != '' and line != '\r':
+                        assembly_levels.append(line)
+            else:
+                for line in range(len(taxonomic_nodes)):
+                    assembly_levels.append('not provided')
+
+        pandas_table_file = open(path_to_database+blast_database.get_pandas_table_name(),'w')
+        pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+        for line_index in range(len(taxonomic_nodes)):
+            pandas_table_file.write(str(line_index)+',')
+            pandas_table_file.write(assembly_accessions[line_index]+',')
+            pandas_table_file.write(organisms[line_index]+',')
+            pandas_table_file.write(taxonomic_nodes[line_index]+','+taxonomic_nodes[line_index]+',')
+            pandas_table_file.write(assembly_levels[line_index]+',uploaded genome\n')
+        pandas_table_file.close()
+
+    except Exception as e:
+        raise IntegrityError('couldnt write database table : {}'.format(e))
+
+#TODO documentation
+def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email):
+    try:
+        taxids = []
+        organisms = []
+        for line in organisms_file:
+            line = line.decode().rstrip()
+
+            if line != '':
+                taxid = pyb.get_species_taxid_by_name(user_email,line)
+                taxids.append(taxid)
+                organisms.append(line)
+        return taxids, organisms
+    except Exception as e:
+        raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))

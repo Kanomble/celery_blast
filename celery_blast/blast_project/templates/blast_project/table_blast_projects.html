@@ -4,6 +4,7 @@
                 <tr>
                     <th>Project Title</th>
                     <th>Forward Database Name</th>
+                    <th>Backward Database Name</th>
                     <th>Timestamp</th>
                     <th>Project Details</th>
                 </tr>
@@ -13,7 +14,8 @@
                     <tr>
                         <td>{{project.project_title}}</td>
                         <td>{{project.project_forward_database.database_name}}</td>
-                        <td>{{project.timestamp}}</td>
+                        <td>{{project.project_backward_database.database_name}}</td>
+                        <td>{{ project.timestamp|date:'d.m.Y, h:m:s' }}</td>
                         <td>
                              <form class="col"
                                    action="{% url 'project_details' project_id=project.id%}"

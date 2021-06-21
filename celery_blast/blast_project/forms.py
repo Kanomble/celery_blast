@@ -155,7 +155,7 @@ class UploadGenomeForm(forms.Form):
 
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
-
+    assembly_entries = forms.IntegerField(min_value=1,required=True)
     assembly_accession = forms.CharField(max_length=200,required=False)
 
     assembly_level = forms.ChoiceField(
@@ -165,6 +165,7 @@ class UploadGenomeForm(forms.Form):
     organism_name = forms.CharField(
         label="Organism Name", required=False
     )
+
 
     taxonomic_node = forms.IntegerField(
         min_value=2,
@@ -186,7 +187,7 @@ class UploadGenomeForm(forms.Form):
         required=False
     )
 
-    user_email = forms.CharField(max_length=200)
+    user_email = forms.CharField(max_length=200,required=False)
 
     def __init__(self,user,*args,**kwargs):
         super(UploadGenomeForm,self).__init__(*args,**kwargs)
@@ -209,7 +210,10 @@ class UploadGenomeForm(forms.Form):
         organism_file = cleaned_data['organism_name_file']
         genome_fasta_file = cleaned_data['genome_fasta_file']
 
-        user_email = self.fields['user_email'].charfield
+        assembly_accessions_file = cleaned_data['assembly_accessions_file']
+        assembly_level_file = cleaned_data['assembly_level_file']
+
+        user_email = cleaned_data['user_email']
 
         if taxonomic_node != None:
             try:
@@ -238,7 +242,37 @@ class UploadGenomeForm(forms.Form):
             for chunk in taxmap_file.chunks():
                 taxmap_ids += chunk.decode().count('\n')
 
+            #check if taxonomic_nodes_exists
+            organisms = 0
+            for chunk in organism_file.chunks():
+                lines = chunk.decode().split("\n")
+                for line in lines:
+                    if line != '':
+                        try:
+                            get_species_taxid_by_name(user_email,line)
+                        except:
+                            self.add_error('organism_name_file','there is no taxonomic node available for : {}'.format(line))
+                organisms += chunk.decode().count('\n')
+
             if taxmap_ids != protein_ids:
                 self.add_error('taxmap_file','the amount of provided acc_ids: {} does not match the provided amount of protein_ids: {}'.format(taxmap_ids,protein_ids))
 
-            #print(protein_ids)
+
+            if assembly_accessions_file != None:
+                amount_of_assemblies = 0
+                for chunk in assembly_accessions_file.chunks():
+                    lines = chunk.decode().split('\n')
+                    #print(lines)
+                    for line in lines:
+                        if line == '\r':
+                            self.add_error('assembly_accessions_file','there are lines without any informations in your assembly accessions file')
+                    amount_of_assemblies += chunk.decode().count('\n')
+                if amount_of_assemblies != organisms:
+                    self.add_error('assembly_accessions_file','the amount of assemblies: {} does not match the amount of provided organisms: {}'.format(amount_of_assemblies,organisms))
+
+            if assembly_level_file != None:
+                amount_of_levels = 0
+                for chunk in assembly_level_file.chunks():
+                    amount_of_levels += chunk.decode().count('\n')
+                if amount_of_levels != organisms:
+                    self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))

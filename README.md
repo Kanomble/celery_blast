@@ -10,7 +10,8 @@ cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 ## TODO
-- [ ] use a config file for all configuration options, e.g. the panoptes 
+- [ ] blastn one way searches can't display query sequence informations received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
+- [ ] use a config file for all configuration options, e.g. the panoptes
 - [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
 - [ ] add configuration environment variables for SNAKEMAKE

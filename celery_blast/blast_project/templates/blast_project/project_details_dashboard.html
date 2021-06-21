@@ -41,7 +41,7 @@ Project Details
                             </table>
                         </td>
 
-                        <td>{{BlastProject.timestamp}}</td>
+                        <td>{{BlastProject.timestamp|date:'d.m.Y, h:m:s'}}</td>
 
                         <td>
                             <form class="col"
@@ -73,7 +73,7 @@ Project Details
 
     <br>
 
-    <div class="dashboard_project_list_col" id="QUERY_INFO">
+    <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
     </div>
 
     <br>

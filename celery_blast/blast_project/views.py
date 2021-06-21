@@ -6,13 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm,\
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm
-from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project
+from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes
 from .py_services import list_taxonomic_files, upload_file, \
     delete_project_and_associated_directories_by_id, get_html_results
 from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
-from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id
+from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
@@ -172,9 +172,40 @@ def upload_genome_view(request):
         if request.method == "POST":
             upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
             if upload_genome_form.is_valid():
-                print("It's valid")
-                return success_view(request)
+                with transaction.atomic():
+                    new_db = save_uploaded_genomes_into_database(
+                        database_title=upload_genome_form.cleaned_data['database_title'],
+                        database_description=upload_genome_form.cleaned_data['database_description'],
+                        genome_file=upload_genome_form.cleaned_data['genome_fasta_file'],
+                        assembly_entries=upload_genome_form.cleaned_data['assembly_entries'],
+                        assembly_level=upload_genome_form.cleaned_data['assembly_level'],
+                        taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'],
+                        assembly_accession=upload_genome_form.cleaned_data['assembly_accession'],
+                        user_email=request.user.email,
+                        organism_name=upload_genome_form.cleaned_data['organism_name'],
+                        taxmap_file=upload_genome_form.cleaned_data['taxmap_file'],
+                        organism_file=upload_genome_form.cleaned_data['organism_name_file'],
+                        assembly_accession_file=upload_genome_form.cleaned_data['assembly_accessions_file'],
+                        assembly_level_file=upload_genome_form.cleaned_data['assembly_level_file']
+                    )
+
+                    genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ','_').upper()+'.database'
+                    if upload_genome_form.cleaned_data['taxmap_file'] != None:
+                        execute_makeblastdb_with_uploaded_genomes.delay(
+                            new_db.id,
+                            new_db.path_to_database_file + '/' + genome_file_name,
+                            taxmap_file=True)
+                    elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
+                        execute_makeblastdb_with_uploaded_genomes.delay(
+                            new_db.id,
+                            new_db.path_to_database_file + '/' + genome_file_name,
+                            taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
+                    else:
+                        raise Exception('couldnt trigger makeblastdb execution ...')
+                    return success_view(request)
+
         else:
+
             upload_genome_form = UploadGenomeForm(request.user)
 
         #files = request.FILES.getlist('genome_fasta_files')

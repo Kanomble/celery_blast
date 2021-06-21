@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
 
-        <link rel="stylesheet"  href="{%  static  'css/blast_project_styles.css'  %}">
+    <link rel="stylesheet"  href="{%  static  'css/blast_project_styles.css'  %}">
     <script src="{% static 'javascript/utils.js' %}"></script>
 
     {% block add_headers %}{% endblock %}
@@ -22,17 +22,17 @@
         {% block navbar %}
         <nav class="navbar navbar-dark bg-dark">
             <a class="navbar-brand" href="{% url 'blast_project_dashboard'%}">Home</a>
-                <h1 class="navbar_title"> {% block page_title %} SynMibi Reciprocal BLAST {% endblock %}</h1>
+                <h1 class="navbar_title"> {% block page_title %} Reciprocal BLAST Web-Tool {% endblock %}</h1>
                   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                   </button>
                   <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                       <div class="navbar-nav">
-                        <a class="nav-link" href="{% url 'one_way_project_creation' %}">Project Creation: Create Your BLAST Project<span class="sr-only">(current)</span></a>
-                        <a class="nav-link" href="{% url 'project_creation' %}">Project Creation: Create Your Reciprocal BLAST Project<span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="{% url 'one_way_project_creation' %}">Project Creation: One-Way BLAST Project<span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="{% url 'project_creation' %}">Project Creation: Reciprocal BLAST Project<span class="sr-only">(current)</span></a>
                         <a class="nav-link" href="{% url 'species_taxids' %}">Create Taxonomic Node Files<span class="sr-only">(current)</span></a>
                         <a class="nav-link" href="{% url 'upload_genomes' %}">Upload New Genome FASTA Files<span class="sr-only">(current)</span></a>
-                        <a class="nav-link" href="{% url 'refseq_transactions_dashboard' %}">RefSeq Database Transactions<span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="{% url 'refseq_transactions_dashboard' %}">BLAST Database Creation Dashboard<span class="sr-only">(current)</span></a>
                           <a class="nav-link" href="{% url 'logout' %}">Logout</a>
                       </div>
                   </div>
@@ -74,7 +74,7 @@
         <div class="container-fluid" id="titles">
             <div class="header base_header">
                 <br>
-                <h2> {% block page_header %} Welcome To This Page! {% endblock %} </h2>
+                <h2 id="pageHeader"> {% block page_header %} Welcome To This Page! {% endblock %} </h2>
             </div>
         </div>
         {% endblock %}
