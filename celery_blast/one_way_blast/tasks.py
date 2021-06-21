@@ -46,6 +46,9 @@ def execute_one_way_blast_project(self,project_id):
     try:
         logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(one_way_blast_snakemake.pid, 4000))
         returncode = one_way_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
+        if returncode > 0:
+            logger.warning('received a negative returncode : {} ... '.format(returncode))
+            raise Exception
         logger.info('returncode : {}'.format(returncode))
         progress_recorder.set_progress(100, 100, "SUCCESS")
         return returncode
@@ -94,6 +97,9 @@ def execute_one_way_remote_blast_project(self,project_id):
     try:
         logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(one_way_remote_blast_snakemake.pid, 4000))
         returncode = one_way_remote_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
+        if returncode > 0:
+            logger.warning('received a negative returncode {} ... '.format(returncode))
+            raise Exception
         logger.info('returncode : {}'.format(returncode))
         progress_recorder.set_progress(100, 100, "SUCCESS")
         return returncode

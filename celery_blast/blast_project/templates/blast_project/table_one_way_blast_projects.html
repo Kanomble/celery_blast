@@ -13,7 +13,7 @@
                     <tr>
                         <td>{{project.project_title}}</td>
                         <td>{{project.project_database.database_name}}</td>
-                        <td>{{project.timestamp}}</td>
+                        <td>{{project.timestamp |date:'d.m.Y, h:m:s'}}</td>
                         <td>
                              <form class="col"
                                    action="{% url 'one_way_project_details' project_id=project.id %}"
