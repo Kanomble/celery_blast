@@ -55,24 +55,25 @@ function createElementListForTable(jsonResponse){
     for(var i = 0;i < jsonResponse["QUERIES"].length;i++) {
         //var pElem = document.createElement('p');
         //pElem.innerHTML = jsonResponse["QUERIES"][i];
-        var links = {'TIGR': 'no entries', 'PFAM': 'no entries','CDD': 'no entries',
+        var links = {'PFAM - NCBI': 'no entries', 'PFAM - EMBL': 'no entries','CDD': 'no entries',
             'Definition': jsonResponse['Definition'][jsonResponse["QUERIES"][i]],
             'Length': jsonResponse['Length'][jsonResponse["QUERIES"][i]],
-            'REFSEQ' : `<a href="${jsonResponse['REFSEQ'][jsonResponse["QUERIES"][i]]}">${jsonResponse['REFSEQ'][jsonResponse["QUERIES"][i]]}</a>`,
-            'WP_NUMBER': jsonResponse["QUERIES"][i]}
+            'REFSEQ-Link' : `<a href="${jsonResponse['REFSEQ'][jsonResponse["QUERIES"][i]]}">${jsonResponse['REFSEQ'][jsonResponse["QUERIES"][i]].split('/')[4]}</a>`,
+            }
+            //'Protein Identifier': jsonResponse["QUERIES"][i]
 
         if (jsonResponse['TIGR'][jsonResponse["QUERIES"][i]]) {
-            var link = `<a href="${jsonResponse['TIGR'][jsonResponse["QUERIES"][i]]}">${jsonResponse['TIGR'][jsonResponse["QUERIES"][i]]}</a>`
-            links['TIGR'] = link;
+            var link = `<a href="${jsonResponse['TIGR'][jsonResponse["QUERIES"][i]]}">${jsonResponse['TIGR'][jsonResponse["QUERIES"][i]].split('/')[6]}</a>`
+            links['PFAM - NCBI'] = link;
         }
 
         if (jsonResponse['PFAM'][jsonResponse["QUERIES"][i]]) {
-            var link = `<a href="${jsonResponse['PFAM'][jsonResponse["QUERIES"][i]]}">${jsonResponse['PFAM'][jsonResponse["QUERIES"][i]]}</a>`
-            links['PFAM'] = link;
+            var link = `<a href="${jsonResponse['PFAM'][jsonResponse["QUERIES"][i]]}">${jsonResponse['PFAM'][jsonResponse["QUERIES"][i]].split('/')[4]}</a>`
+            links['PFAM - EMBL'] = link;
         }
 
         if (jsonResponse['CDD'][jsonResponse["QUERIES"][i]]){
-            var link = `<a href="${jsonResponse['CDD'][jsonResponse["QUERIES"][i]]}">${jsonResponse['CDD'][jsonResponse["QUERIES"][i]]}</a>`
+            var link = `<a href="${jsonResponse['CDD'][jsonResponse["QUERIES"][i]]}">${jsonResponse['CDD'][jsonResponse["QUERIES"][i]].split('=')[1]}</a>`
             links['CDD'] = link;
         }
         elementList.push(links)

@@ -34,7 +34,7 @@ Project Details
                     <tr>
                         <td>{{OneWayRemoteBlastProject.r_project_title}}</td>
                         <td>{{OneWayRemoteBlastProject.r_project_database}}</td>
-                        <td>{{OneWayRemoteBlastProject.r_timestamp}}</td>
+                        <td>{{OneWayRemoteBlastProject.r_timestamp |date:'d.m.Y, h:m:s'}}</td>
                         {% if OneWayRemoteBlastProject.r_entrez_query %}
                         <td>{{OneWayRemoteBlastProject.r_entrez_query}}</td>
                         {% endif %}
