@@ -1,7 +1,7 @@
 # celery_blast
-Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct and BLAST
+Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct, BLAST, Snakemake and Panoptes.
 ## Installation
-Installation can be done with `docker-compose up`. This should result into three different images and six containers.
+The application can get installed by submitting the `docker-compose up` command in a terminal window which points to the applications working directory (directory with `docker-compose.yml`). The docker client will pull two remotely available images, an image for the PostgreSQL database and an image for the RabbitMQ message broker. Additionally, a build process for a third image gets triggered. All required software tools are loaded and installed automatically into this third image. Next, docker creates six containers named: `celery_blast_X_1` where `X` is an synonym for `panoptes, worker, flower, web, postgres and rabbitmq`.
 If you run into any error during `docker-compose up` or if you recreate the container you need to activate the E-Direct tool. This can be achieved by submitting following command inside the docker container:
 ```` Bash
 docker exec -it celery_blast /bin/bash
@@ -66,7 +66,7 @@ Relationships can get further described with `related_name` and `related_query_n
 Model managers reside inside project specific `managers.py` files.
 Manager classes are responsible for specific creation functions, such as ``create_blast_project(fields=values ...)``.
 Those functions can be used to trigger side effect during initialization of the database entry.
-E.g. creation of blast project directories or filesettings...
+E.g. creation of blast project directories or file settings...
 
 ## BLAST Databases
 ### BLAST database preparation
@@ -75,11 +75,11 @@ Currently BLAST databases are downloaded from the BLAST FTP site provided by the
 If the user submits the form, a `BlastDatabase` model instance and a database directory with a file, that contains the filtered table, is created. The model is saved into the database without an associated `TaskResult`, thus yet it is not downloaded and formatted.
 
 ### Download and formatting procedure of genome assemblies
-If the user press the download button, a celery asynchronous task is executed. This task is composed of mutliple subtasks, that perform the relevant database creation steps.
-Celery allows task monitoring via a logger and with the `TaskResult` model of the [result backend](https://docs.celeryproject.org/en/stable/userguide/tasks.html#task-result-backends). The name of the function and celery task, which is triggered by the button is `download_blast_databases_based_on_summary_file` resides in the `refseq_transactions/tasks.py` file. This function processed three main steps, first it tries to download and decompress all files that reside in the `BlastDatabase` summary table, second it formats the downloaded protein fasta files to BLAST databases and third it writes an alias file similar to the file that is created with the `blastdb_aliastool`. In all of these three main steps processes via the `subprocess.Popen` interface are executed. In the first step, the unix command `wget` and `gzip` are used to download and simultaneous decompress genome assemblies from the NCBI FTP server. This is done with following command: `wget -qO- ftp_path | gzip -d > assembly_file.faa`. If this command results into any error (returncode != 0) it is retried with a maximum of ten tries. If there is no positive returncode after ten tries, the assembly file is skipped and excluded of the subsequent steps. In the second step `makeblastdb` is used to format every downloaded and decompressed assembly file.
+If the user presses the download button, a celery asynchronous task is executed. This task is composed of multiple subtasks, that perform the relevant database creation steps.
+Celery allows task monitoring via a logger and with the `TaskResult` model of the [result backend](https://docs.celeryproject.org/en/stable/userguide/tasks.html#task-result-backends). The name of the function and celery task, which is triggered by the button is `download_blast_databases_based_on_summary_file` resides in the `refseq_transactions/tasks.py` file. This function has to process three main steps, first it tries to download and decompress all files that reside in the `BlastDatabase` summary table, second it formats the downloaded protein fasta files to BLAST databases and third it writes an alias file similar to the file that is created with the `blastdb_aliastool`. In all of these three main steps processes via the `subprocess.Popen` interface are executed. In the first step, the unix command `wget` and `gzip` are used to download and simultaneous decompress genome assemblies from the NCBI FTP server. This is done with following command: `wget -qO- ftp_path | gzip -d > assembly_file.faa`. If this command results into any error (returncode != 0) it is retried with a maximum of ten tries. If there is no positive returncode after ten tries, the assembly file is skipped and excluded of the subsequent steps. In the second step `makeblastdb` is used to format every downloaded and decompressed assembly file.
 
 With the `makeblastdb` module we can create custom BLAST databases. Per default it will create a database for the input sequences, e.g. if you submit following cmd:
-`makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5` you will create a database for the bw_prot_db.faa.
+`makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5` you will create a database for the `bw_prot_db.faa`.
 The `-taxid` parameter is used to assign the taxonomic node 1140 (*Synechococcus elongatus* 7492) to all sequences that reside in the `bw_prot_db.faa` fasta file.
 If you have mutliple fasta files that needs to get formatted with the `makeblastdb` program, there are two options. First, you can pass multiple fasta files to the `-in` parameter. Secondly, after formatting each fasta individually, you can create a `.pal` database alias file that lists all existing databases or you can use the `blastdb_aliastool` program to create this alias file for you. If they have the same taxonomic node you can pass the taxid with the `-taxid` parameter to the program, if not use the `-taxid_map` parameter.
 
@@ -89,7 +89,7 @@ makeblastdb -in .\prot_2_db.faa -dbtype prot -taxid 1844971 -blastdb_version 5
 blastdb_aliastool -dblist 'prot_1_db.faa prot_2_db.faa' -dbtype prot -title combined_db -out combined_db
 blastp -query .\test.faa -db combined_db -out blast_out.table -outfmt "6 qseqid sseqid evalue bitscore qgi sgi sacc pident nident mismatch gaps qcovhsp staxids sscinames scomnames sskingdoms  stitle"
 ````
-BLASTP `-outfmt 6` output formats are descriped [here](http://www.metagenomics.wiki/tools/blast/blastn-output-format-6).
+BLASTP `-outfmt 6` output formats are described [here](http://www.metagenomics.wiki/tools/blast/blastn-output-format-6).
 
 The third step creates an alias file for all BLAST databases that have been formatted in the previous step. The alias file is the file, that would be created by the `blastdb_aliastool`.
 
@@ -103,7 +103,7 @@ DBLIST "prot_1_db.faa" "prot_2_db.faa"
 ````
 The `.pal` file combines different formatted BLAST databases so that they can be used as one combined database.
 This is useful for databases with duplicate sequences, they normally have an identifier (accession number) that starts with `WP`.
-During execution the underlying database (e.g. BlastDatabase or BlastProject) model OneToOne field gets updated with the appropriate `TaskResult` model.
+During execution the underlying database (e.g. `BlastDatabase` or `BlastProject`) model OneToOne field gets updated with the appropriate `TaskResult` model.
 This allows interaction with the associated celery task and can be used for displaying the progress of the task.
 
 ## SNAKEMAKE tasks with celery

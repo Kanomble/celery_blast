@@ -125,7 +125,7 @@ def execute_reciprocal_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
             execute_reciprocal_blast_project.delay(project_id)
-        return success_view(request)
+        return redirect('project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request,e)
 

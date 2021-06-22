@@ -130,7 +130,7 @@ def execute_one_way_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
             execute_one_way_blast_project.delay(project_id)
-        return success_view(request)
+        return redirect('one_way_project_details',project_id=project_id)
     except Exception as e:
         return failure_view(request,e)
 
@@ -140,7 +140,7 @@ def execute_one_way_remote_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
             execute_one_way_remote_blast_project.delay(project_id)
-        return success_view(request)
+        return redirect('one_way_remote_project_details',project_id=project_id)
     except Exception as e:
         return failure_view(request,e)
 
