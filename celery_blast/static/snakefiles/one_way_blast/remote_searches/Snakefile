@@ -18,7 +18,7 @@ rule blast:
 			" -num_alignments "+str(params.num_alignments)+\
 			" -query "+input.queries+\
 			" -remote"+\
-			" -entrez_query "+params.entrez_query
+			" -entrez_query \""+params.entrez_query+"\""
 			shell(cmd_string)
 		else:
 			cmd_string = "blastp -db "+params.database+\

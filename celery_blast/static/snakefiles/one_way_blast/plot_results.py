@@ -140,7 +140,7 @@ charts_template = """
     #visCustom {{
       overflow-y: scroll;
       overflow-x: scroll;
-      max-height: inherit;
+      height: 50%;
       }}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/vega@{vega_version}"></script>
