@@ -4,6 +4,7 @@ from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessEr
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
+from django.conf import settings
 
 from .py_django_db_services import update_one_way_blast_project_with_task_result_model,\
     update_one_way_remote_blast_project_with_task_result_model
@@ -13,6 +14,8 @@ logger = get_task_logger(__name__)
 
 @shared_task(bind=True)
 def execute_one_way_blast_project(self,project_id):
+    logger.info('snakemake one way blast workflow execution')
+    logger.info('setting panoptes ip to: {}'.format(settings.PANOPTES_IP))
     snakemake_working_dir = 'media/one_way_blast/' + str(project_id) + '/'
     snakemake_config_file = 'media/one_way_blast/' + str(project_id) + '/snakefile_config'
     snakefile_dir = 'static/snakefiles/one_way_blast/Snakefile'
@@ -31,7 +34,7 @@ def execute_one_way_blast_project(self,project_id):
         one_way_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.4:5000',
+             '--wms-monitor',settings.PANOPTES_IP,
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
@@ -64,6 +67,8 @@ def execute_one_way_blast_project(self,project_id):
 
 @shared_task(bind=True)
 def execute_one_way_remote_blast_project(self,project_id):
+    logger.info('snakemake one way remote blast workflow execution')
+    logger.info('setting panoptes ip to: {}'.format(settings.PANOPTES_IP))
     snakemake_working_dir = 'media/one_way_blast/remote_searches/' + str(project_id) + '/'
     snakemake_config_file = 'media/one_way_blast/remote_searches/' + str(project_id) + '/snakefile_config'
     snakefile_dir = 'static/snakefiles/one_way_blast/remote_searches/Snakefile'
@@ -82,7 +87,7 @@ def execute_one_way_remote_blast_project(self,project_id):
         one_way_remote_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.4:5000',
+             '--wms-monitor',settings.PANOPTES_IP,
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,

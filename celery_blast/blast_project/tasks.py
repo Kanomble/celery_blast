@@ -2,7 +2,7 @@
 
 import os
 from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
-
+from django.conf import settings
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
@@ -76,7 +76,7 @@ def execute_reciprocal_blast_project(self,project_id):
         reciprocal_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
-             '--wms-monitor','http://172.23.0.4:5000',
+             '--wms-monitor',settings.PANOPTES_IP,
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
