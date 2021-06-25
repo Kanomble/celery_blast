@@ -1,7 +1,7 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct, BLAST, Snakemake and Panoptes.
 ## Installation
-The application can get installed by submitting the `docker-compose up` command in a terminal window which points to the applications working directory (directory with `docker-compose.yml`). The docker client will pull two remotely available images, an image for the PostgreSQL database and an image for the RabbitMQ message broker. Additionally, a build process for a third image gets triggered. All required software tools are loaded and installed automatically into this third image. Next, docker creates six containers named: `celery_blast_X_1` where `X` is an synonym for `panoptes, worker, flower, web, postgres and rabbitmq`.
+The application can get installed by submitting the `docker-compose up` command in a terminal window which points to the applications working directory (directory with `docker-compose.yml`). The docker client will pull two remotely available images, an image for the PostgreSQL database and an image for the RabbitMQ message broker. Additionally, a build process for a third image gets triggered. All required software tools are loaded and installed automatically into this third image. Next, docker creates six containers named: `celery_blast_X_1` where `X` is a synonym for `panoptes, worker, flower, web, postgres and rabbitmq`.
 If you run into any error during `docker-compose up` or if you recreate the container you need to activate the E-Direct tool. This can be achieved by submitting following command inside the docker container:
 ```` Bash
 docker exec -it celery_blast /bin/bash
@@ -11,12 +11,12 @@ cd ../edirect && sh ./setup.sh
 ````
 ## TODO
 - [ ] blastn one way searches can't display query sequence informations received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
-- [ ] use a config file for all configuration options, e.g. the panoptes
+- [X] use a config file for all configuration options, e.g. the panoptes - settings.py
 - [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
-- [ ] add configuration environment variables for SNAKEMAKE
+- [X] add configuration environment variables for SNAKEMAKE - settings.py
 - [ ] check if backward organism is in database
-- [ ] reciprocal BLAST results, sequence in output and string of taxonomy; EXAMPLE: https://docs.google.com/spreadsheets/d/1EBwEp-C0ocCUBx3zVaCtxrMlTKGTZHx19lPq8q7W_bE/edit#gid=649158632
+- [X] reciprocal BLAST results, sequence in output and string of taxonomy; EXAMPLE: https://docs.google.com/spreadsheets/d/1EBwEp-C0ocCUBx3zVaCtxrMlTKGTZHx19lPq8q7W_bE/edit#gid=649158632
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [X] error handling if ftp_path does not exist e.g.: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/893/775/GCF_000893775.1_ViralProj70005/GCF_000893775.1_ViralProj70005_protein.faa.gz
 - [ ] write documentation for added functions
@@ -108,9 +108,10 @@ This allows interaction with the associated celery task and can be used for disp
 
 ## SNAKEMAKE tasks with celery
 In order to allow reproducability and allow an easy workflow understanding, the workflow engine snakemake is used.
-Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/`.
-Different snakefiles are designed to execute the desired workflow. Execution of snakemake is wrapped in functions of the `tasks.py` files,
-which are decorated with the celery `@shared_task` decorator. Those function use the `subprocess.Popen` interface to spawn the snakemake process.
+Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/`. 
+In addition they can be used outside this application, e.g. if the researcher needs to use additional settings or want to implement own post-processing procedures.
+Different snakefiles are designed to execute the desired workflows. Currently, there are Snakefiles for the One-Way BLAST remote and local searches and the reciprocal BLAST analysis. Execution of snakemake is wrapped in functions of the `tasks.py` files,
+which are decorated with the celery `@shared_task` decorator. Those functions are queued up by celery and are processed by the celery worker. Snakemake is executed with the `subprocess.Popen` interface which spawns a child process for every Snakemake workflow.
 
 Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enables snakemake communication with [Panoptes](https://github.com/panoptes-organization/monitor-schema). In addition [Flower](https://flower.readthedocs.io/en/latest/) can be used to monitor the celery tasks.
 
