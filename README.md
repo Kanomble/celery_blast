@@ -72,7 +72,7 @@ E.g. creation of blast project directories or file settings...
 ### BLAST database preparation
 Currently BLAST databases are downloaded from the BLAST FTP site provided by the NCBI. First the software downloads the refseq assembly summary file from the refseq [FTP](ftp://ftp.ncbi.nih.gov/genomes/refseq/) directory. This summary file inherits 226337 assembly entries. The application loads this summary file into a pandas dataframe, that gets processed. As a first step of BLAST database creation, the user has to define the level of assembly completeness (e.g. 'Complete Genome', 'Chromosome', 'Contig' and 'Scaffold'), secondly the user can filter the summary file with taxonomic informations. For example, the user could specify the assembly levels of the new database as `Complete Genome` and `Chromosome` and the `apes.taxids` file as basis for taxonomic limitation. According to this setup, the summary file gets filtered by the provided taxids (which reside in the `apes.taxids` file) and the assembly levels, which results into a table with 6 entries (20.04.2021).
 
-If the user submits the form, a `BlastDatabase` model instance and a database directory with a file, that contains the filtered table, is created. The model is saved into the database without an associated `TaskResult`, thus yet it is not downloaded and formatted.
+If the user submits the form, a `BlastDatabase` model instance and a database directory with a file, that contains the filtered table, is created. The model is saved into the database without an associated `TaskResult`, thus yet it is not downloaded and formatted. The download and formatting procedure has to be started separately.
 
 ### Download and formatting procedure of genome assemblies
 If the user presses the download button, a celery asynchronous task is executed. This task is composed of multiple subtasks, that perform the relevant database creation steps.
@@ -105,6 +105,9 @@ The `.pal` file combines different formatted BLAST databases so that they can be
 This is useful for databases with duplicate sequences, they normally have an identifier (accession number) that starts with `WP`.
 During execution the underlying database (e.g. `BlastDatabase` or `BlastProject`) model OneToOne field gets updated with the appropriate `TaskResult` model.
 This allows interaction with the associated celery task and can be used for displaying the progress of the task.
+
+## Uploading genomes for BLAST database creation
+The second option to obtain BLAST databases is to upload your own genomes. Currently only genomes with protein sequences are supported.
 
 ## SNAKEMAKE tasks with celery
 In order to allow reproducability and allow an easy workflow understanding, the workflow engine snakemake is used.
