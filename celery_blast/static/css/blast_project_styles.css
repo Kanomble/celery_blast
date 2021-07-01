@@ -59,6 +59,12 @@ div.transparent-box table {
     color: #000000;
 }
 
+div.transparent-box h3 {
+    text-align: center;
+    font-weight: bold;
+    font-family: "Courier New";
+}
+
 h3.project-creation-header {
     font-family: "Courier New";
     font-weight: bold;

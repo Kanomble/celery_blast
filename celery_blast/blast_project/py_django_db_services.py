@@ -2,6 +2,7 @@ from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
 from .py_services import create_blastdatabase_directory, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError
+from pandas import read_csv
 from celery.result import AsyncResult
 
 #following functions are utilized in the dashboard_view
@@ -186,3 +187,12 @@ def create_database_directory_and_upload_files(blast_database,genome_file,taxmap
         upload_file(genome_file, path_to_database + blast_database.database_name.replace(' ','_').upper()+'.database')
     except Exception as e:
         raise IntegrityError('couldnt upload genome or taxmap file into database directory with exception : {}'.format(e))
+
+#TODO documentation
+def check_if_taxid_is_in_database(database_id, taxonomic_node):
+    path_to_database = 'media/databases/' + str(database_id) + '/'
+    database = get_database_by_id(database_id)
+    pandas_table_file = path_to_database + database.get_pandas_table_name()
+    df = read_csv(pandas_table_file, header=0, index_col=0)
+    boolean = taxonomic_node in list(df['species_taxid'])
+    return boolean

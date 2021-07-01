@@ -196,7 +196,6 @@ class BlastProject(models.Model):
         else:
             return None
 
-    #
     ''' initialize_project_directory
     
         invokation is done with BlastProject.objects.initialize_project_directory() or 

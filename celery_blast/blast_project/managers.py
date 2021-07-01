@@ -1,5 +1,4 @@
 from django.db import models
-
 # example for model manager that is invoked as __init__ for the blastproject model
 # allows customization of queries for the database
 ''' BlastProjectManager

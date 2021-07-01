@@ -4,6 +4,7 @@ from os import mkdir, listdir
 from shutil import rmtree
 from django.db import IntegrityError, transaction
 from blast_project import py_biopython as pyb
+import pandas as pd
 
 '''list_taxonomic_files
 
@@ -195,3 +196,4 @@ def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_emai
         return taxids, organisms
     except Exception as e:
         raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))
+

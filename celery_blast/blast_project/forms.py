@@ -4,8 +4,9 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.forms import ModelChoiceField
 
+from pandas import read_csv
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node
-from .py_django_db_services import get_all_succeeded_databases
+from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
 
@@ -48,7 +49,20 @@ class CreateUserForm(UserCreationForm):
         model = User
         fields = ['username','email','password1','password2']
 
-#TODO documentation
+''' ProjectCreationForm
+    This form is used in the form_project_creation.html.
+    All form fields are processed into the BlastProject model instance via the project_creation_view functions 
+    in the views.py file. 
+    
+    fields | types:
+        - project_title | charfield
+        - search_strategy | choicefield --> currently disabled
+        - query_sequence_file | filefield
+        - project_forward_database | BlastDatabaseModelChoiceField
+        - project_backward_database | BlastDatabaseModelChoiceField
+        - species_name_for_backward_blast | charfield
+        - user_email | charfield
+'''
 class ProjectCreationForm(forms.Form):
     class BlastDatabaseModelChoiceField(forms.ModelChoiceField):
         def label_from_instance(self, blast_database):
@@ -102,10 +116,19 @@ class ProjectCreationForm(forms.Form):
         user_email = self.fields['user_email'].charfield
         try:
             taxonomic_node = get_species_taxid_by_name(user_email, species_name)
-            return species_name, taxonomic_node
+            backward_db = self.cleaned_data['project_backward_database']
+            forward_db = self.cleaned_data['project_forward_database']
+            booleanbw = check_if_taxid_is_in_database(backward_db.id,taxonomic_node)
+            booleanfw = check_if_taxid_is_in_database(forward_db.id,taxonomic_node)
+            if booleanbw == False:
+                self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(taxonomic_node,backward_db.database_name))
+            if booleanfw == False:
+                self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected FORWARD database: {}'.format(taxonomic_node,forward_db.database_name))
+            if booleanfw == True and booleanbw == True:
+                return species_name, taxonomic_node
         except Exception as e:
             raise ValidationError(
-                "validation error in clean_species_name pls check your provided scientific name : {}".format(e))
+                "validation error in clean_species_name pls check your provided scientific name : {}, due to this exception: ".format(species_name,e))
 
     def clean_query_sequence_file(self):
         query_file = self.cleaned_data['query_sequence_file']
@@ -113,7 +136,6 @@ class ProjectCreationForm(forms.Form):
             raise ValidationError("please upload only fasta files!")
         else:
             return query_file
-
 
 #TODO documentation
 class BlastSettingsFormForward(forms.Form):
@@ -204,15 +226,11 @@ class UploadGenomeForm(forms.Form):
     #TODO add controll
     def clean(self):
         cleaned_data = super().clean()
-        #print(cleaned_data)
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
         organism_file = cleaned_data['organism_name_file']
-        genome_fasta_file = cleaned_data['genome_fasta_file']
-
         assembly_accessions_file = cleaned_data['assembly_accessions_file']
         assembly_level_file = cleaned_data['assembly_level_file']
-
         user_email = cleaned_data['user_email']
 
         if taxonomic_node != None:

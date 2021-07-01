@@ -218,9 +218,7 @@ def filter_table_by_taxonomy(refseq_table, taxonomy_table):
 def read_database_table_by_database_id_and_return_json(database_id):
     blastdb = get_database_by_id(database_id)
     tablefile_name = blastdb.database_name.replace(' ', '_').upper()
-    print("[++++++]",tablefile_name)
     table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name,header=0,index_col=0)
-    print(table)
     json = transform_data_table_to_json_dict(table)
     return json
 
