@@ -400,7 +400,7 @@ def download_refseq_assembly_summary_file():
 
         # invoke wget program
 
-        wget_process = Popen(['wget', refseq_url,'-O',path_to_assembly_file])
+        wget_process = Popen(['wget', refseq_url,'-O',path_to_assembly_file],stdout=subPIPE, stderr=subSTDOUT)
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(

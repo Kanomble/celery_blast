@@ -14,6 +14,7 @@ services:
     hostname: posgres
     image: postgres:latest
     environment:
+      - TZ=Europe/Berlin
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -27,8 +28,7 @@ services:
 
   web:
     build: .
-    command:  sh -c "./wait-for postgres:5432
-     && python manage.py makemigrations blast_project
+    command:  sh -c "python manage.py makemigrations blast_project
      && python manage.py migrate blast_project
       && python manage.py makemigrations one_way_blast
       && python manage.py migrate one_way_blast

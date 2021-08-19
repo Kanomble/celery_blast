@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils import timezone
+from django.contrib.auth.models import User
 from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -247,11 +249,14 @@ def logout_user(request):
 def registration_view(request):
     userForm = CreateUserForm()
     if request.method == 'POST':
-        userForm = CreateUserForm(request.POST)
+        userForm = CreateUserForm(request.POST,initial={'last_login':timezone.now()})
         if userForm.is_valid():
             try:
-                userForm.save()
                 username = userForm.cleaned_data.get('username')
+                password = userForm.cleaned_data.get('password1')
+                email = userForm.cleaned_data.get('email')
+                user = User.objects.create_user(username, email, password=password, last_login=timezone.now())
+
                 #group = Group.objects.get(name='customer')
                 #user.groups.add(group)
                 messages.success(request,'Account was created for '+ username)

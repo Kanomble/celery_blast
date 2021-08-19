@@ -7,8 +7,13 @@ FROM ubuntu:focal
 
 # Download and install required software
 RUN apt-get update -y && apt-get upgrade -y && apt-get install curl -y && apt-get install wget bzip2 -y
+
 # Software and packages for the E-Direct Tool
-RUN apt-get -y -m update && DEBIAN_FRONTEND="noninteractive" TZ="Europe/Berlin" apt-get install -y cpanminus libxml-simple-perl libwww-perl libnet-perl build-essential
+RUN apt-get -y -m update && DEBIAN_FRONTEND="noninteractive" apt-get install -y cpanminus libxml-simple-perl libwww-perl libnet-perl build-essential tzdata
+
+#Set correct timezone
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # set working directory
 WORKDIR /blast
