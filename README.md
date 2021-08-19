@@ -9,6 +9,7 @@ docker exec -it celery_blast /bin/bash
 cd ../edirect && sh ./setup.sh
 #answer with y
 ````
+The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
 - [ ] blastn one way searches can't display query sequence informations received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [X] use a config file for all configuration options, e.g. the panoptes - settings.py
@@ -25,7 +26,7 @@ cd ../edirect && sh ./setup.sh
     - [X] add table for not downloaded databases with delete and download button (download button triggers snakemake)
     - [X] add table for downloaded databases with deletion button
     - [X] add table for downloaded databases with errors and with a deletion button
-- [ ] correct timezone in the docker image
+- [x] correct timezone in the docker image
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [ ] think about multiple species_name inputs ...
 - [x] integrate blast_project_dashboard functionality
