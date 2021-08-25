@@ -11,7 +11,11 @@ cd ../edirect && sh ./setup.sh
 ````
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
-- [ ] blastn one way searches can't display query sequence informations received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
+- [ ] extract subject sequences from database (with blastdbcmd and orthologous sequence id list)
+    - [ ] integrate docker container for mafft and fasttree 
+    - [ ] perform msa with orthologous subject sequences
+    - [ ] build ml or neighbour joining trees from all msa's
+- [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [X] use a config file for all configuration options, e.g. the panoptes - settings.py
 - [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
