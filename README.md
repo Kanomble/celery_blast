@@ -9,6 +9,7 @@ docker exec -it celery_blast /bin/bash
 cd ../edirect && sh ./setup.sh
 #answer with y
 ````
+If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
 - [ ] exclude not downloaded and formatted assemblies from summary table
