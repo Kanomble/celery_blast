@@ -11,53 +11,53 @@ cd ../edirect && sh ./setup.sh
 ````
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] exclude not downloaded and formatted assemblies from summary table
+- [ ] write documentation for added functions
+- [ ] refactor the create_blastdatabase_table_and_directory function (too long)
 - [ ] extract subject sequences from database (with blastdbcmd and orthologous sequence id list)
     - [ ] integrate docker container for mafft and fasttree 
     - [ ] perform msa with orthologous subject sequences
     - [ ] build ml or neighbour joining trees from all msa's
 - [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
-- [X] use a config file for all configuration options, e.g. the panoptes - settings.py
+- [ ] check if backward organism is in database
 - [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
+- [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
+    - [ ] think about multiple species_name inputs ...
 - [X] add configuration environment variables for SNAKEMAKE - settings.py
-- [ ] check if backward organism is in database
+- [X] use a config file for all configuration options, e.g. the panoptes - settings.py
 - [X] reciprocal BLAST results, sequence in output and string of taxonomy; EXAMPLE: https://docs.google.com/spreadsheets/d/1EBwEp-C0ocCUBx3zVaCtxrMlTKGTZHx19lPq8q7W_bE/edit#gid=649158632
-- [ ] exclude not downloaded and formatted assemblies from summary table
 - [X] error handling if ftp_path does not exist e.g.: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/893/775/GCF_000893775.1_ViralProj70005/GCF_000893775.1_ViralProj70005_protein.faa.gz
-- [ ] write documentation for added functions
-- [ ] refactor the create_blastdatabase_table_and_directory function (too long)
 - [X] refactor the refseq_transactions_dashboard in order to allow creation of a database directory with a csv table file, and tables for deletion download and details functions
     - [X] add table for not downloaded databases with delete and download button (download button triggers snakemake)
     - [X] add table for downloaded databases with deletion button
     - [X] add table for downloaded databases with errors and with a deletion button
 - [x] correct timezone in the docker image
-- [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
-    - [ ] think about multiple species_name inputs ...
 - [x] integrate blast_project_dashboard functionality
     - [x] TODO Database Models for dashboard functionality (base functionality)
     - [x] add links to Detail View, Delete View and Execution View
 - [X] integrate blastdb_creation dashboard functionality
     - [X] assembly download, `makeblastdb` execution and creation of `.pal` blast database alias files with celery
     - [X] monitoring with ajax and celery progress
-- [ ] integrate project_creation dashboard functionality
+- [X] integrate project_creation dashboard functionality
 - [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously
     - [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously to check celery tasks execution process
 - [X] use [celery-progress](https://github.com/czue/celery-progress) for monitoring the celery tasks execution process in the backend
 - [X] check out the .pal files from BLAST databases
 
 ## TODO Database Models
+- [ ] add validation
+- [ ] write tests
+- [ ] wrap database transactions inside `with transactions.atomic()` blocks
 - [X] create models:
     - [X] BlastProject
-        - [ ] add backward BlastDatabase
+        - [X] add backward BlastDatabase
     - [X] [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
     - [X] BlastDatabase
     - [X] BlastDatabaseManager
     - [X] BlastSettings
     - [X] AssemblyLevels
-- [ ] add validation
-- [ ] write tests
-- [ ] refactor models
-- [ ] wrap database transactions inside `with transactions.atomic()` blocks
+
 
 ## database models
 Django models reside inside project specific `models.py` files. Models are translated to database tables.
