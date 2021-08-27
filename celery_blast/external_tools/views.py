@@ -15,3 +15,11 @@ def project_informations(request, project_id):
         return render(request,"external_tools/external_tools_dashboard.html",context)
     except Exception as e:
         return failure_view(request,e)
+
+@login_required(login_url='login')
+def view_query_folder_informations(request,project_id,folder_path):
+    try:
+        context = {}
+        return render(request,"external_tools/query_informations.html",context)
+    except Exception as e:
+        return failure_view(request,e)
