@@ -1,5 +1,25 @@
 <!-- This template does not need to inherit from base.html since it is pasted into the project_details_dashboard template -->
 
-{% for folder in qseqid_folder %}
-    {{ folder }}
-{% endfor %}
+<table style="text-align: center">
+    <thead>
+        <tr>
+        {% for folder in qseqid_folder %}
+            <th> {{ folder }} </th>
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+         {% for folder in qseqid_folder %}
+             <td>
+                <form class="col"
+                       action='http://192.168.1.131:5001/project_information/{{ project_id }}'
+                       method="GET">
+                    {% csrf_token %}
+                    <input type="submit" value="{{ folder }}" class="btn btn-danger">
+                </form>
+             </td>
+        {% endfor %}
+        </tr>
+    </tbody>
+</table>
