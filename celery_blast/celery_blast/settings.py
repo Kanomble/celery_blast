@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django_celery_results',
     'refseq_transactions',
     'celery_progress',
-    'one_way_blast'
+    'one_way_blast',
+    'external_tools',
 ]
 
 MIDDLEWARE = [
