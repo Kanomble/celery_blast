@@ -1,9 +1,23 @@
 configfile: "./snakefile_config"
 import pandas as pd
 
+#filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
+QSEQIDS = []
+with open(config['query_sequence'],'r') as qseqfile:
+	for line in qseqfile.readlines():
+		if ">" in line:
+			#TODO adjust qseq_ids in query_sequence file in order to assign a new unique name ? - until now just refseq OR local database sequence headers are allowed
+			qseq_id = line.split(" ")[0].split(">")[1].split(".")[0]
+			QSEQIDS.append(qseq_id)
+
 rule all:
 	input:
-		"reciprocal_results.html","plot_amount_hits_of_target_taxon.png","plot_evalue_distribution.png"
+		expand("{qseqid}/target_sequences.faa",qseqid=QSEQIDS),
+		"reciprocal_results.html",
+		 "plot_amount_hits_of_target_taxon.png",
+		 "plot_evalue_distribution.png",
+		 "reciprocal_results.csv",
+		 "reciprocal_results_info.txt",
 
 rule forward_blast:
 	input: fw_queries=config['query_sequence']
@@ -22,7 +36,6 @@ rule fw_result_processing:
 		for gi in fw_results[6][:].unique():
 			out.write(gi+"\n")
 		out.close()
-
 
 #prepares the backward query fasta file
 rule bw_query_preparation:
@@ -50,6 +63,25 @@ rule blast_tables_to_html:
 	output: rec_html="reciprocal_results.html"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"
+
+rule blast_tables_to_csv:
+	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt"
+	output: result_csv="reciprocal_results.csv"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_orthologous_table.py"
+
+rule reciprocal_results_table_to_target_sequences:
+	input: result_csv="reciprocal_results.csv"
+	output: hit_information="reciprocal_results_info.txt"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
+
+rule extract_subject_sequences_from_database:
+	input: "{qseqid}/target_sequence_ids.txt"
+	output: "{qseqid}/target_sequences.faa"
+	params: database=config["blastdb"]
+	shell:
+		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
 
 rule blast_tables_to_plots:
 	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt",query_file=config['query_sequence']
