@@ -1,9 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponse
 from .py_services import get_list_of_query_sequence_folder
 from blast_project.views import failure_view, success_view
-
+from .tasks import execute_multiple_sequence_alignment
 # Create your views here.
 @login_required(login_url='login')
 def project_informations(request, project_id):
@@ -17,9 +17,10 @@ def project_informations(request, project_id):
         return failure_view(request,e)
 
 @login_required(login_url='login')
-def view_query_folder_informations(request,project_id,folder_path):
+def perform_simple_msa(request,project_id,folder_path):
     try:
         context = {}
-        return render(request,"external_tools/query_informations.html",context)
+        returncode = execute_multiple_sequence_alignment.delay(project_id,folder_path)
+        return redirect('external_project_informations',project_id=project_id)
     except Exception as e:
         return failure_view(request,e)

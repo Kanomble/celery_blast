@@ -13,10 +13,10 @@
          {% for folder in qseqid_folder %}
              <td>
                 <form class="col"
-                       action='{% url 'view_query_folder_informations' project_id=project_id folder_path=folder %}'
+                       action='{% url 'perform_simple_msa' project_id=project_id folder_path=folder %}'
                        method="GET">
                     {% csrf_token %}
-                    <input type="submit" value="Informations" class="btn btn-danger">
+                    <input type="submit" value="Conduct Multiple Sequence Alignment" class="btn btn-danger">
                 </form>
              </td>
         {% endfor %}
