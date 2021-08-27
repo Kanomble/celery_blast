@@ -14,7 +14,7 @@
              <td>
                 <form class="col"
                        action='{% url 'perform_simple_msa' project_id=project_id folder_path=folder %}'
-                       method="GET">
+                       method="POST">
                     {% csrf_token %}
                     <input type="submit" value="Conduct Multiple Sequence Alignment" class="btn btn-danger">
                 </form>

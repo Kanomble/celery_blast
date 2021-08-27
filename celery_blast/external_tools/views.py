@@ -19,8 +19,11 @@ def project_informations(request, project_id):
 @login_required(login_url='login')
 def perform_simple_msa(request,project_id,folder_path):
     try:
-        context = {}
-        returncode = execute_multiple_sequence_alignment.delay(project_id,folder_path)
-        return redirect('external_project_informations',project_id=project_id)
+        if request.method == 'POST':
+            context = {}
+            returncode = execute_multiple_sequence_alignment.delay(project_id,folder_path)
+            return redirect('external_project_informations',project_id=project_id)
+        else:
+            return failure_view(request,e)
     except Exception as e:
         return failure_view(request,e)
