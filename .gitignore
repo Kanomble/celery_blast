@@ -129,6 +129,9 @@ dmypy.json
 .pyre/
 
 # repository files
+flask_api_bioinformatic_tools/.idea/*
+flask_api_bioinformatic_tools/instance/*
+flask_api_bioinformatic_tools/flask_api_bioinformatic_tools/__pycache__/*
 data/*
 .idea/*
 celery_blast/refseq_transactions/migrations/*

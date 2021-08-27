@@ -11,7 +11,7 @@ services:
     restart: on-failure
 
   postgres:
-    hostname: posgres
+    hostname: postgres
     image: postgres:latest
     environment:
       - TZ=Europe/Berlin
@@ -27,7 +27,9 @@ services:
       - "5432:5432"
 
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.django_snakemake
     command:  sh -c "python manage.py makemigrations blast_project
      && python manage.py migrate blast_project
       && python manage.py makemigrations one_way_blast
@@ -87,5 +89,17 @@ services:
       - "5555:5555"
     restart: unless-stopped
 
+  tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.bioinformatic_tools
+    networks:
+      - main
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+    volumes:
+      - ./flask_api_bioinformatic_tools:/application
+      - ./data:/application/data
 networks:
   main:

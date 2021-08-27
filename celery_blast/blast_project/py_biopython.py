@@ -41,10 +41,29 @@ def check_given_taxonomic_node(user_email, taxid):
         raise Exception("exception occured during validation of taxonomic node : {}".format(e))
 
 #TODO documentation
+''' calculate_pfam_and_protein_links_from_queries
+
+This function returns a dictionary 'prot_to_pfam', that contains several keys addressing relevant data for query sequences that reside in the coressponding file.
+The QUERIES key, which points to a list containing all query accession ids, the PFAM, TIGR, REFSEQ, CDD keys, which point to additional key (query_id) value (link to corresponding database) pairs.
+The Definition and Length keys contain key (query_id) value (sequence description, sequence length) as well.
+
+prot_to_pfam datastructure:
+    
+    1. QUERIES: accession ids defined in the corresponding fasta file
+    2. PFAM: The Pfam database is a large collection of protein families, each represented by multiple sequence alignments and hidden Markov models (HMMs)
+    3. TIGR: Protein Family Models are a hierarchical collection of curated Hidden Markov Model-based and BLAST-based protein families (HMMs and BlastRules),
+            and Conserved Domain Database architectures used to assign names, gene symbols,
+            publications and EC numbers to the prokaryotic RefSeq proteins that meet the criteria for inclusion in a family.
+            HMMs and BlastRules also contribute to structural annotation by NCBI's Prokaryotic Genome Annotation Pipeline (PGAP).
+            
+    4. CDD: Protein Family Model search by SPARCLE.
+'''
 def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
     try:
         project = get_project_by_id(project_id)
         path_to_queries = project.get_project_dir()
+
+        #TODO outsource function
         path_to_queries += '/' + project.project_query_sequences
         queries = open(path_to_queries, 'r')
         lines = queries.readlines()
