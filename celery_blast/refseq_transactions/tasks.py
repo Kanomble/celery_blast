@@ -378,7 +378,7 @@ def download_blast_databases(self, database_id):
     :returns download_file
         :type str
 '''
-@shared_task
+@shared_task()
 def download_refseq_assembly_summary_file():
     try:
         refseq_url = "ftp://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
@@ -400,15 +400,19 @@ def download_refseq_assembly_summary_file():
 
         # invoke wget program
 
-        wget_process = Popen(['wget', refseq_url,'-O',path_to_assembly_file],stdout=subPIPE, stderr=subSTDOUT)
+        wget_process = Popen(['wget', refseq_url,'-q','-O',path_to_assembly_file], shell=False,stdout=subPIPE, stderr=subSTDOUT)
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(
             'waiting for popen instance {} to finish with timeout set to {}'
                 .format(wget_process.pid, timeout))
         returncode = wget_process.wait(timeout=timeout)
-        logger.info('returncode : {}'.format(returncode))
 
+        if (returncode != 0):
+            logger.warning('subprocess Popen refseq assembly file download process resulted in an error!')
+            raise Exception('Popen hasnt succeeded ...')
+
+        logger.info('returncode : {}'.format(returncode))
 
         logger.info('download completed')
 

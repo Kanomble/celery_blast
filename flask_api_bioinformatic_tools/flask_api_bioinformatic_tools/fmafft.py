@@ -2,9 +2,9 @@ import subprocess
 import os
 import time
 from flask import (
-    Blueprint, redirect, request, url_for, render_template
+    Blueprint, redirect, request, url_for, render_template, Response
 )
-
+from http import HTTPStatus
 fmafft = Blueprint('fmafft',__name__)
 
 @fmafft.route('/mafft_info',methods=['GET'])
@@ -25,14 +25,13 @@ def perform_simple_msa(project_id,folder_path):
         path_to_query_file = path_to_project + folder_path + '/target_sequences.faa'
         output = path_to_project + folder_path + '/target_sequences.msa'
         cmd = "mafft {} > {}".format(path_to_query_file,output)
-        #print("[*] received task: {}".format(cmd))
-        #print("\t[*] {}".format(os.getcwd()))
         try:
             process = subprocess.Popen(cmd, shell=True)
             returncode = process.wait(timeout=5000)
-            #time.sleep(120)
-            return str(returncode)
+            if returncode != 0:
+                raise Exception
+            return Response("0",status=HTTPStatus.OK,mimetype="str")
         except subprocess.SubprocessError as e:
-            return "1"
+            return Response("1",status=HTTPStatus.INTERNAL_SERVER_ERROR,mimetype="str")
     else:
-        return "1"
+        return Response("1",status=HTTPStatus.BAD_REQUEST,mimetype="str")
