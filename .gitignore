@@ -137,6 +137,7 @@ data/*
 celery_blast/refseq_transactions/migrations/*
 celery_blast/blast_project/migrations/*
 celery_blast/one_way_blast/migrations/*
+celery_blast/external_tools/migrations/*
 celery_blast/static/images/result_images/6/plot_evalue_distribution.png
 celery_blast/static/images/result_images/5/plot_amount_hits_of_target_taxon.png
 celery_blast/static/images/result_images/5/plot_evalue_distribution.png
