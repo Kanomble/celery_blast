@@ -188,6 +188,9 @@ class BlastProject(models.Model):
     def get_project_dir(self):
         return 'media/blast_projects/' + str(self.id)
 
+    def get_project_query_sequence_filepath(self):
+        return 'media/blast_projects/' + str(self.id) + '/' + self.project_query_sequences
+
     def if_executed_return_associated_taskresult_model(self):
         # executed
         if self.project_execution_snakemake_task != None:

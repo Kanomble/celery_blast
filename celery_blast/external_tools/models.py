@@ -1,7 +1,7 @@
 from django.db import models
 from blast_project.models import BlastProject
 from django_celery_results.models import TaskResult
-#from .managers import ExternalToolsManager
+from .managers import ExternalToolsManager
 # Create your models here.
 
 class ExternalTools(models.Model):
@@ -10,6 +10,8 @@ class ExternalTools(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Associated BlastProject"
     )
+
+    objects = ExternalToolsManager()
     '''
     #many to many seems to be wrong we should consider to use a one to many relationship
     query_sequences = models.ManyToManyField(
