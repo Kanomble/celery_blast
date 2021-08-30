@@ -1,9 +1,17 @@
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
+from external_tools.models import ExternalTools
 from .py_services import create_blastdatabase_directory, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file
 from django_celery_results.models import TaskResult
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from pandas import read_csv
-from celery.result import AsyncResult
+
+#TODO documentation
+def create_external_tools_after_snakemake_workflow_finishes(project_id):
+    try:
+        with transaction.atomic():
+            ExternalTools.objects.create_external_tools(project_id)
+    except IntegrityError as e:
+        raise IntegrityError("[-] couldnt create external tools model with exception : {}".format(e))
 
 #following functions are utilized in the dashboard_view
 ''' get_users_blast_projects

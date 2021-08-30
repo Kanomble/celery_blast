@@ -7,7 +7,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 
-from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model
+from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
@@ -93,6 +93,9 @@ def execute_reciprocal_blast_project(self,project_id):
         returncode = reciprocal_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
         logger.info('returncode : {}'.format(returncode))
         progress_recorder.set_progress(100, 100, "SUCCESS")
+
+        create_external_tools_after_snakemake_workflow_finishes(project_id)
+
         return returncode
 
     except TimeoutExpired as e:
