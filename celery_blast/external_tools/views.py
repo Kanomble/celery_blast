@@ -24,6 +24,7 @@ def perform_simple_msa(request,project_id,folder_path):
             returncode = execute_multiple_sequence_alignment.delay(project_id,folder_path)
             return redirect('external_project_informations',project_id=project_id)
         else:
+            e = "There is no GET method for this view function"
             return failure_view(request,e)
     except Exception as e:
         return failure_view(request,e)

@@ -1,6 +1,5 @@
 import subprocess
-import os
-import time
+
 from flask import (
     Blueprint, redirect, request, url_for, render_template, Response
 )
@@ -31,7 +30,7 @@ def perform_simple_msa(project_id,folder_path):
             if returncode != 0:
                 raise Exception
             return Response("0",status=HTTPStatus.OK,mimetype="str")
-        except subprocess.SubprocessError as e:
+        except subprocess.SubprocessError:
             return Response("1",status=HTTPStatus.INTERNAL_SERVER_ERROR,mimetype="str")
     else:
         return Response("1",status=HTTPStatus.BAD_REQUEST,mimetype="str")
