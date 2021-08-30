@@ -24,19 +24,6 @@ def get_users_blast_projects(userid):
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
 
-#TODO documentation
-def get_list_of_query_sequences(blast_project):
-    try:
-        query_sequence_file_path = blast_project.get_project_query_sequence_filepath()
-        query_file = open(query_sequence_file_path,'r')
-        qseqids = []
-        for line in query_file.readlines():
-            if ">" in line:
-                qseqid = line.split(" ")[0].split(">")[1].split(".")[0]
-                qseqids.append(qseqid)
-        return qseqids
-    except Exception as e:
-        raise IntegrityError("[-] couldnt extract query sequence ids from query sequence file : {} with exception : {}".format(query_sequence_file_path,e))
 
 #TODO documentation
 def get_project_by_id(project_id):

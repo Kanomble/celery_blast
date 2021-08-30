@@ -179,6 +179,21 @@ class BlastProject(models.Model):
             self.timestamp, self.project_user.username,
             self.project_forward_database.database_name)
 
+    def get_list_of_query_sequences(self):
+        try:
+            query_sequence_file_path = self.get_project_query_sequence_filepath()
+            query_file = open(query_sequence_file_path, 'r')
+            qseqids = []
+            for line in query_file.readlines():
+                if ">" in line:
+                    qseqid = line.split(" ")[0].split(">")[1].split(".")[0]
+                    qseqids.append(qseqid)
+            return qseqids
+        except Exception as e:
+            raise IntegrityError(
+                "[-] couldnt extract query sequence ids from query sequence file : {} with exception : {}".format(
+                    query_sequence_file_path, e))
+
     def get_project_username(self):
         return self.project_user.name
 

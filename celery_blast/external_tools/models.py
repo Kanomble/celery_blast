@@ -13,13 +13,16 @@ class ExternalTools(models.Model):
     )
 
     objects = ExternalToolsManager()
-    '''
-    #many to many seems to be wrong we should consider to use a one to many relationship
-    query_sequences = models.ManyToManyField(
-        to=QuerySequences,
-        verbose_name="query sequences of the associated BlastProject"
-    )
-    '''
+
+    def initialize_external_tools_project(self):
+        try:
+            blast_project = self.associated_project
+            query_sequence_id_list = blast_project.get_list_of_query_sequences()
+            for qseqid in query_sequence_id_list:
+                    QuerySequences.objects.create_query_sequence(qseqid,external_tools=self)
+
+        except Exception as e:
+            raise Exception("[-] couldnt extract query sequence ids from associated project with exception : {}".format(e))
 
 class QuerySequences(models.Model):
     query_accession_id = models.CharField(
@@ -50,3 +53,4 @@ class QuerySequences(models.Model):
     )
 
     objects = QuerySequenceManager()
+
