@@ -1,7 +1,8 @@
 from django.db import models
 from blast_project.models import BlastProject
 from django_celery_results.models import TaskResult
-from .managers import ExternalToolsManager
+
+from .managers import ExternalToolsManager, QuerySequenceManager
 # Create your models here.
 
 class ExternalTools(models.Model):
@@ -47,3 +48,5 @@ class QuerySequences(models.Model):
         related_name="query_sequences",
         on_delete=models.CASCADE
     )
+
+    objects = QuerySequenceManager()

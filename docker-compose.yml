@@ -34,6 +34,8 @@ services:
      && python manage.py migrate blast_project
       && python manage.py makemigrations one_way_blast
       && python manage.py migrate one_way_blast
+      && python manage.py makemigrations external_tools
+      && python manage.py migrate external_tools
      && python manage.py runserver 0.0.0.0:8080"
     networks:
       - main
