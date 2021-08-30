@@ -24,6 +24,18 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt extract query sequence ids from associated project with exception : {}".format(e))
 
+    def update_query_sequences_msa_task(self, query_sequence_id, msa_task_id):
+        try:
+            if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
+                query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
+                taskresult = TaskResult.objects.get(task_id=msa_task_id)
+                query_sequence.multiple_sequence_alignment_task = taskresult
+                query_sequence.save()
+            else:
+                raise Exception("[-] couldnt update query sequence with multiple sequence alignment taskresult object")
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
+
 class QuerySequences(models.Model):
     query_accession_id = models.CharField(
         max_length=200,

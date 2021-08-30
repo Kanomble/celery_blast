@@ -17,6 +17,17 @@ class ExternalToolsManager(models.Manager):
         except Exception as e:
             raise IntegrityError("[-] couldnt save external tools model into database with exception : {}".format(e))
 
+    def get_external_tools_based_on_project_id(self, project_id):
+        try:
+            if self.filter(associated_project_id=project_id).exists() == False:
+                raise IntegrityError("[-] there is no external tools object with your specified project id : {}".format(project_id))
+            else:
+                return self.get(associated_project_id=project_id)
+        except Exception as e:
+            raise IntegrityError(
+                "[-] there is no external tools object with your specified project id : {}".format(project_id))
+
+
 class QuerySequenceManager(models.Manager):
     def create_query_sequence(self,query_sequence_id,external_tools):
         try:
