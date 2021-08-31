@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 
 result_df = pd.read_csv(snakemake.input['result_csv'],header=0, index_col=0)
 hit_info_file = open(snakemake.output['hit_information'],'w')
