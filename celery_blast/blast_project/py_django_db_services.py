@@ -203,5 +203,5 @@ def check_if_taxid_is_in_database(database_id, taxonomic_node):
     database = get_database_by_id(database_id)
     pandas_table_file = path_to_database + database.get_pandas_table_name()
     df = read_csv(pandas_table_file, header=0, index_col=0)
-    boolean = taxonomic_node in list(df['species_taxid'])
+    boolean = int(taxonomic_node) in list(df['taxid'])
     return boolean

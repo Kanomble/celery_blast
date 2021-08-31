@@ -72,12 +72,12 @@ rule blast_tables_to_csv:
 
 rule reciprocal_results_table_to_target_sequences:
 	input: result_csv="reciprocal_results.csv"
-	output: hit_information="reciprocal_results_info.txt"
+	output: hit_information="reciprocal_results_info.txt",queries=directory(expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS))
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
 
 rule extract_subject_sequences_from_database:
-	input: "{qseqid}/target_sequence_ids.txt"
+	input: queries="{qseqid}/target_sequence_ids.txt"
 	output: "{qseqid}/target_sequences.faa"
 	params: database=config["blastdb"]
 	shell:
