@@ -71,7 +71,7 @@ rule blast_tables_to_csv:
 		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_orthologous_table.py"
 
 rule build_query_sequence_folders:
-	output: directory(expand("{qseqid}"),qseqid=QSEQIDS)
+	output: directory(expand("{qseqid}",qseqid=QSEQIDS))
 	shell:
 		"mkdir {output}"
 
