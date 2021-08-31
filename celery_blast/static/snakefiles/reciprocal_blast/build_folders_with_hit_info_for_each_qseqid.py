@@ -4,17 +4,13 @@ import os
 result_df = pd.read_csv(snakemake.input['result_csv'],header=0, index_col=0)
 hit_info_file = open(snakemake.output['hit_information'],'w')
 for query in snakemake.output['queries']:
-    try:
-        os.mkdir(query)
-    except OSError as e:
-        raise Exception("[-] Couldn't create folder for query sequence with exception : {}".format(e))
 
     target_df = result_df[result_df['qseqid'] == query]
     sacc_list = list(target_df['sacc'].unique())
 
     output_file_path = query + '/' + 'target_sequence_ids.txt'
 
-    output = open(output_file_path,'w')
+    output = open(query,'w')
     for sacc in sacc_list:
         output.write(sacc+'\n')
     output.close()

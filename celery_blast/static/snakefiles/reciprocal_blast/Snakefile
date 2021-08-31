@@ -70,9 +70,14 @@ rule blast_tables_to_csv:
 	script:
 		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_orthologous_table.py"
 
+rule build_query_sequence_folders:
+	output: directory(expand("{qseqid}"),qseqid=QSEQIDS)
+	shell:
+		"mkdir {output}"
+
 rule reciprocal_results_table_to_target_sequences:
 	input: result_csv="reciprocal_results.csv"
-	output: hit_information="reciprocal_results_info.txt",queries=directory(expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS))
+	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
 
