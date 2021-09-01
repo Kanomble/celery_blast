@@ -168,6 +168,7 @@ def create_taxonomic_file_view(request):
     except Exception as e:
         return failure_view(request,e)
 
+#TODO documentation
 @login_required(login_url='login')
 def upload_genome_view(request):
     try:

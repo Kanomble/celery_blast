@@ -12,12 +12,19 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] add correct docker timezone (currently it is Europe/Berlin but still 2h difference)
+- [ ] add pident ssequence and other output options to the blast results
+- [ ] check genome upload option | all options - begin with the view function
+  - [ ] with uploaded DNA / RNA sequences it is currently not possible to perform the reciprocal BLAST analysis
+    - [ ] refactor the reciprocal BLAST creation view - model supports blastn command (search strategy)
+    - [ ] integrate the possible execution of blastn also in snakemake
+- [ ] download taxdb during build process of the docker image
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [ ] write documentation for added functions
 - [ ] refactor the create_blastdatabase_table_and_directory function (too long)
-- [ ] extract subject sequences from database (with blastdbcmd and orthologous sequence id list)
-    - [ ] integrate docker container for mafft and fasttree 
-    - [ ] perform msa with orthologous subject sequences
+- [x] extract subject sequences from database (with blastdbcmd and orthologous sequence id list)
+    - [x] integrate docker container for mafft and fasttree 
+    - [x] perform msa with orthologous subject sequences
     - [ ] build ml or neighbour joining trees from all msa's
 - [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [ ] check if backward organism is in database

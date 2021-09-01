@@ -74,7 +74,7 @@ def download_refseq_assembly_summary_view(request):
     creates the blast database model, saves it into the database and 
     simultaneously creates a directory with a summary file of the blast database.
     
-    this summary file is used as input for snakemake execution, it lists the assembly_accession, 
+    this summary file is used as input for the celery task execution, it lists the assembly_accession, 
     organism_name, taxid, species_taxid, assembly_level and ftp_path.
     
     if the form is valid the user gets redirected to the refseq_transactions_dashboard
