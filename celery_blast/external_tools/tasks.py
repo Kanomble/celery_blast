@@ -17,7 +17,7 @@ def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
         external_tools.update_query_sequences_msa_task(query_sequence_id, str(self.request.id))
 
-        url = "http://10.125.46.80:5001/perform_simple_msa/" + str(project_id) +'/' + query_sequence_id
+        url = "http://tools:5001/perform_simple_msa/" + str(project_id) +'/' + query_sequence_id
         response = requests.post(url, json={"folder_path":query_sequence_id, "project_id":project_id})
         if response.status_code == 200:
             progress_recorder.set_progress(100, 100, "finished process")
