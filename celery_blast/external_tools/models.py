@@ -52,10 +52,8 @@ class ExternalTools(models.Model):
     def update_for_all_query_sequences_msa_task(self, msa_task_id):
         try:
             query_sequences = self.query_sequences.get_queryset()
-            taskresult = TaskResult.objects.get(task_id=msa_task_id)
             for qseq in query_sequences:
-                qseq.multiple_sequence_alignment_task = taskresult
-                qseq.save()
+                qseq.update_multiple_sequence_alignment_task(msa_task_id)
         except Exception as e:
             raise Exception("[-] couldnt update query sequences with taskresult object by performing msa for all queries with exception : {}".format(e))
 
@@ -84,19 +82,21 @@ class QuerySequences(models.Model):
         blank=False,unique=False,
         verbose_name="query sequence identifier"
     )
-    multiple_sequence_alignment_task = models.OneToOneField(
+    multiple_sequence_alignment_task = models.ForeignKey(
         TaskResult,
         on_delete=models.CASCADE,
         blank=True,null=True,
         verbose_name="celery task for multiple sequence alignment performed by mafft in the bioinformatic tools container",
-        related_name="msa_task"
+        related_name="msa_task",
+        unique=False
     )
-    phylogenetic_tree_construction_task = models.OneToOneField(
+    phylogenetic_tree_construction_task = models.ForeignKey(
         TaskResult,
         on_delete=models.CASCADE,
         blank=True,null=True,
         verbose_name="celery task for constructing a phylogenetic tree performed by fasttree in the bioinformatic tools container",
-        related_name="tree_task"
+        related_name="tree_task",
+        unique=False
     )
     #many to one relationship
     external_tool_for_query_sequence = models.ForeignKey(
@@ -108,3 +108,10 @@ class QuerySequences(models.Model):
 
     objects = QuerySequenceManager()
 
+    def update_multiple_sequence_alignment_task(self, msa_task_id):
+        try:
+            taskresult = TaskResult.objects.get(task_id=msa_task_id)
+            self.multiple_sequence_alignment_task = taskresult
+            self.save()
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequences with taskresult object with exception : {}".format(e))

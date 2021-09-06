@@ -1,4 +1,5 @@
 import subprocess
+import json
 
 from flask import (
     Blueprint, redirect, request, url_for, render_template, Response
@@ -58,5 +59,25 @@ def perform_fasttree_phylobuild(project_id, query_sequence_id):
         return Response("1", status=HTTPStatus.BAD_REQUEST, mimetype="str")
 
 @fmafft.route('/perform_simple_msa_with_all_qseqs/<int:project_id>',methods=['POST'])
-def perform_simple_msa_with_all_qseqs():
-    return "1"
+def perform_simple_msa_with_all_qseqs(project_id):
+    if request.method == 'POST':
+        query_sequence_ids = request.json['query_sequence_ids']
+        query_sequence_ids = json.loads(query_sequence_ids)
+        path_to_project = 'data/blast_projects/' + str(project_id) + '/'
+
+        for qseqid in query_sequence_ids:
+            path_to_query_file = path_to_project + qseqid + '/target_sequences.faa'
+            output = path_to_project + qseqid + '/target_sequences.msa'
+
+            cmd = "mafft {} > {}".format(path_to_query_file, output)
+            try:
+                process = subprocess.Popen(cmd, shell=True)
+                returncode = process.wait(timeout=5000)
+                if returncode != 0:
+                    raise Exception
+
+            except subprocess.SubprocessError:
+                return Response("1", status=HTTPStatus.INTERNAL_SERVER_ERROR, mimetype="str")
+        return Response("0", status=HTTPStatus.OK, mimetype="str")
+    else:
+        return Response("1", status=HTTPStatus.BAD_REQUEST, mimetype="str")

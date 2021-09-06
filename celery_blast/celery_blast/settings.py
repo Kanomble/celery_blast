@@ -154,4 +154,4 @@ CACHES = {
 }
 '''
 
-PANOPTES_IP = 'http://172.18.0.4:5000'
+PANOPTES_IP = 'http://panoptes:5000'

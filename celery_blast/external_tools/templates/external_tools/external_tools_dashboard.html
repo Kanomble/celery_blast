@@ -10,6 +10,14 @@
     </head>
 
  <div class="container-fluid">
+    <form class="row"
+           action='{% url 'perform_simple_msa_for_all_query_sequences' project_id=project_id %}'
+           method="POST">
+        {% csrf_token %}
+        <input type="submit" value="Conduct MSA" class="btn btn-dark">
+    </form>
+
+
      <div class="table-responsive">
          <table style="text-align: center" class="table table-hover">
             <thead>

@@ -8,5 +8,8 @@ urlpatterns = [
          name='perform_simple_msa'),
     path('<int:project_id>/<str:query_sequence_id>/perform_fasttree_phylobuild',
          views.perform_fasttree_phylobuild,
-         name='perform_fasttree_phylobuild')
+         name='perform_fasttree_phylobuild'),
+    path('<int:project_id>/perform_simple_msa_for_all_query_sequences',
+         views.perform_simple_msa_for_all_query_sequences,
+         name='perform_simple_msa_for_all_query_sequences')
 ]
