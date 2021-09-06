@@ -15,6 +15,14 @@ div.dashboard_project_list_col {
     overflow-x: auto;
 }
 
+div.dashboard_external_tools {
+    background: linear-gradient(whitesmoke,lightblue);
+    border: 1px solid #000000;
+    overflow-y: auto;
+    overflow-x: auto;
+
+}
+
 div.base_header {
     font-family: "Courier New";
     text-align: right;

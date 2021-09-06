@@ -57,6 +57,16 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt update query sequences with taskresult object by performing msa for all queries with exception : {}".format(e))
 
+    def update_for_all_query_sequences_phylo_task(self, phylo_task_id):
+        try:
+            query_sequences = self.query_sequences.get_queryset()
+            for qseq in query_sequences:
+                qseq.update_phylogenetic_tree_task(phylo_task_id)
+        except Exception as e:
+            raise Exception(
+                "[-] couldnt update query sequences with taskresult object by performing msa for all queries with exception : {}".format(
+                    e))
+
     def check_if_msa_task_is_completed(self,query_sequence_id):
         try:
             if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
@@ -114,4 +124,13 @@ class QuerySequences(models.Model):
             self.multiple_sequence_alignment_task = taskresult
             self.save()
         except Exception as e:
-            raise Exception("[-] couldnt update query sequences with taskresult object with exception : {}".format(e))
+            raise Exception("[-] couldnt update query sequences with taskresult object for msa with exception : {}".format(e))
+
+    def update_phylogenetic_tree_task(self, phylo_task_id):
+        try:
+            taskresult = TaskResult.objects.get(task_id=phylo_task_id)
+            self.phylogenetic_tree_construction_task = taskresult
+            self.save()
+        except Exception as e:
+            raise Exception(
+                "[-] couldnt update query sequences with taskresult object for msa with exception : {}".format(e))

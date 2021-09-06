@@ -11,5 +11,9 @@ urlpatterns = [
          name='perform_fasttree_phylobuild'),
     path('<int:project_id>/perform_simple_msa_for_all_query_sequences',
          views.perform_simple_msa_for_all_query_sequences,
-         name='perform_simple_msa_for_all_query_sequences')
+         name='perform_simple_msa_for_all_query_sequences'),
+    #perform_fasttree_phylobuild_for_all_query_sequences
+    path('<int:project_id>/perform_fasttree_phylobuild_for_all_query_sequences',
+         views.perform_fasttree_phylobuild_for_all_query_sequences,
+         name='perform_fasttree_phylobuild_for_all_query_sequences'),
 ]
