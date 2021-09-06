@@ -4,7 +4,7 @@ from django_celery_results.models import TaskResult
 
 from .managers import ExternalToolsManager, QuerySequenceManager
 # Create your models here.
-
+#TODO documentation - explain why ExternalTools model is usefull (ManyToOne Relationship)
 class ExternalTools(models.Model):
     associated_project = models.OneToOneField(
         BlastProject,
@@ -36,6 +36,37 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
 
+    def update_query_sequences_phylo_task(self,query_sequence_id,phylo_task_id):
+        try:
+            if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
+                query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
+                taskresult = TaskResult.objects.get(task_id=phylo_task_id)
+                query_sequence.phylogenetic_tree_construction_task = taskresult
+                query_sequence.save()
+            else:
+                raise Exception("[-] couldnt update query sequence with phylo taskresult object")
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
+
+    def check_if_msa_task_is_completed(self,query_sequence_id):
+        try:
+            if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
+                query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
+                if query_sequence.multiple_sequence_alignment_task:
+                    if query_sequence.multiple_sequence_alignment_task.status == 'SUCCESS':
+                        return True
+                    elif query_sequence.multiple_sequence_alignment_task.status == 'FAILURE':
+                        return False
+                    else:
+                        raise Exception("[-] couldnt check msa taskresult status of query sequence : {}".format(query_sequence_id))
+                else:
+                    return False
+            else:
+                raise Exception("[-] couldnt check msa taskresult status of query sequence : {}".format(query_sequence_id))
+        except Exception as e:
+            raise Exception("[-] couldnt check msa taskresult status for query sequence object with exceptipon : {}".format(e))
+
+#TODO documentation
 class QuerySequences(models.Model):
     query_accession_id = models.CharField(
         max_length=200,

@@ -15,14 +15,15 @@ def index():
 def list_informations(project_id):
     return "listing view of project : {}".format(project_id)
 
-@fmafft.route('/perform_simple_msa/<int:project_id>/<folder_path>',methods=['GET','POST'])
-def perform_simple_msa(project_id,folder_path):
+#TODO documentation
+@fmafft.route('/perform_simple_msa/<int:project_id>/<query_sequence_id>', methods=['POST'])
+def perform_simple_msa(project_id, query_sequence_id): #keyword arguments for detailed routing
     if request.method == 'POST':
         project_id = request.json['project_id']
-        folder_path = request.json['folder_path']
+        query_sequence_id = request.json['query_sequence_id']
         path_to_project = 'data/blast_projects/' + str(project_id) + '/'
-        path_to_query_file = path_to_project + folder_path + '/target_sequences.faa'
-        output = path_to_project + folder_path + '/target_sequences.msa'
+        path_to_query_file = path_to_project + query_sequence_id + '/target_sequences.faa'
+        output = path_to_project + query_sequence_id + '/target_sequences.msa'
         cmd = "mafft {} > {}".format(path_to_query_file,output)
         try:
             process = subprocess.Popen(cmd, shell=True)
@@ -34,3 +35,24 @@ def perform_simple_msa(project_id,folder_path):
             return Response("1",status=HTTPStatus.INTERNAL_SERVER_ERROR,mimetype="str")
     else:
         return Response("1",status=HTTPStatus.BAD_REQUEST,mimetype="str")
+
+#TODO documentation
+@fmafft.route('/perform_phylo_task/<int:project_id>/<query_sequence_id>',methods=['POST'])
+def perform_fasttree_phylobuild(project_id, query_sequence_id):
+    if request.method == 'POST':
+        project_id = request.json['project_id']
+        query_sequence_id = request.json['query_sequence_id']
+        path_to_project = 'data/blast_projects/' + str(project_id) + '/'
+        path_to_query_file = path_to_project + query_sequence_id + '/target_sequences.msa'
+        output = path_to_project + query_sequence_id + '/target_sequences.nwk'
+        cmd = "fasttree -lg {} > {}".format(path_to_query_file, output)
+        try:
+            process = subprocess.Popen(cmd, shell=True)
+            returncode = process.wait(timeout=5000)
+            if returncode != 0:
+                raise Exception
+            return Response("0", status=HTTPStatus.OK, mimetype="str")
+        except subprocess.SubprocessError:
+            return Response("1", status=HTTPStatus.INTERNAL_SERVER_ERROR, mimetype="str")
+    else:
+        return Response("1", status=HTTPStatus.BAD_REQUEST, mimetype="str")

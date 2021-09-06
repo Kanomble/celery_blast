@@ -26,7 +26,7 @@
                      <td>
                      {% if not qseq.multiple_sequence_alignment_task %}
                         <form class="col"
-                               action='{% url 'perform_simple_msa' project_id=project_id folder_path=qseq.query_accession_id %}'
+                               action='{% url 'perform_simple_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
                                method="POST">
                             {% csrf_token %}
                             <input type="submit" value="Conduct MSA" class="btn btn-dark">
@@ -35,7 +35,7 @@
                      {% if qseq.multiple_sequence_alignment_task and qseq.multiple_sequence_alignment_task.status != 'PROGRESS' %}
 
                           <form class="col"
-                               action='{% url 'perform_simple_msa' project_id=project_id folder_path=qseq.query_accession_id %}'
+                               action='{% url 'perform_simple_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
                                method="POST">
                             {% csrf_token %}
                             <input type="submit" {% if qseq.multiple_sequence_alignment_task.status == 'SUCCESS' %} value="ReConduct MSA" class="btn btn-warning" {% elif qseq.multiple_sequence_alignment_task.status == 'FAILURE' %} value="Error in previous MSA, ReConduct MSA" class="btn btn-danger" {% endif %}>
@@ -48,6 +48,43 @@
                      </td>
                 {% endfor %}
                 </tr>
+
+                <tr>
+                 {% for qseq in qseqids.query_sequences.get_queryset %}
+                     <td>
+                     {% if not qseq.multiple_sequence_alignment_task %}
+                        <button type="button" class="btn btn-secondary">Before PhyloTree construction, perform MSA</button>
+                     {% endif %}
+                     {% if qseq.multiple_sequence_alignment_task and qseq.multiple_sequence_alignment_task.status == 'SUCCESS' %}
+                         {% if not qseq.phylogenetic_tree_construction_task %}
+                              <form class="col"
+                                   action='{% url 'perform_fasttree_phylobuild' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit" value="Build Phylogenetic Tree" class="btn btn-dark">
+                            </form>
+                         {% endif %}
+                         {% if qseq.phylogenetic_tree_construction_task %}
+                            <form class="col"
+                                   action='{% url 'perform_fasttree_phylobuild' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit"
+                                        {% if qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %} value="ReBuild Phylogenetic Tree" class="btn btn-warning"
+                                        {% elif qseq.phylogenetic_tree_construction_task.status == 'FAILURE' %} value="Error in previous phylo task, ReBuild Phylo Tree" class="btn btn-danger"
+                                        {% elif qseq.phylogenetic_tree_construction_task.status == 'PROGRESS' %} value="Phylo Task in progress" class="btn btn-info"
+                                        {% endif %}>
+                            </form>
+                         {% endif %}
+                     {% endif %}
+                     {% if qseq.multiple_sequence_alignment_task and qseq.multiple_sequence_alignment_task.status != 'SUCCESS' %}
+                        <button type="button" class="btn btn-info">MSA in progress</button>
+                     {% endif %}
+                     </td>
+                {% endfor %}
+                </tr>
+
+
             </tbody>
         </table>
     </div>
