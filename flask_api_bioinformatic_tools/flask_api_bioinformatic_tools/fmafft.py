@@ -56,3 +56,7 @@ def perform_fasttree_phylobuild(project_id, query_sequence_id):
             return Response("1", status=HTTPStatus.INTERNAL_SERVER_ERROR, mimetype="str")
     else:
         return Response("1", status=HTTPStatus.BAD_REQUEST, mimetype="str")
+
+@fmafft.route('/perform_simple_msa_with_all_qseqs/<int:project_id>',methods=['POST'])
+def perform_simple_msa_with_all_qseqs():
+    return "1"

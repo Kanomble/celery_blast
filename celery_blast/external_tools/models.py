@@ -48,6 +48,17 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
 
+
+    def update_for_all_query_sequences_msa_task(self, msa_task_id):
+        try:
+            query_sequences = self.query_sequences.get_queryset()
+            taskresult = TaskResult.objects.get(task_id=msa_task_id)
+            for qseq in query_sequences:
+                qseq.multiple_sequence_alignment_task = taskresult
+                qseq.save()
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequences with taskresult object by performing msa for all queries with exception : {}".format(e))
+
     def check_if_msa_task_is_completed(self,query_sequence_id):
         try:
             if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
