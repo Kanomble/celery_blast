@@ -122,13 +122,9 @@ class ProjectCreationForm(forms.Form):
             booleanfw = check_if_taxid_is_in_database(forward_db.id,taxonomic_node)
             if booleanbw == False:
                 self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(taxonomic_node,backward_db.database_name))
-            '''
             if booleanfw == False:
                 self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected FORWARD database: {}'.format(taxonomic_node,forward_db.database_name))
             if booleanfw == True and booleanbw == True:
-                return species_name, taxonomic_node
-            '''
-            if booleanbw == True:
                 return species_name, taxonomic_node
         except Exception as e:
             raise ValidationError(
