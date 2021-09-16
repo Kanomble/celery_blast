@@ -12,6 +12,7 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] if you specify explicitly all assembly levels, they get doubled in the database model
 - [ ] celery_progress is needed for initial TaskResult database saving?!
 - [ ] add correct docker timezone (currently it is Europe/Berlin but still 2h difference)
 - [ ] add pident ssequence and other output options to the blast results
