@@ -12,7 +12,10 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
-- [ ] if user selects different databases for the forward and backward BLAST, 
+- [ ] uploaded databases might have problems with taxonomic nodes - especially if the user selects different databases for the forward and backward blast
+  - [ ] if there is no taxonomic node available (which can be the case for some organisms) it is not possible to upload a taxmap file ...
+  - [ ] provide a tool for writing taxmap files of combined genomes 
+  - [ ] forward and backward BLAST databases should both contain the backward BLAST taxonomic node, otherwise you wont see your 100% results in the backward BLAST!
 - [X] if you specify explicitly all assembly levels, they get doubled in the database model
   - [ ] doubled assembly level entries in database, during start up? or because of manual edit?
 - [ ] celery_progress is needed for initial TaskResult database saving?!

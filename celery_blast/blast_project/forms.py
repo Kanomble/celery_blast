@@ -226,6 +226,7 @@ class UploadGenomeForm(forms.Form):
     #TODO add controll
     def clean(self):
         cleaned_data = super().clean()
+        genome_fasta_file = cleaned_data['genome_fasta_file']
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
         organism_file = cleaned_data['organism_name_file']
