@@ -72,7 +72,7 @@ def execute_reciprocal_blast_project(self,project_id):
     try:
         logger.info('trying to start snakemake reciprocal BLAST workflow')
         progress_recorder.set_progress(25,100,'PROGRESS')
-        #snakemake --snakefile '../../../static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/one_way_blast/remote_searches/1/snakefile_config'
+        #snakemake --snakefile '../../../static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/blast_project/13/snakefile_config --directory 'media/blast_project/13'
         reciprocal_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,

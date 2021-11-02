@@ -1,22 +1,23 @@
 #this script writes the RBHs identified by the reciprocal BLAST pipeline into an html table
 import pandas as pd
 
-rec_prot=pd.read_table(snakemake.input['rec_res'])
-fw_res=pd.read_table(snakemake.input['fw_res'],header=None)
-fw_res.columns=["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
-                  "stitle"]
+#rec_prot=pd.read_table(snakemake.input['rec_res'])
+#fw_res=pd.read_table(snakemake.input['fw_res'],header=None)
+#fw_res.columns=["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
+#                  "stitle"]
 
-fw_res['qseqid'] = fw_res['qseqid'].map(lambda line: line.split('.')[0])
-fw_res['sacc'] = fw_res['sacc'].map(lambda line: line.split('.')[0])
-rec_prot = rec_prot.rename(columns={"forward_genome_id": "sacc"})
-rec_prot = rec_prot.rename(columns={"backward_genome_id": "qseqid"})
-result_data = rec_prot.merge(fw_res,how='inner', on=['sacc','qseqid'])
+#fw_res['qseqid'] = fw_res['qseqid'].map(lambda line: line.split('.')[0])
+#fw_res['sacc'] = fw_res['sacc'].map(lambda line: line.split('.')[0])
+#rec_prot = rec_prot.rename(columns={"forward_genome_id": "sacc"})
+#rec_prot = rec_prot.rename(columns={"backward_genome_id": "qseqid"})
+#result_data = rec_prot.merge(fw_res,how='inner', on=['sacc','qseqid'])
 #the backward blast is currently limited to output only the best match, but the best match can contain several hsps,
 #thus it is possible that there are multiple lines of one qseqid present, which gets loaded by reading the dictionary for
 #filtering reciprocal best hits
-result_data = result_data.drop_duplicates('sacc', keep='first')
-result_data = result_data.reset_index(drop=True)
+#result_data = result_data.drop_duplicates('sacc', keep='first')
+#result_data = result_data.reset_index(drop=True)
 
+result_data = pd.read_csv(snakemake.input['rec_res'],header=0,index_col=0)
 '''
 for i in range(0, len(result_data), 1):
     taxids = result_data.iat[i, 7]

@@ -59,19 +59,19 @@ rule reciprocal_best_hits:
 		"../../../static/snakefiles/reciprocal_blast/extract_reciprocal_best_hits.py"
 
 rule blast_tables_to_html:
-	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt"
+	input: rec_res="reciprocal_results_with_taxonomy.csv"
 	output: rec_html="reciprocal_results.html"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"
 
 rule blast_tables_to_csv:
-	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt"
-	output: result_csv="reciprocal_results.csv"
+	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt", query_file=config['query_sequence']
+	output: result_csv="reciprocal_results.csv", taxonomy_result_csv='reciprocal_results_with_taxonomy.csv'
 	script:
 		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_orthologous_table.py"
 
 rule reciprocal_results_table_to_target_sequences:
-	input: result_csv="reciprocal_results.csv"
+	input: result_csv="reciprocal_results.csv", query_file=config['query_sequence']
 	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"

@@ -2,7 +2,19 @@ import pandas as pd
 
 result_df = pd.read_csv(snakemake.input['result_csv'],header=0, index_col=0)
 hit_info_file = open(snakemake.output['hit_information'],'w')
-for query in result_df['qseqid'].unique():
+
+queries = []
+with open(snakemake.input['query_file'],'r') as fhandle:
+    for line in fhandle.readlines():
+        if line[0] == '>':
+            query = line.split('>')[1].split(' ')[0]
+            if '.' in query:
+                query = query.split('.')[0]
+            print(query)
+            queries.append(query)
+print(queries)
+
+for query in queries:
 
     target_df = result_df[result_df['qseqid'] == query]
     sacc_list = list(target_df['sacc'].unique())

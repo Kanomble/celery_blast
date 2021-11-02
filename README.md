@@ -12,7 +12,11 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] implement custom snakemake logfile that lists all of the executed functions
+- [ ] display warning if backward organism not in the forward database as there is no controlling step - cause hits against the identical protein are not considered
 - [ ] reciprocal_result.csv should also contain assembly accession for each hit and genus, family .. informations
+  - [X] genus, family and other taxonomic informations are integrated
+  - [ ] assembly accession id
 - [ ] uploaded databases might have problems with taxonomic nodes - especially if the user selects different databases for the forward and backward blast
   - [ ] if there is no taxonomic node available (which can be the case for some organisms) it is not possible to upload a taxmap file ...
   - [ ] provide a tool for writing taxmap files of combined genomes 
