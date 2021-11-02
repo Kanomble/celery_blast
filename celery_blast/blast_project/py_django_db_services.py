@@ -5,6 +5,12 @@ from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv
 
+'''py_django_db_services
+
+This script provides functions that should serve as a layer between the database and other services.
+
+'''
+
 #TODO documentation
 def create_external_tools_after_snakemake_workflow_finishes(project_id):
     try:
@@ -37,7 +43,25 @@ def get_all_blast_databases():
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)
 
-#TODO documentation
+''' create_project_from_form
+
+Interacts with the BlastProject model. Calls the BlastProjectManager by using the "objects" field of the BlastProject
+model. Executes the "create_blast_project" function of the BlastProjectManager, which saves the BlastProject into
+the postgresql database. The input for this function is maintained by the py_project_creation.py script. 
+
+    :param valid_project_form
+        :type django form object
+    :param user
+        :type django user object (model)
+    :param fw_settings
+        :type django model
+    :param bw_settings
+        :type django model
+    :param query_sequence_filename
+        :type string
+    :return blast_project
+        :type django model (BlastProject)
+'''
 def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,query_sequence_filename):
     try:
         blast_project = BlastProject.objects.create_blast_project(
@@ -78,7 +102,17 @@ def create_blast_settings_from_form(fwOrBw,valid_settings_form):
     except Exception as e:
         raise IntegrityError('something went wrong during creation of blastsettings with Exception : {}'.format(e))
 
-#TODO documentation
+''' update_blast_project_with_task_result_model
+
+everytime a celery reciprocal blast task gets executed, particularly the function execute_reciprocal_blast, the TaskResult object gets 
+connected to the BlastProject model. This function is responsible for this linkage, thus it loads the relevant BlastProject and TaskResult by their 
+corresponding IDs and saves them back to the database.
+
+    :param project_id
+        :type int
+    :param task_id
+        :type int
+'''
 def update_blast_project_with_task_result_model(project_id,task_id):
     try:
         blast_project = BlastProject.objects.get(id=project_id)
@@ -88,7 +122,17 @@ def update_blast_project_with_task_result_model(project_id,task_id):
     except Exception as e:
         raise IntegrityError('problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
-#TODO documentation
+'''update_blast_database_with_task_result_model
+
+see above description. Similar to update_blast_project_with_task_result_model just for the celery database creation task, particularly the functions
+execute_makeblastdb_with_uploaded_genomes and download_blast_databases_based_on_summary_file.
+
+    :param database_id
+        :type int
+    :param task_id
+        :type int
+
+'''
 def update_blast_database_with_task_result_model(database_id,task_id):
     try:
         blastdb = BlastDatabase.objects.get(id=database_id)
@@ -98,7 +142,14 @@ def update_blast_database_with_task_result_model(database_id,task_id):
     except Exception as e:
         raise IntegrityError('problem during updating of database model with task result instance exception : {}'.format(e))
 
-#TODO documentation
+'''get_database_by_id
+    
+wrapper for the model function objects.get, return a BlastDatabase object with the provided key.
+
+    :param database_id
+        :type int
+
+'''
 def get_database_by_id(database_id):
     try:
         blastdb=BlastDatabase.objects.get(id=database_id)
@@ -106,7 +157,12 @@ def get_database_by_id(database_id):
     except Exception as e:
         raise IntegrityError('there is no database with this {} id : {}'.format(database_id,e))
 
-#TODO documentation
+'''get_all_succeeded_databases
+
+This functions uses the BlastDatabase model manager and executes the custom function get_databases_with_succeeded_tasks.
+As the name says, it returns all BlastDatabase models with the 'SUCCESS' entry in their corresponding TaskResult objects. 
+
+'''
 def get_all_succeeded_databases():
     return BlastDatabase.objects.get_databases_with_succeeded_tasks()
 
