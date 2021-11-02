@@ -36,6 +36,7 @@ The web container will automatically try to restart if the startup fails, unless
     - [ ] build ml or neighbour joining trees from all msa's
 - [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [ ] check if backward organism is in database
+  - [ ] check if query sequences are in backward database
 - [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project

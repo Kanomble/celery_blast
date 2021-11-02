@@ -20,10 +20,21 @@ Create a project based on available BLAST databases.
     <h3> Project creation procedure and informations </h3>
     <ul class="list-group">
         <li class="list-group-item">
-            Project Title - The specified project title is
+            <b> Project Title </b> - This field is mandatory as it is needed for correct project assignment.
+        </li>
+        <li class="list-group-item">
+            <b> Query Sequences </b> - Upload a query sequence fasta file. Sequences in this file MUST derive from only ONE organism (genome file). The sequence identifiers (the genome from which you receive the sequences) have to reside in the backward database. Thus a careful design of the query sequences is recommended.
+        </li>
+        <li class="list-group-item">
+            <b> Forward BLAST database </b> - This database will function as the "search space" database. The query sequences are "blasted" against this database as a first step. All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta.
+        </li>
+        <li class="list-group-item">
+            <b> Backward BLAST database </b> - The organism or/and genome of the query sequences has to reside in this database. All hits of the forward BLAST are "blasted" against this database. If those hits match the exact query sequence of the forward BLAST, reciprocal best hits are found.
+        </li>
+        <li class="list-group-item">
+            <b> Species Name for the backward BLAST </b> - Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer orthologs in the forward BLAST database. You can also use the NCBI protein website and search there for entries of your query sequences.
         </li>
     </ul>
-<hr>
 </div>
 <br>
 <div class="transparent-box" id="post_form_container">
