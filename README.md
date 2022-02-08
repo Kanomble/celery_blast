@@ -12,6 +12,11 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+<<<<<<<<< Temporary merge branch 1
+- [ ] is the uneven species distribution harmful for identifying orthologs? - add warning if e.coli sequences are uploaded
+- [ ] input fasta query file headers have to be separated by a space, not by a pipe symbol (|) or others
+- [ ] clinker like synteny plots (basic plot with x axis scaling depending on biggest genome size ..) just for filtered organisms
+=========
 - [ ] if no reciprocal hits are available for at least one gene the snakmake workflow will result into an error - rule extract_sequences
 - [ ] upload genome: if \n is in any uploaded txt file it will count as a value for insertion
 - [ ] implement custom snakemake logfile that lists all of the executed functions
@@ -34,6 +39,9 @@ The web container will automatically try to restart if the startup fails, unless
     - [ ] refactor the reciprocal BLAST creation view - model supports blastn command (search strategy)
     - [ ] integrate the possible execution of blastn also in snakemake
 - [ ] download taxdb during build process of the docker image
+- [ ] is the uneven species distribution harmful for identifying orthologs? - add warning if e.coli sequences are uploaded
+- [ ] input fasta query file headers have to be separated by a space, not by a pipe symbol (|) or others
+- [ ] clinker like synteny plots (basic plot with x axis scaling depending on biggest genome size ..) just for filtered organisms
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [ ] write documentation for added functions
 - [ ] refactor the create_blastdatabase_table_and_directory function (too long)
