@@ -34,6 +34,9 @@ The web container will automatically try to restart if the startup fails, unless
     - [ ] refactor the reciprocal BLAST creation view - model supports blastn command (search strategy)
     - [ ] integrate the possible execution of blastn also in snakemake
 - [ ] download taxdb during build process of the docker image
+- [ ] is the uneven species distribution harmful for identifying orthologs? - add warning if e.coli sequences are uploaded
+- [ ] input fasta query file headers have to be separated by a space, not by a pipe symbol (|) or others
+- [ ] clinker like synteny plots (basic plot with x axis scaling depending on biggest genome size ..) just for filtered organisms
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [ ] write documentation for added functions
 - [ ] refactor the create_blastdatabase_table_and_directory function (too long)
