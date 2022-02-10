@@ -28,7 +28,8 @@ services:
 
   web:
     image: kanomble/rec_blast_base_image:1.1
-    command:  sh -c "python manage.py makemigrations blast_project
+    command:  sh -c "python manage.py makemigrations && python manage.py migrate
+     && python manage.py makemigrations blast_project
      && python manage.py migrate blast_project
       && python manage.py makemigrations one_way_blast
       && python manage.py migrate one_way_blast
