@@ -27,8 +27,6 @@ logger = get_task_logger(__name__)
     :returns download_file
         :type str
 '''
-
-
 @shared_task()
 def download_refseq_assembly_summary_file():
     try:

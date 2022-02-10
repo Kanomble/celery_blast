@@ -64,7 +64,7 @@ def dashboard(request):
 @login_required(login_url='login')
 def download_refseq_assembly_summary_view(request):
     try:
-        download_refseq_assembly_summary_file.delay()
+        task = download_refseq_assembly_summary_file.delay()
         return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request,e)
