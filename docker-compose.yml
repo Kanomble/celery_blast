@@ -3,7 +3,7 @@ version: "3.8"
 services:
   rabbitmq:
     hostname: rabbitmq
-    image: kanomble/rec_blast_rabbitmq_image:1.0
+    image: kanomble/rec_blast_rabbitmq_image:1.1
     networks:
       - main
     ports:
