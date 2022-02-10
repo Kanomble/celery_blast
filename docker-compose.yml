@@ -51,7 +51,7 @@ services:
 
   celery_worker:
     image: kanomble/rec_blast_base_image:1.1
-    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery -A celery_blast worker -l info"
+    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery worker -A celery_blast -l INFO"
     depends_on:
       - web
       - postgres
