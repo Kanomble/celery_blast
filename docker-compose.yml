@@ -49,23 +49,23 @@ services:
       - "8080:8080"
 
   celery_worker:
+    image: kanomble/rec_blast_base_image:1.1
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery -A celery_blast worker -l info"
     depends_on:
       - web
       - postgres
       - rabbitmq
-    image: kanomble/rec_blast_base_image
     networks:
       - main
     restart: unless-stopped
 
   panoptes:
+    image: kanomble/rec_blast_base_image:1.1
     command: sh -c "./wait-for web:8080 -- panoptes"
     depends_on:
       - web
       - postgres
       - rabbitmq
-    image: kanomble/rec_blast_base_image
     ports:
       - "5000:5000"
     networks:
@@ -73,13 +73,13 @@ services:
     restart: unless-stopped
 
   flower:
+    image: kanomble/rec_blast_base_image:1.1
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- flower -A celery_blast --port=5555"
     networks:
       - main
     environment:
       AMQP_HOST: 'rabbitmq.local'
       AMQP_ADMIN_HOST: 'rabbitmq.local'
-    image: kanomble/rec_blast_base_image
     depends_on:
       - web
       - postgres
