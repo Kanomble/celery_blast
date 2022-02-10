@@ -1,4 +1,4 @@
-from os import getcwd, chdir, mkdir, remove
+from os import getcwd, mkdir, remove
 from os.path import isdir, isfile
 from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT
 import pandas as pd
@@ -6,10 +6,8 @@ import math
 
 from blast_project.py_django_db_services import get_database_by_id, update_blast_database_with_task_result_model
 from .py_services import write_blastdatabase_snakemake_configfile,\
-    get_ftp_paths_and_taxids_from_summary_file, write_progress_database_transactions,\
-    get_current_progress_database_transactions, get_bdb_summary_table_name
+    get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
 
-from time import sleep
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
