@@ -3,7 +3,7 @@ version: "3.8"
 services:
   rabbitmq:
     hostname: rabbitmq
-    image: kanomble/rec_blast_rabbitmq_image:1.0
+    image: rabbitmq:latest
     networks:
       - main
     ports:
@@ -12,7 +12,7 @@ services:
 
   postgres:
     hostname: postgres
-    image: kanomble/rec_blast_postgres_db_image:1.0
+    image: postgres:latest
     environment:
       - TZ=Europe/Berlin
       - POSTGRES_DB=postgres
@@ -27,7 +27,9 @@ services:
       - "5432:5432"
 
   web:
-    image: kanomble/rec_blast_base_image:1.1
+    build:
+      context: .
+      dockerfile: Dockerfile.django_snakemake
     command:  sh -c "python manage.py makemigrations blast_project
      && python manage.py migrate blast_project
       && python manage.py makemigrations one_way_blast
@@ -41,6 +43,7 @@ services:
     depends_on:
       - rabbitmq
       - postgres
+    image: blast_celery_snakemake_app
     volumes:
       - ./data:/blast/reciprocal_blast/media
       - ./tmp:/blast/reciprocal_blast/tmp
@@ -54,7 +57,7 @@ services:
       - web
       - postgres
       - rabbitmq
-    image: kanomble/rec_blast_base_image
+    image: blast_celery_snakemake_app
     networks:
       - main
     restart: unless-stopped
@@ -65,7 +68,7 @@ services:
       - web
       - postgres
       - rabbitmq
-    image: kanomble/rec_blast_base_image
+    image: blast_celery_snakemake_app
     ports:
       - "5000:5000"
     networks:
@@ -79,7 +82,7 @@ services:
     environment:
       AMQP_HOST: 'rabbitmq.local'
       AMQP_ADMIN_HOST: 'rabbitmq.local'
-    image: kanomble/rec_blast_base_image
+    image: blast_celery_snakemake_app
     depends_on:
       - web
       - postgres
@@ -89,7 +92,9 @@ services:
     restart: unless-stopped
 
   tools:
-    image: kanomble/rec_blast_external_tools:1.0
+    build:
+      context: .
+      dockerfile: Dockerfile.bioinformatic_tools
     networks:
       - main
     ports:

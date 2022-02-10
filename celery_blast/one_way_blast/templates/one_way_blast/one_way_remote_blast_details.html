@@ -7,7 +7,7 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
 {% endblock %}
 
-{% block page_title %} Reciprocal Blast Project Details {% endblock %}
+{% block page_title %} Remote Blast Project Details {% endblock %}
 
 {% block infoheader %} Project Details {% endblock %}
 {% block page_header %}
@@ -25,9 +25,9 @@ Details and pipeline dashboard.
 
     <h4> Basic Informations </h4>
     <ul>
-        <li> Click on the "Execute Snakemake" Button if you haven't started your reciprocal BLAST analysis </li>
+        <li> Click on the "Execute Snakemake" Button if you haven't started your remote BLAST analysis </li>
         <li> Monitor your current Snakemake run via Panoptes by clicking on the "Panoptes Monitoring" button </li>
-        <li> If your Snakemake execution finishes you can view and download the results by clicking on the "Reciprocal Results Table" button which appears after successfull termination at the right side of the project information panel</li>
+        <li> If your Snakemake execution finishes you can view and download the results by clicking on the "Results Table" button which appears after successfull termination at the right side of the project information panel</li>
     </ul>
 {% endblock %}
 
@@ -75,7 +75,7 @@ Details and pipeline dashboard.
                             <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
                         {% endif %}
                         {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark" href="{% url 'one_way_html_results' project_id=OneWayRemoteBlastProject.id remote=1%}"> Reciprocal Results Table </a></td>
+                            <td><a class="btn btn-dark" href="{% url 'one_way_html_results' project_id=OneWayRemoteBlastProject.id remote=1%}"> Results Table </a></td>
                         {% endif %}
                     </tr>
                 </tbody>
