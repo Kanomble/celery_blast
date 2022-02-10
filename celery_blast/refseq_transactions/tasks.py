@@ -26,7 +26,7 @@ logger = get_task_logger(__name__)
         :type str
 '''
 @shared_task()
-def download_refseq_assembly_summary_file():
+def download_refseq_assembly_summary():
     try:
         refseq_url = "ftp://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
         current_working_directory = getcwd()  # /blast/reciprocal_blast
