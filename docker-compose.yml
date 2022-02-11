@@ -28,13 +28,8 @@ services:
 
   web:
     image: kanomble/rec_blast_base_image:1.2
-    command:  sh -c "python manage.py makemigrations && python manage.py migrate
-     && python manage.py makemigrations blast_project
-     && python manage.py migrate blast_project
-      && python manage.py makemigrations one_way_blast
-      && python manage.py migrate one_way_blast
-      && python manage.py makemigrations external_tools
-      && python manage.py migrate external_tools
+    command:  sh -c "./wait-for rabbitmq:5672 && ./wait-for postgres:5432
+     && python manage.py makemigrations && python manage.py migrate
      && python manage.py runserver 0.0.0.0:8080"
     networks:
       - main
@@ -58,19 +53,10 @@ services:
       - rabbitmq
     networks:
       - main
-    restart: unless-stopped
-
-  panoptes:
-    image: kanomble/rec_blast_base_image:1.2
-    command: sh -c "./wait-for web:8080 -- panoptes"
-    depends_on:
-      - web
-      - postgres
-      - rabbitmq
-    ports:
-      - "5000:5000"
-    networks:
-      - main
+    volumes:
+      - ./data:/blast/reciprocal_blast/media
+      - ./tmp:/blast/reciprocal_blast/tmp
+      - ./celery_blast:/blast/reciprocal_blast
     restart: unless-stopped
 
   flower:
@@ -85,8 +71,24 @@ services:
       - web
       - postgres
       - rabbitmq
+      - celery_worker
+    volumes:
+        - ./celery_blast:/blast/reciprocal_blast
     ports:
       - "5555:5555"
+    restart: unless-stopped
+
+  panoptes:
+    image: kanomble/rec_blast_base_image:1.2
+    command: sh -c "./wait-for web:8080 -- panoptes"
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    ports:
+      - "5000:5000"
+    networks:
+      - main
     restart: unless-stopped
 
   tools:
