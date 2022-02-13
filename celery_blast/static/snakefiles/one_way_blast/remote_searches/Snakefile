@@ -7,10 +7,10 @@ rule all:
 rule blast:
 	input: queries=config['query_sequence']
 	output: results="blast_results.table"
-	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb'], entrez_query=config['entrez_query']
+	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb'], entrez_query=config['entrez_query'], search_strategy=config['search_strategy']
 	run:
 		if(params.entrez_query != ""):
-			cmd_string = "blastp -db "+params.database+\
+			cmd_string = params.search_strategy + " -db "+params.database+\
 			" -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
 			" -word_size "+str(params.word_size)+\
@@ -21,7 +21,7 @@ rule blast:
 			" -entrez_query \""+params.entrez_query+"\""
 			shell(cmd_string)
 		else:
-			cmd_string = "blastp -db "+params.database+\
+			cmd_string = params.search_strategy + " -db "+params.database+\
 			" -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
 			" -word_size "+str(params.word_size)+\

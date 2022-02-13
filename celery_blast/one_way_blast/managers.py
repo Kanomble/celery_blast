@@ -35,7 +35,6 @@ class OneWayBlastProjectManager(models.Manager):
 
 class OneWayRemoteBlastProjectManager(models.Manager):
     #functions
-    # functions
     def create_one_way_remote_blast_project(
             self, r_project_title,
             r_project_query_sequences,
