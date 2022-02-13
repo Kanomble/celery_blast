@@ -83,7 +83,7 @@ def execute_one_way_remote_blast_project(self,project_id):
         raise Exception('couldnt update blastproject with exception : {}'.format(e))
     try:
         logger.info('trying to start snakemake one way remote BLAST workflow')
-        #snakemake --snakefile 'static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/blast_projects/4/snakefile_config' --directory 'media/blast_projects/4/'
+        #snakemake --snakefile 'static/snakefiles/one_way_blast/remote_searches/Snakefile' --cores 1 --configfile 'media/one_way_blast/remote_searches/6/snakefile_config' --directory 'media/one_way_blast/remote_searches/6/'
         one_way_remote_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
