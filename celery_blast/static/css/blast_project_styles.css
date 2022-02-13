@@ -4,9 +4,10 @@ div.dashboard_project_list_col {
     background: linear-gradient(whitesmoke,lightblue);
     border: 1px solid #000000;
     padding: 10px;
-
     border-radius: 5px;
 
+    height: auto;
+    max-height: 40%;
     margin-top: 15px !important;
     margin-bottom: 15px !important;
     margin-left: 15px !important;

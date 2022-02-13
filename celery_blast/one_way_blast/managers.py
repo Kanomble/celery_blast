@@ -41,7 +41,8 @@ class OneWayRemoteBlastProjectManager(models.Manager):
             r_project_query_sequences,
             r_project_user,
             r_project_settings,
-            r_project_database):
+            r_project_database,
+            r_project_search_strategy):
         # calling the create method (objects.create) ..
 
         r_blast_project = self.create(
@@ -49,7 +50,8 @@ class OneWayRemoteBlastProjectManager(models.Manager):
             r_project_query_sequences=r_project_query_sequences,
             r_project_user=r_project_user,
             r_project_settings=r_project_settings,
-            r_project_database=r_project_database)
+            r_project_database=r_project_database,
+            r_search_strategy=r_project_search_strategy)
 
         r_blast_project.initialize_project_directory()
         r_blast_project.write_snakemake_configuration_file()

@@ -24,6 +24,7 @@ def create_one_way_remote_project_from_form(valid_project_form,user,settings,que
             r_project_user=user,
             r_project_settings=settings,
             r_project_database=valid_project_form.cleaned_data['r_project_database'],
+            r_project_search_strategy=valid_project_form.cleaned_data['r_search_strategy'],
         )
         return blast_project
     except Exception as e:

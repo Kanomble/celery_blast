@@ -187,8 +187,8 @@ class OneWayRemoteBlastProject(models.Model):
             snk_config_file.write('project_id: ' + str(self.id) + "\n")
             snk_config_file.write('blastdb: '  + str(self.r_project_database) + "\n")
             snk_config_file.write('query_sequence: ' + "\"" + self.r_project_query_sequences + "\"\n")
+            snk_config_file.write('search_strategy:' + "\"" + self.r_search_strategy +"\"\n")
             snk_config_file.write('entrez_query:'+"\n")
-
 
             settings_dict = self.r_project_settings.get_values_as_dict()
 
