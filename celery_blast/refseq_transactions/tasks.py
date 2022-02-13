@@ -11,6 +11,7 @@ from .py_services import write_blastdatabase_snakemake_configfile,\
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
+
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
