@@ -64,7 +64,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
 
 
                 if len(filtered_table) == 0:
-                    raise IntegrityError("the database doesnt contain any entries, pls apply an other filter method!")
+                    raise IntegrityError("the database doesnt contain any entries, pls apply another filter method!")
 
                 # create new refseq database model and save it into the database
                 new_blastdb = create_and_save_refseq_database_model(
@@ -155,6 +155,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
                   "release_type", "genome_rep", "seq_rel_date", "asm_name", "submitter", "gbrs_paired_asm",
                   "paired_asm_comp", "ftp_path", "excluded_from_refseq", "relation_to_type_material"]
         refseq_table.columns = header
+        refseq_table = refseq_table.astype({"taxid": str})
     except Exception as e:
         raise ValueError("exception during pandas parsing of assembly_summary_refseq.txt file ...\n\tException: {}".format(e))
 
@@ -169,6 +170,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
             pandas_genome_level_dataframes.append(refseq_table[refseq_table['assembly_level'] == genome_level])
 
         desired_refseq_genomes_dataframe = pd.concat(pandas_genome_level_dataframes)
+
         return desired_refseq_genomes_dataframe
 
     except Exception as e:
@@ -191,6 +193,7 @@ def read_taxonomy_table(taxfilename):
     # species_taxid and taxid should normally be interchangeable, the species_taxid may inherit more informations
     # to current strain (have a look at the README description of the refseq summary file)
     taxonomy_file.columns = ['taxid']
+    taxonomy_file = taxonomy_file.astype({"taxid": str})
     return taxonomy_file
 
 ''' filter_table_by_taxonomy
