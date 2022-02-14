@@ -4,11 +4,6 @@
 BLAST Dashboard
 {% endblock %}
 
-{% block add_headers %}
-{% load static %}
-<link rel="stylesheet"  href="{%  static  'css/refseq_transactions_styles.css'  %}">
-{% endblock %}
-
 {% block page_title %} Refseq Transaction Dashboard {% endblock %}
 {% block infoheader %} Refseq Transaction Dashboard {% endblock %}
 
@@ -33,7 +28,7 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
     </div>
 
     {% if refseq_exists %}
-    <div class="transparent-box" style="margin-bottom: 30px">
+    <div class="transparent-box" style="margin-bottom: 30px;">
         {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
     </div>
     {% endif %}
