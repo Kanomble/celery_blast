@@ -13,7 +13,8 @@ Create a project based on available BLAST databases.
 {% block page_header %}{% endblock %}
 
 {% block content %}
-<div class="transparent-box">
+
+<div class="transparent-box" id="post_form_container">
     <h3> Project creation procedure and informations </h3>
     <ul class="list-group">
         <li class="list-group-item">
@@ -32,9 +33,7 @@ Create a project based on available BLAST databases.
             <b> Species Name for the backward BLAST </b> - Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer orthologs in the forward BLAST database. You can also use the NCBI protein website and search there for entries of your query sequences.
         </li>
     </ul>
-</div>
-<br>
-<div class="transparent-box" id="post_form_container">
+    <br>
     {% include "blast_project/form_project_creation.html" %}
     <button class="btn btn-dark" onclick="displayBlastSettings()">Advanced BLAST Settings </button>
 </div>
