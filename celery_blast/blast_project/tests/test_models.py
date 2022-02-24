@@ -55,7 +55,7 @@ class BlastProjectTestCase(TestCase):
         BlastProject.objects.create(
             project_title='test project 1',
             search_strategy='blastp',
-            project_query_sequences='testfiles/query_sequences/lps_transport.faa',
+            project_query_sequences='lps_transport.faa',
             project_user = user,
             project_forward_settings = fw_settings,
             project_backward_settings = bw_settings,
@@ -90,12 +90,12 @@ class BlastProjectTestCase(TestCase):
 
     def test_blast_project_functions(self):
         blast_project = BlastProject.objects.get(project_title='test project 1')
-        self.assertEqual(blast_project.get_list_of_query_sequences(),
-                         ['WP_087495344.1',
-                          'WP_087495343.1',
-                          'WP_087497333.1',
-                          'WP_087495837.1',
-                          'WP_087496015.1',
-                          'WP_087493791.1',
-                          'WP_087493790.1',
-                          'WP_087493929.1'])
+        self.assertEqual(blast_project.get_list_of_query_sequences(filepath='testfiles/blast_project/'),
+                         ['WP_087495344',
+                          'WP_087495343',
+                          'WP_087497333',
+                          'WP_087495837',
+                          'WP_087496015',
+                          'WP_087493791',
+                          'WP_087493790',
+                          'WP_087493929'])
