@@ -87,3 +87,15 @@ class BlastProjectTestCase(TestCase):
     def test_blast_project_model(self):
         blast_project = BlastProject.objects.get(project_title='test project 1')
         self.assertEqual(blast_project.project_title,'test project 1')
+
+    def test_blast_project_functions(self):
+        blast_project = BlastProject.objects.get(project_title='test project 1')
+        self.assertEqual(blast_project.get_list_of_query_sequences(),
+                         ['WP_087495344.1',
+                          'WP_087495343.1',
+                          'WP_087497333.1',
+                          'WP_087495837.1',
+                          'WP_087496015.1',
+                          'WP_087493791.1',
+                          'WP_087493790.1',
+                          'WP_087493929.1'])

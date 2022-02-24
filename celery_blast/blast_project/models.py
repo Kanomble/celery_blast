@@ -179,9 +179,9 @@ class BlastProject(models.Model):
             self.timestamp, self.project_user.username,
             self.project_forward_database.database_name)
 
-    def get_list_of_query_sequences(self):
+    def get_list_of_query_sequences(self, filepath='media/blast_projects/'):
         try:
-            query_sequence_file_path = self.get_project_query_sequence_filepath()
+            query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
             query_file = open(query_sequence_file_path, 'r')
             qseqids = []
             for line in query_file.readlines():
@@ -203,8 +203,8 @@ class BlastProject(models.Model):
     def get_project_dir(self):
         return 'media/blast_projects/' + str(self.id)
 
-    def get_project_query_sequence_filepath(self):
-        return 'media/blast_projects/' + str(self.id) + '/' + self.project_query_sequences
+    def get_project_query_sequence_filepath(self, filepath='media/blast_projects/'):
+        return filepath + str(self.id) + '/' + self.project_query_sequences
 
     def if_executed_return_associated_taskresult_model(self):
         # executed
@@ -222,13 +222,13 @@ class BlastProject(models.Model):
         this function is executed within the create_blast_project function of the manager, 
         it directly creates a directory for the project and a directory for result images in the static folder
     '''
-    def initialize_project_directory(self):
+    def initialize_project_directory(self,filepath='media/blast_projects/'):
         # check if blast_project was previously created / check if media/blast_project directory exists
-        if (isdir('media/blast_projects/' + str(self.id)) or isdir('media/blast_projects/') == False):
+        if (isdir(filepath + str(self.id)) or isdir(filepath) == False):
             raise IntegrityError("project directory exists")
         else:
             try:
-                mkdir('media/blast_projects/' + str(self.id))
+                mkdir(filepath + str(self.id))
                 if(isdir('static/images/result_images/'+str(self.id)) == False):
                     mkdir('static/images/result_images/'+str(self.id))
             except Exception as e:
@@ -236,9 +236,9 @@ class BlastProject(models.Model):
 
 
     #TODO documentation
-    def write_snakemake_configuration_file(self):
+    def write_snakemake_configuration_file(self, filepath='media/blast_projects/'):
         try:
-            snk_config_file = open('media/blast_projects/' + str(self.id)+'/snakefile_config','w')
+            snk_config_file = open(filepath + str(self.id)+'/snakefile_config','w')
             #database path from media/blast_projects/project_id as working directory for snakemake
             snk_config_file.write('project_id: '+str(self.id)+"\n")
             snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
