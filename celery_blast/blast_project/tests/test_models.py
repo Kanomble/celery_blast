@@ -88,7 +88,7 @@ class BlastProjectTestCase(TestCase):
         blast_project = BlastProject.objects.get(project_title='test project 1')
         self.assertEqual(blast_project.project_title,'test project 1')
 
-    def test_blast_project_functions(self):
+    def test_blast_project_query_sequence_file(self):
         blast_project = BlastProject.objects.get(project_title='test project 1')
         self.assertEqual(blast_project.get_list_of_query_sequences(filepath='testfiles/blast_project/'),
                          ['WP_087495344',
@@ -99,3 +99,18 @@ class BlastProjectTestCase(TestCase):
                           'WP_087493791',
                           'WP_087493790',
                           'WP_087493929'])
+
+    def test_blast_project_write_sanekmake_config_file(self):
+        blast_project = BlastProject.objects.get(project_title='test project 1')
+
+        if os.path.isdir('testfiles/blast_project/'+str(blast_project.id)) == False:
+            os.mkdir('testfiles/blast_project/'+str(blast_project.id))
+        blast_project.write_snakemake_configuration_file(filepath='testfiles/blast_project/')
+        with open('testfiles/blast_project/'+str(blast_project.id) +'/snakefile_config') as sconfig:
+            lines = sconfig.readlines()
+            config_dict = {}
+            for line in lines:
+                line = line.split(":")
+                config_dict[line[0]] = line[1]
+
+        self.assertEqual(len(config_dict.keys()),17)
