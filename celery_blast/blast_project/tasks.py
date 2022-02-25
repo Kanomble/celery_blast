@@ -92,8 +92,12 @@ def execute_reciprocal_blast_project(self,project_id):
         logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(reciprocal_blast_snakemake.pid, 4000))
         returncode = reciprocal_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
         logger.info('returncode : {}'.format(returncode))
-        progress_recorder.set_progress(100, 100, "SUCCESS")
+        if (returncode != 0):
+            logger.warning('subprocess Popen reciprocal BLAST resulted in an error!')
+            progress_recorder.set_progress(0, 100, "FAILURE")
+            raise Exception('Popen hasnt succeeded ...')
 
+        progress_recorder.set_progress(100, 100, "SUCCESS")
         create_external_tools_after_snakemake_workflow_finishes(project_id)
 
         return returncode
