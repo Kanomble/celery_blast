@@ -4,6 +4,8 @@
 #table reading. Especially df[0] and df[6] ... qseqid and sacc are needed ...
 
 import pandas as pd
+import sys
+
 '''
 def get_seq_match_dict_and_flat_list(df):
     #extract protein identifier for matches: key=protein identifier for forward_input_sequences
@@ -30,10 +32,6 @@ def extract_reciprocal_best_hits_and_return_protein_ids(seq_matches_backward_dic
 #import numpy as np
 #import itertools as it
 
-
-
-
-
 forward_df = pd.read_table(snakemake.input['fw_res'],header=None)
 forward_df[6] = forward_df[6].map(lambda line : line.split('.')[0])
 forward_df = pd.DataFrame([forward_df[0][:],forward_df[6][:]]).transpose()
@@ -50,6 +48,11 @@ forward_df.columns = ['qseqid','targetid']
 backward_df.columns = ['targetid','qseqid']
 
 result_df = backward_df.merge(forward_df,how='inner',on=['targetid','qseqid']).drop_duplicates()
+
+#returncode for no reciprocal hits
+if len(result_df['targetid']) == 0:
+    sys.exit(123)
+
 with open(snakemake.output['rec_best_hits'],'w') as recfile:
     recfile.write("forward_genome_id\tbackward_genome_id\n")
     for targetid, qseqid in zip(result_df['targetid'],result_df['qseqid']):

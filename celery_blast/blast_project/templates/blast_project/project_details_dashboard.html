@@ -87,8 +87,15 @@ Details and pipeline dashboard.
             </table>
         </div>
     </div>
-
     <br>
+
+    {% if BlastProject.project_execution_snakemake_task.status == 'FAILURE' %}
+    <div class="dashboard_project_list_col">
+            <p> AN ERROR OCCURED DURING SNAKEMAKE EXECUTION </p>
+    </div>
+    <br>
+    {% endif %}
+
     <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
     </div>
 
