@@ -295,3 +295,7 @@ class UploadGenomeForm(forms.Form):
                     amount_of_levels += chunk.decode().count('\n')
                 if amount_of_levels != organisms:
                     self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
+
+class UploadMultipleFilesGenomeForm(forms.Form):
+    file_field = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={'multiple': True}))

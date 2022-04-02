@@ -50,7 +50,7 @@
     <h3 class="project-creation-header"> BLAST Project Creation </h3>
     <br>
     {% include "one_way_blast/form_one_way_blast_project_creation.html" %}
-    <button class="btn btn-dark" onclick="displayBlastSettings('advanced_settings')">Advanced BLAST Settings </button>
+    <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')">Advanced BLAST Settings </button>
 </div>
 
 <div class="transparent-box" id="project_creation_remote" style="display: none">
@@ -58,24 +58,8 @@
     <h3 class="project-creation-header"> Remote BLAST Project Creation </h3>
     <br>
     {% include "one_way_blast/form_one_way_remote_blast_project_creation.html" %}
-    <button class="btn btn-dark" onclick="displayBlastSettings('advanced_remote_settings')">Advanced BLAST Settings </button>
+    <button class="btn btn-dark" onclick="displayDivElement('advanced_remote_settings')">Advanced BLAST Settings </button>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-function loadTemplate(project_type) {
-    document.getElementById('project_creation_' + project_type).style.display = "block";
-    if (project_type == 'remote') {
-        document.getElementById('project_creation_local').style.display = 'none'
-        document.getElementById('local').checked = false
-
-    } else if (project_type == 'local') {
-        document.getElementById('project_creation_remote').style.display = 'none'
-        document.getElementById('remote').checked = false
-    }
-}
-</script>
 {% endblock %}
 
 

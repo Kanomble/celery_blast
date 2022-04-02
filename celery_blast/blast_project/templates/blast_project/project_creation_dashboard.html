@@ -35,19 +35,6 @@ Create a project based on available BLAST databases.
     </ul>
     <br>
     {% include "blast_project/form_project_creation.html" %}
-    <button class="btn btn-dark" onclick="displayBlastSettings()">Advanced BLAST Settings </button>
+    <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')">Advanced BLAST Settings </button>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-   function displayBlastSettings() {
-      var settingsForm = document.getElementById("advanced_settings");
-      if (settingsForm.style.display == "none") {
-        settingsForm.style.display = "block";
-      } else {
-        settingsForm.style.display = "none";
-      }
-   }
-</script>
 {% endblock %}
