@@ -1,5 +1,6 @@
 <div class="post_form_container">
-    <form action="{% url 'upload_genomes' %}"
+
+    <form action="{% url 'upload_genomes' upload_type='one_file' %}"
       method="post"
       enctype="multipart/form-data"
       onsubmit="showLoader('loading_div','post_form_container')">

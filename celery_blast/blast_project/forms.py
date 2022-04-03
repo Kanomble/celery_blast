@@ -297,5 +297,17 @@ class UploadGenomeForm(forms.Form):
                     self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
 
 class UploadMultipleFilesGenomeForm(forms.Form):
-    file_field = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={'multiple': True}))
+    genome_file_field = forms.FileField(required=False)
+    organism_name = forms.CharField(max_length=200, required=False)
+    extra_field_count = forms.CharField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        extra_fields = kwargs.pop('extra', 0)
+        super(UploadMultipleFilesGenomeForm, self).__init__(*args, **kwargs)
+        self.fields['extra_field_count'].initial = extra_fields
+
+        for index in range(int(extra_fields)):
+            self.fields['genome_file_field_{index}'.format(index=index)] = forms.FileField(required=False)
+            self.fields['organism_name_{index}'.format(index=index)] = forms.CharField(required=False)
+    #https://stackoverflow.com/questions/6142025/dynamically-add-field-to-a-form
+

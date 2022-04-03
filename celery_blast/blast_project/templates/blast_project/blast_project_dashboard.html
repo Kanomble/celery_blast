@@ -26,7 +26,7 @@
         <li> BLAST Database creation</li>
         <ul>
             <li> <a href="{% url 'refseq_transactions_dashboard' %}"> based on remotely available NCBI-Databases </a></li>
-            <li> <a href="{% url 'upload_genomes' %}"> based on locally downloaded or uploaded BLAST databases </a></li>
+            <li> <a href="{% url 'upload_genomes' upload_type='standard' %}"> based on locally downloaded or uploaded BLAST databases </a></li>
         </ul>
         <li> <a href="{% url 'species_taxids' %}"> Create files with taxonomic nodes for limiting your BLAST databases by taxonomic informations </a></li>
 

@@ -16,10 +16,53 @@ Upload your own FASTA files and format them to BLAST databases.
 {% block page_header %}{% endblock %}
 
 {% block content %}
-<div class="transparent-box" id="post_form_container">
+
+
+
+    <div class="container-fluid text-center transparent-box">
+    <form name="database_upload_menu" action="javascript:void(0)" id="upload_genome_files_dashboard_load_forms">
+        <div class="custom-control custom-radio custom-control-inline">
+            <input class="custom-control-input" type="radio" id="single" name="single_genome_file_upload_button" value="single" onchange="loadMultipleOrSingleFileUpload(this.value)">
+            <label class="custom-control-label" for="single">Upload a single genome file</label>
+        </div>
+
+        <div class="custom-control custom-radio custom-control-inline">
+            <input class="custom-control-input" type="radio" id="multiple" name="multiple_genome_file_upload_button" value="multiple" onchange="loadMultipleOrSingleFileUpload(this.value)">
+            <label class="custom-control-label" for="multiple">Upload multiple genome files</label>
+        </div>
+    </form>
+</div>
+
+<div class="transparent-box" id="post_form_single_container" style="display: none">
     {% include "blast_project/form_genome_upload.html" %}
 </div>
+
+<div class="transparent-box" id="post_form_multiple_container" style="display: none;">
+    {% include "blast_project/form_genome_upload_multiple_files.html" %}
+</div>
+
 {% endblock %}
 
 {% block scripts %}
+<script>
+let form_count = Number($("[name=extra_field_count]").val());
+// get extra form count so we know what index to use for the next item.
+
+$("#add_another").click(function() {
+    form_count ++;
+
+    let element = $('<input type="file" class="form-control-file"/>');
+    element.attr('name', 'genome_file_field_' + form_count);
+
+    let orgname = $('<input type="text" class="form-control"/>');
+    orgname.attr('organism','organism_name_' + form_count)
+    $("#multiple_files_form").append(element);
+    $("#multiple_files_form").append(orgname);
+    // build element and append it to our forms container
+
+    $("[name=extra_field_count]").val(form_count);
+    // increment form count so our view knows to populate
+    // that many fields for validation
+})
+</script>
 {% endblock %}

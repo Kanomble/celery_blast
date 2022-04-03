@@ -1,0 +1,13 @@
+<div class="post_form_container">
+    <form id="multiple_files_form" action="{% url 'upload_genomes' upload_type='multiple_files' %}" method="post" enctype="multipart/form-data"
+      onsubmit="showLoader('loading_div','post_form_container')">
+        {% csrf_token %}
+
+        {% for field in MultipleFileUploadGenomeForm %}
+            {{ field.label }} | {{ field }}
+        {%  endfor %}
+        <input type="submit">
+    </form>
+
+    <button id="add_another" >Add Another Genome File</button>
+</div>
