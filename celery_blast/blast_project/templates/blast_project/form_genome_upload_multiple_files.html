@@ -1,13 +1,36 @@
-<div class="post_form_container">
+<div class="post_form_container" id="multiple_file_upload_form_div">
     <form id="multiple_files_form" action="{% url 'upload_genomes' upload_type='multiple_files' %}" method="post" enctype="multipart/form-data"
       onsubmit="showLoader('loading_div','post_form_container')">
         {% csrf_token %}
 
-        {% for field in MultipleFileUploadGenomeForm %}
-            {{ field.label }} | {{ field }}
-        {%  endfor %}
-        <input type="submit">
+        <div class="form-group">
+            <label for="organism_name_0">Organism name</label>
+            <input type="text" class="form-control" id="organism_name_0" name="organism_name_0">
+            {% if MultipleFileUploadGenomeForm.organism_name_0.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ MultipleFileUploadGenomeForm.organism_name_0.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="genome_file_field_0">Upload Genome File</label>
+            <input type="file" class="form-control-file" id="genome_file_field_0" name="genome_file_field_0">
+            {% if MultipleFileUploadGenomeForm.genome_file_field_0.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ MultipleFileUploadGenomeForm.genome_file_field_0.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <input type="hidden" class="form-control" id="extra_field_count" name="extra_field_count" value="{{ MultipleFileUploadGenomeForm.extra_field_count.initial }}">
+            {% if MultipleFileUploadGenomeForm.extra_field_count.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ MultipleFileUploadGenomeForm.extra_field_count.errors }}</strong>
+            </div>
+            {% endif %}
+        </div>
+        <input type="submit" value="Submit" class="btn btn-dark"  id="submit_multiple_field_form">
     </form>
 
-    <button id="add_another" >Add Another Genome File</button>
+    <button id="add_another">Add Another Genome File</button>
 </div>

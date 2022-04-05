@@ -33,13 +33,16 @@ Upload your own FASTA files and format them to BLAST databases.
     </form>
 </div>
 
-<div class="transparent-box" id="post_form_single_container" style="display: none">
-    {% include "blast_project/form_genome_upload.html" %}
+<div id="upload_form_master_div" class="transparent-box" style="display: none">
+    <div  id="post_form_single_container" style="display: none">
+        {% include "blast_project/form_genome_upload.html" %}
+    </div>
+
+    <div id="post_form_multiple_container" style="display: none;">
+        {% include "blast_project/form_genome_upload_multiple_files.html" %}
+    </div>
 </div>
 
-<div class="transparent-box" id="post_form_multiple_container" style="display: none;">
-    {% include "blast_project/form_genome_upload_multiple_files.html" %}
-</div>
 
 {% endblock %}
 
@@ -50,17 +53,54 @@ let form_count = Number($("[name=extra_field_count]").val());
 
 $("#add_another").click(function() {
     form_count ++;
+    if(form_count == 0){
+        form_count = 1;
+    }
+    var form = document.getElementById("multiple_files_form")
+    var submit_button = document.getElementById("submit_multiple_field_form")
+    submit_button.parentNode.removeChild(submit_button)
 
-    let element = $('<input type="file" class="form-control-file"/>');
-    element.attr('name', 'genome_file_field_' + form_count);
+    var file_field_name = 'genome_file_field_' + form_count;
+    var organism_field_name = 'organism_name_' + form_count;
 
-    let orgname = $('<input type="text" class="form-control"/>');
-    orgname.attr('organism','organism_name_' + form_count)
-    $("#multiple_files_form").append(element);
-    $("#multiple_files_form").append(orgname);
+    var new_form_div = document.createElement("div")
+    var new_file_field_label = document.createElement("label")
+    var new_file_field_input = document.createElement("input")
+
+    var genome_file_text = document.createTextNode("Next Genome FASTA File:")
+    new_form_div.setAttribute("class","form-group")
+    new_file_field_label.setAttribute("for",file_field_name)
+    new_file_field_label.appendChild(genome_file_text)
+    new_file_field_input.setAttribute("id",file_field_name)
+    new_file_field_input.setAttribute("type","file")
+    new_file_field_input.setAttribute("class","form-control-file")
+
+    var new_organism_text_field_label = document.createElement("label")
+    var new_organism_text_field_input = document.createElement("input")
+
+    var organism_file_text = document.createTextNode("Next Organism Name:")
+    new_organism_text_field_label.setAttribute("for",organism_field_name)
+    new_organism_text_field_label.appendChild(organism_file_text)
+    new_organism_text_field_input.setAttribute("id",organism_field_name)
+    new_organism_text_field_input.setAttribute("type","text")
+    new_organism_text_field_input.setAttribute("class","form-control")
+
+    new_form_div.appendChild(new_file_field_label)
+    new_form_div.appendChild(new_file_field_input)
+
+    new_form_div.appendChild(new_organism_text_field_label)
+    new_form_div.appendChild(new_organism_text_field_input)
+
+
+    new_form_div.appendChild(document.createElement("br"))
+
+
+    $("#multiple_files_form").append(new_form_div);
+    //$("#multiple_files_form").append(orgname);
     // build element and append it to our forms container
 
     $("[name=extra_field_count]").val(form_count);
+    form.appendChild(submit_button)
     // increment form count so our view knows to populate
     // that many fields for validation
 })

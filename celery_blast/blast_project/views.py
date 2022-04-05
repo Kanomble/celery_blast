@@ -168,14 +168,13 @@ def create_taxonomic_file_view(request):
     except Exception as e:
         return failure_view(request,e)
 
+#upload_types: standard for GET one_file and multiple_files for POST
 #TODO documentation
 @login_required(login_url='login')
 def upload_genome_view(request, upload_type):
     try:
         if request.method == "POST":
-            print("POST!")
             if upload_type == 'one_file':
-                print("NOPE!")
                 upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
                 if upload_genome_form.is_valid():
                     with transaction.atomic():
@@ -212,10 +211,11 @@ def upload_genome_view(request, upload_type):
 
             elif upload_type == 'multiple_files':
                 upload_genome_form = UploadGenomeForm(request.user)
+                print("[*] {}".format(request.POST.get('extra_field_count')))
                 multiple_files_genome_form= UploadMultipleFilesGenomeForm(request.POST,request.FILES, extra=request.POST.get('extra_field_count'))
                 if multiple_files_genome_form.is_valid():
+                    #TODO: implementation of correct functionality for multiple file uploads
                     print(multiple_files_genome_form)
-                    print("IS VALID +++")
 
         else:
             multiple_files_genome_form = UploadMultipleFilesGenomeForm()
