@@ -297,17 +297,54 @@ class UploadGenomeForm(forms.Form):
                     self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
 
 class UploadMultipleFilesGenomeForm(forms.Form):
-    genome_file_field_0 = forms.FileField(required=False)
-    organism_name_0 = forms.CharField(max_length=200, required=False)
+    genome_file_field_0 = forms.FileField(required=True)
+    organism_name_0 = forms.CharField(max_length=200, required=True)
     extra_field_count = forms.CharField(initial="0",widget=forms.HiddenInput())
+    user_email = forms.CharField(max_length=200,required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user, *args, **kwargs):
         extra_fields = kwargs.pop('extra', 0)
         super(UploadMultipleFilesGenomeForm, self).__init__(*args, **kwargs)
-        self.fields['extra_field_count'].initial = extra_fields
 
-        for index in range(int(extra_fields)):
+        self.fields['user_email'].charfield = user.email
+        self.fields['user_email'].initial = user.email
+        self.fields['extra_field_count'].initial = extra_fields
+        extra_fields = int(extra_fields)
+
+
+        if extra_fields > 0:
+            extra_fields += 1
+        for index in range(extra_fields):
             self.fields['genome_file_field_{index}'.format(index=index)] = forms.FileField(required=False)
             self.fields['organism_name_{index}'.format(index=index)] = forms.CharField(required=False)
     #https://stackoverflow.com/questions/6142025/dynamically-add-field-to-a-form
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user_email = cleaned_data['user_email']
+
+        for field in self.fields:
+            if "genome_file" in field:
+                file = cleaned_data.get(field)
+                if file == None:
+                    self.add_error(field,'You have to provide a genome file')
+
+                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:
+                    #print("wieso wird der code ausgeführt? obowhl {}".format(file.name.split(".")[-1] in ["fasta","faa","fa"] is not True))
+                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
+
+            elif "organism" in field:
+                if cleaned_data.get(field) == '':
+                    self.add_error(field,'You have to provide a valid scientific name')
+                elif cleaned_data.get(field) == None:
+                    self.add_error(field,"You have to provide a valid scientific name")
+                else:
+                    try:
+                        print("nope", cleaned_data.get(field))
+                        taxid = get_species_taxid_by_name(user_email,cleaned_data.get(field))
+                    except Exception as e:
+                        self.add_error(field,"{} : {} is no valid name!".format(e,cleaned_data.get(field)))
+
+
+
 

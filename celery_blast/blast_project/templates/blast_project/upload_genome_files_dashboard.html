@@ -32,7 +32,7 @@ Upload your own FASTA files and format them to BLAST databases.
         </div>
     </form>
 </div>
-
+<br>
 <div id="upload_form_master_div" class="transparent-box" style="display: none">
     <div  id="post_form_single_container" style="display: none">
         {% include "blast_project/form_genome_upload.html" %}
@@ -53,9 +53,9 @@ let form_count = Number($("[name=extra_field_count]").val());
 
 $("#add_another").click(function() {
     form_count ++;
-    if(form_count == 0){
-        form_count = 1;
-    }
+    //if(form_count == 0){
+    //    form_count = 1;
+    //}
     var form = document.getElementById("multiple_files_form")
     var submit_button = document.getElementById("submit_multiple_field_form")
     submit_button.parentNode.removeChild(submit_button)
@@ -87,10 +87,8 @@ $("#add_another").click(function() {
 
     new_form_div.appendChild(new_file_field_label)
     new_form_div.appendChild(new_file_field_input)
-
     new_form_div.appendChild(new_organism_text_field_label)
     new_form_div.appendChild(new_organism_text_field_input)
-
 
     new_form_div.appendChild(document.createElement("br"))
 

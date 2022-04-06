@@ -211,19 +211,29 @@ def upload_genome_view(request, upload_type):
 
             elif upload_type == 'multiple_files':
                 upload_genome_form = UploadGenomeForm(request.user)
-                print("[*] {}".format(request.POST.get('extra_field_count')))
-                multiple_files_genome_form= UploadMultipleFilesGenomeForm(request.POST,request.FILES, extra=request.POST.get('extra_field_count'))
+                extra_field_count = request.POST.get('extra_field_count')
+
+                multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user,request.POST,request.FILES, extra=extra_field_count)
+
                 if multiple_files_genome_form.is_valid():
                     #TODO: implementation of correct functionality for multiple file uploads
-                    print(multiple_files_genome_form)
+                    context = {'UploadGenomeForm': upload_genome_form,
+                               'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
+                else:
+                    context = {'UploadGenomeForm': upload_genome_form,
+                               'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
+                return render(request, 'blast_project/upload_genome_files_dashboard.html', context)
 
         else:
-            multiple_files_genome_form = UploadMultipleFilesGenomeForm()
+            multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
             upload_genome_form = UploadGenomeForm(request.user)
 
+            for field in multiple_files_genome_form:
+                print(field)
+            context = {'UploadGenomeForm': upload_genome_form,
+                       'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
+
         #files = request.FILES.getlist('genome_fasta_files')
-        context = {'UploadGenomeForm':upload_genome_form,
-                   'MultipleFileUploadGenomeForm':multiple_files_genome_form}
         return render(request,'blast_project/upload_genome_files_dashboard.html',context)
     except Exception as e:
         return failure_view(request,e)
