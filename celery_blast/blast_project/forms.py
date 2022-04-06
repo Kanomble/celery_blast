@@ -302,6 +302,20 @@ class UploadMultipleFilesGenomeForm(forms.Form):
     extra_field_count = forms.CharField(initial="0",widget=forms.HiddenInput())
     user_email = forms.CharField(max_length=200,required=False)
 
+    ASSEMBLY_LEVELS = [
+        ('Scaffold','Scaffold'),
+        ('Chromosome','Chromosome'),
+        ('Contig','Contig'),
+        ('Complete Genome','Complete Genome')]
+
+    assembly_levels_0 = forms.MultipleChoiceField(
+        label="Assembly Completeness Level",
+        required=False,
+        choices=ASSEMBLY_LEVELS,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+
     def __init__(self, user, *args, **kwargs):
         extra_fields = kwargs.pop('extra', 0)
         super(UploadMultipleFilesGenomeForm, self).__init__(*args, **kwargs)
@@ -340,8 +354,9 @@ class UploadMultipleFilesGenomeForm(forms.Form):
                     self.add_error(field,"You have to provide a valid scientific name")
                 else:
                     try:
-                        print("nope", cleaned_data.get(field))
                         taxid = get_species_taxid_by_name(user_email,cleaned_data.get(field))
+                        #returning taxid as datapoint?
+                        print(taxid)
                     except Exception as e:
                         self.add_error(field,"{} : {} is no valid name!".format(e,cleaned_data.get(field)))
 

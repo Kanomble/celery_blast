@@ -1,6 +1,6 @@
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
 from external_tools.models import ExternalTools
-from .py_services import create_blastdatabase_directory, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file
+from .py_services import create_blastdatabase_directory, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file, pyb
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv
@@ -238,6 +238,38 @@ def save_uploaded_genomes_into_database(database_title,database_description,geno
         return blast_database
     except Exception as e:
         raise IntegrityError('couldnt save uploaded genome model into database with exception : {}'.format(e))
+
+def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_files, amount_of_entries, user_email):
+    #1st save db model
+    #2nd upload files
+    #3rd write accession table
+    #4th concatenate files
+    #5th makeblastdb cmd
+
+    database_title = cleaned_data_multiple_files['database_title']
+    database_description = cleaned_data_multiple_files['database_description']
+    for index in range(int(amount_of_entries)):
+        file = 'genome_file_field_{}'.format(index)
+        organism = 'organism_name_{}'.format(index)
+        assembly_level = 'assembly_level_{}'.format(index)
+        file = cleaned_data_multiple_files[file]
+        taxid = pyb.get_species_taxid_by_name(user_email,cleaned_data_multiple_files[organism])
+
+    try:
+        blast_database = BlastDatabase.objects.create(database_name=database_title,
+                                                      database_description=database_description,
+                                                      assembly_entries=amount_of_entries,
+                                                      uploaded_files=True)
+        #blast_database.path_to_database_file = 'media/databases/' + str(blast_database.id)
+        assembly_levels = AssemblyLevels.objects.filter(assembly_level__contains=assembly_level)
+        for assembly_lvl in assembly_levels:
+            blast_database.assembly_levels.add(assembly_lvl)
+        return blast_database
+    except Exception as e:
+        raise IntegrityError('couldn save multiple files genome model into database with exception : {}'.format(e))
+
+
+
 
 #TODO documentation
 def create_database_directory_and_upload_files(blast_database,genome_file,taxmap_file=None):

@@ -32,6 +32,16 @@
                     </div>
                     {% endif %}
                 </div>
+                {% elif "assembly" in field.name %}
+                <div id="{{ field.name }}" class="form-group" style="text-align: left">
+                    <label for="assembly_levels"> Assembly Completness Level </label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{field.errors}}</strong>
+                    </div>
+                    {% endif %}
+                </div>
                 {% endif %}
             {% endfor %}
         <br>

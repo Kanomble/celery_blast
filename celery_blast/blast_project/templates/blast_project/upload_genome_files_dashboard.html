@@ -58,6 +58,8 @@ $("#add_another").click(function() {
     //}
     var form = document.getElementById("multiple_files_form")
     var submit_button = document.getElementById("submit_multiple_field_form")
+
+
     submit_button.parentNode.removeChild(submit_button)
 
     var file_field_name = 'genome_file_field_' + form_count;
@@ -89,7 +91,6 @@ $("#add_another").click(function() {
     new_form_div.appendChild(new_file_field_input)
     new_form_div.appendChild(new_organism_text_field_label)
     new_form_div.appendChild(new_organism_text_field_input)
-
     new_form_div.appendChild(document.createElement("br"))
 
 

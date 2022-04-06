@@ -90,6 +90,7 @@ def upload_file(project_file, destination):
         raise IntegrityError(
             'exception during file upload of : {} : exception : {}'.format(project_file.name,e))
 
+
 #TODO documentation
 #loads the reciprocal results table that is written with one of the last rules in the snakefiles
 def get_html_results(project_id,filename):

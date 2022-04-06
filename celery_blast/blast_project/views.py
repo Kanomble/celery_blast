@@ -14,7 +14,8 @@ from .py_services import list_taxonomic_files, upload_file, \
 from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
-from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database
+from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database, \
+    save_uploaded_multiple_file_genomes_into_database
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
@@ -216,9 +217,13 @@ def upload_genome_view(request, upload_type):
                 multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user,request.POST,request.FILES, extra=extra_field_count)
 
                 if multiple_files_genome_form.is_valid():
-                    #TODO: implementation of correct functionality for multiple file uploads
-                    context = {'UploadGenomeForm': upload_genome_form,
-                               'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
+                    with transaction.atomic():
+                        #TODO: implementation of correct functionality for multiple file uploads
+                        new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
+                                                                          int(extra_field_count)+1,
+                                                                          request.user.email)
+                        context = {'UploadGenomeForm': upload_genome_form,
+                                   'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
                 else:
                     context = {'UploadGenomeForm': upload_genome_form,
                                'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
