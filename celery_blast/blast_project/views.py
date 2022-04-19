@@ -170,71 +170,52 @@ def create_taxonomic_file_view(request):
         return failure_view(request,e)
 
 #upload_types: standard for GET one_file and multiple_files for POST
-#TODO documentation
+#TODO documentation rename function to upload_single_genome_ ...
+#two upload genome views one for single and one for multiple files
 @login_required(login_url='login')
-def upload_genome_view(request, upload_type):
+def upload_genome_view(request):
     try:
         if request.method == "POST":
-            if upload_type == 'one_file':
-                upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
-                if upload_genome_form.is_valid():
-                    with transaction.atomic():
-                        new_db = save_uploaded_genomes_into_database(
-                            database_title=upload_genome_form.cleaned_data['database_title'],
-                            database_description=upload_genome_form.cleaned_data['database_description'],
-                            genome_file=upload_genome_form.cleaned_data['genome_fasta_file'],
-                            assembly_entries=upload_genome_form.cleaned_data['assembly_entries'],
-                            assembly_level=upload_genome_form.cleaned_data['assembly_level'],
-                            taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'],
-                            assembly_accession=upload_genome_form.cleaned_data['assembly_accession'],
-                            user_email=request.user.email,
-                            organism_name=upload_genome_form.cleaned_data['organism_name'],
-                            taxmap_file=upload_genome_form.cleaned_data['taxmap_file'],
-                            organism_file=upload_genome_form.cleaned_data['organism_name_file'],
-                            assembly_accession_file=upload_genome_form.cleaned_data['assembly_accessions_file'],
-                            assembly_level_file=upload_genome_form.cleaned_data['assembly_level_file']
-                        )
+            multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
+            upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
+            if upload_genome_form.is_valid():
+                with transaction.atomic():
+                    new_db = save_uploaded_genomes_into_database(
+                        database_title=upload_genome_form.cleaned_data['database_title'],
+                        database_description=upload_genome_form.cleaned_data['database_description'],
+                        genome_file=upload_genome_form.cleaned_data['genome_fasta_file'],
+                        assembly_entries=upload_genome_form.cleaned_data['assembly_entries'],
+                        assembly_level=upload_genome_form.cleaned_data['assembly_level'],
+                        taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'],
+                        assembly_accession=upload_genome_form.cleaned_data['assembly_accession'],
+                        user_email=request.user.email,
+                        organism_name=upload_genome_form.cleaned_data['organism_name'],
+                        taxmap_file=upload_genome_form.cleaned_data['taxmap_file'],
+                        organism_file=upload_genome_form.cleaned_data['organism_name_file'],
+                        assembly_accession_file=upload_genome_form.cleaned_data['assembly_accessions_file'],
+                        assembly_level_file=upload_genome_form.cleaned_data['assembly_level_file']
+                    )
 
-                        genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ','_').upper()+'.database'
-                        if upload_genome_form.cleaned_data['taxmap_file'] != None:
-                            execute_makeblastdb_with_uploaded_genomes.delay(
-                                new_db.id,
-                                new_db.path_to_database_file + '/' + genome_file_name,
-                                taxmap_file=True)
-                        elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
-                            execute_makeblastdb_with_uploaded_genomes.delay(
-                                new_db.id,
-                                new_db.path_to_database_file + '/' + genome_file_name,
-                                taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
-                        else:
-                            raise Exception('couldnt trigger makeblastdb execution ...')
-                        return success_view(request)
-
-            elif upload_type == 'multiple_files':
-                upload_genome_form = UploadGenomeForm(request.user)
-                extra_field_count = request.POST.get('extra_field_count')
-
-                multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user,request.POST,request.FILES, extra=extra_field_count)
-
-                if multiple_files_genome_form.is_valid():
-                    with transaction.atomic():
-                        #TODO: implementation of correct functionality for multiple file uploads
-                        new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
-                                                                          int(extra_field_count)+1,
-                                                                          request.user.email)
-                        context = {'UploadGenomeForm': upload_genome_form,
-                                   'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
-                else:
-                    context = {'UploadGenomeForm': upload_genome_form,
-                               'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
-                return render(request, 'blast_project/upload_genome_files_dashboard.html', context)
-
+                    genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ','_').upper()+'.database'
+                    if upload_genome_form.cleaned_data['taxmap_file'] != None:
+                        execute_makeblastdb_with_uploaded_genomes.delay(
+                            new_db.id,
+                            new_db.path_to_database_file + '/' + genome_file_name,
+                            taxmap_file=True)
+                    elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
+                        execute_makeblastdb_with_uploaded_genomes.delay(
+                            new_db.id,
+                            new_db.path_to_database_file + '/' + genome_file_name,
+                            taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
+                    else:
+                        raise Exception('couldnt trigger makeblastdb execution ...')
+                    return success_view(request)
+            else:
+                context = {'UploadGenomeForm': upload_genome_form,
+                           'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
         else:
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
             upload_genome_form = UploadGenomeForm(request.user)
-
-            for field in multiple_files_genome_form:
-                print(field)
             context = {'UploadGenomeForm': upload_genome_form,
                        'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
 
@@ -243,6 +224,35 @@ def upload_genome_view(request, upload_type):
     except Exception as e:
         return failure_view(request,e)
 
+#TODO implement view for disentangling big genome upload view ...
+@login_required(login_url='login')
+def upload_multiple_genomes_post_view(request):
+    try:
+        if request.method == 'POST':
+            print("Hello!")
+            upload_genome_form = UploadGenomeForm(request.user)
+            extra_field_count = request.POST.get('extra_field_count')
+            multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user, request.POST, request.FILES,
+                                                                       extra=extra_field_count)
+
+            if multiple_files_genome_form.is_valid():
+                with transaction.atomic():
+                    # TODO: implementation of correct functionality for multiple file uploads
+                    new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
+                                                                               int(extra_field_count) + 1,
+                                                                               request.user.email)
+                    context = {'UploadGenomeForm': upload_genome_form,
+                               'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
+            else:
+                context = {'UploadGenomeForm': upload_genome_form,
+                           'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
+
+            return render(request,'blast_project/upload_genome_files_dashboard.html',context)
+
+        else:
+            return failure_view(request,exception="This view is just for POST requests!")
+    except Exception as e:
+        return failure_view(request,e)
 
 ''' registration, login and logout views
 register an account with email and password, email can be used inside biopython functions

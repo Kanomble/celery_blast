@@ -1,5 +1,5 @@
 <div class="post_form_container" id="multiple_file_upload_form_div">
-    <form id="multiple_files_form" action="{% url 'upload_genomes' upload_type='multiple_files' %}" method="post" enctype="multipart/form-data"
+    <form id="multiple_files_form" action="{% url 'upload_multiple_genomes' %}" method="post" enctype="multipart/form-data"
       onsubmit="showLoader('loading_div','post_form_container')">
         {% csrf_token %}
             {% for field in MultipleFileUploadGenomeForm %}
@@ -29,16 +29,6 @@
                     {% if field.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ field.errors }}</strong>
-                    </div>
-                    {% endif %}
-                </div>
-                {% elif "assembly" in field.name %}
-                <div id="{{ field.name }}" class="form-group" style="text-align: left">
-                    <label for="assembly_levels"> Assembly Completness Level </label>
-                    {{ field }}
-                    {% if field.errors %}
-                    <div class="alert alert-danger">
-                        <strong>{{field.errors}}</strong>
                     </div>
                     {% endif %}
                 </div>
