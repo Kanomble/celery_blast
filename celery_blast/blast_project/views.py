@@ -229,25 +229,25 @@ def upload_genome_view(request):
 def upload_multiple_genomes_post_view(request):
     try:
         if request.method == 'POST':
-            print("Hello!")
             upload_genome_form = UploadGenomeForm(request.user)
             extra_field_count = request.POST.get('extra_field_count')
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user, request.POST, request.FILES,
                                                                        extra=extra_field_count)
-
             if multiple_files_genome_form.is_valid():
                 with transaction.atomic():
+
                     # TODO: implementation of correct functionality for multiple file uploads
                     new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
                                                                                int(extra_field_count) + 1,
                                                                                request.user.email)
                     context = {'UploadGenomeForm': upload_genome_form,
                                'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
+                    return success_view(request)
+
             else:
                 context = {'UploadGenomeForm': upload_genome_form,
                            'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
-
-            return render(request,'blast_project/upload_genome_files_dashboard.html',context)
+                return render(request,'blast_project/upload_genome_files_dashboard.html',context)
 
         else:
             return failure_view(request,exception="This view is just for POST requests!")

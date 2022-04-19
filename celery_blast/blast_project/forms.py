@@ -297,6 +297,9 @@ class UploadGenomeForm(forms.Form):
                     self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
 
 class UploadMultipleFilesGenomeForm(forms.Form):
+    database_title = forms.CharField(max_length=200, required=True)
+    database_description = forms.CharField(max_length=200, required=True)
+
     genome_file_field_0 = forms.FileField(required=True)
     organism_name_0 = forms.CharField(max_length=200, required=True)
     extra_field_count = forms.CharField(initial="0",widget=forms.HiddenInput())

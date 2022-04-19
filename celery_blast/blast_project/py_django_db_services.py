@@ -263,13 +263,16 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
         create_blastdatabase_directory(database_id=blast_database.id)
         path_to_database = 'media/databases/' + str(blast_database.id) + '/'
 
+        #uploading files and creation of taxmap file ?
         for index in range(int(amount_of_entries)):
             file = 'genome_file_field_{}'.format(index)
             organism = 'organism_name_{}'.format(index)
 
             file = cleaned_data_multiple_files[file]
             upload_file(file,path_to_database + file.name)
+
             taxid = pyb.get_species_taxid_by_name(user_email,cleaned_data_multiple_files[organism])
+
 
 
         return blast_database

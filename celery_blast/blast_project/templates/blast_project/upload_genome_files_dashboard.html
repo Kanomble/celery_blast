@@ -59,42 +59,46 @@ $("#add_another").click(function() {
     var form = document.getElementById("multiple_files_form")
     var submit_button = document.getElementById("submit_multiple_field_form")
 
-
     submit_button.parentNode.removeChild(submit_button)
 
     var file_field_name = 'genome_file_field_' + form_count;
     var organism_field_name = 'organism_name_' + form_count;
 
-    var new_form_div = document.createElement("div")
+    var new_form_div_file = document.createElement("div")
     var new_file_field_label = document.createElement("label")
     var new_file_field_input = document.createElement("input")
 
     var genome_file_text = document.createTextNode("Next Genome FASTA File:")
-    new_form_div.setAttribute("class","form-group")
+    new_form_div_file.setAttribute("class","form-group")
     new_file_field_label.setAttribute("for",file_field_name)
     new_file_field_label.appendChild(genome_file_text)
     new_file_field_input.setAttribute("id",file_field_name)
     new_file_field_input.setAttribute("type","file")
     new_file_field_input.setAttribute("class","form-control-file")
+    new_file_field_input.setAttribute("name",file_field_name)
 
+    var new_form_div_organism = document.createElement("div")
     var new_organism_text_field_label = document.createElement("label")
     var new_organism_text_field_input = document.createElement("input")
 
     var organism_file_text = document.createTextNode("Next Organism Name:")
+    new_form_div_organism.setAttribute("class","form-group")
     new_organism_text_field_label.setAttribute("for",organism_field_name)
     new_organism_text_field_label.appendChild(organism_file_text)
     new_organism_text_field_input.setAttribute("id",organism_field_name)
     new_organism_text_field_input.setAttribute("type","text")
     new_organism_text_field_input.setAttribute("class","form-control")
+    new_organism_text_field_input.setAttribute("name",organism_field_name)
 
-    new_form_div.appendChild(new_file_field_label)
-    new_form_div.appendChild(new_file_field_input)
-    new_form_div.appendChild(new_organism_text_field_label)
-    new_form_div.appendChild(new_organism_text_field_input)
-    new_form_div.appendChild(document.createElement("br"))
+    new_form_div_file.appendChild(new_file_field_label)
+    new_form_div_file.appendChild(new_file_field_input)
+    new_form_div_organism.appendChild(new_organism_text_field_label)
+    new_form_div_organism.appendChild(new_organism_text_field_input)
 
+    $("#multiple_files_form").append(new_form_div_file);
+    $("#multiple_files_form").append(new_form_div_organism);
+    $("#multiple_files_form").append(document.createElement("br"));
 
-    $("#multiple_files_form").append(new_form_div);
     //$("#multiple_files_form").append(orgname);
     // build element and append it to our forms container
 
@@ -102,6 +106,12 @@ $("#add_another").click(function() {
     form.appendChild(submit_button)
     // increment form count so our view knows to populate
     // that many fields for validation
+})
+
+
+
+$("#submit_multiple_field_form").click(function() {
+    alert("SUBMIT!")
 })
 </script>
 {% endblock %}

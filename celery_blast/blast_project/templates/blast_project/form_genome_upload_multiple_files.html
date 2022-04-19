@@ -2,6 +2,28 @@
     <form id="multiple_files_form" action="{% url 'upload_multiple_genomes' %}" method="post" enctype="multipart/form-data"
       onsubmit="showLoader('loading_div','post_form_container')">
         {% csrf_token %}
+
+             <div class="form-group">
+                <label for="{{ MultipleFileUploadGenomeForm.database_title.name }}">Database Title</label>
+                <input type="text" class="form-control" id="{{ MultipleFileUploadGenomeForm.database_title.name }}" name="{{ MultipleFileUploadGenomeForm.database_title.name  }}">
+                {% if MultipleFileUploadGenomeForm.database_title.name.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ MultipleFileUploadGenomeForm.database_title.name.errors }}</strong>
+                </div>
+                {% endif %}
+             </div>
+
+            <div class="form-group">
+                <label for="{{ MultipleFileUploadGenomeForm.database_description.name }}">Database Description</label>
+                <input type="text" class="form-control" id="{{ MultipleFileUploadGenomeForm.database_description.name }}" name="{{ MultipleFileUploadGenomeForm.database_description.name }}">
+                {% if MultipleFileUploadGenomeForm.database_description.name.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ MultipleFileUploadGenomeForm.database_description.name.errors }}</strong>
+                </div>
+                {% endif %}
+             </div>
+
+            <hr>
             {% for field in MultipleFileUploadGenomeForm %}
                 {% if "genome_file" in field.name %}
                  <div class="form-group">
