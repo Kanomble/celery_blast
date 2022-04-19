@@ -240,8 +240,13 @@ def upload_multiple_genomes_post_view(request):
                     new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
                                                                                int(extra_field_count) + 1,
                                                                                request.user.email)
-                    context = {'UploadGenomeForm': upload_genome_form,
-                               'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
+                    genome_file_name = new_db.database_name.replace(' ', '_').upper() + '.database'
+
+                    execute_makeblastdb_with_uploaded_genomes.delay(
+                        new_db.id,
+                        new_db.path_to_database_file + '/' + genome_file_name,
+                        taxmap_file=True)
+
                     return success_view(request)
 
             else:

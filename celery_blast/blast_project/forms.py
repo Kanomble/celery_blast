@@ -334,9 +334,7 @@ class UploadMultipleFilesGenomeForm(forms.Form):
                 if file == None:
                     self.add_error(field,'You have to provide a genome file')
 
-                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:
-                    #print("wieso wird der code ausgeführt? obowhl {}".format(file.name.split(".")[-1] in ["fasta","faa","fa"] is not True))
-                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
+                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
 
             elif "organism" in field:
                 if cleaned_data.get(field) == '':

@@ -1,6 +1,6 @@
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
 from external_tools.models import ExternalTools
-from .py_services import create_blastdatabase_directory, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file, pyb
+from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv
@@ -239,6 +239,7 @@ def save_uploaded_genomes_into_database(database_title,database_description,geno
     except Exception as e:
         raise IntegrityError('couldnt save uploaded genome model into database with exception : {}'.format(e))
 
+#TODO documentation
 def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_files, amount_of_entries, user_email):
     #1st save db model
     #2nd upload files
@@ -263,24 +264,36 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
         create_blastdatabase_directory(database_id=blast_database.id)
         path_to_database = 'media/databases/' + str(blast_database.id) + '/'
 
-        #uploading files and creation of taxmap file ?
-        for index in range(int(amount_of_entries)):
-            file = 'genome_file_field_{}'.format(index)
-            organism = 'organism_name_{}'.format(index)
+        genomes_to_organism_and_taxid_dict = {}
+        with open(path_to_database+'acc_taxmap.table','w') as taxmap_file:
+            for index in range(int(amount_of_entries)):
+                file = 'genome_file_field_{}'.format(index)
+                organism = 'organism_name_{}'.format(index)
 
-            file = cleaned_data_multiple_files[file]
-            upload_file(file,path_to_database + file.name)
+                organism = cleaned_data_multiple_files[organism]
+                taxid = pyb.get_species_taxid_by_name(user_email,organism)
+                file = cleaned_data_multiple_files[file]
 
-            taxid = pyb.get_species_taxid_by_name(user_email,cleaned_data_multiple_files[organism])
+                upload_file(file,path_to_database + file.name)
 
+                with open(path_to_database + file.name,'r') as current_genome_file:
+                    for line in current_genome_file.readlines():
+                        if line.startswith(">"):
+                            acc = line.split(" ")[0].split(">")[1]
+                            taxmap_file.write(acc+"\t"+str(taxid)+"\n")
 
+                genomes_to_organism_and_taxid_dict[file.name] = [organism,taxid]
 
+        write_pandas_table_for_multiple_uploaded_files(blast_database,genomes_to_organism_and_taxid_dict)
+
+        blast_database.path_to_database_file = "media/databases/"+str(blast_database.id)
+
+        genome_files = list(genomes_to_organism_and_taxid_dict.keys())
+        concatenate_genome_fasta_files_in_db_dir(path_to_database, database_title, genome_files)
+        blast_database.save()
         return blast_database
     except Exception as e:
         raise IntegrityError('couldn save multiple files genome model into database with exception : {}'.format(e))
-
-
-
 
 #TODO documentation
 def create_database_directory_and_upload_files(blast_database,genome_file,taxmap_file=None):

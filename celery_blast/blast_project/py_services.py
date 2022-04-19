@@ -128,6 +128,38 @@ def write_pandas_table_for_one_genome_file(blast_database,organism_name,assembly
     except Exception as e:
         raise IntegrityError("Couldnt write pandas dataframe for your uploaded genome file, with exception : {}".format(e))
 
+
+#TODO documentation
+def write_pandas_table_for_multiple_uploaded_files(blast_database, genomes_to_organism_and_taxid_dict):
+    try:
+        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
+        with open(path_to_database + blast_database.get_pandas_table_name(), 'w') as  pandas_table_file:
+            pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+            for line_index, key in enumerate(list(genomes_to_organism_and_taxid_dict.keys())):
+                pandas_table_file.write(str(line_index) + ',')
+                pandas_table_file.write(key + ',')
+                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][0] + ',')
+                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][1] + ',' + genomes_to_organism_and_taxid_dict[key][1] + ',')
+                pandas_table_file.write("Chromosome"+ ',uploaded genome\n')
+        return 0
+    except Exception as e:
+        raise IntegrityError('couldnt write database table : {}'.format(e))
+
+
+#TODO documentation
+def concatenate_genome_fasta_files_in_db_dir(path_to_database,database_title,genome_files):
+    try:
+        database_name = database_title.replace(' ', '_').upper() + '.database'
+        with open(path_to_database+database_name,'w') as dbfile:
+            for file in genome_files:
+                with open(path_to_database+file, 'r') as gfile:
+                    for line in gfile.readlines():
+                        dbfile.write(line)
+    except Exception as e:
+        raise IntegrityError('couldnt concatenate database files : {}'.format(e))
+
+
+
 #TODO documentation
 def write_pandas_table_for_uploaded_genomes(blast_database,
                                             assembly_accessions_file,

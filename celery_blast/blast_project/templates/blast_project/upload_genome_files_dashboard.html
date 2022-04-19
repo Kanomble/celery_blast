@@ -75,6 +75,7 @@ $("#add_another").click(function() {
     new_file_field_input.setAttribute("id",file_field_name)
     new_file_field_input.setAttribute("type","file")
     new_file_field_input.setAttribute("class","form-control-file")
+    //the name field is especially important for django!
     new_file_field_input.setAttribute("name",file_field_name)
 
     var new_form_div_organism = document.createElement("div")
