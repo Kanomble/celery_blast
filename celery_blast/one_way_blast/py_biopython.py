@@ -63,9 +63,6 @@ def calculate_pfam_and_protein_links_from_one_way_queries(user_email,project_id,
                     # print(record[i]['GBSeq_locus'], pfam)
             except Exception as e:
                 continue
-            # print(record[i]['GBSeq_comment'])
-            # print("#############")
-            # json.dumps
         return prot_to_pfam
     except Exception as e:
         raise Exception("couldn't parse entrez.efetch with query ids with exception : {}".format(e))

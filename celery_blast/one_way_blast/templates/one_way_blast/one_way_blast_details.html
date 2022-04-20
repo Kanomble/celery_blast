@@ -25,7 +25,7 @@ Details and pipeline dashboard.
 
     <h4> Basic Informations </h4>
     <ul>
-        <li> Click on the "Execute Snakemake" Button if you haven't started your reciprocal BLAST analysis </li>
+        <li> Click on the "Execute Snakemake" Button if you haven't started your BLAST analysis </li>
         <li> Monitor your current Snakemake run via Panoptes by clicking on the "Panoptes Monitoring" button </li>
         <li> If your Snakemake execution finishes you can view and download the results by clicking on the "Reciprocal Results Table" button which appears after successfull termination at the right side of the project information panel</li>
     </ul>
@@ -173,21 +173,31 @@ $(document).ready(function() {
         {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
+            console.log("Ready")
         if (this.readyState == 4 && this.status == 200) {
-
+            console.log("IF")
             var query_info = document.getElementById('QUERY_INFO');
 
             var data=this.responseText;
             var jsonResponse = JSON.parse(data);
 
-
-
             var elementList =createElementListForTable(jsonResponse)
-
             var table = buildHtmlTable(elementList);
             table.className = 'table table-hover';
             query_info.appendChild(table)
-            }
+            } else if (this.readyState == 4 && this.status != 200) {
+
+            console.log("ELSE")
+            var query_info = document.getElementById('QUERY_INFO');
+            var error_div = document.createElement("div");
+            var error_p = document.createElement("p");
+            error_div.setAttribute("class","alert alert-warning");
+            var error_text = document.createTextNode("There is no information of your provided sequences available!")
+            error_p.appendChild(error_text)
+            error_div.appendChild(error_p)
+            query_info.appendChild(error_div)
+
+        }
         };
         xhttp.open("GET", "{% url 'ajax_one_way_wp_to_links' project_id=BlastProject.id remote=0 %}", true);
         xhttp.send();
