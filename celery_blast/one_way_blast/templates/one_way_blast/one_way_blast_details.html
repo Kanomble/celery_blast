@@ -81,6 +81,10 @@ Details and pipeline dashboard.
                         {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
                             <td><a class="btn btn-dark" href="{% url 'one_way_html_results' project_id=BlastProject.id remote=0 %}"> Results Table </a></td>
                         {% endif %}
+
+                        <td>
+                            <a class="btn btn-dark" href="{% url 'one_way_target_sequence_download' project_id=BlastProject.id project_type='one_way_blast' filename=BlastProject.project_query_sequences %}"> Download Query Fasta Files </a>
+                        </td>
                     </tr>
                 </tbody>
             </table>

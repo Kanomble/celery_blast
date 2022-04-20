@@ -229,4 +229,3 @@ def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_emai
         return taxids, organisms
     except Exception as e:
         raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))
-
