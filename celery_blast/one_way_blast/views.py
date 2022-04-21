@@ -161,16 +161,30 @@ def load_one_way_result_html_table_view(request, project_id, remote):
 def one_way_download_target_sequences(request, project_id, project_type, filename='',):
     try:
         if filename != '':
+            if project_type == "one_way_blast":
+                filepath = '/blast/reciprocal_blast/media/' + project_type + '/' + str(project_id) + '/' + filename
+                if os.path.isfile(filepath):
+                    with open(filepath,'r') as download_file:
+                        content = [str(line) for line in download_file.readlines()]
+                        content = ''.join(content)
+                    response = HttpResponse(content,content_type="text/plain")
+                    response['Contnt-Disposition'] = "attachment; filename={}".format(filename)
+                else:
+                    raise FileNotFoundError
 
-            filepath = '/blast/reciprocal_blast/media/' + project_type + '/' + str(project_id) + '/' + filename
-            if os.path.isfile(filepath):
-                with open(filepath,'r') as download_file:
-                    content = [str(line) for line in download_file.readlines()]
-                    content = ''.join(content)
-                response = HttpResponse(content,content_type="text/plain")
-                response['Contnt-Disposition'] = "attachment; filename={}".format(filename)
-                return response
+            elif project_type == 'remote_searches':
+                filepath = '/blast/reciprocal_blast/media/one_way_blast/' + project_type + '/' + str(project_id) + '/' + filename
+                if os.path.isfile(filepath):
+                    with open(filepath, 'r') as download_file:
+                        content = [str(line) for line in download_file.readlines()]
+                        content = ''.join(content)
+                    response = HttpResponse(content, content_type="text/plain")
+                    response['Contnt-Disposition'] = "attachment; filename={}".format(filename)
+                else:
+                    raise FileNotFoundError
             else:
-                raise FileNotFoundError
+                raise Exception("There is no such project_type available!")
+            return response
+
     except Exception as e:
         return failure_view(request,e)

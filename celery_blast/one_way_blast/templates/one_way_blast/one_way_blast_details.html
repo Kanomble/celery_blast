@@ -174,37 +174,47 @@ $(document).ready(function() {
 </script>
 <script>
     $(document).ready(function(){
-        {
-        var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-            console.log("Ready")
-        if (this.readyState == 4 && this.status == 200) {
-            console.log("IF")
-            var query_info = document.getElementById('QUERY_INFO');
+            {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    var intermediate = document.getElementById('intermediate')
+                    intermediate.remove()
 
-            var data=this.responseText;
-            var jsonResponse = JSON.parse(data);
+                    var query_info = document.getElementById('QUERY_INFO');
+                    var data=this.responseText;
+                    var jsonResponse = JSON.parse(data);
+                    var elementList =createElementListForTable(jsonResponse) //load_ajax_table.js
+                    var table = buildHtmlTable(elementList); //load_ajax_table.js
+                    table.className = 'table table-hover';
+                    query_info.appendChild(table)
+                } else if (this.readyState == 4 && this.status != 200) {
+                    var intermediate = document.getElementById('intermediate')
+                    intermediate.remove()
 
-            var elementList =createElementListForTable(jsonResponse)
-            var table = buildHtmlTable(elementList);
-            table.className = 'table table-hover';
-            query_info.appendChild(table)
-            } else if (this.readyState == 4 && this.status != 200) {
+                    var query_info = document.getElementById('QUERY_INFO');
+                    var error_div = document.createElement("div");
+                    var error_p = document.createElement("p");
+                    error_div.setAttribute("class","alert alert-warning");
+                    var error_text = document.createTextNode("There is no information of your provided sequences available!")
+                    error_p.appendChild(error_text)
+                    error_div.appendChild(error_p)
+                    query_info.appendChild(error_div)
 
-            console.log("ELSE")
-            var query_info = document.getElementById('QUERY_INFO');
-            var error_div = document.createElement("div");
-            var error_p = document.createElement("p");
-            error_div.setAttribute("class","alert alert-warning");
-            var error_text = document.createTextNode("There is no information of your provided sequences available!")
-            error_p.appendChild(error_text)
-            error_div.appendChild(error_p)
-            query_info.appendChild(error_div)
-
-        }
-        };
-        xhttp.open("GET", "{% url 'ajax_one_way_wp_to_links' project_id=BlastProject.id remote=0 %}", true);
-        xhttp.send();
+                } else if (this.readyState == 1){
+                    var info = document.getElementById('QUERY_INFO');
+                    var info_div = document.createElement("div");
+                    var info_p = document.createElement("p");
+                    info_div.setAttribute("class","alert alert-primary");
+                    info_div.setAttribute("id","intermediate")
+                    var info_text = document.createTextNode("The server still processes your target sequences.")
+                    info_p.appendChild(info_text)
+                    info_div.appendChild(info_p)
+                    info.appendChild(info_div)
+                }
+            };
+            xhttp.open("GET", "{% url 'ajax_one_way_wp_to_links' project_id=BlastProject.id remote=0 %}", true);
+            xhttp.send();
         }
     });
 </script>
