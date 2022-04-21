@@ -3,7 +3,7 @@
             <thead>
                 <tr>
                     <th>Database Name</th>
-                    <th>Creation Timestamp</th>
+                   <!--  <th>Creation Timestamp</th>-->
                     <th>Assembly Entries</th>
                     <th>Assembly Levels</th>
                     <th>Database Details</th>
@@ -14,7 +14,7 @@
                 {% for database in ActiveBlastDatabases %}
                     <tr>
                         <td>{{database.database_name}}</td>
-                        <td>{{database.timestamp |date:'d.m.Y, h:m:s'}}</td>
+                       <!--  <td>{{database.timestamp |date:'d.m.Y, h:m:s'}}</td> -->
                         <td>{{database.assembly_entries}}</td>
                         <td>
                         <table>
@@ -30,7 +30,7 @@
                                    action="{% url 'database_details' database_id=database.id%}"
                                    method="GET">
                                 {% csrf_token %}
-                                <input type="submit" value="Database Details" class="btn btn-dark">
+                                <input type="submit" value="Details" class="btn btn-dark">
                             </form>
                         </td>
 

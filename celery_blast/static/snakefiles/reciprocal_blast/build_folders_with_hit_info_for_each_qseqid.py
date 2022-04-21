@@ -12,7 +12,7 @@ with open(snakemake.input['query_file'],'r') as fhandle:
                 query = query.split('.')[0]
             print(query)
             queries.append(query)
-print(queries)
+#print(queries)
 
 for query in queries:
 

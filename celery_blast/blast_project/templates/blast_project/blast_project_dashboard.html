@@ -2,13 +2,14 @@
 
 {% block title %} BLAST Dashboard {% endblock %}
 
-{% block page_title %} Reciprocal BLAST Project Dashboard {% endblock %}
+{% block page_title %} {% endblock %}
 
 {% block infoheader %} BLAST Project Dashboard {% endblock %}
 
 {% block page_description %}
+    You are logged in as: <strong>{{request.user}}</strong>.<br>
     This dashboard lists all available local databases, remote one way BLAST, local one way BLAST and
-    reciprocal BLAST projects of the current user (logged in as: <strong>{{ request.user }}</strong>).
+    reciprocal BLAST projects for {{request.user}}.
     Monitor and execute your current projects or view your results on the
     <strong>Project Details </strong> pages. Manage and view available local databases by pressing the <strong>Database Details</strong>
     button.
@@ -33,38 +34,45 @@
     </ul>
 {% endblock %}
 
-{% block page_header %} Welcome to your project dashboard, {{request.user}}! {% endblock %}
+{% block page_header %}
+    Reciprocal BLAST Dashboard
+    <br>
+    <p style="text-align: center;font-size: small"> Manage your BLAST projects and create new projects, {{ request.user }}!</p>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
 
     <div class="row" style="text-align: center">
-        <div class="col" style="max-width: 50%">
+        <div class="col" style="max-width: 50%; max-height: 50%;">
           <div class="dashboard_project_list_col">
 
-                <h3 class="col_header"> Your Reciprocal BLAST Projects </h3>
-                <hr>
-                {% include "blast_project/table_blast_projects.html" %}
+                <h3 class="col_header"> Reciprocal BLAST Projects </h3>
+              <p style="font-size: medium">Identification of putative orthologous sequences</p>
+               {% include "blast_project/table_blast_projects.html" %}
             </div>
 
             <div class="dashboard_project_list_col">
-                <h3 class="col_header"> Your Remote BLAST Projects</h3>
-                <hr>
+                <h3 class="col_header">Remote BLAST Projects</h3>
+              <p style="font-size: medium">Perform BLAST similarity searches on NCBI Server</p>
+
                 {% include "blast_project/table_one_way_remote_blast_projects.html" %}
             </div>
         </div>
 
 
-        <div class="col" style="max-width: 50%">
+        <div class="col" style="max-width: 50%;max-height: 50%;">
             <div class="dashboard_project_list_col">
-                 <h3 class="col_header"> Local Available Databases </h3>
-                <hr>
+                <h3 class="col_header">Local Databases</h3>
+              <p style="font-size: medium">Create your own custom databases</p>
+
                 {% include "blast_project/table_downloaded_and_formatted_blast_databases.html" %}
 
             </div>
             <div class="dashboard_project_list_col">
-                <h3 class="col_header"> Your local BLAST Projects</h3>
-                <hr>
+                <h3 class="col_header">Local BLAST Projects</h3>
+              <p style="font-size: medium">Perform BLAST similarity searches with local databases</p>
+
                 {% include "blast_project/table_one_way_blast_projects.html" %}
             </div>
         </div>

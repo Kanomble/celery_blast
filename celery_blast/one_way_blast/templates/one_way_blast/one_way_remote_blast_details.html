@@ -34,6 +34,17 @@ Details and pipeline dashboard.
 {% block content %}
 <div class="container-fluid">
     <div class="dashboard_project_list_col">
+        <h2 style="text-align: center"> Project Details and Execution Dashboard </h2>
+        <p style="font-size: medium; text-align: center">
+            {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
+                Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
+            {% elif BlastProject.project_execution_task_result.status == 'FAILURE' %}
+                Re-Execute your Snakemake Run for this BLAST project or delete the project.
+            {% elif BlastProject.project_execution_task_result.status == 'PROGRESS' %}
+                Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
+            {% else %}
+                Execute your BLAST project by pressing the Execute Snakemake button.
+            {% endif %}
         <div class="table-responsive">
             <table class="table table-hover" id="blastProjectTable">
                 <thead>
@@ -88,7 +99,7 @@ Details and pipeline dashboard.
         </div>
     </div>
 
-    <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
+    <div class="dashboard_project_list_col" id="QUERY_INFO">
     </div>
     {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
     <div class="dashboard_project_list_col" style="max-height: 50%;">

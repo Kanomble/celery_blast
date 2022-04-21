@@ -4,7 +4,7 @@
                 <tr>
                     <th>Project Title</th>
                     <th>Database Name</th>
-                    <th>Timestamp</th>
+                   <!--  <th>Timestamp</th> -->
                     <th>Project Details</th>
                 </tr>
             </thead>
@@ -13,13 +13,13 @@
                     <tr>
                         <td>{{project.r_project_title}}</td>
                         <td>{{project.r_project_database}}</td>
-                        <td>{{project.r_timestamp |date:'d.m.Y, h:m:s' }}</td>
+                       <!--  <td>{{project.r_timestamp |date:'d.m.Y, h:m:s' }}</td> -->
                         <td>
                              <form class="col"
                                    action="{% url 'one_way_remote_project_details' project_id=project.id %}"
                                    method="GET">
                                 {% csrf_token %}
-                                <input type="submit" value="Project Details" class="btn btn-dark">
+                                <input type="submit" value="Details" class="btn btn-dark">
                             </form>
                         </td>
 

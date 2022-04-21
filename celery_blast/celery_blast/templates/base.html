@@ -1,5 +1,6 @@
+<!doctype html>
 {% load static %}
-<html>
+<html lang="en">
 
     {% block head %}
     <head>
@@ -15,7 +16,7 @@
     </head>
     {% endblock %}
 
-        <body class="body_bg" {% block extend_body %}{% endblock %}>
+        <body class="body_bg scrollbar scrollbar-black bordered-black square thin" {% block extend_body %}{% endblock %}>
 
         {% block navbar %}
         <nav class="navbar navbar-dark bg-dark">
@@ -41,7 +42,7 @@
 
         <div style="text-align: right">
              <button type="button" class="btn btn-primary btn-dark" data-toggle="modal" data-target="#infobox">
-                Display Informations On This Website
+                Info
             </button>
         </div>
 
@@ -52,7 +53,7 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <div class="modal-title">
-                                <h4> Informations on {% block infoheader %} SynMibi {% endblock %}</h4>
+                                <h4> Information for the {% block infoheader %} RecBLAST {% endblock %} Website</h4>
                             </div>
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
@@ -70,7 +71,7 @@
 
         {% block header %}
         <div class="container-fluid" id="titles">
-            <div class="header base_header">
+            <div class="header base_header container-fluid">
                 <br>
                 <h2 id="pageHeader"> {% block page_header %} Welcome To This Page! {% endblock %} </h2>
             </div>
