@@ -1,1 +1,101 @@
 <p> hello world! </p>
+
+
+
+    <div class="row">
+        <div class="table-responsive">
+
+             <table style="text-align: center" class="table table-hover">
+                <thead>
+                    <tr>
+                    <!-- qseqids.query_sequences.get_queryset() -->
+                    {% for qseq in qseqids.query_sequences.get_queryset %}
+                        <th> {{ qseq.query_accession_id }} </th>
+                    {% endfor %}
+                        <th>Perform MSA or PhyloBuild with ALL sequences</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                     {% for qseq in qseqids.query_sequences.get_queryset %}
+                         <td>
+                         {% if not qseq.multiple_sequence_alignment_task %}
+                            <form class="col"
+                                   action='{% url 'perform_simple_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit" value="Conduct MSA" class="btn btn-dark">
+                            </form>
+                         {% endif %}
+                         {% if qseq.multiple_sequence_alignment_task and qseq.multiple_sequence_alignment_task.status != 'PROGRESS' %}
+
+                              <form class="col"
+                                   action='{% url 'perform_simple_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit" {% if qseq.multiple_sequence_alignment_task.status == 'SUCCESS' %} value="ReConduct MSA" class="btn btn-warning" {% elif qseq.multiple_sequence_alignment_task.status == 'FAILURE' %} value="Error in previous MSA, ReConduct MSA" class="btn btn-danger" {% endif %}>
+                            </form>
+
+                         {% endif %}
+                         {% if qseq.multiple_sequence_alignment_task and qseq.multiple_sequence_alignment_task.status == 'PROGRESS' %}
+                            <button type="button" class="btn btn-info">MSA in progress</button>
+                         {% endif %}
+                         </td>
+                    {% endfor %}
+
+                    <td>
+                        <form action='{% url 'perform_simple_msa_for_all_query_sequences' project_id=project_id %}'
+                            method="POST">
+                            {% csrf_token %}
+                            <input type="submit" value="Conduct MSA" class="btn btn-dark">
+                        </form>
+                    </td>
+                    </tr>
+
+                    <tr>
+                     {% for qseq in qseqids.query_sequences.get_queryset %}
+                         <td>
+                         {% if not qseq.multiple_sequence_alignment_task %}
+                            <button type="button" class="btn btn-secondary">Before PhyloTree construction, perform MSA</button>
+                         {% endif %}
+                         {% if qseq.multiple_sequence_alignment_task and qseq.multiple_sequence_alignment_task.status == 'SUCCESS' %}
+                             {% if not qseq.phylogenetic_tree_construction_task %}
+                                  <form class="col"
+                                       action='{% url 'perform_fasttree_phylobuild' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                       method="POST">
+                                    {% csrf_token %}
+                                    <input type="submit" value="Build Phylogenetic Tree" class="btn btn-dark">
+                                </form>
+                             {% endif %}
+                             {% if qseq.phylogenetic_tree_construction_task %}
+                                <form class="col"
+                                       action='{% url 'perform_fasttree_phylobuild' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                       method="POST">
+                                    {% csrf_token %}
+                                    <input type="submit"
+                                            {% if qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %} value="ReBuild Phylogenetic Tree" class="btn btn-warning"
+                                            {% elif qseq.phylogenetic_tree_construction_task.status == 'FAILURE' %} value="Error in previous phylo task, ReBuild Phylo Tree" class="btn btn-danger"
+                                            {% elif qseq.phylogenetic_tree_construction_task.status == 'PROGRESS' %} value="Phylo Task in progress" class="btn btn-info"
+                                            {% endif %}>
+                                </form>
+                             {% endif %}
+                         {% endif %}
+                         {% if qseq.multiple_sequence_alignment_task and qseq.multiple_sequence_alignment_task.status != 'SUCCESS' %}
+                            <button type="button" class="btn btn-info">MSA in progress</button>
+                         {% endif %}
+                         </td>
+                    {% endfor %}
+                    <td>
+                         <form action='{% url 'perform_fasttree_phylobuild_for_all_query_sequences' project_id=project_id %}'
+                            method="POST">
+                            {% csrf_token %}
+                            <input type="submit" value="Build PhyloTrees" class="btn btn-dark">
+                        </form>
+                    </td>
+                    </tr>
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>

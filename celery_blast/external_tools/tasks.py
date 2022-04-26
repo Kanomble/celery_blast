@@ -7,11 +7,14 @@ import requests
 from .models import ExternalTools
 from celery_progress.backend import ProgressRecorder
 from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
-from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available
+from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
+'''
+execute_multiple_sequence_alignment 
+'''
 @shared_task(bind=True)
 def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
     try:
@@ -78,7 +81,13 @@ def execute_phylogenetic_tree_building(self,project_id,query_sequence_id):
             returncode = phylo_task.wait(4000)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+
+            returncode = create_html_output_for_newicktree(path_to_fasttree_output,project_id, query_sequence_id)
+            if returncode != 0:
+                raise Exception("HTML building hasnt succeeded, returncode != 0: {}".format(returncode))
+
             else:
+                progress_recorder.set_progress(100, 100, "SUCCESS")
                 return 0
         elif msa_status == 1:
             raise FileNotFoundError("msa file does not exist!")
