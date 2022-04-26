@@ -4,6 +4,27 @@ from blast_project.views import failure_view, success_view
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences
 from .models import ExternalTools
+from .forms import EntrezSearchForm
+
+@login_required(login_url='login')
+def entrez_dashboard_view(request):
+    try:
+        context = {}
+        print(request.method)
+        if request.method == "POST":
+            entrez_search_form = EntrezSearchForm(request.POST)
+            if entrez_search_form.is_valid():
+                database = entrez_search_form.cleaned_data['database']
+                entrez_query = entrez_search_form.cleaned_data['entrez_query']
+                #do something
+                print("[*] DATABASE: {} ENTREZ QUERY: {}".format(database, entrez_query))
+        else:
+            entrez_search_form = EntrezSearchForm()
+            context['EntrezSearchForm'] = entrez_search_form
+        return render(request,'external_tools/entrez_search_dashboard.html',context)
+    except Exception as e:
+        return failure_view(request,e)
+
 
 #TODO documentation
 @login_required(login_url='login')

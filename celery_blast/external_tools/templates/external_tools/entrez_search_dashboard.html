@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %} Entrez Search Platform {% endblock %}
+{% block add_headers %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.2/css/select.dataTables.min.css" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
+{% endblock %}
+
+{% block page_title %} Entrez Search Dashboard {% endblock %}
+
+{% block infoheader %} Entrez Search {% endblock %}
+
+{% block page_header %}
+    Entrez Searches on NCBI Server
+  <p style="text-align: center;font-size: small"> Execute searches on different NCBI Databses, {{ request.user }}!</p>
+{% endblock %}
+
+{% block page_description %}
+<h2> Entrez Searches with different databases </h2>
+<br>
+    <h4> Protein </h4>
+    <ul>
+        <li> Search within NCBIs protein databases </li>
+    </ul>
+
+    <h4> Pubmed </h4>
+    <ul>
+        <li> Search pubmed articles </li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard_project_list_col">
+    <form method="POST">
+        {% csrf_token %}
+        {{ EntrezSearchForm }}
+        <input type="submit" value="Submit" class="btn btn-dark">
+    </form>
+    </div>
+{% endblock %}
