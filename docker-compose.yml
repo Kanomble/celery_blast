@@ -27,7 +27,7 @@ services:
       - "5432:5432"
 
   web:
-    image: kanomble/rec_blast_base_image:1.3
+    image: kanomble/rec_blast_base_image:1.4
     command:  sh -c "./wait-for rabbitmq:5672 && ./wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runserver 0.0.0.0:8080"
@@ -45,7 +45,7 @@ services:
       - "8080:8080"
 
   celery_worker:
-    image: kanomble/rec_blast_base_image:1.3
+    image: kanomble/rec_blast_base_image:1.4
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery worker -A celery_blast -l INFO"
     depends_on:
       - web
@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
 
   flower:
-    image: kanomble/rec_blast_base_image:1.3
+    image: kanomble/rec_blast_base_image:1.4
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- flower -A celery_blast --port=5555"
     networks:
       - main
@@ -79,7 +79,7 @@ services:
     restart: unless-stopped
 
   panoptes:
-    image: kanomble/rec_blast_base_image:1.3
+    image: kanomble/rec_blast_base_image:1.4
     command: sh -c "./wait-for web:8080 -- panoptes"
     depends_on:
       - web
