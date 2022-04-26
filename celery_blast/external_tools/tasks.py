@@ -1,5 +1,6 @@
 import json
 
+
 from celery import shared_task
 from celery.utils.log import get_task_logger
 import requests
@@ -12,33 +13,33 @@ from .py_services import check_if_target_sequences_are_available, check_if_msa_f
 logger = get_task_logger(__name__)
 
 @shared_task(bind=True)
-def execute_multiple_sequence_alignment_new(self, project_id, query_sequence_id):
+def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
     try:
         logger.info("trying to start mafft multiple sequence alignment")
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
-
-
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
         external_tools.update_query_sequences_msa_task(query_sequence_id, str(self.request.id))
         logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
-
-        path_to_project = 'data/blast_projects/' + str(project_id) + '/'
+        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
         path_to_query_file = path_to_project + query_sequence_id + '/target_sequences.faa'
 
         target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
         if target_sequence_status == 0:
             #mafft invocation with default settings
-            output = path_to_project + query_sequence_id + '/target_sequences.msa'
-            msa_task = Popen(
-                ['mafft',path_to_query_file,'>',output], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+            path_to_mafft_output = path_to_project + query_sequence_id + '/target_sequences.msa'
+            cmd = "mafft {} > {}".format(path_to_query_file, path_to_mafft_output)
+            msa_task = Popen(cmd, shell=True)
             logger.info(
                 'waiting for popen instance {} to finish with timeout set to {}'.format(msa_task.pid,
-                                                                                        4000))
-            returncode = msa_task.wait(4000)
+                                                                                        40000))
+            progress_recorder.set_progress(20, 100, "PROGRESS")
+
+            returncode = msa_task.wait(40000)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
             else:
+                progress_recorder.set_progress(100, 100, "SUCCESS")
                 return 0
         elif target_sequence_status == 1:
             raise FileNotFoundError("query file with targets for msa does not exist!")
@@ -47,42 +48,6 @@ def execute_multiple_sequence_alignment_new(self, project_id, query_sequence_id)
 
     except Exception as e:
         raise Exception("[-] Couldnt perform multiple sequence alignment task with Exception: {}".format(e))
-
-@shared_task(bind=True)
-def execute_phylogenetic_tree_building_new(self,project_id,query_sequence_id):
-    try:
-        path_to_msa_file=""
-        check_if_msa_file_is_available(path_to_msa_file)
-    except Exception as e:
-        raise Exception("[-] Couldnt perform phylogenetic tree task with Exception: {}".format(e))
-#TODO documentation - refactoring with logger statements
-@shared_task(bind=True)
-def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
-    try:
-        logger.info("trying to execute mafft multiple sequence alignment per request to bioinformatic tools container")
-        progress_recorder = ProgressRecorder(self)
-        progress_recorder.set_progress(0, 100, "PROGRESS")
-
-
-        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
-        external_tools.update_query_sequences_msa_task(query_sequence_id, str(self.request.id))
-        logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
-        url = "http://tools:5001/perform_simple_msa/" + str(project_id) +'/' + query_sequence_id
-        response = requests.post(url, json={"query_sequence_id":query_sequence_id, "project_id":project_id})
-        logger.info("received response from : {} with status_code : {}".format(url,response.status_code))
-        if response.status_code == 200:
-            progress_recorder.set_progress(100, 100, "SUCCESS")
-            return 0
-        elif response.status_code == 400:
-            raise Exception("[-] status code for http request to bioinformatic tools container with url : {} is 400".format(url))
-        elif response.status_code == 500:
-            raise Exception(
-                "[-] status code for http request to bioinformatic tools container with url : {} is 500".format(url))
-        else:
-            raise Exception("[-] error in response from bioinformatic tools container with url : {} status code is : {}"
-                            .format(url,response.status_code))
-    except Exception as e:
-        raise Exception("[-] couldnt perform simple msa task with exception : {}".format(e))
 
 @shared_task(bind=True)
 def execute_phylogenetic_tree_building(self,project_id,query_sequence_id):
@@ -94,79 +59,91 @@ def execute_phylogenetic_tree_building(self,project_id,query_sequence_id):
 
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
         logger.info("cheking if msa task succeeded for query sequence : {}".format(query_sequence_id))
-        if external_tools.check_if_msa_task_is_completed(query_sequence_id):
+
+        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
+        path_to_msa_file = path_to_project + query_sequence_id + '/target_sequences.msa'
+        path_to_fasttree_output = path_to_project + query_sequence_id + '/target_sequences.nwk'
+        msa_status = check_if_msa_file_is_available(path_to_msa_file)
+        if msa_status == 0 and external_tools.check_if_msa_task_is_completed(query_sequence_id):
+
             external_tools.update_query_sequences_phylo_task(query_sequence_id,str(self.request.id))
             logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
-
-            url = "http://tools:5001/perform_phylo_task/" + str(project_id) + '/' + query_sequence_id
-            response = requests.post(url, json={"query_sequence_id": query_sequence_id, "project_id": project_id})
-            logger.info("received response from : {} with status_code : {}".format(url, response.status_code))
-
-            if response.status_code == 200:
-                progress_recorder.set_progress(100, 100, "SUCCESS")
-                return 0
-            elif response.status_code == 400:
-                raise Exception(
-                    "[-] status code for http request to bioinformatic tools container with url : {} is 400".format(url))
-            elif response.status_code == 500:
-                raise Exception(
-                    "[-] status code for http request to bioinformatic tools container with url : {} is 500".format(url))
+            progress_recorder.set_progress(20, 100, "PROGRESS")
+            cmd = "fasttree -lg {} > {}".format(path_to_msa_file, path_to_fasttree_output)
+            phylo_task = Popen(cmd,shell=True)
+            progress_recorder.set_progress(30, 100, "PROGRESS")
+            logger.info(
+                'waiting for popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
+                                                                                        40000))
+            returncode = phylo_task.wait(4000)
+            if returncode != 0:
+                raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
             else:
-                raise Exception("[-] error in response from bioinformatic tools container with url : {} status code is : {}"
-                                .format(url, response.status_code))
-        else:
-            raise Exception("[-] error in performing fasttree task, there is no multiple sequence alignment file for your query sequence : {}".format(query_sequence_id))
-
+                return 0
+        elif msa_status == 1:
+            raise FileNotFoundError("msa file does not exist!")
     except Exception as e:
-        raise Exception("[-] couldnt perform phylogenetic tree building with exception : {}".format(e))
+        raise Exception("[-] Couldnt perform phylogenetic tree task with Exception: {}".format(e))
 
 @shared_task(bind=True)
 def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id):
     try:
-        logger.info("trying to execute mafft multiple sequence alignment for all query sequences per request to bioinformatic tools container")
-
+        logger.info("trying to start mafft multiple sequence alignment for multiple query sequence targets")
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
-
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
         external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
         logger.info("updated multiple query sequence models with taskresult instance : {}".format(str(self.request.id)))
+        progress_recorder.set_progress(19, 100, "PROGRESS")
 
         query_sequence_ids = [qseq.query_accession_id for qseq in external_tools.query_sequences.get_queryset()]
-        json_query_sequence_ids = json.dumps(query_sequence_ids)
 
-        url = "http://tools:5001/perform_simple_msa_with_all_qseqs/" + str(project_id)
-        response = requests.post(url,json={'query_sequence_ids':json_query_sequence_ids,'project_id':project_id})
-        logger.info("received response from : {} with status_code : {}".format(url,response.status_code))
+        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
 
-        if response.status_code == 200:
-            progress_recorder.set_progress(100, 100, "SUCCESS")
-            return 0
-        elif response.status_code == 400:
-            raise Exception(
-                "[-] status code for http request to bioinformatic tools container with url : {} is 400".format(url))
-        elif response.status_code == 500:
-            raise Exception(
-                "[-] status code for http request to bioinformatic tools container with url : {} is 500".format(url))
-        else:
-            raise Exception("[-] error in response from bioinformatic tools container with url : {} status code is : {}"
-                            .format(url, response.status_code))
+        progress = 80 / len(query_sequence_ids)
+        counter = 1
+        for qseqid in query_sequence_ids:
+            path_to_query_file = path_to_project + qseqid + '/target_sequences.faa'
+            path_to_mafft_output = path_to_project + qseqid + '/target_sequences.msa'
+
+            target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
+
+            if target_sequence_status == 0:
+                cmd = "mafft {} > {}".format(path_to_query_file, path_to_mafft_output)
+                msa_task = Popen(cmd, shell=True)
+                logger.info(
+                    'waiting for popen instance {} to finish with timeout set to {}'.format(msa_task.pid,
+                                                                                            40000))
+                returncode = msa_task.wait(40000)
+                progress = int(progress * counter)
+                if progress <= 80:
+                    logger.info(
+                        'progress of multiple sequence alignment task for all query sequences set to {}'.format(progress))
+                    progress_recorder.set_progress(progress, 100, "PROGRESS")
+                    counter += 1
+
+                if returncode != 0:
+                    raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+            elif target_sequence_status == 1:
+                raise FileNotFoundError("query file with targets for msa does not exist!")
+            elif target_sequence_status == 2:
+                continue
+
+        progress_recorder.set_progress(100, 100, "PROGRESS")
     except Exception as e:
-        raise Exception("[-] couldnt perform msa for all query sequences with exception : {}".format(e))
+        raise Exception("[-] Couldnt perform multiple sequence alignment task for multiple query sequences with Exception: {}".format(e))
 
-#TODO documentation - fasttree call just for sequences with SUCCESS of MSA task ...
 @shared_task(bind=True)
 def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
     try:
-        logger.info("trying to execute fasttree phylogenetic tree construction for all query sequences per request to bioinformatic tools container")
-
+        logger.info("trying to execute fasttree phylogenetic tree construction for all query sequences")
         progress_recorder = ProgressRecorder(self)
-        progress_recorder.set_progress(0, 100, "PROGRESS")
-
+        progress_recorder.set_progress(0,100,"PROGRESS")
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
 
         external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
         logger.info("updated multiple query sequence models with taskresult instance : {}".format(str(self.request.id)))
+        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
 
         query_sequence_ids = []
         for qseq in external_tools.query_sequences.get_queryset():
@@ -174,25 +151,35 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
             if external_tools.check_if_msa_task_is_completed(qseq.query_accession_id):
                 query_sequence_ids.append(qseq.query_accession_id)
                 logger.info("\tmsa task succeeded ... added query sequence to target list for phylogenetic tree construction")
+        progress = 80/len(query_sequence_ids)
+        counter = 1
+        for qseqid in query_sequence_ids:
+            path_to_msa_file = path_to_project + qseqid + '/target_sequences.msa'
+            path_to_fasttree_output = path_to_project + qseqid + '/target_sequences.nwk'
+            msa_status = check_if_msa_file_is_available(path_to_msa_file)
+            if msa_status == 0 and external_tools.check_if_msa_task_is_completed(qseqid):
 
-        json_query_sequence_ids = json.dumps(query_sequence_ids)
+                external_tools.update_query_sequences_phylo_task(qseqid, str(self.request.id))
+                logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
 
-        url = "http://tools:5001/perform_fasttree_phylobuild_with_all_qseqs/" + str(project_id)
-        response = requests.post(url,json={'query_sequence_ids':json_query_sequence_ids,'project_id':project_id})
-        logger.info("received response from : {} with status_code : {}".format(url,response.status_code))
+                cmd = "fasttree -lg {} > {}".format(path_to_msa_file, path_to_fasttree_output)
+                phylo_task = Popen(cmd, shell=True)
+                logger.info(
+                    'waiting for popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
+                                                                                            40000))
+                returncode = phylo_task.wait(4000)
 
-        if response.status_code == 200:
-            progress_recorder.set_progress(100, 100, "SUCCESS")
-            return 0
-        elif response.status_code == 400:
-            raise Exception(
-                "[-] status code for http request to bioinformatic tools container with url : {} is 400".format(url))
-        elif response.status_code == 500:
-            raise Exception(
-                "[-] status code for http request to bioinformatic tools container with url : {} is 500".format(url))
-        else:
-            raise Exception("[-] error in response from bioinformatic tools container with url : {} status code is : {}"
-                            .format(url, response.status_code))
+                progress = int(progress * counter)
+                if progress <= 80:
+                    logger.info(
+                        'progress of fasttree task for all query sequences set to {}'.format(
+                            progress))
+                    progress_recorder.set_progress(progress, 100, "PROGRESS")
+                    counter += 1
+
+                if returncode != 0:
+                    raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+            elif msa_status == 1:
+                raise FileNotFoundError("msa file does not exist!")
     except Exception as e:
-        raise Exception("[-] couldnt perform phylogenetic tree construction for all query sequences with exception : {}".format(e))
-
+        raise Exception("[-] couldnt perform fasttree task for all query sequences with exception: {}".format(e))

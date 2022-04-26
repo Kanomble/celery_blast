@@ -32,7 +32,7 @@ check if there are > 2 target sequences available (for msa task).
 def check_if_target_sequences_are_available(path_to_query_file: str) -> int:
     try:
         if os.path.isfile(path_to_query_file):
-            count = 0
+            count = 1
             with open(path_to_query_file, 'r') as query_file:
                 for line in query_file.readlines():
                     if line.startswith(">"):

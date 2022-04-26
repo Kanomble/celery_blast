@@ -91,15 +91,5 @@ services:
       - main
     restart: unless-stopped
 
-  tools:
-    image: kanomble/rec_blast_external_tools:1.0
-    networks:
-      - main
-    ports:
-      - "5001:5001"
-    restart: unless-stopped
-    volumes:
-      - ./flask_api_bioinformatic_tools:/application
-      - ./data:/application/data
 networks:
   main:
