@@ -2,7 +2,7 @@
 
 {% block title %} Upload Genomes Dashboard {% endblock %}
 
-{% block page_title %} Upload Genomes Dashboard {% endblock %}
+{% block page_title %}{% endblock %}
 
 {% block infoheader %} Genome Upload {% endblock %}
 
@@ -13,27 +13,28 @@ Upload your own FASTA files and format them to BLAST databases.
     or you upload multiple genome fasta files.
 {% endblock %}
 
+{% block header %}
 {% block page_header %}{% endblock %}
-
+{% endblock %}
 {% block content %}
 
 
 
-    <div class="container-fluid text-center transparent-box">
+    <div class="dashboard_project_list_col text-center" style="font-size: large">
     <form name="database_upload_menu" action="javascript:void(0)" id="upload_genome_files_dashboard_load_forms">
         <div class="custom-control custom-radio custom-control-inline">
             <input class="custom-control-input" type="radio" id="single" name="single_genome_file_upload_button" value="single" onchange="loadMultipleOrSingleFileUpload(this.value)">
-            <label class="custom-control-label" for="single">Upload a single genome file</label>
+            <label class="custom-control-label" for="single"> <b> Upload a single genome file </b> </label>
         </div>
 
-        <div class="custom-control custom-radio custom-control-inline">
-            <input class="custom-control-input" type="radio" id="multiple" name="multiple_genome_file_upload_button" value="multiple" onchange="loadMultipleOrSingleFileUpload(this.value)">
-            <label class="custom-control-label" for="multiple">Upload multiple genome files</label>
+        <div class="btn-group">
+            <input type="radio" class="btn-check" id="multiple" name="multiple_genome_file_upload_button" value="multiple" autocomplete="off" onchange="loadMultipleOrSingleFileUpload(this.value)">
+            <label class="btn btn-info" for="multiple"> <b> Upload multiple genome files </b> </label>
         </div>
     </form>
 </div>
 <br>
-<div id="upload_form_master_div" class="transparent-box" style="display: none">
+<div id="upload_form_master_div" class="dashboard_project_list_col" style="display: none">
     <div  id="post_form_single_container" style="display: none">
         {% include "blast_project/form_genome_upload.html" %}
     </div>

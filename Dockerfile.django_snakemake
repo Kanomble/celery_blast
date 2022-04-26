@@ -74,6 +74,10 @@ RUN perl ../ncbi-blast-2.11.0+/bin/update_blastdb.pl taxdb
 # Install it in the BLASTDB directory
 RUN gunzip -cd taxdb.tar.gz | (cd $BLASTDB; tar xvf - )
 
+# Install EMBOSS, mafft and fasttree
+RUN apt-get update && (apt-get install -t buster-backports -y emboss emboss-data embassy-domsearch embassy-domalign embassy-domainatrix mafft fasttree || apt-get install -y emboss emboss-data embassy-domsearch embassy-domalign embassy-domainatrix mafft fasttree)
+
+
 #wait-for script to make the web-app and celery worker waiting for the services to finish
 RUN apt-get update -y && apt-get install -y netcat
 RUN wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for

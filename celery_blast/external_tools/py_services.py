@@ -23,3 +23,37 @@ def get_msa_files_from_folder_list(project_id,folders):
         return qseqid_to_msa
     except Exception as e:
         raise Exception("[-] couldnt identify if qseq folder contains msa file or not, exception : {}".format(e))
+
+'''
+check if there are > 2 target sequences available (for msa task).
+    
+    :returns 0 if task can proceed, 1 if file was not found and 2 if there are not enough sequences
+'''
+def check_if_target_sequences_are_available(path_to_query_file: str) -> int:
+    try:
+        if os.path.isfile(path_to_query_file):
+            count = 0
+            with open(path_to_query_file, 'r') as query_file:
+                for line in query_file.readlines():
+                    if line.startswith(">"):
+                        count += 1
+            if count >= 2:
+                return 0
+            else: #not enough target sequences
+                return 2
+        else: #FileNotFound
+            return 1
+    except Exception as e:
+        raise Exception("[-] error during checking amount of sequence targets for msa task with exception: {}".format(e))
+
+'''
+check if multiple sequence file is available (for phylo task)
+'''
+def check_if_msa_file_is_available(path_to_msa_file: str) -> int:
+    try:
+        if os.path.isfile(path_to_msa_file):
+            return 0
+        else:
+            return 1
+    except Exception as e:
+        raise Exception("[-] error during checking if msa file exists")

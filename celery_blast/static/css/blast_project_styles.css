@@ -12,6 +12,7 @@ div.dashboard_project_list_col {
     margin-right: 15px !important;
     overflow-x: auto;
     overflow-y: auto;
+    position: relative;
 }
 
 div.base_header {
@@ -36,6 +37,7 @@ h3.col_header {
 body.body_bg {
     //background: white;
     //background: linear-gradient(whitesmoke,darkgreen);
+    //background: linear-gradient(whitesmoke, #4ebadc);
     background: url(../images/background_2.jpg);
     background-size: contain;
 }

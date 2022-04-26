@@ -5,10 +5,56 @@ from celery.utils.log import get_task_logger
 import requests
 from .models import ExternalTools
 from celery_progress.backend import ProgressRecorder
+from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
+from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
+@shared_task(bind=True)
+def execute_multiple_sequence_alignment_new(self, project_id, query_sequence_id):
+    try:
+        logger.info("trying to start mafft multiple sequence alignment")
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
+
+
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools.update_query_sequences_msa_task(query_sequence_id, str(self.request.id))
+        logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
+
+        path_to_project = 'data/blast_projects/' + str(project_id) + '/'
+        path_to_query_file = path_to_project + query_sequence_id + '/target_sequences.faa'
+
+        target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
+        if target_sequence_status == 0:
+            #mafft invocation with default settings
+            output = path_to_project + query_sequence_id + '/target_sequences.msa'
+            msa_task = Popen(
+                ['mafft',path_to_query_file,'>',output], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+            logger.info(
+                'waiting for popen instance {} to finish with timeout set to {}'.format(msa_task.pid,
+                                                                                        4000))
+            returncode = msa_task.wait(4000)
+            if returncode != 0:
+                raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+            else:
+                return 0
+        elif target_sequence_status == 1:
+            raise FileNotFoundError("query file with targets for msa does not exist!")
+        elif target_sequence_status == 2:
+            raise Exception("not enough target sequences")
+
+    except Exception as e:
+        raise Exception("[-] Couldnt perform multiple sequence alignment task with Exception: {}".format(e))
+
+@shared_task(bind=True)
+def execute_phylogenetic_tree_building_new(self,project_id,query_sequence_id):
+    try:
+        path_to_msa_file=""
+        check_if_msa_file_is_available(path_to_msa_file)
+    except Exception as e:
+        raise Exception("[-] Couldnt perform phylogenetic tree task with Exception: {}".format(e))
 #TODO documentation - refactoring with logger statements
 @shared_task(bind=True)
 def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
@@ -149,3 +195,4 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
                             .format(url, response.status_code))
     except Exception as e:
         raise Exception("[-] couldnt perform phylogenetic tree construction for all query sequences with exception : {}".format(e))
+

@@ -28,25 +28,25 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
     </div>
 
     {% if refseq_exists %}
-    <div class="transparent-box" style="margin-bottom: 30px;">
+    <div class="dashboard_project_list_col" style="margin-bottom: 30px;">
         {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
     </div>
     {% endif %}
 
     {% if DownloadInProgressBlastDatabases.count > 0 %}
-        <div class="transparent-box" style="margin-bottom: 30px">
+        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
             {% include "refseq_transactions/table_download_in_progress_databases.html" %}
         </div>
     {% endif %}
 
     {% if ActiveBlastDatabases.count > 0 %}
-        <div class="transparent-box" style="margin-bottom: 30px">
+        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
             {% include "refseq_transactions/table_active_blast_databases.html" %}
         </div>
     {% endif %}
 
     {% if UnactiveBlastDatabases.count > 0 %}
-        <div class="transparent-box" style="margin-bottom: 30px">
+        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
             {% include "refseq_transactions/table_unactive_blast_databases.html" %}
         </div>
     {% endif %}

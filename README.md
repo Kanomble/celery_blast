@@ -22,6 +22,8 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] define global timeout variable
+- [ ] one_way_blast_results - if there is an error in the biopython request for building genus graphs display at least the hit table
 - [ ] correct ajax requests if it results into an error
 - [ ] wait-for script checking - LF / CLRF
 - [ ] add genbank database option
@@ -98,6 +100,9 @@ The web container will automatically try to restart if the startup fails, unless
     - [X] BlastDatabaseManager
     - [X] BlastSettings
     - [X] AssemblyLevels
+    - [X] UploadedGenomes
+    - [X] ExternalTools --> Connected to BlastProjects
+    - [X] QuerySequences --> Connected to ExternalTools
 
 
 

@@ -20,7 +20,7 @@ df.columns = ["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "s
 unique_queries = list(df["qseqid"].unique())
 dataframes = []
 
-for query in unique_queries:
+for query in unique_queries[0:10]:
     # print("processing : {}".format(query))
     dataframe = df.loc[df['qseqid'] == query].copy()
     dataframe['sacc'] = dataframe['sacc'].map(lambda protid: protid.split(".")[0])

@@ -89,7 +89,7 @@ def execute_reciprocal_blast_project(self,project_id):
             'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
 
     try:
-        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(reciprocal_blast_snakemake.pid, 4000))
+        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(reciprocal_blast_snakemake.pid, 604800))
         returncode = reciprocal_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
         logger.info('returncode : {}'.format(returncode))
         if (returncode != 0):

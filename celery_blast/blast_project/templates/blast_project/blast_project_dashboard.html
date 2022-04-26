@@ -38,6 +38,33 @@
     Reciprocal BLAST Dashboard
     <br>
     <p style="text-align: center;font-size: small"> Manage your BLAST projects and create new projects, {{ request.user }}!</p>
+    <div class="row" style="text-align:center;justify-content: center;">
+        <div class="col-1" >
+            <a  href="{% url 'project_creation' %}">
+                <button class="btn btn-dark" style="height: 80px;width: 130px; "> RecBLAST Project </button>
+            </a>
+        </div>
+        <div class="col-1">
+            <a href="{% url 'upload_genomes' %}">
+                <button class="btn btn-dark" style="height: 80px;width: 130px;">Upload Genomes</button>
+            </a>
+        </div>
+    </div>
+    <div class="row" style="text-align:center;justify-content: center;margin-top: 5px">
+         <div class="col-1">
+            <a href="{% url 'one_way_project_creation' %}">
+                <button class="btn btn-dark" style="height: 80px;width: 130px;"> BLAST Project </button>
+            </a>
+         </div>
+        <div class="col-1">
+            <a  href="{% url 'refseq_transactions_dashboard' %}">
+                <button class="btn btn-dark" style="height: 80px;width: 130px;">Refseq Genomes</button>
+            </a>
+        </div>
+    </div>
+
+
+
 {% endblock %}
 
 {% block content %}

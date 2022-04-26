@@ -4,7 +4,8 @@
 {% block add_headers %}
 
 {% endblock %}
-{% block page_title %} One-Way BLAST Project Creation {% endblock %}
+{% block page_title %}{% endblock %}
+
 
 {% block infoheader %} One-Way BLAST Project Creation Dashboard {% endblock %}
 
@@ -26,11 +27,12 @@
 {% endblock %}
 
 <!-- Welcome to your one way BLAST project dashboard, request.user!-->
-{% block page_header %}  {% endblock %}
+{% block header %}
+{%  endblock %}
 {%  block extend_body %} {% if OneWayRemoteProjectCreationForm.errors %} onload="loadTemplate('remote')" {% endif %} {% if OneWayProjectCreationForm.errors %} onload="loadTemplate('local')" {% endif %} {% endblock %}
 {% block content %}
 
-<div class="container-fluid text-center transparent-box">
+<div class="container-fluid text-center dashboard_project_list_col">
     <form name="project_creation_menu" action="javascript:void(0)" id="one_way_project_creation_form">
         <div class="custom-control custom-radio custom-control-inline">
             <input class="custom-control-input" type="radio" id="local" name="local_search_button" value="local" onchange="loadRemoteOrLocal(this.value)">
@@ -45,19 +47,21 @@
 </div>
 
 <br>
-<div class="transparent-box" id="project_creation_local" style="display: none">
+<div class="dashboard_project_list_col" id="project_creation_local" style="display: none">
     <br>
     <h3 class="project-creation-header"> BLAST Project Creation </h3>
     <br>
     {% include "one_way_blast/form_one_way_blast_project_creation.html" %}
+    <br>
     <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')">Advanced BLAST Settings </button>
 </div>
 
-<div class="transparent-box" id="project_creation_remote" style="display: none">
+<div class="dashboard_project_list_col" id="project_creation_remote" style="display: none">
     <br>
     <h3 class="project-creation-header"> Remote BLAST Project Creation </h3>
     <br>
     {% include "one_way_blast/form_one_way_remote_blast_project_creation.html" %}
+    <br>
     <button class="btn btn-dark" onclick="displayDivElement('advanced_remote_settings')">Advanced BLAST Settings </button>
 </div>
 {% endblock %}

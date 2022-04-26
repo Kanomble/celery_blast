@@ -3,7 +3,7 @@ from blast_project.models import BlastProject
 from django_celery_results.models import TaskResult
 
 from .managers import ExternalToolsManager, QuerySequenceManager
-# Create your models here.
+
 #TODO documentation - explain why ExternalTools model is usefull (ManyToOne Relationship)
 class ExternalTools(models.Model):
     associated_project = models.OneToOneField(
@@ -86,6 +86,13 @@ class ExternalTools(models.Model):
             raise Exception("[-] couldnt check msa taskresult status for query sequence object with exceptipon : {}".format(e))
 
 #TODO documentation
+'''
+Query sequences of reciprocal BLAST projects. 
+This model combines the results of the RecBLAST for each query sequence to
+multiple sequence alignments and phylogenetic tree task result objects. 
+
+It can be used as a hub for new tasks.
+'''
 class QuerySequences(models.Model):
     query_accession_id = models.CharField(
         max_length=200,
