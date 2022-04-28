@@ -26,19 +26,17 @@ def search_detail_view(request, search_id):
 @login_required(login_url='login')
 def delete_search_view(request, search_id):
     try:
-        if request.method == "POST":
-            retcode = delete_esearch_by_id(search_id)
-            if retcode == 0:
-                entrez_search_form = EntrezSearchForm()
-                context = {"EntrezSearches":  EntrezSearch.objects.all(),
-                           "EntrezSearchForm":entrez_search_form}
-                return render(request, 'external_tools/entrez_search_dashboard.html', context)
-            elif retcode == 1:
-                return failure_view(request, "Couldnt delete esearch object")
-            else:
-                return failure_view(request, "ERROR during deletion of edirectpaper with id: {}".format(search_id))
+        retcode = delete_esearch_by_id(search_id)
+        if retcode == 0:
+            entrez_search_form = EntrezSearchForm()
+            context = {"EntrezSearches":  EntrezSearch.objects.all(),
+                       "EntrezSearchForm":entrez_search_form}
+            return render(request, 'external_tools/entrez_search_dashboard.html', context)
+        elif retcode == 1:
+            return failure_view(request, "Couldnt delete esearch object")
         else:
-            return failure_view(request,"ERROR during deletion of edirectpaper with id: {}".format(search_id))
+            return failure_view(request, "ERROR during deletion of edirectpaper with id: {}".format(search_id))
+
     except Exception as e:
         return failure_view(request,e)
 
@@ -52,6 +50,13 @@ def entrez_dashboard_view(request):
                 database = entrez_search_form.cleaned_data['database']
                 entrez_query = entrez_search_form.cleaned_data['entrez_query']
                 entrez_search_task.delay(database,entrez_query, request.user.id)
+
+                entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
+                    request.user.id)
+                context['EntrezSearches'] = entrez_searches
+                context['EntrezSearchForm'] = entrez_search_form
+                return render(request, 'external_tools/entrez_search_dashboard.html', context)
+
         else:
             entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
                 request.user.id)

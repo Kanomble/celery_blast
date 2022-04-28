@@ -21,7 +21,9 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
         progress_recorder.set_progress(0, 100, "PROGRESS")
 
         randomly_generated_filename = create_random_filename() + '.tsf'
+        logger.info("filename for search output: {}".format(randomly_generated_filename))
         esearch_output_filepath = 'media/esearch_output/result_dataframe_' + randomly_generated_filename
+
         save_entrez_search_model(database=database,
                                  entrez_query=entrez_query,
                                  file_name=esearch_output_filepath,

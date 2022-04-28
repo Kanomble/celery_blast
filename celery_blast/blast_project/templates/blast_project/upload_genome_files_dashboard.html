@@ -66,16 +66,21 @@ $("#add_another").click(function() {
     var organism_field_name = 'organism_name_' + form_count;
 
     var new_form_div_file = document.createElement("div")
+    var new_form_div_file_custom = document.createElement("div")
+
     var new_file_field_label = document.createElement("label")
     var new_file_field_input = document.createElement("input")
 
     var genome_file_text = document.createTextNode("Next Genome FASTA File:")
     new_form_div_file.setAttribute("class","form-group")
+    new_form_div_file.setAttribute("class","custom-file")
+
     new_file_field_label.setAttribute("for",file_field_name)
+    new_file_field_label.setAttribute("class","custom-file-label")
     new_file_field_label.appendChild(genome_file_text)
     new_file_field_input.setAttribute("id",file_field_name)
     new_file_field_input.setAttribute("type","file")
-    new_file_field_input.setAttribute("class","form-control-file")
+    new_file_field_input.setAttribute("class","custom-file-input")
     //the name field is especially important for django!
     new_file_field_input.setAttribute("name",file_field_name)
 

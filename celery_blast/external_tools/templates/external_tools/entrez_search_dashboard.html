@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 
 {% block title %} Entrez Search Platform {% endblock %}
+
 {% block add_headers %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css" crossorigin="anonymous">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.2/css/select.dataTables.min.css" crossorigin="anonymous">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
 {% endblock %}
 
-{% block page_title %} Entrez Search Dashboard {% endblock %}
+{% block page_title %}  {% endblock %}
 
 {% block infoheader %} Entrez Search {% endblock %}
 
 {% block page_header %}
-    Entrez Searches on NCBI Server
+    Entrez Search Dashboard
   <p style="text-align: center;font-size: small"> Execute searches on different NCBI Databses, {{ request.user }}!</p>
 {% endblock %}
 
@@ -31,19 +32,40 @@
 {% endblock %}
 
 {% block content %}
-    <div class="dashboard_project_list_col">
-    <form method="POST">
-        {% csrf_token %}
-        {{ EntrezSearchForm }}
-        <input type="submit" value="Submit" class="btn btn-dark">
-    </form>
+    <div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
+        <form id="entrez_form" method="POST">
+            {% csrf_token %}
+            <div class="form-group row">
+                 <div class="form-group col-sm-4" style="margin: 20px">
+                    <label for="entrez_query"> Enter a search query:</label>
+                    <input type="text" class="form-control-plaintext" id="entre_query" name="entrez_query">
+                    {% if EntrezSearchForm.entrez_query.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ EntrezSearchForm.entrez_query.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group col-sm-4" style="margin: 20px">
+                    <label for="database">Select a BLAST Database </label>
+                    <select class="form-control" id="database" name="database">
+                        {% for database in EntrezSearchForm.database %}
+                            {{database}}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <input type="submit" value="Submit" class="btn btn-dark" style="margin: 20px">
+        </form>
+
     </div>
 
     <div class="dashboard_project_list_col">
-        <h1> Current EDirect Search Results </h1>
+                <h3 class="col_header" style="text-align: center">Current EDirect Search Results</h3>
+              <p style="font-size: medium; text-align: center">Perform BLAST similarity searches on NCBI Server</p>
         <hr>
-            <div>
-                 <table class="main_table">
+            <div class="table-responsive">
+                 <table class="main_table table table-hover">
 
                      <tr>
                          <th> Database </th>
@@ -67,7 +89,7 @@
                              </a>
                          </td>
                          <td>
-                             <a href="{% url 'search_delete' search_id=search.id %}" method="post">
+                             <a href="{% url 'search_delete' search_id=search.id %}">
                                  <button class="btn btn-danger">
                                      Delete-Search
                                  </button>

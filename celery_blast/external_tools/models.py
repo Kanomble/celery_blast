@@ -162,7 +162,8 @@ class EntrezSearch(models.Model):
 
     fasta_file_name = models.CharField(max_length=200,
                                        blank=True,
-                                       unique=True)
+                                       null=True,
+                                       verbose_name="search associated fasta file")
 
     file_name = models.CharField(
         max_length=200, unique=True,
