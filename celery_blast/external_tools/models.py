@@ -1,8 +1,9 @@
 from django.db import models
 from blast_project.models import BlastProject
 from django_celery_results.models import TaskResult
-
-from .managers import ExternalToolsManager, QuerySequenceManager
+import pandas as pd
+from .managers import ExternalToolsManager, QuerySequenceManager, EntrezSearchManager
+from django.contrib.auth.models import User
 
 #TODO documentation - explain why ExternalTools model is usefull (ManyToOne Relationship)
 class ExternalTools(models.Model):
@@ -141,3 +142,70 @@ class QuerySequences(models.Model):
         except Exception as e:
             raise Exception(
                 "[-] couldnt update query sequences with taskresult object for msa with exception : {}".format(e))
+
+class EntrezSearch(models.Model):
+
+    database = models.CharField(
+        max_length=200, unique=False,
+        default="pubmed", verbose_name="Search Database"
+    )
+
+    entrez_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="user who created this project",
+        default=1)
+
+    entrez_query = models.CharField(
+        max_length=600, unique=True,
+        verbose_name="Search query.", default="Lipopolysaccharides AND review [PT]")
+
+    fasta_file_name = models.CharField(max_length=200,
+                                       blank=True,
+                                       unique=True)
+
+    file_name = models.CharField(
+        max_length=200, unique=True,
+        verbose_name="File name for search results.", default="paper"
+    )
+
+    paper_entries = models.IntegerField(
+        verbose_name="Amount of paper in result file.",
+        default=0
+    )
+
+    task_result = models.OneToOneField(
+        TaskResult,
+        on_delete=models.CASCADE,
+        verbose_name="Associated Task Result model",
+    )
+
+    objects = models.Manager()
+    edirect_objects = EntrezSearchManager()
+
+    def get_paper_content(self):
+        pandas_header = {}
+        pandas_header['pubmed'] = ['Id', 'PubDate', 'Source', 'Title', 'ElocationID']
+        pandas_header['protein'] = ['Id','Caption','Title','Organism']
+
+        paper = pd.read_table(self.file_name, header=None)
+        paper.columns = pandas_header[self.database]
+        paper = paper.to_html(classes='entrezsearch" id="searchResultTable')
+        return paper
+
+    def get_pandas_table(self):
+        pandas_header = {}
+        pandas_header['pubmed'] = ['Id', 'PubDate', 'Source', 'Title', 'ElocationID']
+        pandas_header['protein'] = ['Id','Caption','Title','Organism']
+
+        paper = pd.read_table(self.file_name, header=None)
+        paper.columns = pandas_header[self.database]
+        return paper
+
+    def get_paper_number(self):
+        return len(pd.read_table(self.file_name, header=None))
+
+    def update_paper_entries(self):
+        paper_entries = len(pd.read_table(self.file_name, header=None))
+        self.update(paper_entries=paper_entries)
+        return paper_entries

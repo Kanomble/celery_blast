@@ -2,23 +2,60 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
-    execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences
-from .models import ExternalTools
+    execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
+    entrez_search_task
+from .models import ExternalTools, EntrezSearch
 from .forms import EntrezSearchForm
+from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
+
+@login_required(login_url='login')
+def search_detail_view(request, search_id):
+    #get edirectpaper entry based on search_id (which is id of db object)
+    #get paper content and fill context object with edirectpaper and paper content
+    #return template with context
+    try:
+
+        entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
+        context = {'EntrezSearch':entrez_search,'HtmlTable':entrez_search.get_paper_content()}
+        print("[*] SEARCH DETAILS: {}".format(entrez_search.id))
+        print("[*] {}".format(entrez_search.get_paper_content()))
+        return render(request,'external_tools/search_details.html',context)
+    except Exception as e:
+        return failure_view(request,e=e)
+
+@login_required(login_url='login')
+def delete_search_view(request, search_id):
+    try:
+        if request.method == "POST":
+            retcode = delete_esearch_by_id(search_id)
+            if retcode == 0:
+                entrez_search_form = EntrezSearchForm()
+                context = {"EntrezSearches":  EntrezSearch.objects.all(),
+                           "EntrezSearchForm":entrez_search_form}
+                return render(request, 'external_tools/entrez_search_dashboard.html', context)
+            elif retcode == 1:
+                return failure_view(request, "Couldnt delete esearch object")
+            else:
+                return failure_view(request, "ERROR during deletion of edirectpaper with id: {}".format(search_id))
+        else:
+            return failure_view(request,"ERROR during deletion of edirectpaper with id: {}".format(search_id))
+    except Exception as e:
+        return failure_view(request,e)
 
 @login_required(login_url='login')
 def entrez_dashboard_view(request):
     try:
         context = {}
-        print(request.method)
         if request.method == "POST":
             entrez_search_form = EntrezSearchForm(request.POST)
             if entrez_search_form.is_valid():
                 database = entrez_search_form.cleaned_data['database']
                 entrez_query = entrez_search_form.cleaned_data['entrez_query']
-                #do something
-                print("[*] DATABASE: {} ENTREZ QUERY: {}".format(database, entrez_query))
+                entrez_search_task.delay(database,entrez_query, request.user.id)
         else:
+            entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
+                request.user.id)
+            context['EntrezSearches'] = entrez_searches
             entrez_search_form = EntrezSearchForm()
             context['EntrezSearchForm'] = entrez_search_form
         return render(request,'external_tools/entrez_search_dashboard.html',context)

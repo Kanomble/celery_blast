@@ -8,9 +8,35 @@ from .models import ExternalTools
 from celery_progress.backend import ProgressRecorder
 from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
+from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
+
+@shared_task(bind=True)
+def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
+    try:
+        logger.info("trying to start entrez search")
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
+
+        randomly_generated_filename = create_random_filename() + '.tsf'
+        esearch_output_filepath = 'media/esearch_output/result_dataframe_' + randomly_generated_filename
+        save_entrez_search_model(database=database,
+                                 entrez_query=entrez_query,
+                                 file_name=esearch_output_filepath,
+                                 task_result_id=self.request.id,
+                                 user_id=user_id)
+        returncode = execute_entrez_search(database, entrez_query, esearch_output_filepath)
+
+        if returncode != 0:
+            raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+        else:
+            progress_recorder.set_progress(100, 100, "SUCCESS")
+            return 0
+    except Exception as e:
+        raise Exception("[-] Couldnt perform entrez search with exception: {}".format(e))
+
 
 '''
 execute_multiple_sequence_alignment 

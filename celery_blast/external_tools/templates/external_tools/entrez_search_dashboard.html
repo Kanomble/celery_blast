@@ -38,4 +38,48 @@
         <input type="submit" value="Submit" class="btn btn-dark">
     </form>
     </div>
+
+    <div class="dashboard_project_list_col">
+        <h1> Current EDirect Search Results </h1>
+        <hr>
+            <div>
+                 <table class="main_table">
+
+                     <tr>
+                         <th> Database </th>
+                         <th> Esearch Query </th>
+                         <th> Task Status </th>
+                         <th> Link to Result-Table </th>
+                         <th> Delete Query </th>
+                     </tr>
+
+                     {% for search in EntrezSearches %}
+                     <tr>
+                         <td> {{ search.database }}</td>
+                         <td> {{ search.entrez_query }} </td>
+                         <td> {{ search.task_result.status }} </td>
+                         {% if search.task_result.status == 'SUCCESS' %}
+                         <td>
+                             <a href="{% url 'search_details' search_id=search.id %}">
+                                 <button class="btn btn-dark">
+                                     Result-Table
+                                 </button>
+                             </a>
+                         </td>
+                         <td>
+                             <a href="{% url 'search_delete' search_id=search.id %}" method="post">
+                                 <button class="btn btn-danger">
+                                     Delete-Search
+                                 </button>
+                             </a>
+                         </td>
+                         {% endif %}
+                     </tr>
+                     {% endfor %}
+
+                 </table>
+            </div>
+        <hr>
+    </div>
 {% endblock %}
+
