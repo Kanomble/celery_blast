@@ -157,7 +157,7 @@ class EntrezSearch(models.Model):
         default=1)
 
     entrez_query = models.CharField(
-        max_length=600, unique=True,
+        max_length=600,
         verbose_name="Search query.", default="Lipopolysaccharides AND review [PT]")
 
     fasta_file_name = models.CharField(max_length=200,
@@ -175,11 +175,23 @@ class EntrezSearch(models.Model):
         default=0
     )
 
-    task_result = models.OneToOneField(
+    search_task_result = models.OneToOneField(
         TaskResult,
         on_delete=models.CASCADE,
-        verbose_name="Associated Task Result model",
+        verbose_name="TaskResult model for entrez searches",
+        related_name="search_task",
+        null=True
     )
+
+    download_task_result = models.OneToOneField(
+        TaskResult,
+        on_delete=models.CASCADE,
+        verbose_name="TaskResult model for downloads",
+        related_name="download_task",
+        null=True
+    )
+
+    timestamp = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
     edirect_objects = EntrezSearchManager()

@@ -42,18 +42,18 @@ class QuerySequenceManager(models.Manager):
             raise IntegrityError("[-] couldnt save query sequence model into database with exception : {}".format(e))
 
 class EntrezSearchManager(models.Manager):
-    def create_entrez_search(self, database, entrez_query, file_path, task_result_id, entrez_user):
+    def create_entrez_search(self, database, entrez_query, file_path, search_task_result, entrez_user):
         file_name = file_path
         if os.path.isfile(file_name) == False:
             paper_entries = 0
         else:
             paper_entries = len(pd.read_table(file_name, header=None))
-        task_result = TaskResult.objects.get(task_id=task_result_id)
+        task_result = TaskResult.objects.get(task_id=search_task_result)
         edirect_paper = self.create(database=database,
                                     entrez_query=entrez_query,
                                     file_name=file_name,
                                     paper_entries=paper_entries,
-                                    task_result=task_result,
+                                    search_task_result=task_result,
                                     entrez_user=entrez_user)
         return edirect_paper
 

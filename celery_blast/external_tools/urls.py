@@ -5,6 +5,10 @@ urlpatterns = [
     path('entrez_dashboard', views.entrez_dashboard_view, name="entrez_dashboard"),
     path('<int:search_id>/search_details', views.search_detail_view, name='search_details'),
     path('<int:search_id>/search_delete', views.delete_search_view, name='search_delete'),
+    path('<int:search_id>/search_details/download_protein_accessions',
+         views.download_proteins_from_entrez_search, name='download_protein_accessions'),
+    path('<int:search_id>/search_details/view_downloaded_sequences',
+         views.view_downloaded_sequences, name='view_downloaded_sequences'),
 
     path('<int:project_id>/external_project_information', views.project_informations, name='external_project_informations'),
     path('<int:project_id>/<str:query_sequence_id>/perform_simple_msa',

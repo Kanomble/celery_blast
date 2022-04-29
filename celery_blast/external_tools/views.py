@@ -1,12 +1,32 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
-    entrez_search_task
+    entrez_search_task, download_entrez_search_associated_protein_sequences
 from .models import ExternalTools, EntrezSearch
 from .forms import EntrezSearchForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
+import os
+
+@login_required(login_url='login')
+def view_downloaded_sequences(request, search_id):
+    try:
+        entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
+        filepath = entrez_search.fasta_file_name
+        if os.path.isfile(filepath):
+            with open(filepath,'r') as download_file:
+                content = [str(line) for line in download_file.readlines()]
+                content = ''.join(content)
+            response = HttpResponse(content,content_type="text/plain")
+            response['Contnt-Disposition'] = "attachment; filename={}".format(filepath.split("/")[-1])
+        else:
+            raise FileNotFoundError
+
+        return response
+    except Exception as e:
+        return failure_view(request,e)
+
 
 @login_required(login_url='login')
 def search_detail_view(request, search_id):
@@ -17,11 +37,25 @@ def search_detail_view(request, search_id):
 
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
         context = {'EntrezSearch':entrez_search,'HtmlTable':entrez_search.get_paper_content()}
-        print("[*] SEARCH DETAILS: {}".format(entrez_search.id))
-        print("[*] {}".format(entrez_search.get_paper_content()))
+
+        if entrez_search.database == 'protein' and entrez_search.download_task_result == None:
+            context['DownloadProteins'] = True
+        elif entrez_search.database == 'protein' and entrez_search.download_task_result != None:
+            if entrez_search.download_task_result.status == 'SUCCESS':
+                context['DownloadTaskSuccess'] = True
+            else:
+                context['DownloadTaskSuccess'] = False
         return render(request,'external_tools/search_details.html',context)
     except Exception as e:
-        return failure_view(request,e=e)
+        return failure_view(request,e)
+
+@login_required(login_url='login')
+def download_proteins_from_entrez_search(request, search_id):
+    try:
+        download_entrez_search_associated_protein_sequences.delay(search_id)
+        return search_detail_view(request, search_id)
+    except Exception as e:
+        return failure_view(request,e)
 
 @login_required(login_url='login')
 def delete_search_view(request, search_id):
@@ -29,7 +63,8 @@ def delete_search_view(request, search_id):
         retcode = delete_esearch_by_id(search_id)
         if retcode == 0:
             entrez_search_form = EntrezSearchForm()
-            context = {"EntrezSearches":  EntrezSearch.objects.all(),
+            context = {"EntrezSearches":  EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
+                    request.user.id),
                        "EntrezSearchForm":entrez_search_form}
             return render(request, 'external_tools/entrez_search_dashboard.html', context)
         elif retcode == 1:

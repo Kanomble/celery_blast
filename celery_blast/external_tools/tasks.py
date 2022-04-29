@@ -1,17 +1,41 @@
-import json
-
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-import requests
 from .models import ExternalTools
 from celery_progress.backend import ProgressRecorder
-from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
+from subprocess import Popen
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
-from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model
+from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model, download_esearch_protein_fasta_files, \
+    update_entrezsearch_with_download_task_result
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
+
+@shared_task(bind=True)
+def download_entrez_search_associated_protein_sequences(self, search_id):
+    try:
+        progress_recorder = ProgressRecorder(self)
+
+        logger.info("trying to download protein accessions with entrez")
+        progress_recorder.set_progress(0, 100, "PROGRESS")
+
+        returncode = update_entrezsearch_with_download_task_result(search_id, self.request.id)
+        if returncode == 0:
+            logger.info("starting download")
+            returncode = download_esearch_protein_fasta_files(search_id)
+            if returncode == 0:
+                progress_recorder.set_progress(100, 100, "SUCCESS")
+                return 0
+            elif returncode == 1:
+                logger.info("error in downloading protein sequences")
+                return 0
+        elif returncode == 1:
+            logger.info("file already exists")
+            return 0
+        else:
+            raise Exception("Error during saving taskresult instance to download_task_result field of entrezsearch with id: {}".format(search_id))
+    except Exception as e:
+        raise Exception("[-] an error occurred during downloading fasta files with entrez: {}".format(e))
 
 @shared_task(bind=True)
 def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
@@ -24,12 +48,12 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
         logger.info("filename for search output: {}".format(randomly_generated_filename))
         esearch_output_filepath = 'media/esearch_output/result_dataframe_' + randomly_generated_filename
 
-        save_entrez_search_model(database=database,
+        entrez_search = save_entrez_search_model(database=database,
                                  entrez_query=entrez_query,
                                  file_name=esearch_output_filepath,
                                  task_result_id=self.request.id,
                                  user_id=user_id)
-        returncode = execute_entrez_search(database, entrez_query, esearch_output_filepath)
+        returncode = execute_entrez_search(database, entrez_query, esearch_output_filepath,entrez_search)
 
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))

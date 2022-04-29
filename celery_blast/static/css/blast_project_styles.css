@@ -35,11 +35,11 @@ h3.col_header {
 }
 
 body.body_bg {
-    //background: white;
+    background: white;
     //background: linear-gradient(whitesmoke,darkgreen);
     //background: linear-gradient(whitesmoke, #4ebadc);
-    background: url(../images/background_2.jpg);
-    background-size: contain;
+    //background: url(../images/background_2.jpg);
+    //background-size: contain;
 }
 
 div.transparent-box {
