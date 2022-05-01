@@ -83,6 +83,7 @@ class OneWayBlastProject(models.Model):
             snk_config_file.write('blastdb: ' + "\"" + "../../databases/" + str(
                 self.project_database.id) + "/" + self.project_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: ' + "\"" + self.project_query_sequences + "\"\n")
+            snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
 
 
             settings_dict = self.project_settings.get_values_as_dict()
@@ -189,6 +190,7 @@ class OneWayRemoteBlastProject(models.Model):
             snk_config_file.write('query_sequence: ' + "\"" + self.r_project_query_sequences + "\"\n")
             snk_config_file.write('search_strategy: ' + str(self.r_search_strategy) +"\n")
             snk_config_file.write('entrez_query:'+"\n")
+            snk_config_file.write('user_email: '+str(self.r_project_user.email)+"\n")
 
             settings_dict = self.r_project_settings.get_values_as_dict()
 
