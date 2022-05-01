@@ -39,7 +39,7 @@ rule blast_table_to_html:
 '''
 rule blast_results_to_plots:
 	input: blast_results="blast_results.table", query_file=config['query_sequence']
-	params: genus_bars_static="../../../../static/images/result_images/one_way_blast/remote_searches/" + str(config['project_id']) + '/genus_bars.html'
+	params: genus_bars_static="../../../../static/images/result_images/one_way_blast/remote_searches/" + str(config['project_id']) + '/genus_bars.html',user_email=config['user_email']
 	output: genus_bars="genus_bars.html", html_table="blast_results.html"
 	script:
 		"../../../../static/snakefiles/one_way_blast/plot_results.py"

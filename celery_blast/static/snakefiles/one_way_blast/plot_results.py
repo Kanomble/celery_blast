@@ -3,7 +3,7 @@ import pandas as pd
 import math
 import altair as alt
 
-Entrez.email = "lukas.becker@hhu.de"
+Entrez.email = snakemake.params['user_email']
 
 queries = {}
 queryfile = open(snakemake.input['query_file'], "r")
