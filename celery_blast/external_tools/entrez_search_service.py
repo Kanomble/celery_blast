@@ -152,12 +152,15 @@ def delete_esearch_by_id(search_id):
             if entrez_search != None:
                 if os.path.isfile(entrez_search.file_name):
                     os.remove(entrez_search.file_name)
+                if entrez_search.fasta_file_name != None:
+                    if os.path.isfile(entrez_search.fasta_file_name):
+                        os.remove(entrez_search.fasta_file_name)
                 entrez_search.delete()
                 return 0
             else:
                 return 1
     except Exception as e:
-        raise IntegrityError("ERROR during deletion of entrez_search with id : {}".format(search_id))
+        raise IntegrityError("ERROR during deletion of entrez_search with id : {} with exception: {}".format(search_id,e))
 
 def save_entrez_search_model(database:str,entrez_query:str,file_name:str, task_result_id:int, user_id:int) -> EntrezSearch:
     try:

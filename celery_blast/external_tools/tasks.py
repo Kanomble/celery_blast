@@ -59,6 +59,7 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         else:
             progress_recorder.set_progress(100, 100, "SUCCESS")
+            entrez_search.update_paper_entries()
             return 0
     except Exception as e:
         raise Exception("[-] Couldnt perform entrez search with exception: {}".format(e))

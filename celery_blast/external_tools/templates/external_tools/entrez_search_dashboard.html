@@ -64,6 +64,7 @@
                      <tr>
                          <th> Database </th>
                          <th> Esearch Query </th>
+                         <th> Paper Entries </th>
                          <th> Timestamp </th>
                          <th> Task Status </th>
                          <th> Link to Result-Table </th>
@@ -74,6 +75,7 @@
                      <tr>
                          <td> {{ search.database }}</td>
                          <td> {{ search.entrez_query }} </td>
+                         <td> {{ search.paper_entries }}</td>
                          <td>{{ search.timestamp|date:'d.m.Y, h:m:s' }}</td>
 
                          <td> {{ search.search_task_result.status }} </td>

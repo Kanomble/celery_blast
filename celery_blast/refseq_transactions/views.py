@@ -96,11 +96,24 @@ def create_blast_database_model_and_directory(request):
                 #do something here if validation succeeds
                 create_blastdatabase_table_and_directory(refseq_database_form)
                 return redirect('refseq_transactions_dashboard')
+
             #validation error
             else:
+
+                if (refseq_file_exists()):
+                    context['refseq_exists'] = True
+
                 #user stays at the page because of validation errors
+                executed_databases = get_downloaded_databases()
+                not_executed_databases = get_databases_without_tasks()
+                download_in_progress_databases = get_databases_in_progress()
+
+                context['ActiveBlastDatabases'] = executed_databases
+                context['DownloadInProgressBlastDatabases'] = download_in_progress_databases
+                context['UnactiveBlastDatabases'] = not_executed_databases
                 context['RefseqDatabaseForm'] = refseq_database_form
-                return render(request,'refseq_transactions/refseq_transactions_dashboard.html',context)
+
+            return render(request,'refseq_transactions/refseq_transactions_dashboard.html',context)
         # should never been executed
         else:
             return redirect('refseq_transactions_dashboard')

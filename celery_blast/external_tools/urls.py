@@ -24,5 +24,8 @@ urlpatterns = [
     path('<int:project_id>/perform_fasttree_phylobuild_for_all_query_sequences',
          views.perform_fasttree_phylobuild_for_all_query_sequences,
          name='perform_fasttree_phylobuild_for_all_query_sequences'),
+    path('<int:search_id>/ajax_call_progress_fasta_download',
+         views.ajax_call_progress_entrezsearch_to_fasta,
+         name="ajax_call_progress_entrezsearch_to_fasta"),
 
 ]

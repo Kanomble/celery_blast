@@ -220,5 +220,6 @@ class EntrezSearch(models.Model):
 
     def update_paper_entries(self):
         paper_entries = len(pd.read_table(self.file_name, header=None))
-        self.update(paper_entries=paper_entries)
+        self.paper_entries=paper_entries
+        self.save()
         return paper_entries

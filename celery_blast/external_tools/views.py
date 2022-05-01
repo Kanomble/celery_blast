@@ -8,6 +8,8 @@ from .models import ExternalTools, EntrezSearch
 from .forms import EntrezSearchForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
+from django.http import JsonResponse
+from time import sleep
 
 @login_required(login_url='login')
 def view_downloaded_sequences(request, search_id):
@@ -34,7 +36,7 @@ def search_detail_view(request, search_id):
     #get paper content and fill context object with edirectpaper and paper content
     #return template with context
     try:
-
+        sleep(0.5)
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
         context = {'EntrezSearch':entrez_search,'HtmlTable':entrez_search.get_paper_content()}
 
@@ -42,9 +44,11 @@ def search_detail_view(request, search_id):
             context['DownloadProteins'] = True
         elif entrez_search.database == 'protein' and entrez_search.download_task_result != None:
             if entrez_search.download_task_result.status == 'SUCCESS':
-                context['DownloadTaskSuccess'] = True
+                context['DownloadTaskSuccess'] = 0
+            elif entrez_search.download_task_result.status == 'PROGRESS':
+                context['DownloadTaskSuccess'] = 1
             else:
-                context['DownloadTaskSuccess'] = False
+                context['DownloadTaskSuccess'] = 2
         return render(request,'external_tools/search_details.html',context)
     except Exception as e:
         return failure_view(request,e)
@@ -53,7 +57,7 @@ def search_detail_view(request, search_id):
 def download_proteins_from_entrez_search(request, search_id):
     try:
         download_entrez_search_associated_protein_sequences.delay(search_id)
-        return search_detail_view(request, search_id)
+        return redirect('search_details',search_id=search_id)
     except Exception as e:
         return failure_view(request,e)
 
@@ -62,11 +66,11 @@ def delete_search_view(request, search_id):
     try:
         retcode = delete_esearch_by_id(search_id)
         if retcode == 0:
-            entrez_search_form = EntrezSearchForm()
-            context = {"EntrezSearches":  EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
-                    request.user.id),
-                       "EntrezSearchForm":entrez_search_form}
-            return render(request, 'external_tools/entrez_search_dashboard.html', context)
+            #entrez_search_form = EntrezSearchForm()
+            #context = {"EntrezSearches":  EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
+            #        request.user.id),
+            #           "EntrezSearchForm":entrez_search_form}
+            return redirect("entrez_dashboard")
         elif retcode == 1:
             return failure_view(request, "Couldnt delete esearch object")
         else:
@@ -90,14 +94,17 @@ def entrez_dashboard_view(request):
                     request.user.id)
                 context['EntrezSearches'] = entrez_searches
                 context['EntrezSearchForm'] = entrez_search_form
-                return render(request, 'external_tools/entrez_search_dashboard.html', context)
+
+                return redirect('entrez_dashboard')
 
         else:
+            sleep(0.5)
             entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
                 request.user.id)
             context['EntrezSearches'] = entrez_searches
             entrez_search_form = EntrezSearchForm()
             context['EntrezSearchForm'] = entrez_search_form
+
         return render(request,'external_tools/entrez_search_dashboard.html',context)
     except Exception as e:
         return failure_view(request,e)
@@ -164,5 +171,18 @@ def perform_fasttree_phylobuild(request,project_id,query_sequence_id):
         else:
             e = "There is no GET method for this view function"
             return failure_view(request,e)
+    except Exception as e:
+        return failure_view(request,e)
+
+
+@login_required(login_url='login')
+def ajax_call_progress_entrezsearch_to_fasta(request,search_id):
+    try:
+        if request.is_ajax and request.method == "GET":
+            entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
+            progress = entrez_search.download_task_result.status
+            return JsonResponse({"progress":progress})
+        else:
+            return JsonResponse({"progress":"error"})
     except Exception as e:
         return failure_view(request,e)

@@ -20,15 +20,15 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
 
 {% block content %}
 
-<div class="container-fluid" id="post_form_container">
-    <div class="row" >
-        <div class="col" style="text-align: right">
+<div class="container-fluid" id="whole_dashboard">
+    <div class="row">
+        <div class="col" style="text-align: right" >
             {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
         </div>
     </div>
 
     {% if refseq_exists %}
-    <div class="dashboard_project_list_col" style="margin-bottom: 30px;">
+    <div class="dashboard_project_list_col" style="margin-bottom: 30px;" id="post_form_container">
         {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
     </div>
     {% endif %}

@@ -1,6 +1,6 @@
 <form action="{% url 'create_refseq_database_metadata' %}"
       method = "POST" enctype="multipart/form-data"
-      onsubmit="showLoader('loading_div','post_form_container')">
+      >
 
     {% csrf_token %}
     <div class="form-row" style="text-align: center; padding: 30px">
