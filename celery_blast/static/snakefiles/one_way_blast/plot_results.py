@@ -20,6 +20,7 @@ df.columns = ["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "s
 unique_queries = list(df["qseqid"].unique())
 dataframes = []
 
+#maximum query sequences == 10?
 for query in unique_queries[0:10]:
     # print("processing : {}".format(query))
     dataframe = df.loc[df['qseqid'] == query].copy()
@@ -108,14 +109,14 @@ for query in unique_queries[0:10]:
 result_df = pd.concat(dataframes)
 
 #cols = math.ceil(math.sqrt(len(result_df['qseqid'].unique())))
-rf = result_df.drop_duplicates(subset='genus', keep="first")
+rf = result_df.drop_duplicates(subset='family', keep="first")
 bars = []
-selection = alt.selection_multi(fields=['genus'])
+selection = alt.selection_multi(fields=['family'])
 for df in dataframes:
     # make_selector = alt.Chart(df).mark_rect().encode(y='genus', color='genus').add_selection(selection)
     bar = alt.Chart(df).mark_bar(tooltip=True).encode(
         alt.X("count()"),
-        alt.Y("genus"),
+        alt.Y("family"),
         color=alt.Color('genus', legend=None),
         tooltip=['count()', 'mean(bitscore)', 'mean(evalue)'],
     ).transform_filter(selection).interactive().facet(facet='query_info')
@@ -123,7 +124,7 @@ for df in dataframes:
     graph = bar
     bars.append(graph)
 
-make_selector = alt.Chart(rf).mark_rect().encode(y='genus', color='genus').add_selection(selection)
+make_selector = alt.Chart(rf).mark_rect().encode(y='family', color='family').add_selection(selection)
 graphics = make_selector | bars[0]
 if len(bars) > 1:
     for bar in bars[1:]:

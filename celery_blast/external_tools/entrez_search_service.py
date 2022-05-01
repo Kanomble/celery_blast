@@ -4,7 +4,6 @@ import string
 import random
 from django.db import transaction, IntegrityError
 from .models import EntrezSearch
-from Bio import Entrez
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
 
@@ -44,6 +43,8 @@ def download_esearch_protein_fasta_files(search_id:int):
         file_random_number = file_path.split("_")[-1].split(".")[0]
 
         target_fasta_file_path = 'media/esearch_output/target_fasta_file_' + str(file_random_number) + '.faa'
+        sequence_list_file_path = 'media/esearch_output/sequence_list_' + str(file_random_number) + '.table'
+
         if os.path.isfile(target_fasta_file_path):
             if entrez_search.download_task_result != None:
                 if entrez_search.download_task_result.status == 'SUCCESS':
@@ -53,21 +54,23 @@ def download_esearch_protein_fasta_files(search_id:int):
             if entrez_search.download_task_result.status == 'SUCCESS':
                 return 1
 
-        Entrez.email = entrez_search.entrez_user.email
         pandas_table = entrez_search.get_pandas_table()
         sequence_ids = list(pandas_table['Caption'])
+        with open(sequence_list_file_path,'w') as seq_id_file:
+            for seqid in sequence_ids:
+                seq_id_file.write("{}\n".format(seqid))
 
-        if len(sequence_ids) > 500:
-            sequence_ids = sequence_ids[0:499]
 
-        handle = Entrez.efetch(db="protein", id=sequence_ids, retmode="xml")
-        record = Entrez.read(handle)
-        handle.close()
+        cmd = 'efetch -db protein -format fasta -input {} > {}'.format(sequence_list_file_path,target_fasta_file_path)
 
-        with open(target_fasta_file_path,'w') as target_fasta_file:
-            for rec in record:
-                target_fasta_file.write('>' + rec['GBSeq_locus'] + ' ' + rec['GBSeq_definition'] + "\n")
-                target_fasta_file.write(rec['GBSeq_sequence'] + "\n")
+        process = subprocess.Popen(cmd, shell=True)
+
+        try:
+            returncode = process.wait(timeout=20000)
+        except subprocess.TimeoutExpired as e:
+            process.kill()
+            returncode = 'searchtime expired {}'.format(e)
+            return returncode
 
         #update entrezsearch instance with fastafile path
         with transaction.atomic():
