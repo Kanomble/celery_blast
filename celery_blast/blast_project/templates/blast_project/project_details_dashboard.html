@@ -123,6 +123,11 @@ Details and pipeline dashboard.
     {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
     <br>
     <div class="dashboard_project_list_col">
+        <div>
+            {{ BlastProject.read_query_information_table | safe }}
+        </div>
+    </div>
+    <div class="dashboard_project_list_col">
         <div id="demo" class="carousel slide" data-ride="carousel">
 
             <!-- Indicators -->
@@ -231,5 +236,59 @@ Details and pipeline dashboard.
             xhttp.send();
             }
         });
+    </script>
+
+    <script>
+    $(document).ready(function(){
+        $('#myTable').DataTable(
+            {
+                dom: 'Bfrtip',
+                "lengthMenu": [ 10 ],
+                buttons: [
+                    'copy',
+                    'csv',
+                    'selectAll',
+                    'selectNone',
+                    'selectRows'
+                ],
+                select: true,
+                "deferRender": true,
+                "columns":[
+                    {"data":"index"},
+                    {"data":"Accession ID"},
+                    {"data":"Organism"},
+                    {"data":"Sequence Length"},
+                    {"data":"Sequence Definition"},
+                    {"data":"Features"},
+                    {"data":"PFAM",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                            if(oData.PFAM){
+                                $(nTd).html("<a href='"+oData.PFAM+"'>"+oData.PFAM+"</a>");
+                            } else {
+                                $(nTd).html("<p>no link available</p>");
+                            }
+                        }},
+                    {"data":"CDD",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                            if(oData.CDD) {
+                                $(nTd).html("<a href='"+oData.CDD+"'>"+oData.CDD+"</a>");
+                            } else {
+                                $(nTd).html("<p>no link available</p>");
+                            }
+                        }
+                    },
+                    {"data":"TIGR",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                            if(oData.TIGR) {
+                                $(nTd).html("<a href='"+oData.TIGR+"'>"+oData.TIGR+"</a>");
+                            } else {
+                                $(nTd).html("<p>no link available</p>");
+                            }
+                        }
+                    }
+                ]
+            }
+        );
+        //var result_table = document.getElementById('myTable');
+        //result_table.style.display = "block";
+    });
+
     </script>
 {% endblock %}

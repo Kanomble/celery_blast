@@ -18,6 +18,8 @@ rule all:
 		 "plot_evalue_distribution.png",
 		 "reciprocal_results.csv",
 		 "reciprocal_results_info.txt",
+		 "query_sequence_information.html",
+		"query_sequence_information.csv",
 
 rule forward_blast:
 	input: fw_queries=config['query_sequence']
@@ -91,3 +93,10 @@ rule blast_tables_to_plots:
 	output: taxids_hits_plot="plot_amount_hits_of_target_taxon.png",evalue_plot="plot_evalue_distribution.png"
 	script:
 		  "../../../static/snakefiles/reciprocal_blast/plot_reciprocal_results.py"
+
+rule query_sequences_to_html_table:
+	input: target_file=config['query_sequence']
+	params: email=config['user_email']
+	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"

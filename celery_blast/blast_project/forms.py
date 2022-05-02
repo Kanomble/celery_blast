@@ -6,7 +6,7 @@ from django.forms import ModelChoiceField
 from django.utils import timezone
 from pandas import read_csv
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node
-from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database
+from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
 
@@ -81,6 +81,16 @@ class ProjectCreationForm(forms.Form):
         error_messages={
             'required': "Please specify a search strategy otherwise you won't be able to execute a BLAST run .."})
 
+    species_name_for_backward_blast = forms.CharField(
+        required=True,
+        label='Scientific Names (conversion to Taxonomic Nodes) for Backward BLAST',
+        error_messages={
+            'required':"Specify a Scientific Name for your backward BLAST - use a comma separated list - names will be converted to taxids that will be written to a file which will serve as the -taxidlist parameter of your backward BLAST"})
+
+    user_email = forms.CharField(
+        max_length=200,
+        required=False)
+
     query_sequence_file = forms.FileField(
         error_messages={
             'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
@@ -95,47 +105,71 @@ class ProjectCreationForm(forms.Form):
         empty_label=None
     )
 
-    species_name_for_backward_blast = forms.CharField(
-        required=True,
-        label='Scientific Names (conversion to Taxonomic Nodes) for Backward BLAST',
-        error_messages={
-            'required':"Specify a Scientific Name for your backward BLAST - use a comma separated list - names will be converted to taxids that will be written to a file which will serve as the -taxidlist parameter of your backward BLAST"})
-
-    user_email = forms.CharField(
-        max_length=200,
-        required=False)
-
     def __init__(self, user, *args, **kwargs):
         super(ProjectCreationForm, self).__init__(*args, **kwargs)
         self.fields['user_email'].charfield = user.email
         self.fields['user_email'].initial = user.email
 
-    #TODO check if backward organism reside in the backward blast database
-    def clean_species_name_for_backward_blast(self):
-        species_name = self.cleaned_data['species_name_for_backward_blast']
-        user_email = self.fields['user_email'].charfield
+    def clean(self):
         try:
-            taxonomic_node = get_species_taxid_by_name(user_email, species_name)
-            backward_db = self.cleaned_data['project_backward_database']
-            #forward_db = self.cleaned_data['project_forward_database']
-            booleanbw = check_if_taxid_is_in_database(backward_db.id,taxonomic_node)
-            #booleanfw = check_if_taxid_is_in_database(forward_db.id,taxonomic_node)
-            if booleanbw == False:
-                self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(taxonomic_node,backward_db.database_name))
-            #if booleanfw == False:
-            #    self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected FORWARD database: {}'.format(taxonomic_node,forward_db.database_name))
-            if booleanbw == True: #if booleanfw == True
-                return species_name, taxonomic_node
+            cleaned_data = super().clean()
+
+            species_name = cleaned_data['species_name_for_backward_blast']
+            user_email = self.fields['user_email'].charfield
+            try:
+                taxonomic_node = get_species_taxid_by_name(user_email, species_name)
+            except Exception as e:
+                self.add_error('species_name_for_backward_blast','your provided species has no taxonomic node - check on NCBI'.format(species_name))
+
+            backward_db = cleaned_data['project_backward_database']
+            # forward_db = self.cleaned_data['project_forward_database']
+            try:
+                booleanbw = check_if_taxid_is_in_database(backward_db.id, taxonomic_node)
+
+                print("1")
+            # booleanfw = check_if_taxid_is_in_database(forward_db.id,taxonomic_node)
+                if booleanbw == False:
+                    self.add_error('species_name_for_backward_blast',
+                                   'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
+                                       taxonomic_node, backward_db.database_name))
+                # if booleanfw == False:
+                #    self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected FORWARD database: {}'.format(taxonomic_node,forward_db.database_name))
+                if booleanbw == True:  # if booleanfw == True
+                    cleaned_data['species_name_for_backward_blast'] = (species_name, taxonomic_node)
+                print("2")
+
+            except Exception:
+                self.add_error('species_name_for_backward_blast',
+                               'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
+                                   taxonomic_node, backward_db.database_name))
+
+            query_file = cleaned_data['query_sequence_file']
+            #backward_db = self.cleaned_data['project_backward_database']
+            #print(cleaned_data)
+            if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
+                raise self.add_error("query_sequence_file","please upload only fasta files!")
+            else:
+                header = []
+                for chunk in query_file.chunks():
+                    lines = chunk.decode().split("\n")
+                    for line in lines:
+                        if line.startswith('>'):
+                            print("3")
+
+                            try:
+                                acc = line.split(" ")[0].split('>')[-1].split(".")[0]
+                                header.append(acc)
+                            except Exception as e:
+                                self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
+
+                    valid = check_if_sequences_are_in_database(backward_db.id, header)
+                    if valid != True:
+                        self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
         except Exception as e:
             raise ValidationError(
-                "validation error in clean_species_name pls check your provided scientific name : {}, due to this exception: ".format(species_name,e))
-
-    def clean_query_sequence_file(self):
-        query_file = self.cleaned_data['query_sequence_file']
-        if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-            raise ValidationError("please upload only fasta files!")
-        else:
-            return query_file
+                "validation error in project creation, due to this exception: {}".format(
+                     e))
+        return cleaned_data
 
 #TODO documentation
 class BlastSettingsFormForward(forms.Form):

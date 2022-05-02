@@ -1,11 +1,12 @@
 # Create your models here.
-from os.path import isdir
+from os.path import isdir, isfile
 from os import mkdir
 from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError
 from .managers import BlastProjectManager, BlastDatabaseManager
+import pandas as pd
 
 class BlastSettings(models.Model):
     e_value = models.DecimalField(
@@ -259,3 +260,16 @@ class BlastProject(models.Model):
 
         except Exception as e:
             raise IntegrityError("couldnt write snakemake configuration file in directory with exception : {}".format(e))
+
+    def read_query_information_table(self, filepath='media/blast_projects/'):
+        try:
+            path_to_information_table = filepath+str(self.id)+"/"+"query_sequence_information.csv"
+            if isfile(path_to_information_table):
+                table = pd.read_table(path_to_information_table,header=0,sep="\t",index_col=0)
+                table = table.fillna(value='')
+                table = table.to_html(classes='my_class" id="myTable')
+                return table
+            else:
+                return "there is no query_sequence_information.csv in the project directory"
+        except Exception as e:
+            raise Exception("[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))

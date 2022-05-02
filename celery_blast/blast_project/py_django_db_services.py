@@ -3,7 +3,7 @@ from external_tools.models import ExternalTools
 from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
-from pandas import read_csv
+from pandas import read_csv, Series
 
 '''py_django_db_services
 
@@ -317,3 +317,17 @@ def check_if_taxid_is_in_database(database_id, taxonomic_node):
     df = read_csv(pandas_table_file, header=0, index_col=0)
     boolean = int(taxonomic_node) in list(df['taxid'])
     return boolean
+
+#TODO documentation - form validation
+def check_if_sequences_are_in_database(database_id, sequences):
+    path_to_database = 'media/databases/' + str(database_id) + '/'
+    pandas_table_file = path_to_database + 'acc_taxmap_file_1.table'
+    df = read_csv(pandas_table_file, header=None, sep="\t")
+    df.columns = ['AccessionId', 'TaxId']
+    df = df['AccessionId'].map(lambda acc: acc.split(".")[0])
+    to_compare = Series(sequences)
+    to_compare = to_compare[~to_compare.isin(df)]
+    if len(to_compare) != 0:
+        return list(to_compare)
+    else:
+        return True
