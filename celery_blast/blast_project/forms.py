@@ -159,10 +159,13 @@ class ProjectCreationForm(forms.Form):
                             try:
                                 acc = line.split(" ")[0].split('>')[-1].split(".")[0]
                                 header.append(acc)
+
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
 
+                    print(header)
                     valid = check_if_sequences_are_in_database(backward_db.id, header)
+                    print(valid)
                     if valid != True:
                         self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
         except Exception as e:

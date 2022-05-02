@@ -123,7 +123,7 @@ Details and pipeline dashboard.
     {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
     <br>
     <div class="dashboard_project_list_col">
-        <div>
+        <div class="container-fluid">
             {{ BlastProject.read_query_information_table | safe }}
         </div>
     </div>
@@ -240,6 +240,8 @@ Details and pipeline dashboard.
 
     <script>
     $(document).ready(function(){
+        var result_table = document.getElementById('myTable');
+        result_table.setAttribute("class","display")
         $('#myTable').DataTable(
             {
                 dom: 'Bfrtip',
@@ -252,7 +254,6 @@ Details and pipeline dashboard.
                     'selectRows'
                 ],
                 select: true,
-                "deferRender": true,
                 "columns":[
                     {"data":"index"},
                     {"data":"Accession ID"},
@@ -283,11 +284,11 @@ Details and pipeline dashboard.
                             }
                         }
                     }
-                ]
+                ],
+                "deferRender": true,
             }
         );
-        //var result_table = document.getElementById('myTable');
-        //result_table.style.display = "block";
+
     });
 
     </script>

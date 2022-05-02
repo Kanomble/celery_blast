@@ -1,3 +1,7 @@
+import os
+
+import pandas as pd
+
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
 from external_tools.models import ExternalTools
 from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
@@ -321,12 +325,20 @@ def check_if_taxid_is_in_database(database_id, taxonomic_node):
 #TODO documentation - form validation
 def check_if_sequences_are_in_database(database_id, sequences):
     path_to_database = 'media/databases/' + str(database_id) + '/'
-    pandas_table_file = path_to_database + 'acc_taxmap_file_1.table'
+
+    taxmap_files = os.listdir(path_to_database)
+    taxmap_files = [file for file in taxmap_files if file.endswith('table')]
+
+    #for file in taxmap_files:
+    pandas_table_file = path_to_database + taxmap_files[0]
+
     df = read_csv(pandas_table_file, header=None, sep="\t")
     df.columns = ['AccessionId', 'TaxId']
     df = df['AccessionId'].map(lambda acc: acc.split(".")[0])
+
     to_compare = Series(sequences)
     to_compare = to_compare[~to_compare.isin(df)]
+    print(df)
     if len(to_compare) != 0:
         return list(to_compare)
     else:
