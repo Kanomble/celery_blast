@@ -4,7 +4,7 @@ from blast_project.views import failure_view, success_view
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
     entrez_search_task, download_entrez_search_associated_protein_sequences
-from .models import ExternalTools, EntrezSearch
+from .models import ExternalTools, EntrezSearch, QuerySequences
 from .forms import EntrezSearchForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
@@ -127,8 +127,7 @@ def project_informations(request, project_id):
 def perform_simple_msa(request,project_id,query_sequence_id):
     try:
         if request.method == 'POST':
-            #celery asynchronous task
-            returncode = execute_multiple_sequence_alignment.delay(project_id,query_sequence_id)
+            execute_multiple_sequence_alignment.delay(project_id,query_sequence_id)
             return redirect('external_project_informations',project_id=project_id)
         else:
             e = "There is no GET method for this view function"
@@ -140,7 +139,7 @@ def perform_simple_msa(request,project_id,query_sequence_id):
 def perform_simple_msa_for_all_query_sequences(request,project_id):
     try:
         if request.method == 'POST':
-            returncode = execute_multiple_sequence_alignment_for_all_query_sequences.delay(project_id)
+            execute_multiple_sequence_alignment_for_all_query_sequences.delay(project_id)
             return redirect('external_project_informations',project_id=project_id)
         else:
             e = "There is no GET method for this view function"
@@ -152,7 +151,7 @@ def perform_simple_msa_for_all_query_sequences(request,project_id):
 def perform_fasttree_phylobuild_for_all_query_sequences(request,project_id):
     try:
         if request.method == 'POST':
-            returncode = execute_fasttree_phylobuild_for_all_query_sequences.delay(project_id)
+            execute_fasttree_phylobuild_for_all_query_sequences.delay(project_id)
             return redirect('external_project_informations',project_id=project_id)
         else:
             e = "There is no GET method for this view function"
@@ -165,8 +164,7 @@ def perform_fasttree_phylobuild_for_all_query_sequences(request,project_id):
 def perform_fasttree_phylobuild(request,project_id,query_sequence_id):
     try:
         if request.method == 'POST':
-            #celery asynchronous task
-            returncode = execute_phylogenetic_tree_building.delay(project_id,query_sequence_id)
+            execute_phylogenetic_tree_building.delay(project_id,query_sequence_id)
             return redirect('external_project_informations',project_id=project_id)
         else:
             e = "There is no GET method for this view function"
@@ -174,6 +172,29 @@ def perform_fasttree_phylobuild(request,project_id,query_sequence_id):
     except Exception as e:
         return failure_view(request,e)
 
+@login_required(login_url='login')
+def ajax_call_progress_phylo_task(request, query_sequence_id):
+    try:
+        if request.is_ajax and request.method == "GET":
+            qseq = QuerySequences.objects.get(id=query_sequence_id)
+            progress = qseq.phylogenetic_tree_construction_task.status
+            return JsonResponse({"progress":progress})
+        else:
+            return JsonResponse({"progress":"error"})
+    except Exception as e:
+        return failure_view(request,e)
+
+@login_required(login_url='login')
+def ajax_call_progress_msa_task(request, query_sequence_id):
+    try:
+        if request.is_ajax and request.method == "GET":
+            qseq = QuerySequences.objects.get(id=query_sequence_id)
+            progress = qseq.multiple_sequence_alignment_task.status
+            return JsonResponse({"progress":progress})
+        else:
+            return JsonResponse({"progress":"error"})
+    except Exception as e:
+        return failure_view(request,e)
 
 @login_required(login_url='login')
 def ajax_call_progress_entrezsearch_to_fasta(request,search_id):

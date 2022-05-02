@@ -28,4 +28,11 @@ urlpatterns = [
          views.ajax_call_progress_entrezsearch_to_fasta,
          name="ajax_call_progress_entrezsearch_to_fasta"),
 
+    path('<int:query_sequence_id>/ajax_call_progress_phylogeny_task',
+         views.ajax_call_progress_phylo_task,
+         name="ajax_call_progress_phylogeny_task"),
+
+    path('<int:query_sequence_id>/ajax_call_progress_msa_task',
+         views.ajax_call_progress_msa_task,
+         name="ajax_call_progress_msa_task"),
 ]
