@@ -51,4 +51,4 @@ rule query_sequences_to_html_table:
 	params: email=config['user_email']
 	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
 	script:
-		"../../../static/snakefiles/one_way_blast/query_sequences_to_html_table.py"
+		"../../../../static/snakefiles/one_way_blast/query_sequences_to_html_table.py"

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %} RecBlast Project Details {% endblock %}
+{% block title %} BLAST Project Details {% endblock %}
 
-{% block page_title %} One Way Blast Project Details {% endblock %}
+{% block page_title %}  {% endblock %}
 
 {% block infoheader %} Project Details {% endblock %}
 {% block header %}
@@ -28,7 +28,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="dashboard_project_list_col">
-    <h2 style="text-align: center"> Project Details and Execution Dashboard </h2>
+    <h2 style="text-align: center"> BLAST Project Details and Execution Dashboard</h2>
     <p style="font-size: medium; text-align: center">
         {% if OneWayBlastProject.project_execution_task_result.status == 'SUCCESS' %}
             Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.

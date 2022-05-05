@@ -118,7 +118,7 @@ for df in dataframes:
         alt.X("count()"),
         alt.Y("family"),
         color=alt.Color('genus', legend=None),
-        tooltip=['count()', 'mean(bitscore)', 'mean(evalue)'],
+        tooltip=['count()', 'mean(bitscore)', 'mean(evalue)','genus'],
     ).transform_filter(selection).interactive().facet(facet='query_info')
 
     graph = bar

@@ -218,9 +218,10 @@ class OneWayRemoteBlastProject(models.Model):
             raise IntegrityError(
                 "couldnt write snakemake configuration file in directory with exception : {}".format(e))
 
-    def read_query_information_table(self, filepath='media/one_way_blast/remote_searches'):
+    def read_query_information_table(self, filepath='media/one_way_blast/remote_searches/'):
         try:
             path_to_information_table = filepath+str(self.id)+"/"+"query_sequence_information.csv"
+            print("[*] {}".format(path_to_information_table))
             if isfile(path_to_information_table):
                 table = pd.read_table(path_to_information_table,header=0,sep="\t",index_col=0)
                 table = table.fillna(value='')
