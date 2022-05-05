@@ -5,9 +5,10 @@
 {% block page_title %} Reciprocal Blast Project Details {% endblock %}
 
 {% block infoheader %} Project Details {% endblock %}
-{% block page_header %}
-Details and pipeline dashboard.
+
+{% block header %}
 {% endblock %}
+
 {% block page_description %}
 <h2> Project Details </h2>
 <br>
@@ -29,6 +30,21 @@ Details and pipeline dashboard.
 {% block content %}
 <div class="container-fluid">
     <div class="dashboard_project_list_col">
+
+        <h2 style="text-align: center"> Project Details and Execution Dashboard </h2>
+        <p style="font-size: medium; text-align: center">
+            {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
+                Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
+            {% elif BlastProject.project_execution_task_result.status == 'FAILURE' %}
+                Re-Execute your Snakemake Run for this BLAST project or delete the project.
+            {% elif BlastProject.project_execution_task_result.status == 'PROGRESS' %}
+                Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
+            {% else %}
+                Execute your BLAST project by pressing the Execute Snakemake button.
+            {% endif %}
+        </p>
+
+
         <div class="table-responsive">
             <table class="table table-hover" id="blastProjectTable">
                 <thead>
@@ -56,14 +72,6 @@ Details and pipeline dashboard.
 
                         <td>
                             <form class="col"
-                                   action="{% url 'project_deletion' project_id=BlastProject.id%}"
-                                   method="GET">
-                                {% csrf_token %}
-                                <input type="submit" value="Delete Blast Project" class="btn btn-danger">
-                            </form>
-                        </td>
-                        <td>
-                            <form class="col"
                                    action="{% url 'project_execution' project_id=BlastProject.id%}"
                                    method="POST">
                                 {% csrf_token %}
@@ -77,6 +85,14 @@ Details and pipeline dashboard.
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
                             <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}"> External Tools</a></td>
                         {% endif %}
+                        <td>
+                            <form class="col"
+                                   action="{% url 'project_deletion' project_id=BlastProject.id%}"
+                                   method="GET">
+                                {% csrf_token %}
+                                <input type="submit" value="Delete Blast Project" class="btn btn-danger">
+                            </form>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -90,14 +106,16 @@ Details and pipeline dashboard.
             An error occurred during execution of the pipeline.
         </div>
     </div>
-    <br>
     {% endif %}
 
-    <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
-    </div>
+    <!-- <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
+    </div> -->
 
     <br>
     <div class="dashboard_project_list_col">
+        <h2 style="text-align: center">Forward BLAST Database</h2>
+        <p style="font-size: medium; text-align: center"> Search Space - This database is used for identification of homologous protein sequences. </p>
+        <br>
         <div class="container-fluid">
             <table class="table table-hover" id="blastdatabase">
                 <thead>
@@ -123,11 +141,24 @@ Details and pipeline dashboard.
     {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
     <br>
     <div class="dashboard_project_list_col">
+        <h2 style="text-align: center">Query Sequence Information</h2>
+        <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
+            Information is just available for valid accession ids (ids with sequences stored in the NCBI protein database). </p>
+        <br>
         <div class="container-fluid">
             {{ BlastProject.read_query_information_table | safe }}
         </div>
     </div>
+    <br>
+
     <div class="dashboard_project_list_col">
+        <h2 style="text-align: center"> Result Graphs </h2>
+        <p style="font-size: medium; text-align: center"> <strong> Amount of hits in database organisms: </strong> Number of inferred RBHs (x-axis) in different species (y-axis) for one particular query sequence.
+            <br>
+            E.g. y-value is four and x value is two: Four species each with two RBHs - these two RBHs are putative in-paralogs. </p>
+        <p style="font-size: medium; text-align: center"><strong> E-Value distribution in target sequences: </strong>
+            Distribution of forward BLAST e-values for each query sequence. </p>
+        <br>
         <div id="demo" class="carousel slide" data-ride="carousel">
 
             <!-- Indicators -->
@@ -159,20 +190,6 @@ Details and pipeline dashboard.
 
         </div>
     </div>
-
-    <!--
-    <div class="dashboard_project_list_col">
-        <object type="text/html" data="http://192.168.1.131:5001/project_information/{{ BlastProject.id }}" width="800px" height="600px" style="overflow:auto;border:5px ridge blue">
-    </object>
-    </div>
-    -->
-    <!--
-    <div class="container-fluid">
-        <object type="text/html" data="{% url 'external_project_informations' project_id=BlastProject.id %}" style="width: 100%;height: 20%">
-    </object>
-    </div>
-    <br>
-    -->
     {% endif %}
 
 </div>
@@ -211,6 +228,7 @@ Details and pipeline dashboard.
             });
     } );
     </script>
+    <!--
     <script>
         $(document).ready(function(){
             {
@@ -233,7 +251,7 @@ Details and pipeline dashboard.
             }
         });
     </script>
-
+    -->
     <script>
     $(document).ready(function(){
         var result_table = document.getElementById('myTable');
@@ -286,6 +304,5 @@ Details and pipeline dashboard.
         );
 
     });
-
     </script>
 {% endblock %}

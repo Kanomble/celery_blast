@@ -154,8 +154,6 @@ class ProjectCreationForm(forms.Form):
                     lines = chunk.decode().split("\n")
                     for line in lines:
                         if line.startswith('>'):
-                            print("3")
-
                             try:
                                 acc = line.split(" ")[0].split('>')[-1].split(".")[0]
                                 header.append(acc)
@@ -163,11 +161,13 @@ class ProjectCreationForm(forms.Form):
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
 
-                    print(header)
-                    valid = check_if_sequences_are_in_database(backward_db.id, header)
-                    print(valid)
-                    if valid != True:
-                        self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+                    if len(header) > 40:
+                        self.add_error('query_sequence_file','You try to infer orthologs for more than 40 query sequences,'
+                                                             ' this is not allowed, consider to separate the query sequences.')
+                    else:
+                        valid = check_if_sequences_are_in_database(backward_db.id, header)
+                        if valid != True:
+                            self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
         except Exception as e:
             raise ValidationError(
                 "validation error in project creation, due to this exception: {}".format(
