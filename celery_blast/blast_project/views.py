@@ -73,10 +73,11 @@ def project_creation_view(request):
                         path_to_query_file = 'media/blast_projects/' + str(
                             blast_project.id) + '/' + query_sequences.name
                         upload_file(query_sequences, path_to_query_file)
-
                 except IntegrityError as e:
                     return failure_view(request,e)
-                return success_view(request)
+
+                return redirect('project_details',project_id=blast_project.id)
+
         else:
             project_creation_form = ProjectCreationForm(request.user)
             blast_settings_forward_form = BlastSettingsFormForward()

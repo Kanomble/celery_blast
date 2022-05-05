@@ -252,8 +252,6 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
     except Exception as e:
         raise Exception("[-] ERROR during creation of pandas html tables with exception: {}".format(e))
 
-target_file = '../data/entrez/lps_tfs_burkholderia.faa'
-email = 'lukas.becker@hhu.de'
 proteins = get_target_header(snakemake.input['target_file'])
 records = fetch_protein_records(proteins,snakemake.params['email'])
 protein_informations = parse_entrez_xml(records)

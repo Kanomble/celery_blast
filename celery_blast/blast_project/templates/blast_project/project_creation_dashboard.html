@@ -14,69 +14,68 @@ This Website can be used for the creation of reciprocal BLAST projects.
 {% endblock %}
 
 {% block content %}
-
-<div class="dashboard_project_list_col">
-    <h2 style="text-align: center; font-family: 'Courier New'"> <b> Project Creation Setup </b> </h2>
-    <br>
-
-    <div id="input_field_information" style="display: none">
-        <ul class="list-group">
-            <li class="list-group-item">
-                <b> Project Title </b> <br>
-                <p style="text-align: left;font-size: medium"> This field is mandatory as it is needed for correct project assignment. </p>
-            </li>
-            <li class="list-group-item">
-                <b> Query Sequences </b> <br>
-                <p style="text-align: left;font-size: medium">Upload a query sequence fasta file. <br>
-                    Sequences in this file MUST derive from only ONE organism (genome file). <br>
-                    <br>
-                    Example target file content:
-                    <br>
-                    <br>
-                    >WP_087494701.1 lipopolysaccharide heptosyltransferase I [Curvibacter sp. AEP1-3]<br>
-                    MGATHPASCRIGGGFALKAPQKILIVKLSSLGDVVHTMPAVQDLRAAFPRARIDWVVERGFAPLVARCEG<br>
-                    VARVIPCDIRIWSKKPFAAATRAAWRSFKADLQQDAYDAVIDLQGLSKSALVAWLARTTPDGRRYAMANQ<br>
-                    TEGSGYEAPTRWVADTAIALEAHVHAVERGRLLCAKALGYTPADALRFGLVGQSKALSAPLPKHVGHADN<br>
-                    PFVPRKPLVALVHGTSRVDKEWPLEHWIALGRRLNDAGFGVSLPHAGARELATSQAIAAGLDEAWVLPAV<br>
-                    ALDVLTDTLAHCAGVVGVDSGVSHIAVALDLPHVQIYNFDTAWRTGPAALDARGKPARQCSVYAQPCPEV<br>
-                    ESVWSAWEALATPVLSR<br>
-                    >WP_087495532.1 lipopolysaccharide heptosyltransferase II [Curvibacter sp. AEP1-3]<br>
-                    MIKALVIAPQWIGDAVMTEPLLRRLAARGERITVAAVPWVAPVYRAMPQVAEVLVLPFARGGVQWAARRA<br>
-                    YAAALRGQFAKAYVCPNSLKSALIPFWAGIPERIGYTGELRFGMLNQRLPNPPEGSRPPMVAFYSALSGE<br>
-                    AGVDTDRPALQVAADAIAAVLAPRALHAQGFYVVAPGAEYGPAKRWPATHFAALVTRLDKPVLLLGSAKD<br>
-                    DAVCNEIAEAVNAVRPGHCANLAGRTSLDEAVALIAGAHAMVSNDSGLMHVAAAFGVPQVAIFGSSSPLH<br>
-                    TPPLNPAATVLWLKNDPSYQPPLDCAPCFKRDCPLGHTRCLNDITSDKVLSVL<br>
-                    <br>
-                    The sequence identifiers (the genome from which you receive the sequences) have to reside in the backward database. <br>
-                    A careful design of query sequences is recommended as too much starting sequences can significantly increase the running time. </p>
-            </li>
-            <li class="list-group-item">
-                <b> Forward BLAST database </b> <br>
-                <p style="text-align: left;font-size: medium">
-                    This database will function as the "search space" for your provided query sequences. <br>
-                    As a first step the query sequences are "blasted" against this database. <br>
-                    All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta. </p>
-            </li>
-            <li class="list-group-item">
-                <b> Backward BLAST database </b> <br>
-                <p style="text-align: left;font-size: medium"> The organism or/and genome of the query sequences has to reside in this database. All hits of the forward BLAST are "blasted" against this database. If those hits match the exact query sequence of the forward BLAST, reciprocal best hits are found. </p>
-            </li>
-            <li class="list-group-item">
-                <b> Species Name for the backward BLAST </b> <br>
-                <p style="text-align: left;font-size: medium"> Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer orthologs in the forward BLAST database. You can also use the NCBI protein website and search there for entries of your query sequences. </p>
-            </li>
-        </ul>
+<div id="post_form_container">
+    <div class="dashboard_project_list_col">
+        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Project Creation Setup </b> </h2>
         <br>
+
+        <div id="input_field_information" style="display: none">
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <b> Project Title </b> <br>
+                    <p style="text-align: left;font-size: medium"> This field is mandatory as it is needed for correct project assignment. </p>
+                </li>
+                <li class="list-group-item">
+                    <b> Query Sequences </b> <br>
+                    <p style="text-align: left;font-size: medium">Upload a query sequence fasta file. <br>
+                        Sequences in this file MUST derive from only ONE organism (genome file). <br>
+                        <br>
+                        Example target file content:
+                        <br>
+                        <br>
+                        >WP_087494701.1 lipopolysaccharide heptosyltransferase I [Curvibacter sp. AEP1-3]<br>
+                        MGATHPASCRIGGGFALKAPQKILIVKLSSLGDVVHTMPAVQDLRAAFPRARIDWVVERGFAPLVARCEG<br>
+                        VARVIPCDIRIWSKKPFAAATRAAWRSFKADLQQDAYDAVIDLQGLSKSALVAWLARTTPDGRRYAMANQ<br>
+                        TEGSGYEAPTRWVADTAIALEAHVHAVERGRLLCAKALGYTPADALRFGLVGQSKALSAPLPKHVGHADN<br>
+                        PFVPRKPLVALVHGTSRVDKEWPLEHWIALGRRLNDAGFGVSLPHAGARELATSQAIAAGLDEAWVLPAV<br>
+                        ALDVLTDTLAHCAGVVGVDSGVSHIAVALDLPHVQIYNFDTAWRTGPAALDARGKPARQCSVYAQPCPEV<br>
+                        ESVWSAWEALATPVLSR<br>
+                        >WP_087495532.1 lipopolysaccharide heptosyltransferase II [Curvibacter sp. AEP1-3]<br>
+                        MIKALVIAPQWIGDAVMTEPLLRRLAARGERITVAAVPWVAPVYRAMPQVAEVLVLPFARGGVQWAARRA<br>
+                        YAAALRGQFAKAYVCPNSLKSALIPFWAGIPERIGYTGELRFGMLNQRLPNPPEGSRPPMVAFYSALSGE<br>
+                        AGVDTDRPALQVAADAIAAVLAPRALHAQGFYVVAPGAEYGPAKRWPATHFAALVTRLDKPVLLLGSAKD<br>
+                        DAVCNEIAEAVNAVRPGHCANLAGRTSLDEAVALIAGAHAMVSNDSGLMHVAAAFGVPQVAIFGSSSPLH<br>
+                        TPPLNPAATVLWLKNDPSYQPPLDCAPCFKRDCPLGHTRCLNDITSDKVLSVL<br>
+                        <br>
+                        The sequence identifiers (the genome from which you receive the sequences) have to reside in the backward database. <br>
+                        A careful design of query sequences is recommended as too much starting sequences can significantly increase the running time. </p>
+                </li>
+                <li class="list-group-item">
+                    <b> Forward BLAST database </b> <br>
+                    <p style="text-align: left;font-size: medium">
+                        This database will function as the "search space" for your provided query sequences. <br>
+                        As a first step the query sequences are "blasted" against this database. <br>
+                        All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta. </p>
+                </li>
+                <li class="list-group-item">
+                    <b> Backward BLAST database </b> <br>
+                    <p style="text-align: left;font-size: medium"> The organism or/and genome of the query sequences has to reside in this database. All hits of the forward BLAST are "blasted" against this database. If those hits match the exact query sequence of the forward BLAST, reciprocal best hits are found. </p>
+                </li>
+                <li class="list-group-item">
+                    <b> Species Name for the backward BLAST </b> <br>
+                    <p style="text-align: left;font-size: medium"> Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer orthologs in the forward BLAST database. You can also use the NCBI protein website and search there for entries of your query sequences. </p>
+                </li>
+            </ul>
+            <br>
+        </div>
+        <button class="btn btn-dark" onclick="displayDivElement('input_field_information')" style="position: absolute;top: 10px; right: 10px;">Display Information For Input Fields </button>
     </div>
-    <button class="btn btn-dark" onclick="displayDivElement('input_field_information')" style="position: absolute;top: 10px; right: 10px;">Display Information For Input Fields </button>
 
+    <div class="dashboard_project_list_col" >
 
-</div>
-
-<div class="dashboard_project_list_col" id="post_form_container">
-
-    {% include "blast_project/form_project_creation.html" %}
-    <br>
-    <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
+        {% include "blast_project/form_project_creation.html" %}
+        <br>
+        <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
+    </div>
 </div>
 {% endblock %}

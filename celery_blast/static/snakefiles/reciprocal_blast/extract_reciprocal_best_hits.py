@@ -32,20 +32,25 @@ def extract_reciprocal_best_hits_and_return_protein_ids(seq_matches_backward_dic
 #import numpy as np
 #import itertools as it
 
+#fw_seqs = get_seq_match_dict_and_flat_list(forward_df)
+
+#bw_seqs = get_seq_match_dict_and_flat_list(backward_df)
+#best_hits = extract_reciprocal_best_hits_and_return_protein_ids(bw_seqs,fw_seqs)
+
+
 forward_df = pd.read_table(snakemake.input['fw_res'],header=None)
 forward_df[6] = forward_df[6].map(lambda line : line.split('.')[0])
-forward_df = pd.DataFrame([forward_df[0][:],forward_df[6][:]]).transpose()
-#fw_seqs = get_seq_match_dict_and_flat_list(forward_df)
+forward_df = pd.DataFrame([forward_df[0][:],forward_df[6][:], forward_df[7][:]]).transpose()
 
 backward_df = pd.read_table(snakemake.input['bw_res'],header=None)
 backward_df[6] = backward_df[6].map(lambda line : line.split('.')[0])
-backward_df = pd.DataFrame([backward_df[0][:],backward_df[6][:]]).transpose()
-#bw_seqs = get_seq_match_dict_and_flat_list(backward_df)
-#best_hits = extract_reciprocal_best_hits_and_return_protein_ids(bw_seqs,fw_seqs)
+backward_df = pd.DataFrame([backward_df[0][:],backward_df[6][:], backward_df[7][:]]).transpose()
 forward_df[0] = forward_df[0].map(lambda line : line.split('.')[0])
 backward_df[0] = backward_df[0].map(lambda line: '_'.join(line.split("_")[0:2]).split(".")[0])
-forward_df.columns = ['qseqid','targetid']
-backward_df.columns = ['targetid','qseqid']
+
+#taxid for multispecies proteins
+forward_df.columns = ['qseqid','targetid','taxid']
+backward_df.columns = ['targetid','qseqid','taxid']
 
 result_df = backward_df.merge(forward_df,how='inner',on=['targetid','qseqid']).drop_duplicates()
 
@@ -54,9 +59,9 @@ if len(result_df['targetid']) == 0:
     sys.exit(123)
 
 with open(snakemake.output['rec_best_hits'],'w') as recfile:
-    recfile.write("forward_genome_id\tbackward_genome_id\n")
-    for targetid, qseqid in zip(result_df['targetid'],result_df['qseqid']):
-        recfile.write("{}\t{}\n".format(targetid,qseqid))
+    recfile.write("forward_genome_id\tbackward_genome_id\tstaxids\n")
+    for targetid, qseqid,taxid in zip(result_df['targetid'],result_df['qseqid'],result_df['taxid_y']):
+        recfile.write("{}\t{}\t{}\n".format(targetid,qseqid, taxid))
 '''
 out = open(snakemake.output['rec_best_hits'],'w')
 out.write('forward_genome_id\tbackward_genome_id\n')

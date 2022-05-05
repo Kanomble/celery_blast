@@ -4,11 +4,11 @@
 BLAST Database
 {% endblock %}
 
+
 {% block page_title %} Blast Database Table {% endblock %}
 {% block infoheader %} SynMibi Blast Database Table{% endblock %}
 
-{% block page_header %}
-BLAST Database Details
+{% block header %}
 {% endblock %}
 
 {% block page_description %}
@@ -16,25 +16,43 @@ This website displays information of the {{Database.database_name}} BLAST databa
 {% endblock %}
 
 {% block content %}
-<div class="dashboard_project_list_col">
-    <table class="table table-hover" id="blastdatabase">
-        <thead>
-         <tr>
-            <th>Index</th>
-             <th> Assembly Accession</th>
-             <th> Organism Name</th>
-             <th> Taxid </th>
-             <th> Species Taxid </th>
-             <th> Assembly Level </th>
-             <th> FTP Path </th>
-         </tr>
-        </thead>
-        <tbody>
-         <tr>
-         </tr>
-        </tbody>
-    </table>
+<div class="container-fluid">
+    <div class="dashboard_project_list_col">
+        <h2 style="text-align: center; font-family: 'Courier New'">
+            <b>BLAST Database Details </b>
+        </h2>
+        <form
+           action="{% url 'delete_blast_database' database_id=Database.id%}"
+           method="POST"
+           onSubmit="return confirm('Are you sure you wish to delete?');" >
+        {% csrf_token %}
+        <input type="submit" value="Delete Blast Database" class="btn btn-danger" style="position: absolute; top: 10px; right: 10px;">
+        </form>
+    </div>
+
 </div>
+<div class="container-fluid">
+    <div class="dashboard_project_list_col">
+        <table class="table table-hover" id="blastdatabase">
+            <thead>
+             <tr>
+                <th>Index</th>
+                 <th> Assembly Accession</th>
+                 <th> Organism Name</th>
+                 <th> Taxid </th>
+                 <th> Species Taxid </th>
+                 <th> Assembly Level </th>
+                 <th> FTP Path </th>
+             </tr>
+            </thead>
+            <tbody>
+             <tr>
+             </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

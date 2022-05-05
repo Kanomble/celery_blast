@@ -219,15 +219,11 @@ Details and pipeline dashboard.
             if (this.readyState == 4 && this.status == 200) {
 
                 var query_info = document.getElementById('QUERY_INFO');
-
                 var data=this.responseText;
                 var jsonResponse = JSON.parse(data);
-
-
-
                 var elementList =createElementListForTable(jsonResponse)
-
                 var table = buildHtmlTable(elementList);
+
                 table.className = 'table table-hover';
                 query_info.appendChild(table)
                 }

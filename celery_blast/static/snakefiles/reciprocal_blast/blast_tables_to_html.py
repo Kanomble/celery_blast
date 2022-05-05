@@ -17,7 +17,7 @@ import pandas as pd
 #result_data = result_data.drop_duplicates('sacc', keep='first')
 #result_data = result_data.reset_index(drop=True)
 
-result_data = pd.read_csv(snakemake.input['rec_res'],header=0,index_col=0)
+result_data = pd.read_csv(snakemake.input['rec_res'],header=0,index_col=False)
 '''
 for i in range(0, len(result_data), 1):
     taxids = result_data.iat[i, 7]
