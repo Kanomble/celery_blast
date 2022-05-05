@@ -28,8 +28,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid" style="display: none" id="msaPhyloTasks">
-    <div class="dashboard_project_list_col">
+<div>
+    <div class="dashboard_project_list_col" style="display: none" id="msaPhyloTasks">
         {% for qseq in qseqids.query_sequences.get_queryset %}
             <div class="row" style="text-align: center; margin: 10px">
                 <div class="col-sm"> {{ qseq.query_accession_id }} </div>
