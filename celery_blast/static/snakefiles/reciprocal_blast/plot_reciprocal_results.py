@@ -11,7 +11,7 @@ overlap.remove("lightgrey")
 
 rec_prot=pd.read_table(snakemake.input['rec_res'])
 fw_res=pd.read_table(snakemake.input['fw_res'],header=None)
-fw_res.columns=["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
+fw_res.columns=["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
                   "stitle"]
 
 fw_res['qseqid'] = fw_res['qseqid'].map(lambda line: line.split('.')[0])

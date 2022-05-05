@@ -2,14 +2,16 @@ configfile: "./snakefile_config"
 
 rule all:
 	input:
-		"genus_bars.html"
+		"genus_bars.html",
+		"query_sequence_information.html",
+		"query_sequence_information.csv"
 
 rule blast:
 	input: queries=config['query_sequence']
 	output: "blast_results.table"
 	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb']
 	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries}"
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries}"
 
 '''
 rule blast_table_to_html:
@@ -25,3 +27,10 @@ rule blast_results_to_plots:
 	output: genus_bars="genus_bars.html",html_table="blast_results.html"
 	script:
 		"../../../static/snakefiles/one_way_blast/plot_results.py"
+
+rule query_sequences_to_html_table:
+	input: target_file=config['query_sequence']
+	params: email=config['user_email']
+	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
+	script:
+		"../../../static/snakefiles/one_way_blast/query_sequences_to_html_table.py"

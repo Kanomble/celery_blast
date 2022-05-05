@@ -2,7 +2,9 @@ configfile: "./snakefile_config"
 
 rule all:
 	input:
-		"blast_results.table","blast_results.html", "genus_bars.html"
+		"blast_results.table","blast_results.html", "genus_bars.html",
+		"query_sequence_information.html",
+		"query_sequence_information.csv"
 
 rule blast:
 	input: queries=config['query_sequence']
@@ -11,7 +13,7 @@ rule blast:
 	run:
 		if(params.entrez_query != ""):
 			cmd_string = params.search_strategy + " -db "+params.database+\
-			" -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
+			" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
 			" -word_size "+str(params.word_size)+\
 			" -evalue "+str(params.e_value)+\
@@ -22,7 +24,7 @@ rule blast:
 			shell(cmd_string)
 		else:
 			cmd_string = params.search_strategy + " -db "+params.database+\
-			" -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
+			" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
 			" -word_size "+str(params.word_size)+\
 			" -evalue "+str(params.e_value)+\
@@ -43,3 +45,10 @@ rule blast_results_to_plots:
 	output: genus_bars="genus_bars.html", html_table="blast_results.html"
 	script:
 		"../../../../static/snakefiles/one_way_blast/plot_results.py"
+
+rule query_sequences_to_html_table:
+	input: target_file=config['query_sequence']
+	params: email=config['user_email']
+	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
+	script:
+		"../../../static/snakefiles/one_way_blast/query_sequences_to_html_table.py"

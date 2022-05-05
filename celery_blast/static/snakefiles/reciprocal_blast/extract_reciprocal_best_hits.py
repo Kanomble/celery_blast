@@ -39,12 +39,12 @@ def extract_reciprocal_best_hits_and_return_protein_ids(seq_matches_backward_dic
 
 
 forward_df = pd.read_table(snakemake.input['fw_res'],header=None)
-forward_df[6] = forward_df[6].map(lambda line : line.split('.')[0])
-forward_df = pd.DataFrame([forward_df[0][:],forward_df[6][:], forward_df[7][:]]).transpose()
+forward_df[7] = forward_df[7].map(lambda line : line.split('.')[0])
+forward_df = pd.DataFrame([forward_df[0][:],forward_df[7][:], forward_df[8][:]]).transpose()
 
 backward_df = pd.read_table(snakemake.input['bw_res'],header=None)
-backward_df[6] = backward_df[6].map(lambda line : line.split('.')[0])
-backward_df = pd.DataFrame([backward_df[0][:],backward_df[6][:], backward_df[7][:]]).transpose()
+backward_df[7] = backward_df[7].map(lambda line : line.split('.')[0])
+backward_df = pd.DataFrame([backward_df[0][:],backward_df[7][:], backward_df[8][:]]).transpose()
 forward_df[0] = forward_df[0].map(lambda line : line.split('.')[0])
 backward_df[0] = backward_df[0].map(lambda line: '_'.join(line.split("_")[0:2]).split(".")[0])
 

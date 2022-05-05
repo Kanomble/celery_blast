@@ -15,7 +15,7 @@ for line in queryfile.readlines():
 queryfile.close()
 
 df = pd.read_csv(snakemake.input['blast_results'], delimiter="\t", header=None)
-df.columns = ["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
+df.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
               "stitle"]
 unique_queries = list(df["qseqid"].unique())
 dataframes = []
