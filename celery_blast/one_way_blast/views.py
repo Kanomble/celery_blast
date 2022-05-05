@@ -75,7 +75,7 @@ def one_way_project_details_view(request, project_id):
         blast_project = get_one_way_project_by_id(project_id)
         genus_plot_template = "one_way_blast/"+str(blast_project.id)+'/genus_bars.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
-        context = {'BlastProject':blast_project,
+        context = {'OneWayBlastProject':blast_project,
                     'Database':blast_project.project_database,
                    'GenusPlotTemplate':genus_plot_template
                    }

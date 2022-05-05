@@ -30,11 +30,11 @@
     <div class="dashboard_project_list_col">
     <h2 style="text-align: center"> Project Details and Execution Dashboard </h2>
     <p style="font-size: medium; text-align: center">
-        {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
+        {% if OneWayBlastProject.project_execution_task_result.status == 'SUCCESS' %}
             Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
-        {% elif BlastProject.project_execution_task_result.status == 'FAILURE' %}
+        {% elif OneWayBlastProject.project_execution_task_result.status == 'FAILURE' %}
             Re-Execute your Snakemake Run for this BLAST project or delete the project.
-        {% elif BlastProject.project_execution_task_result.status == 'PROGRESS' %}
+        {% elif OneWayBlastProject.project_execution_task_result.status == 'PROGRESS' %}
             Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
         {% else %}
             Execute your BLAST project by pressing the Execute Snakemake button.
@@ -54,22 +54,22 @@
                 </thead>
                 <tbody id="blastProjectTableBody">
                     <tr>
-                        <td>{{BlastProject.project_title}}</td>
+                        <td>{{OneWayBlastProject.project_title}}</td>
                         <td>
                             <table>
                                 <tr>
-                                    <tr> <td>Title: {{BlastProject.project_database.database_name}}</td></tr>
-                                    <tr> <td>Entries: {{BlastProject.project_database.assembly_entries}}</td></tr>
+                                    <tr> <td>Title: {{OneWayBlastProject.project_database.database_name}}</td></tr>
+                                    <tr> <td>Entries: {{OneWayBlastProject.project_database.assembly_entries}}</td></tr>
 
                                 </tr>
                             </table>
                         </td>
 
-                        <td>{{BlastProject.timestamp |date:'d.m.Y, h:m:s' }}</td>
+                        <td>{{OneWayBlastProject.timestamp |date:'d.m.Y, h:m:s' }}</td>
 
                         <td>
                             <form class="col"
-                                   action="{% url 'one_way_project_deletion' project_id=BlastProject.id%}"
+                                   action="{% url 'one_way_project_deletion' project_id=OneWayBlastProject.id%}"
                                    method="GET">
                                 {% csrf_token %}
                                 <input type="submit" value="Delete Blast Project" class="btn btn-danger">
@@ -77,34 +77,35 @@
                         </td>
                         <td>
                             <form class="col"
-                                   action="{% url 'one_way_project_execution' project_id=BlastProject.id %}"
+                                   action="{% url 'one_way_project_execution' project_id=OneWayBlastProject.id %}"
                                    method="POST">
                                 {% csrf_token %}
                                 <input type="submit" value="Execute Snakemake" class="btn btn-dark">
                             </form>
                         </td>
-                        {% if BlastProject.project_execution_task_result %}
+                        {% if OneWayBlastProject.project_execution_task_result %}
                             <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
                         {% endif %}
-                        {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark" href="{% url 'one_way_html_results' project_id=BlastProject.id remote=0 %}"> Results Table </a></td>
+                        {% if OneWayBlastProject.project_execution_task_result.status == 'SUCCESS' %}
+                            <td><a class="btn btn-dark" href="{% url 'one_way_html_results' project_id=OneWayBlastProject.id remote=0 %}"> Results Table </a></td>
                         {% endif %}
 
                         <td>
-                            <a class="btn btn-dark" href="{% url 'one_way_target_sequence_download' project_id=BlastProject.id project_type='one_way_blast' filename=BlastProject.project_query_sequences %}"> Download Query Fasta Files </a>
+                            <a class="btn btn-dark" href="{% url 'one_way_target_sequence_download' project_id=OneWayBlastProject.id project_type='one_way_blast' filename=OneWayBlastProject.project_query_sequences %}"> Download Query Fasta Files </a>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
-
-    <div class="dashboard_project_list_col" id="QUERY_INFO">
+    <br>
+    <!-- <div class="dashboard_project_list_col" id="QUERY_INFO">
         <h2 style="text-align: center">Query Information - NCBI query sequence information</h2>
         <p style="font-size: medium; text-align: center"> If target sequence identifier (acc #) reside in the NCBI protein database, you will see additional information.</p>
 
         <br>
-    </div>
+    </div> -->
+
 
     <div class="dashboard_project_list_col">
         <h2 style="text-align: center">BLAST Database Content - Target Genomes</h2>
@@ -130,21 +131,28 @@
         </div>
     </div>
 
-    <div class="container-fluid">
-
-      {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
-        <div class="dashboard_project_list_col">
-            {% include GenusPlotTemplate %}
+    {% if OneWayBlastProject.project_execution_task_result.status == 'SUCCESS' %}
+    <br>
+    <div class="dashboard_project_list_col">
+        <h2 style="text-align: center">Query Sequence Information</h2>
+        <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
+            Information is just available for valid accession ids (ids with sequences stored in the NCBI protein database). </p>
+        <br>
+        <div class="container-fluid">
+            {{ OneWayBlastProject.read_query_information_table | safe }}
         </div>
-      {% endif %}
     </div>
+    <br>
+    <div class="dashboard_project_list_col">
+        {% include GenusPlotTemplate %}
+    </div>
+
+    {% endif %}
 </div>
 {% endblock %}
 
 
 {% block scripts %}
-{%  load static %}
-<script src="{% static 'javascript/load_ajax_table.js' %}"></script>
 <script>
 $(document).ready(function() {
     $('#blastdatabase').DataTable({
@@ -175,6 +183,64 @@ $(document).ready(function() {
         });
 } );
 </script>
+
+<script>
+$(document).ready(function(){
+    var result_table = document.getElementById('myTable');
+    result_table.setAttribute("class","display")
+    $('#myTable').DataTable(
+        {
+            dom: 'Bfrtip',
+            "lengthMenu": [ 10 ],
+            buttons: [
+                'copy',
+                'csv',
+                'selectAll',
+                'selectNone',
+                'selectRows'
+            ],
+            select: true,
+            "columns":[
+                {"data":"index"},
+                {"data":"Accession ID"},
+                {"data":"Organism"},
+                {"data":"Sequence Length"},
+                {"data":"Sequence Definition"},
+                {"data":"Features"},
+                {"data":"PFAM",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if(oData.PFAM){
+                            $(nTd).html("<a href='"+oData.PFAM+"'>"+oData.PFAM+"</a>");
+                        } else {
+                            $(nTd).html("<p>no link available</p>");
+                        }
+                    }},
+                {"data":"CDD",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if(oData.CDD) {
+                            $(nTd).html("<a href='"+oData.CDD+"'>"+oData.CDD+"</a>");
+                        } else {
+                            $(nTd).html("<p>no link available</p>");
+                        }
+                    }
+                },
+                {"data":"TIGR",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if(oData.TIGR) {
+                            $(nTd).html("<a href='"+oData.TIGR+"'>"+oData.TIGR+"</a>");
+                        } else {
+                            $(nTd).html("<p>no link available</p>");
+                        }
+                    }
+                }
+            ],
+            "deferRender": true,
+        }
+    );
+
+});
+</script>
+<!--
+{% load static %}
+<script src="{% static 'javascript/load_ajax_table.js' %}"></script>
+
 <script>
     $(document).ready(function(){
             {
@@ -216,9 +282,10 @@ $(document).ready(function() {
                     info.appendChild(info_div)
                 }
             };
-            xhttp.open("GET", "{% url 'ajax_one_way_wp_to_links' project_id=BlastProject.id remote=0 %}", true);
+            xhttp.open("GET", "{% url 'ajax_one_way_wp_to_links' project_id=OneWayBlastProject.id remote=0 %}", true);
             xhttp.send();
         }
     });
 </script>
+-->
 {% endblock %}

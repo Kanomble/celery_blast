@@ -35,7 +35,7 @@ rule fw_result_processing:
 	run:
 		fw_results = pd.read_table(input[0], header=None)
 		out = open(output[0],"w+")
-		for gi in fw_results[6][:].unique():
+		for gi in fw_results[7][:].unique():
 			out.write(gi+"\n")
 		out.close()
 

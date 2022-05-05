@@ -94,10 +94,20 @@ Details and pipeline dashboard.
             </table>
         </div>
     </div>
-
-    <div class="dashboard_project_list_col" id="QUERY_INFO">
-    </div>
+    <br>
+    <!-- <div class="dashboard_project_list_col" id="QUERY_INFO">
+    </div> -->
     {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
+    <div class="dashboard_project_list_col">
+        <h2 style="text-align: center">Query Sequence Information</h2>
+        <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
+            Information is just available for valid accession ids (ids with sequences stored in the NCBI protein database). </p>
+        <br>
+        <div class="container-fluid">
+            {{ OneWayRemoteBlastProject.read_query_information_table | safe }}
+        </div>
+    </div>
+    <br>
     <div class="dashboard_project_list_col" style="max-height: 50%;">
             {% include GenusPlotTemplate %}
     </div>
@@ -109,6 +119,61 @@ Details and pipeline dashboard.
 
 
 {% block scripts %}
+
+<script>
+$(document).ready(function(){
+    var result_table = document.getElementById('myTable');
+    result_table.setAttribute("class","display")
+    $('#myTable').DataTable(
+        {
+            dom: 'Bfrtip',
+            "lengthMenu": [ 10 ],
+            buttons: [
+                'copy',
+                'csv',
+                'selectAll',
+                'selectNone',
+                'selectRows'
+            ],
+            select: true,
+            "columns":[
+                {"data":"index"},
+                {"data":"Accession ID"},
+                {"data":"Organism"},
+                {"data":"Sequence Length"},
+                {"data":"Sequence Definition"},
+                {"data":"Features"},
+                {"data":"PFAM",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if(oData.PFAM){
+                            $(nTd).html("<a href='"+oData.PFAM+"'>"+oData.PFAM+"</a>");
+                        } else {
+                            $(nTd).html("<p>no link available</p>");
+                        }
+                    }},
+                {"data":"CDD",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if(oData.CDD) {
+                            $(nTd).html("<a href='"+oData.CDD+"'>"+oData.CDD+"</a>");
+                        } else {
+                            $(nTd).html("<p>no link available</p>");
+                        }
+                    }
+                },
+                {"data":"TIGR",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if(oData.TIGR) {
+                            $(nTd).html("<a href='"+oData.TIGR+"'>"+oData.TIGR+"</a>");
+                        } else {
+                            $(nTd).html("<p>no link available</p>");
+                        }
+                    }
+                }
+            ],
+            "deferRender": true,
+        }
+    );
+
+});
+</script>
+<!--
 {%  load static %}
 <script src="{% static 'javascript/load_ajax_table.js' %}"></script>
 <script>
@@ -157,4 +222,5 @@ $(document).ready(function(){
     }
 });
 </script>
+-->
 {% endblock %}

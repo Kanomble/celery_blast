@@ -7,8 +7,11 @@
 {% block infoheader %} Entrez Search {% endblock %}
 
 {% block page_header %}
-    Entrez Search Dashboard
-  <p style="text-align: center;font-size: small"> Execute searches on different NCBI Databses, {{ request.user }}!</p>
+    <div style="overflow-x: hidden; text-align: center;">
+        Entrez Search Dashboard
+        <p style="text-align: center;font-size: small"> Execute searches on different NCBI Databses, {{ request.user }}!</p>
+
+    </div>
 {% endblock %}
 
 {% block page_description %}
@@ -26,7 +29,6 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
         <div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
             <form id="entrez_form" method="POST">
                 {% csrf_token %}
@@ -114,7 +116,6 @@
                 </div>
             <hr>
         </div>
-    </div>
 
 
 {% endblock %}
