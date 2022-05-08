@@ -161,8 +161,8 @@ class ProjectCreationForm(forms.Form):
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
 
-                    if len(header) > 40:
-                        self.add_error('query_sequence_file','You try to infer orthologs for more than 40 query sequences,'
+                    if len(header) > 100:
+                        self.add_error('query_sequence_file','You try to infer orthologs for more than 100 query sequences,'
                                                              ' this is not allowed, consider to separate the query sequences.')
                     else:
                         valid = check_if_sequences_are_in_database(backward_db.id, header)
