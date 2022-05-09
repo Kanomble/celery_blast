@@ -6,7 +6,7 @@ from django.conf import settings
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
-
+from celery.exceptions import SoftTimeLimitExceeded
 from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes
 #logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -72,7 +72,17 @@ def execute_reciprocal_blast_project(self,project_id):
     try:
         logger.info('trying to start snakemake reciprocal BLAST workflow')
         progress_recorder.set_progress(25,100,'PROGRESS')
+
+        '''
         #snakemake --snakefile '../../../static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/blast_project/1/snakefile_config --directory 'media/blast_project/1'
+        cmd = 'snakemake --snakefile {} --wms-monitor {} --cores 1 --configfile {} --directory {} --keep-incomplete -q'.format(
+            snakefile_dir, settings.PANOPTES_IP, snakemake_config_file, snakemake_working_dir
+        )
+        reciprocal_blast_snakemake = Popen(
+            cmd, shell=True
+        )       
+        '''
+
         reciprocal_blast_snakemake = Popen(
             ['snakemake',
              '--snakefile',snakefile_dir,
@@ -80,7 +90,9 @@ def execute_reciprocal_blast_project(self,project_id):
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
-             '--keep-incomplete'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+             '--keep-incomplete', '-q'], shell=False)
+
+
         progress_recorder.set_progress(50, 100, "PROGRESS")
 
     except SubprocessError as e:
@@ -108,6 +120,7 @@ def execute_reciprocal_blast_project(self,project_id):
 
         raise Exception(
             'exception during waiting for popen instance : {} \n\t returncode of popen.wait : {}'.format(e, returncode))
+
 
 @shared_task(bind=True)
 def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,taxmap_file=None, taxonomic_node=None):

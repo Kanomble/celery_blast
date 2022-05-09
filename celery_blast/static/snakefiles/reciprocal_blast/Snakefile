@@ -53,6 +53,7 @@ rule backward_blast:
 	params: word_size=config['bw_word_size'],e_value=config['bw_e_value'],num_alignments=config['bw_num_alignments'],max_hsps=config['bw_max_hsps'],num_threads=config['bw_num_threads'],taxid=config['bw_taxid'],database=config['backwarddb'],intermediate_filename="inter_blast.table"
 	run:
 		try:
+			step = 100
 			sequence_dict = {}
 			with open(input[0],'r') as infile:
 				for line in infile.readlines():
@@ -62,13 +63,12 @@ rule backward_blast:
 					if header:
 						sequence_dict[header] += line
 
-			filenames = ["bw_queries_" + str(i) + ".faa" for i in range(math.ceil(len(sequence_dict.keys()) / 500.0))]
+			filenames = ["bw_queries_" + str(i) + ".faa" for i in range(math.ceil(len(sequence_dict.keys()) / float(step)))]
 			keys = list(sequence_dict.keys())
 
-			step = 500
 			start = 0
 			filecounter = 0
-			end = 500
+			end = step
 			while start < len(keys) and filecounter <= len(filenames):
 				with open(filenames[filecounter],'w') as outfile:
 					for key in keys[start:end]:
@@ -77,6 +77,7 @@ rule backward_blast:
 					start = end
 					end += step
 					filecounter += 1
+
 			inter_blast_out = open("blast.table",'w')
 			for file in filenames:
 				shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file}")
