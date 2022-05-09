@@ -1,6 +1,6 @@
 configfile: "./snakefile_config"
 import pandas as pd
-
+import math
 #filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
 QSEQIDS = []
 with open(config['query_sequence'],'r') as qseqfile:
@@ -52,41 +52,44 @@ rule backward_blast:
 	output: "blastp_bw_out.table"
 	params: word_size=config['bw_word_size'],e_value=config['bw_e_value'],num_alignments=config['bw_num_alignments'],max_hsps=config['bw_max_hsps'],num_threads=config['bw_num_threads'],taxid=config['bw_taxid'],database=config['backwarddb'],intermediate_filename="inter_blast.table"
 	run:
-		sequence_dict = {}
-		with open(input[0],'r') as infile:
-			for line in infile.readlines():
-				if line.startswith(">"):
-					header = line.split(" ")[0].split(">")[-1]
-					sequence_dict[header] = ''
-				if header:
-					sequence_dict[header] += line
+		try:
+			sequence_dict = {}
+			with open(input[0],'r') as infile:
+				for line in infile.readlines():
+					if line.startswith(">"):
+						header = line.split(" ")[0].split(">")[-1]
+						sequence_dict[header] = ''
+					if header:
+						sequence_dict[header] += line
 
-		filenames = ["bw_queries_" + str(i) + ".faa" for i in range(round(len(sequence_dict.keys()) / 500.0))]
-		keys = list(sequence_dict.keys())
+			filenames = ["bw_queries_" + str(i) + ".faa" for i in range(math.ceil(len(sequence_dict.keys()) / 500.0))]
+			keys = list(sequence_dict.keys())
 
-		step = 500
-		start = 0
-		filecounter = 0
-		end = 500
-		while start < len(keys) and filecounter < len(filenames):
-			with open(filenames[filecounter],'w') as outfile:
-				for key in keys[start:end]:
-					for line in sequence_dict[key]:
-						outfile.write(line)
-				start = end
-				end += step
-				filecounter += 1
-		inter_blast_out = open("blast.table",'w')
-		for file in filenames:
-			shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file}")
-			with open(params.intermediate_filename,'r') as interfilename:
-				for line in interfilename.readlines():
-					inter_blast_out.write(line)
-		inter_blast_out.close()
-		for file in filenames:
-			shell("rm {file}")
-		shell("rm inter_blast.table")
-		shell("mv blast.table {output}")
+			step = 500
+			start = 0
+			filecounter = 0
+			end = 500
+			while start < len(keys) and filecounter <= len(filenames):
+				with open(filenames[filecounter],'w') as outfile:
+					for key in keys[start:end]:
+						for line in sequence_dict[key]:
+							outfile.write(line)
+					start = end
+					end += step
+					filecounter += 1
+			inter_blast_out = open("blast.table",'w')
+			for file in filenames:
+				shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file}")
+				with open(params.intermediate_filename,'r') as interfilename:
+					for line in interfilename.readlines():
+						inter_blast_out.write(line)
+			inter_blast_out.close()
+			for file in filenames:
+				shell("rm {file}")
+			shell("rm inter_blast.table")
+			shell("mv blast.table {output}")
+		except Exception as e:
+			raise Exception("[-] ERROR during backward blast with exception: {}".format(e))
 
 rule reciprocal_best_hits:
 	input: bw_res="blastp_bw_out.table", fw_res="blastp_fw_out.table"
