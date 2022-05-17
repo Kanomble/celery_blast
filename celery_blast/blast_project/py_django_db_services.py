@@ -19,7 +19,8 @@ This script provides functions that should serve as a layer between the database
 def create_external_tools_after_snakemake_workflow_finishes(project_id):
     try:
         with transaction.atomic():
-            ExternalTools.objects.create_external_tools(project_id)
+            external_tool = ExternalTools.objects.create_external_tools(project_id)
+        return external_tool
     except IntegrityError as e:
         raise IntegrityError("[-] couldnt create external tools model with exception : {}".format(e))
 

@@ -38,7 +38,7 @@ def execute_one_way_blast_project(self,project_id):
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
-             '--keep-incomplete'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+             '--keep-incomplete'], shell=False)
         progress_recorder.set_progress(50, 100, "executed snakemake")
 
     except SubprocessError as e:
@@ -91,7 +91,7 @@ def execute_one_way_remote_blast_project(self,project_id):
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
-             '--keep-incomplete'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+             '--keep-incomplete'], shell=False)
         progress_recorder.set_progress(50, 100, "executed snakemake")
 
     except SubprocessError as e:

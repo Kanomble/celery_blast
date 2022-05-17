@@ -70,7 +70,7 @@ def download_refseq_assembly_summary():
     except Exception as e:
         raise Exception("couldn't download assembly_summary_refseq.txt file : {}".format(e))
 
-
+#TODO documentation
 @shared_task()
 def write_alias_file(alias_filename,available_databases):
     try:
@@ -88,6 +88,7 @@ def write_alias_file(alias_filename,available_databases):
         logger.warning("error during creation of aliasfile with exception : {}".format(e))
         raise Exception("error during creation of aliasfile with exception : {}".format(e))
 
+#TODO documentation
 @shared_task()
 def format_blast_databases(path_to_database,chunks, progress_recorder):
     try:
@@ -125,6 +126,7 @@ def format_blast_databases(path_to_database,chunks, progress_recorder):
         logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
         raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
 
+#TODO documentation
 @shared_task()
 def create_chunks_of_databases(df, path_to_database, progress_recorder):
     try:
@@ -138,7 +140,7 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
         logger.info("starting to concatenate available fasta assemblies")
         progress_recorder.set_progress(progress, 100, "concatenate available fasta assemblies")
 
-        iteration_steps = 500
+        iteration_steps = 500 #chunks --> 500 fasta files build "one" database chunk
         if round(len(df['ftp_path']) / iteration_steps) > 35:
             iteration_steps = math.ceil( len(df['ftp_path']) / 35)
 
@@ -304,7 +306,6 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
         available_db_chunks, errorlist = format_blast_databases(db_path,chunks,progress_recorder)
         
 '''
-#TODO documentation task 1
 @shared_task(bind=True)
 def download_blast_databases_based_on_summary_file(self, database_id):
     try:

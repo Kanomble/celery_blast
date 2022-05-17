@@ -68,6 +68,7 @@ class ExternalTools(models.Model):
                 "[-] couldnt update query sequences with taskresult object by performing msa for all queries with exception : {}".format(
                     e))
 
+    #TODO refactoring!
     def check_if_msa_task_is_completed(self,query_sequence_id):
         try:
             if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
