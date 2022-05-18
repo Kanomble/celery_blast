@@ -1,4 +1,5 @@
 import os
+import psutil
 import subprocess
 import string
 import random
@@ -6,6 +7,7 @@ from django.db import transaction, IntegrityError
 from .models import EntrezSearch
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
+from django.conf import settings
 
 def execute_entrez_search(database: str, entrez_query: str, output_filepath: str, entrez_search: EntrezSearch) -> int:
     try:
@@ -17,22 +19,34 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
             database, entrez_query, xtract_format[database], output_filepath)
 
         process = subprocess.Popen(cmd, shell=True)
-        try:
-            returncode = process.wait(timeout=20000)
+        returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
 
-            if returncode != 0:
-                with transaction.atomic():
-                    if os.path.isfile(entrez_search.file_name):
-                        os.remove(entrez_search.file_name)
-                    entrez_search.delete()
+        if returncode != 0:
+            with transaction.atomic():
+                if os.path.isfile(entrez_search.file_name):
+                    os.remove(entrez_search.file_name)
+                entrez_search.delete()
 
-            return returncode
-        except subprocess.TimeoutExpired as e:
-            process.kill()
-            returncode = 'searchtime expired {}'.format(e)
-            return returncode
-    except Exception:
-        return 1
+        return returncode
+    except subprocess.TimeoutExpired:
+        #delete all child processes
+        if 'process' in locals():
+            pid = process.pid
+            parent = psutil.Process(pid)
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()#this is not enough need to kill all child processes
+
+            with transaction.atomic():
+                if os.path.isfile(entrez_search.file_name):
+                    os.remove(entrez_search.file_name)
+                entrez_search.delete()
+            return pid
+        else:
+            return 1
+    except subprocess.SubprocessError as e:
+        raise Exception("[-] ERROR in Popen Call with exception: {}".format(e))
+
 
 #TODO implementation
 def download_esearch_protein_fasta_files(search_id:int):
@@ -62,23 +76,29 @@ def download_esearch_protein_fasta_files(search_id:int):
 
 
         cmd = 'efetch -db protein -format fasta -input {} > {}'.format(sequence_list_file_path,target_fasta_file_path)
-
         process = subprocess.Popen(cmd, shell=True)
+        returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
 
-        try:
-            returncode = process.wait(timeout=20000)
-        except subprocess.TimeoutExpired as e:
-            process.kill()
-            returncode = 'searchtime expired {}'.format(e)
-            return returncode
-
-        #update entrezsearch instance with fastafile path
         with transaction.atomic():
             entrez_search.fasta_file_name = target_fasta_file_path
             entrez_search.save()
 
-        return 0
-    except Exception as e:
+        return returncode
+    #catch either subprocess
+    except subprocess.TimeoutExpired:
+    # delete all child processes
+        if 'process' in locals():
+            pid = process.pid
+            parent = psutil.Process(pid)
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()  # this is not enough need to kill all child processes
+            if os.path.isfile(target_fasta_file_path):
+                os.remove(target_fasta_file_path)
+            return pid
+        else:
+            return 1
+    except subprocess.SubprocessError as e:
         raise Exception("[-] Couldnt download protein fasta files for esearch {} on protein database and exception: {}".format(search_id,e))
 
 #TODO documentation

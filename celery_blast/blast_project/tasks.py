@@ -32,7 +32,7 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
     try:
         e_direct_process = Popen(
             ['get_species_taxids.sh','-t', str(taxonomic_node)],
-            stdout=open(filepath_species_taxids,'w'),
+            stdout=open(filepath_species_taxids,'w'), #TODO does this close the file?
             stderr=subSTDOUT
         )
 

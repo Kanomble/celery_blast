@@ -1,6 +1,8 @@
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from celery.exceptions import SoftTimeLimitExceeded
+
 from .models import ExternalTools
 from celery_progress.backend import ProgressRecorder
 from subprocess import Popen
@@ -53,6 +55,7 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
                                  file_name=esearch_output_filepath,
                                  task_result_id=self.request.id,
                                  user_id=user_id)
+
         returncode = execute_entrez_search(database, entrez_query, esearch_output_filepath,entrez_search)
 
         if returncode != 0:
@@ -61,6 +64,11 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
             progress_recorder.set_progress(100, 100, "SUCCESS")
             entrez_search.update_paper_entries()
             return 0
+    except SoftTimeLimitExceeded:
+        if 'returncode' in locals():
+            if returncode != 0:
+                logger.info("soft time limit exceeded for process with pid : {}".format(returncode))
+
     except Exception as e:
         raise Exception("[-] Couldnt perform entrez search with exception: {}".format(e))
 
