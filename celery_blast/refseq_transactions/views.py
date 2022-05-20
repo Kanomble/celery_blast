@@ -12,7 +12,7 @@ from .py_refseq_transactions import get_downloaded_databases, get_failed_tasks, 
                                     read_database_table_by_database_id_and_return_json
 from .py_services import refseq_file_exists, read_database_download_and_format_logfile, get_database_download_and_formatting_task_result
 from .forms import RefseqDatabaseForm
-from .tasks import download_refseq_assembly_summary, download_blast_databases, download_blast_databases_based_on_summary_file
+from .tasks import download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
 
 from blast_project.py_django_db_services import get_database_by_id
 from blast_project.views import failure_view

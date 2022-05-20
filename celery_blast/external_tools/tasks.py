@@ -36,6 +36,14 @@ def download_entrez_search_associated_protein_sequences(self, search_id):
             return 0
         else:
             raise Exception("Error during saving taskresult instance to download_task_result field of entrezsearch with id: {}".format(search_id))
+
+    except SoftTimeLimitExceeded:
+        if 'returncode' in locals():
+            if returncode != 0:
+                logger.info("soft time limit exceeded for process with pid : {}".format(returncode))
+        else:
+            raise Exception("soft time limit exceeded for entrez downloading task ...")
+
     except Exception as e:
         raise Exception("[-] an error occurred during downloading fasta files with entrez: {}".format(e))
 
@@ -68,7 +76,8 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
         if 'returncode' in locals():
             if returncode != 0:
                 logger.info("soft time limit exceeded for process with pid : {}".format(returncode))
-
+        else:
+            raise Exception("soft time limit exceeded for entrez search task ...")
     except Exception as e:
         raise Exception("[-] Couldnt perform entrez search with exception: {}".format(e))
 

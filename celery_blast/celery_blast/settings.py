@@ -27,9 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1']
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -145,8 +143,8 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
 
-CELERY_TASK_SOFT_TIME_LIMIT = 30
-CELERY_TASK_TIME_LIMIT = 3000
+CELERY_TASK_SOFT_TIME_LIMIT = 7200 #2 * 60min = 120min * 60sec = 7200sec
+CELERY_TASK_TIME_LIMIT = 8000
 SUBPROCESS_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT - 5
 #CELERY_RESULT_BACKEND = 'django-cache'
 '''

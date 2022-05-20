@@ -140,13 +140,22 @@ def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_f
         else:
             raise Exception
         process = subprocess.Popen(cmd, shell=True)
-        try:
-            returncode = process.wait(timeout=20000)
-            return returncode
-        except subprocess.TimeoutExpired as e:
-            process.kill()
-            returncode = 'searchtime expired {}'.format(e)
-            return returncode
+
+        returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
+        return returncode
+
+    except subprocess.TimeoutExpired as e:
+        if 'process' in locals():
+            pid = process.pid
+            parent = psutil.Process(pid)
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()  # this is not enough need to kill all child processes
+            if os.path.isfile(output_filepath):
+                os.remove(output_filepath)
+            return pid
+        else:
+            return 1
     except Exception:
         return 1
 
