@@ -31,29 +31,35 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
                 'output is redirected into {}'.format(taxonomic_node, filepath_species_taxids))
     #invoke the get_species_taxids.sh script and redirect ouput into file
     try:
-        e_direct_process = Popen(
-            ['get_species_taxids.sh','-t', str(taxonomic_node)],
-            stdout=open(filepath_species_taxids,'w'), #TODO does this close the file?
-            stderr=subSTDOUT
-        )
+        #iteration over all possible taxonomic nodes
+        with open(filepath_species_taxids,'w') as taxfile:
+            for node in taxonomic_node:
+                e_direct_process = Popen(
+                    ['get_species_taxids.sh','-t', str(node)],
+                    stdout=taxfile,
+                    stderr=subSTDOUT
+                )
+                    # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
+                    # wait for process to terminate and set returncode attribute
+                try:
+                    logger.info(
+                        'waiting for popen instance {} to finish with timeout set to {}'.format(e_direct_process.pid, 200))
+                    returncode = e_direct_process.wait(timeout=200)
+                    logger.info('returncode : {}'.format(returncode))
 
+                except TimeoutExpired as e:
+                    logger.info('timeout expired ... trying to kill process {}'.format(e_direct_process.pid))
+                    e_direct_process.kill()
+
+                    raise Exception(
+                        'exception during waiting for popen instance : {} \n\t returncode of popen.wait : {}'.format(e,
+                                                                                                   returncode))
+        return 0
     except SubprocessError as e:
         logger.info('subprocess throwed exception: {}'.format(e))
         raise Exception('exception occured during invokation of:\n\t get_species_taxids_into_file function : {}'.format(e))
 
-    #communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
-    #wait for process to terminate and set returncode attribute
-    try:
-        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(e_direct_process.pid,200))
-        returncode = e_direct_process.wait(timeout=200)
-        logger.info('returncode : {}'.format(returncode))
-        return returncode
 
-    except TimeoutExpired as e:
-        logger.info('timeout expired ... trying to kill process {}'.format(e_direct_process.pid))
-        e_direct_process.kill()
-
-        raise Exception('exception during waiting for popen instance : {} \n\t returncode of popen.wait : {}'.format(e,returncode))
 
 #TODO documentation
 @shared_task(bind=True)

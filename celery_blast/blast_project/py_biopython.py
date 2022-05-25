@@ -4,7 +4,6 @@ functions that use the biopython package, more informations: https://biopython.o
 
 '''
 from Bio import Entrez
-import json
 from .py_django_db_services import get_project_by_id
 ''' get_species_taxid_by_name 
 
@@ -25,6 +24,28 @@ def get_species_taxid_by_name(user_email,scientific_name):
         return taxid
     except Exception as e:
         raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+
+'''get_list_of_species_taxid_by_name
+sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)
+therefore this function can be used to iterate over all available nodes. Those nodes will be written into one file that is 
+than processed for database parsing.
+
+:param user_email
+    :type str
+:param scientific_name
+    :type str
+:returns taxonomic nodes (list:int)
+'''
+def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
+    try:
+        Entrez.email = user_email
+        search = Entrez.esearch(term=scientific_name, db="taxonomy", retmode="xml")
+        record = Entrez.read(search)
+        taxid = record['IdList']
+        return taxid
+    except Exception as e:
+        raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+
 
 #TODO documentation
 def check_given_taxonomic_node(user_email, taxid):

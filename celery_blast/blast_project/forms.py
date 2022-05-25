@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.forms import ModelChoiceField
 from django.utils import timezone
 from pandas import read_csv
-from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node
+from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
@@ -38,8 +38,8 @@ class CreateTaxonomicFileForm(forms.Form):
         species_name = self.cleaned_data['species_name']
         user_email = self.fields['user_email'].charfield
         try:
-            taxonomic_node = get_species_taxid_by_name(user_email,species_name)
-            return species_name, taxonomic_node
+            taxonomic_nodes = get_list_of_species_taxid_by_name(user_email,species_name)
+            return species_name, taxonomic_nodes
         except Exception as e:
             raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
 

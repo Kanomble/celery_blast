@@ -162,8 +162,8 @@ def create_taxonomic_file_view(request):
         if request.method == 'POST':
             taxform = CreateTaxonomicFileForm(request.user,request.POST)
             if taxform.is_valid():
-                species_name,taxonomic_node = taxform.cleaned_data['species_name']
-                task = write_species_taxids_into_file(taxonomic_node,species_name+'.taxids')
+                species_name,taxonomic_nodes = taxform.cleaned_data['species_name']
+                task = write_species_taxids_into_file(taxonomic_nodes,species_name+'.taxids')
         taxid_files = list_taxonomic_files()
         taxid_files = zip(taxid_files[0],taxid_files[1])
         context = {'taxform': taxform, 'taxid_files': taxid_files}
