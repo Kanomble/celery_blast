@@ -22,6 +22,11 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] remote BLAST without entrez query: results in an error: Error: [blastp] internal_error: Message ID#54 Error: Failed to process the Entrez query: Only organism entrez queries are supported
+- [ ] snakemake incomplete flag - restart function for snakemake
+- [ ] limit for query sequences in onewayblast
+- [ ] redirect to onewayblast detail page after project creation
+- [ ] form validation in blastsettings
 - [ ] integrate MAFFT and FastTree in Snakefile
 - [ ] define global timeout variable --> use celery timeouts 
 - [ ] one_way_blast_results - if there is an error in the biopython request for building genus graphs display at least the hit table

@@ -162,7 +162,7 @@ class ProjectCreationForm(forms.Form):
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
 
                     if len(header) > 300:
-                        self.add_error('query_sequence_file','You try to infer orthologs for more than 100 query sequences,'
+                        self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
                                                              ' this is not allowed, consider to separate the query sequences.')
                     else:
                         valid = check_if_sequences_are_in_database(backward_db.id, header)
