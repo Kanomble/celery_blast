@@ -35,4 +35,6 @@ urlpatterns = [
     path('<int:query_sequence_id>/ajax_call_progress_msa_task',
          views.ajax_call_progress_msa_task,
          name="ajax_call_progress_msa_task"),
+    path('<int:project_id>/<str:query_sequence_id>/phylogenetic_information',
+         views.phylogenetic_information, name='phylogenetic_information'),
 ]

@@ -85,6 +85,13 @@ RUN chmod u+x wait-for
 
 COPY requirements.txt /blast/reciprocal_blast
 RUN pip install -r requirements.txt
+
+#Download requirements for ete3
+RUN pip install --upgrade ete3
+RUN apt-get -y update && apt-get -y install python-numpy python-lxml python-six libglib2.0-0 libgtk2.0-dev libqt5x11extras5 libgl1-mesa-glx
+RUN conda install -y pyqt
+#PyQt5 in requirements
+
 EXPOSE 8080
 # Delete not required packages etc..
 RUN apt-get autoremove --purge --yes && apt-get clean && rm -rf /var/lib/apt/lists/*

@@ -207,3 +207,16 @@ def ajax_call_progress_entrezsearch_to_fasta(request,search_id):
             return JsonResponse({"progress":"error"})
     except Exception as e:
         return failure_view(request,e)
+
+#view for phylogenetic dashboard
+@login_required(login_url='login')
+def phylogenetic_information(request, project_id, query_sequence_id):
+    try:
+        context = {}
+        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        context['qseqids'] = qseqids
+        context['query_sequence_id']= query_sequence_id
+        context['project_id'] = project_id
+        return render(request,"external_tools/phylogenetic_dashboard.html",context)
+    except Exception as e:
+        return failure_view(request,e)

@@ -5,6 +5,7 @@ import psutil
 from subprocess import Popen, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
 from django.conf import settings
 from celery import shared_task
+from external_tools.models import ExternalTools
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
@@ -114,6 +115,10 @@ def execute_reciprocal_blast_project(self,project_id):
             progress_recorder.set_progress(100, 100, "SUCCESS")
             logger.info('creating external tools model')
             create_external_tools_after_snakemake_workflow_finishes(project_id)
+            logger.info('update phylo and msa task with id of the reciprocal BLAST')
+            external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+            external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
+            external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
 
             return returncode
 

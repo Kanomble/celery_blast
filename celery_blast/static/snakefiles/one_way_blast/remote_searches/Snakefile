@@ -1,10 +1,19 @@
 configfile: "./snakefile_config"
 
+QSEQIDS = []
+with open(config['query_sequence'],'r') as qseqfile:
+	for line in qseqfile.readlines():
+		if ">" in line:
+			#TODO adjust qseq_ids in query_sequence file in order to assign a new unique name ? - until now just refseq OR local database sequence headers are allowed
+			qseq_id = line.split(" ")[0].split(">")[1].split(".")[0]
+			QSEQIDS.append(qseq_id)
+
 rule all:
 	input:
-		"blast_results.table","blast_results.html", "genus_bars.html",
+		"blast_results.table",
 		"query_sequence_information.html",
-		"query_sequence_information.csv"
+		"query_sequence_information.csv",
+		expand("{qseqid}/target_sequences.svg",qseqid=QSEQIDS)
 
 rule blast:
 	input: queries=config['query_sequence']
@@ -32,19 +41,6 @@ rule blast:
 			" -query "+input.queries+\
 			" -remote"
 			shell(cmd_string)
-'''
-rule blast_table_to_html:
-	input: res="blast_results.table"
-	output: html_table="blast_results.html"
-	script:
-		"../../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
-'''
-rule blast_results_to_plots:
-	input: blast_results="blast_results.table", query_file=config['query_sequence']
-	params: genus_bars_static="../../../../static/images/result_images/one_way_blast/remote_searches/" + str(config['project_id']) + '/genus_bars.html',user_email=config['user_email']
-	output: genus_bars="genus_bars.html", html_table="blast_results.html"
-	script:
-		"../../../../static/snakefiles/one_way_blast/plot_results.py"
 
 rule query_sequences_to_html_table:
 	input: target_file=config['query_sequence']
@@ -52,3 +48,40 @@ rule query_sequences_to_html_table:
 	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
 	script:
 		"../../../../static/snakefiles/one_way_blast/query_sequences_to_html_table.py"
+
+rule filter_blast_results_table_to_csv:
+    input: results_table="blast_results.table"
+    output: result_csv=expand("{qseqid}/blast_results.table",qseqid=QSEQIDS),
+            ids=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
+    script:
+    	"../../../../static/snakefiles/one_way_blast/remote_searches/filter_blast_results_table_to_csv.py"
+
+rule extract_subject_sequences_from_NCBI_edirect:
+	input: ids="{qseqid}/target_sequence_ids.txt"
+	params: user_email=config['user_email']
+	output: fasta_file="{qseqid}/target_sequences.faa"
+	script:
+	    "../../../../static/snakefiles/one_way_blast/remote_searches/extract_subject_sequences_from_NCBI_edirect.py"
+
+rule conduct_multiple_sequence_alignment_mafft:
+    input: "{qseqid}/target_sequences.faa"
+    output: "{qseqid}/target_sequences.msa"
+    log:"log/{qseqid}/conduct_multiple_sequence_alignment_mafft.log"
+    shell:
+        "(mafft --auto {input} > {output}) 2> {log}"
+
+rule conduct_phylogeny_fast_tree:
+    input: "{qseqid}/target_sequences.msa"
+    output: "{qseqid}/target_sequences.tree"
+    log: "log/{qseqid}/conduct_phylogeny_fast_tree.log"
+    shell:
+        "(fasttree {input} > {output}) 2> {log}"
+
+rule ete3_tree_to_png:
+    input: tree="{qseqid}/target_sequences.tree"
+    params:
+        static_pic="../../../../static/images/result_images/one_way_blast/remote_searches/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
+    output: pic="{qseqid}/target_sequences.svg"
+    script:
+        "../../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"
+

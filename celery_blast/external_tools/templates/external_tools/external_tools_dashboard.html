@@ -38,6 +38,8 @@
                     <th>Phylogeny</th>
                     <!-- <th>Timestamp</th> -->
                     <th>Tree</th>
+                    <th> </th>
+                    <th>Phylogenetic information</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,10 +86,22 @@
                     <td>
                         {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
                             {% load static %}
-                            <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}/target_sequences.html">
+                            <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.png">
                                 <button class="btn btn-dark"> View Phylogeny </button>
                             </a>
                             <!-- <iframe src="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}/target_sequences.html"> </iframe> -->
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
+                        <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.png" download="{{project_id}}/{{ qseq.query_accession_id }}_target_sequences">
+                            <button class="btn btn-dark"> Download Phylogeny </button>
+                        </a>
+                        {% endif %}
+                    </td>
+                    <td> {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
+                        <a class="btn btn-dark" href="{% url 'phylogenetic_information' project_id=project_id query_sequence_id=qseq.query_accession_id %}"> Phylogenetic Information
+                        </a>
                         {% endif %}
                     </td>
                 </tr>
