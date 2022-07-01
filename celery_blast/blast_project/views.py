@@ -7,7 +7,7 @@ from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
-    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm
+    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, CreateTaxonomicFileForMultipleScientificNames
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes
 from .py_services import list_taxonomic_files, upload_file, \
     delete_project_and_associated_directories_by_id, get_html_results
@@ -156,7 +156,7 @@ view for creation of taxonomic files, produced by the get_species_taxids.sh scri
     synchronous call of write_species_taxids_into_file
 '''
 @login_required(login_url='login')
-def create_taxonomic_file_view(request):
+def create_taxonomic_file_view_old(request):
     try:
         taxform = CreateTaxonomicFileForm(request.user)
         if request.method == 'POST':
@@ -170,6 +170,30 @@ def create_taxonomic_file_view(request):
         return render(request, 'blast_project/create_taxonomic_file.html', context)
     except Exception as e:
         return failure_view(request,e)
+
+@login_required(login_url='login')
+def create_taxonomic_file_view(request):
+    try:
+        print("HELLO")
+        taxform = CreateTaxonomicFileForMultipleScientificNames(request.user)
+        print("HELLO")
+        if request.method == 'POST':
+            taxform = CreateTaxonomicFileForMultipleScientificNames(request.user,request.POST)
+            if taxform.is_valid():
+                filename = taxform.cleaned_data['filename']
+                filename = filename + '.taxids'
+                taxonomic_nodes = taxform.cleaned_data['species_names']
+                task = write_species_taxids_into_file(taxonomic_nodes,filename)
+        print("HELLO1")
+        taxid_files = list_taxonomic_files()
+        taxid_files = zip(taxid_files[0], taxid_files[1])
+        context = {'taxform': taxform, 'taxid_files': taxid_files}
+        return render(request, 'blast_project/create_taxonomic_file.html', context)
+
+    except Exception as e:
+        return failure_view(request, e)
+
+
 
 #upload_types: standard for GET one_file and multiple_files for POST
 #TODO documentation rename function to upload_single_genome_ ...

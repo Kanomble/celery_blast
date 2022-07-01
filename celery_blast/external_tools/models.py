@@ -204,6 +204,7 @@ class EntrezSearch(models.Model):
 
         paper = pd.read_table(self.file_name, header=None)
         paper.columns = pandas_header[self.database]
+
         paper = paper.to_html(classes='entrezsearch" id="searchResultTable')
         return paper
 

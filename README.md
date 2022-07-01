@@ -19,9 +19,18 @@ docker exec -it celery_blast /bin/bash
 cd ../edirect && sh ./setup.sh
 #answer with y
 ````
+
+
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] refactor the external project information dashboard
+  - [ ] replace MSA and Phylogeny buttons with the number of RBH's
+- [ ] fill the other 2 boxes in connies phylogeny dashboard
+- [ ] there are some bugs in the EntrezSearch - e.g. if you search for rhino in pubmed
+- [ ] pipeline log files
+  - [ ] view logfile content on pipeline dashboard
+- [ ] what happens if a user deletes a database that is still connected to some projects?
 - [ ] remote BLAST without entrez query: results in an error: Error: [blastp] internal_error: Message ID#54 Error: Failed to process the Entrez query: Only organism entrez queries are supported
 - [ ] snakemake incomplete flag - restart function for snakemake
 - [ ] limit for query sequences in onewayblast

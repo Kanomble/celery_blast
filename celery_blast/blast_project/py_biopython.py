@@ -15,7 +15,7 @@ utilization in the clean_species_name form field of CreateTaxonomicFileForm
     :type str
 :returns taxonomic node (int) defined in Entrez.esearch dictionary instance
 '''
-def get_species_taxid_by_name(user_email,scientific_name):
+def get_species_taxid_by_name(user_email:str,scientific_name:str)->str:
     try:
         Entrez.email = user_email
         search = Entrez.esearch(term=scientific_name, db="taxonomy", retmode="xml")
@@ -46,6 +46,24 @@ def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
     except Exception as e:
         raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
 
+#TODO documentation
+def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scientific_names:list)->list:
+    try:
+        Entrez.email = user_email
+        taxonomic_nodes = []
+        for name in scientific_names:
+            try:
+                search = Entrez.esearch(term=name, db="taxonomy", retmode="xml")
+                record = Entrez.read(search)
+                taxids = record['IdList']
+                taxonomic_nodes.extend(taxids)
+            except:
+                continue
+        if len(taxonomic_nodes) == 0:
+            raise Exception("There are no taxonomic nodes for the provided scientific names : {}".format(' '.join(scientific_names)))
+        return taxonomic_nodes
+    except Exception as e:
+        raise Exception("[-] ERROR: {}".format(e))
 
 #TODO documentation
 def check_given_taxonomic_node(user_email, taxid):

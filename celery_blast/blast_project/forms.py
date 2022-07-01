@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.forms import ModelChoiceField
 from django.utils import timezone
 from pandas import read_csv
-from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name
+from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, get_list_of_species_taxids_by_list_of_scientific_names
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
@@ -40,6 +40,27 @@ class CreateTaxonomicFileForm(forms.Form):
         try:
             taxonomic_nodes = get_list_of_species_taxid_by_name(user_email,species_name)
             return species_name, taxonomic_nodes
+        except Exception as e:
+            raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
+
+#TODO Documentation
+class CreateTaxonomicFileForMultipleScientificNames(forms.Form):
+    filename = forms.CharField(max_length=200, required=True)
+    species_names = forms.CharField(max_length=600, required=True)
+    user_email = forms.CharField(max_length=200)
+
+    def __init__(self, user, *args, **kwargs):
+        super(CreateTaxonomicFileForMultipleScientificNames, self).__init__(*args, **kwargs)
+        self.fields['user_email'].charfield = user.email
+        self.fields['user_email'].initial = user.email
+
+    def clean_species_names(self):
+        species_names = self.cleaned_data['species_names']
+        user_email = self.fields['user_email'].charfield
+
+        try:
+            species_names = species_names.split(",")
+            return get_list_of_species_taxids_by_list_of_scientific_names(user_email, species_names)
         except Exception as e:
             raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
 
