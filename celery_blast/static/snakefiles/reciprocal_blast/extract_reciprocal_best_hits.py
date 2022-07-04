@@ -14,26 +14,26 @@ try:
         forward_df[7] = forward_df[7].map(lambda line : line.split('.')[0])
         forward_df = pd.DataFrame([forward_df[0][:],forward_df[7][:], forward_df[8][:]]).transpose()
 
-        logfile.write("loaded forward dataframe into pandas with length {}\n".format(len(forward_df)))
+        logfile.write("INFO:loaded forward dataframe into pandas with length {}\n".format(len(forward_df)))
         backward_df = pd.read_table(snakemake.input['bw_res'],header=None)
         backward_df[7] = backward_df[7].map(lambda line : line.split('.')[0])
         backward_df = pd.DataFrame([backward_df[0][:],backward_df[7][:], backward_df[8][:]]).transpose()
         forward_df[0] = forward_df[0].map(lambda line : line.split('.')[0])
         backward_df[0] = backward_df[0].map(lambda line: '_'.join(line.split("_")[0:2]).split(".")[0])
-        logfile.write("loaded backward dataframe into pandas with length {}\n".format(len(backward_df)))
+        logfile.write("INFO:loaded backward dataframe into pandas with length {}\n".format(len(backward_df)))
 
 
         result_df = pd.DataFrame(columns=["targetid","qseqid","taxid_x","taxid_y"])
 
         for qseq in forward_df[0].unique():
-            logfile.write("analysis of reciprocal best hits for {}\n".format(qseq))
+            logfile.write("INFO:analysis of reciprocal best hits for {}\n".format(qseq))
 
             qseq_df_fw = forward_df[forward_df[0] == qseq]
             qseq_df_bw = backward_df[backward_df[7] == qseq]
             qseq_df_fw.columns = ['qseqid','targetid','taxid']
             qseq_df_bw.columns = ['targetid','qseqid','taxid']
             qseq_result_df = qseq_df_bw.merge(qseq_df_fw,how='inner',on=['targetid','qseqid']).drop_duplicates()
-            logfile.write("\t found {} RBHs\n".format(len(qseq_result_df)))
+            logfile.write("\tINFO:found {} RBHs\n".format(len(qseq_result_df)))
             result_df = pd.concat([result_df,qseq_result_df],ignore_index=True)
 
         #returncode for no reciprocal hits
@@ -45,6 +45,7 @@ try:
             recfile.write("forward_genome_id\tbackward_genome_id\tstaxids\n")
             for targetid, qseqid,taxid in zip(result_df['targetid'],result_df['qseqid'],result_df['taxid_y']):
                 recfile.write("{}\t{}\t{}\n".format(targetid,qseqid, taxid))
+        logfile.write("DONE\n")
 except Exception as e:
     logfile.write("ERROR:something unexpected happened - exception {}\n".format(e))
     sys.exit(ERRORCODE)

@@ -31,7 +31,7 @@ rule forward_blast:
 	params: word_size=config['fw_word_size'], e_value=config['fw_e_value'], num_alignments=config['fw_num_alignments'], num_threads=config['fw_num_threads'], database=config['blastdb']
 	log:log="log/forward_blast.log"
 	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries} 2> {log.log}"
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries} 2> {log}"
 
 #RULE 2
 #collects the subject id's of the forward BLAST and writes those id's into a file that is used by the bw_query_preparation rule (RULE 3)
@@ -42,12 +42,12 @@ rule fw_result_processing:
 	run:
 		with open(log[0],'w') as logfile:
 			try:
-				logfile.write("working with forward blast results: writing target sequences into output file\n")
+				logfile.write("INFO:working with forward blast results: writing target sequences into output file\n")
 				fw_results = pd.read_table(input[0], header=None)
 				with open(output[0],"w+") as out:
 					for gi in fw_results[7][:].unique():
 						out.write(gi+"\n")
-				logfile.write(('done writing {} target sequences into output file'.format(len(fw_results[7][:].unique()))))
+				logfile.write(('INFO:done writing {} target sequences into output file'.format(len(fw_results[7][:].unique()))))
 			except Exception as e:
 				logfile.write("ERROR:{}\n".format(e))
 				raise Exception("ERROR in forward blast result processing: {}".format(e))
@@ -61,7 +61,7 @@ rule bw_query_preparation:
 	params: database=config["blastdb"]
 	log: log="log/bw_query_preparation.log"
 	shell:
-		"blastdbcmd -db {params.database} -entry_batch {input} -out {output} 2> {log.log}"
+		"blastdbcmd -db {params.database} -entry_batch {input} -out {output} 2> {log}"
 
 #RULE 4
 #backward blast rule. the backward blast is divided into chunks of 100 query sequences.
@@ -73,7 +73,7 @@ rule backward_blast:
 	run:
 		with open(log[0],'w') as logfile:
 			try:
-				logfile.write("starting backward blast ...\n")
+				logfile.write("INFO:starting backward blast ...\n")
 				step = 100
 				sequence_dict = {}
 				#loading query sequences into python dictionary
@@ -87,7 +87,7 @@ rule backward_blast:
 
 				#preparation of transient input files for the backward blast. maximal 100 query sequences will reside in the input fasta files
 				filenames = ["bw_queries_" + str(i) + ".faa" for i in range(math.ceil(len(sequence_dict.keys()) / float(step)))]
-				logfile.write("working with: {} input fasta files\n".format(len(filenames)))
+				logfile.write("INFO:working with: {} input fasta files\n".format(len(filenames)))
 				keys = list(sequence_dict.keys())
 				start = 0
 				filecounter = 0
@@ -163,9 +163,9 @@ rule extract_subject_sequences_from_database:
 	input: "{qseqid}/target_sequence_ids.txt"
 	output: "{qseqid}/target_sequences.faa"
 	params: database=config["blastdb"]
-	log: log="log/extract_subject_sequences_from_database.log"
+	#log: log="log/extract_subject_sequences_from_database.log"
 	shell:
-		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output} 2>{log.log}"
+		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
 
 #RULE 10
 #creates plots for the visualization of pipeline results
@@ -190,6 +190,7 @@ rule query_sequences_to_html_table:
 		"../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"
 
 #Conni BA
+#RULE 12
 rule conduct_multiple_sequence_alignment_mafft:
 	input: "{qseqid}/target_sequences.faa"
 	output: "{qseqid}/target_sequences.msa"
@@ -197,10 +198,11 @@ rule conduct_multiple_sequence_alignment_mafft:
 	run:
 		with open(input[0],'r') as infile:
 			if len(infile.readlines()) > 1:
-				shell("mafft --auto {input} > {output} 2> {log.log}")
+				shell("mafft --auto {input} > {output} 2> {log}")
 			else:
 				shell("touch {output} 2> {log.log}")
 
+#RULE 13
 rule conduct_phylogeny_fast_tree:
 	input: "{qseqid}/target_sequences.msa"
 	output: "{qseqid}/target_sequences.tree"
@@ -208,10 +210,11 @@ rule conduct_phylogeny_fast_tree:
 	run:
 		with open(input[0],"r") as infile:
 			if len(infile.readlines()) > 1:
-				shell("fasttree {input} > {output} 2> {log.log}")
+				shell("fasttree {input} > {output} 2> {log}")
 			else:
 				shell("touch {output} 2> {log.log}")
 
+#RULE 14
 rule update_tree_with_taxid:
 	input: nw="{qseqid}/target_sequences.tree", df="reciprocal_results_with_taxonomy.csv"
 	output: "{qseqid}/transformed_treefile.nwk"
@@ -219,6 +222,7 @@ rule update_tree_with_taxid:
 	script:
 		"../../../static/snakefiles/reciprocal_blast/update_seq_id_taxinfo.py"
 
+#RULE 15
 rule ete3_tree_to_png:
 	input: tree="{qseqid}/transformed_treefile.nwk"
 	params: static_pic="../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"

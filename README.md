@@ -24,11 +24,13 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] esearch output into subfolders for each user
+- [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
 - [ ] refactor the external project information dashboard
   - [ ] replace MSA and Phylogeny buttons with the number of RBH's
 - [ ] fill the other 2 boxes in connies phylogeny dashboard
 - [ ] there are some bugs in the EntrezSearch - e.g. if you search for rhino in pubmed
-- [ ] pipeline log files
+- [X] pipeline log files
   - [ ] view logfile content on pipeline dashboard
 - [ ] what happens if a user deletes a database that is still connected to some projects?
 - [ ] remote BLAST without entrez query: results in an error: Error: [blastp] internal_error: Message ID#54 Error: Failed to process the Entrez query: Only organism entrez queries are supported
@@ -36,15 +38,15 @@ The web container will automatically try to restart if the startup fails, unless
 - [ ] limit for query sequences in onewayblast
 - [ ] redirect to onewayblast detail page after project creation
 - [ ] form validation in blastsettings
-- [ ] integrate MAFFT and FastTree in Snakefile
-- [ ] define global timeout variable --> use celery timeouts 
+- [X] integrate MAFFT and FastTree in Snakefile
+- [X] define global timeout variable --> use celery timeouts --> soft and hard timeouts
 - [ ] one_way_blast_results - if there is an error in the biopython request for building genus graphs display at least the hit table
 - [ ] correct ajax requests if it results into an error
 - [ ] wait-for script checking - LF / CLRF
 - [ ] add genbank database option
 - [ ] if no reciprocal hits are available for at least one gene the snakmake workflow will result into an error - rule extract_sequences
 - [ ] upload genome: if \n is in any uploaded txt file it will count as a value for insertion
-- [ ] implement custom snakemake logfile that lists all of the executed functions
+- [X] implement custom snakemake logfile that lists all of the executed functions
 - [ ] display warning if backward organism not in the forward database as there is no controlling step - cause hits against the identical protein are not considered
 - [ ] reciprocal_result.csv should also contain assembly accession for each hit and genus, family .. informations
   - [X] genus, family and other taxonomic informations are integrated

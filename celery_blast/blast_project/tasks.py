@@ -32,6 +32,7 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
                 'output is redirected into {}'.format(taxonomic_node, filepath_species_taxids))
     #invoke the get_species_taxids.sh script and redirect ouput into file
     try:
+        returncode=1
         #iteration over all possible taxonomic nodes
         with open(filepath_species_taxids,'w') as taxfile:
             for node in taxonomic_node:
@@ -44,18 +45,17 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
                     # wait for process to terminate and set returncode attribute
                 try:
                     logger.info(
-                        'waiting for popen instance {} to finish with timeout set to {}'.format(e_direct_process.pid, 200))
+                        'INFO:waiting for popen instance {} to finish with timeout set to {}'.format(e_direct_process.pid, 200))
                     returncode = e_direct_process.wait(timeout=200)
                     logger.info('returncode : {}'.format(returncode))
 
                 except TimeoutExpired as e:
-                    logger.info('timeout expired ... trying to kill process {}'.format(e_direct_process.pid))
+                    logger.info('ERROR:timeout expired - trying to kill process {}'.format(e_direct_process.pid))
                     e_direct_process.kill()
-
                     raise Exception(
                         'exception during waiting for popen instance : {} \n\t returncode of popen.wait : {}'.format(e,
                                                                                                    returncode))
-        return 0
+        return returncode
     except SubprocessError as e:
         logger.info('subprocess throwed exception: {}'.format(e))
         raise Exception('exception occured during invokation of:\n\t get_species_taxids_into_file function : {}'.format(e))
@@ -80,7 +80,7 @@ def execute_reciprocal_blast_project(self,project_id):
             raise Exception('couldnt update blastproject with exception : {}'.format(e))
 
         try:
-            logger.info('trying to start snakemake reciprocal BLAST workflow')
+            logger.info('INFO:trying to start snakemake reciprocal BLAST workflow')
             progress_recorder.set_progress(25,100,'PROGRESS')
 
             '''
@@ -104,7 +104,7 @@ def execute_reciprocal_blast_project(self,project_id):
 
             progress_recorder.set_progress(50, 100, "PROGRESS")
 
-            logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(reciprocal_blast_snakemake.pid, 604800))
+            logger.info('INFO:waiting for popen instance {} to finish with timeout set to {}'.format(reciprocal_blast_snakemake.pid, 604800))
             returncode = reciprocal_blast_snakemake.wait(timeout=settings.SUBPROCESS_TIME_LIMIT) #66 min 604800 = 7d
             logger.info('returncode : {}'.format(returncode))
             if (returncode != 0):
@@ -113,9 +113,9 @@ def execute_reciprocal_blast_project(self,project_id):
                 raise Exception('Popen hasnt succeeded ...')
 
             progress_recorder.set_progress(100, 100, "SUCCESS")
-            logger.info('creating external tools model')
+            logger.info('INFO:creating external tools model')
             create_external_tools_after_snakemake_workflow_finishes(project_id)
-            logger.info('update phylo and msa task with id of the reciprocal BLAST')
+            logger.info('INFO:update phylo and msa task with id of the reciprocal BLAST')
             external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
             external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
             external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
@@ -123,7 +123,7 @@ def execute_reciprocal_blast_project(self,project_id):
             return returncode
 
         except TimeoutExpired as e:
-            logger.info('timeout expired ... trying to kill process {}'.format(reciprocal_blast_snakemake.pid))
+            logger.info('ERROR:timeout expired - trying to kill process {}'.format(reciprocal_blast_snakemake.pid))
             if 'reciprocal_blast_snakemake' in locals():
                 pid = reciprocal_blast_snakemake.pid
                 parent = psutil.Process(pid)
@@ -132,10 +132,10 @@ def execute_reciprocal_blast_project(self,project_id):
                 parent.kill()
 
             raise Exception(
-                'exception during waiting for popen reciprocal blast task: {} \n\t returncode of popen.wait : {}'.format(e, returncode))
+                'ERROR:exception during waiting for popen reciprocal blast task: {} \n\t returncode of popen.wait : {}'.format(e, returncode))
 
         except SubprocessError as e:
-            logger.info('subprocess throwed exception: {}'.format(e))
+            logger.info('ERROR:subprocess throwed exception: {}'.format(e))
             if 'reciprocal_blast_snakemake' in locals():
                 pid = reciprocal_blast_snakemake.pid
                 parent = psutil.Process(pid)
@@ -143,10 +143,16 @@ def execute_reciprocal_blast_project(self,project_id):
                     child.kill()
                 parent.kill()
             raise Exception(
-                'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
+                'ERROR:exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
 
     except SoftTimeLimitExceeded as e:
-        logger.info("ERROR Reciprocal BLAST reached Task Time Limit")
+        logger.info("ERROR:Reciprocal BLAST reached Task Time Limit")
+        if 'reciprocal_blast_snakemake' in locals():
+            pid = reciprocal_blast_snakemake.pid
+            parent = psutil.Process(pid)
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()
         raise Exception("ERROR Reciprocal BLAST reached Task Time Limit")
 
 
@@ -155,18 +161,18 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
     try:
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100,"started process")
-        logger.info("database_id : {}, path_to_database : {}".format(database_id,path_to_database))
+        logger.info("INFO:database_id : {}, path_to_database : {}".format(database_id,path_to_database))
         try:
             update_blast_database_with_task_result_model(database_id,self.request.id)
         except Exception as e:
-            logger.warning('couldnt update blastdatabase with exception : {}'.format(e))
-            raise Exception('couldnt update blastdatabase with exception : {}'.format(e))
+            logger.warning('ERROR:couldnt update blastdatabase with exception : {}'.format(e))
+            raise Exception('ERROR:couldnt update blastdatabase with exception : {}'.format(e))
 
         try:
-            logger.info('trying to start makeblastdb for formatting blast database : {}'.format(path_to_database))
+            logger.info('INFO:trying to start makeblastdb for formatting blast database : {}'.format(path_to_database))
             progress_recorder.set_progress(25,100,'PROGRESS')
             if taxmap_file != None:
-                logger.info('execution with provided taxmap_file')
+                logger.info('INFO:execution with provided taxmap_file')
                 makeblastdb_popen = Popen(
                     ['makeblastdb',
                      '-in',path_to_database,
@@ -178,10 +184,10 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
                     ], shell=False)
 
             elif taxonomic_node != None:
-                logger.info('execution with provided taxonomic_node')
-                logger.info('makeblastdb -in {} -out {} -taxid {} -dbtype {} -input_type {} -parse_seqids'.format(
-                    path_to_database, path_to_database, str(taxonomic_node),'prot','fasta'
-                ))
+                logger.info('INFO:execution with provided taxonomic_node')
+                #logger.info('INFO:makeblastdb -in {} -out {} -taxid {} -dbtype {} -input_type {} -parse_seqids'.format(
+                #    path_to_database, path_to_database, str(taxonomic_node),'prot','fasta'
+                #))
                 makeblastdb_popen = Popen(
                     ['makeblastdb',
                      '-in',path_to_database,
@@ -192,31 +198,36 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
                      '-parse_seqids'
                     ], shell=False)
             else:
-                raise SubprocessError('no subprocess to execute : taxmap_file : {} , taxonomic_node : {}...'.format(taxmap_file,taxonomic_node))
+                logger.info("ERROR:there is no taxmap file or taxonomic node ...\n")
+                raise SubprocessError('ERROR:no subprocess to execute : taxmap_file : {} , taxonomic_node : {}...'.format(taxmap_file,taxonomic_node))
             progress_recorder.set_progress(90,100,'PROGRESS')
 
 
             logger.info(
-                'waiting for popen instance {} to finish with timeout set to {}'.format(makeblastdb_popen.pid,
+                'INFO:waiting for popen instance {} to finish with timeout set to {}'.format(makeblastdb_popen.pid,
                                                                                         settings.SUBPROCESS_TIME_LIMIT))
             returncode = makeblastdb_popen.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)  # 66 min 604800 = 7d
             if returncode > 0:
-                logger.info('ERROR: returncode : {}'.format(returncode))
+                logger.info('ERROR:returncode : {}'.format(returncode))
                 progress_recorder.set_progress(0, 100, "FAILURE")
-                raise Exception('error during makeblastdb attempt ...')
+                raise Exception('ERROR:error during makeblastdb attempt ...')
             else:
-                logger.info('returncode : {}'.format(returncode))
+                logger.info('INFO:returncode : {}'.format(returncode))
                 progress_recorder.set_progress(100, 100, "SUCCESS")
             return returncode
 
         except TimeoutExpired as e:
-            logger.info('timeout expired ... trying to kill process {}'.format(makeblastdb_popen.pid))
+            logger.info('ERROR:timeout expired ... trying to kill process {}'.format(makeblastdb_popen.pid))
             makeblastdb_popen.kill()
             raise Exception('exception during waiting for popen instance : {} \n\t returncode of popen.wait > 0'.format(e))
 
         except SubprocessError as e:
-            logger.warning('error during execution of makeblastdb with exception : {}'.format(e))
+            logger.warning('ERROR:error during execution of makeblastdb with exception : {}'.format(e))
+            makeblastdb_popen.kill()
+            raise Exception(
+                'ERROR:exception in Subprocess Popen call : {}'.format(e))
 
     except SoftTimeLimitExceeded as e:
-        logger.info("ERROR makeblastdb process reached Task Time Limit")
-        raise Exception("ERROR makeblastdb process reached Task Time Limit")
+        logger.info("ERROR:makeblastdb process reached Task Time Limit")
+        makeblastdb_popen.kill()
+        raise Exception("ERROR:makeblastdb process reached Task Time Limit")

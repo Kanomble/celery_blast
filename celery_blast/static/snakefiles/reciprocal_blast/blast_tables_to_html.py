@@ -5,7 +5,7 @@ import sys
 ERRORCODE=7
 with open(snakemake.log['log'],'w') as logfile:
     try:
-        logfile.write("transforming reciprocal results csv files into html tables\n")
+        logfile.write("INFO:transforming reciprocal results csv files into html tables\n")
         result_data = pd.read_csv(snakemake.input['rec_res'],header=0,index_col=False)
         '''
         for i in range(0, len(result_data), 1):
@@ -13,7 +13,7 @@ with open(snakemake.log['log'],'w') as logfile:
             scientific_names = result_data.iat[i, 8]
             common_names = result_data.iat[i, 9]
         '''
-        logfile.write("preparing html string ...\n")
+        logfile.write("INFO:preparing html string ...\n")
 
         pd.set_option('colheader_justify', 'left')
         html_string = '''

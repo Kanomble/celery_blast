@@ -103,5 +103,14 @@
 
 </div>
 {% endblock %}
-
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#blastProjectTable').DataTable();
+        $('#oneWayBLASTProjectTable').DataTable();
+        $('#oneWayRemoteBlastProjectTable').DataTable();
+        $('#activeDatabasesTable').DataTable();
+    });
+</script>
+{% endblock %}
 

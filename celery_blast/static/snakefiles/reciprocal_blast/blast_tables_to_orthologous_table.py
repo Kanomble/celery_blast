@@ -7,7 +7,7 @@ from Bio import Entrez
 ERRORCODE=6
 with open(snakemake.log['log'],'w') as logfile:
     try:
-        logfile.write("starting to construct result dataframe ...\n")
+        logfile.write("INFO:starting to construct result dataframe ...\n")
         Entrez.email = snakemake.config['user_email']
         rec_prot=pd.read_table(snakemake.input['rec_res'],index_col=False)
         fw_res=pd.read_table(snakemake.input['fw_res'],header=None)
@@ -47,7 +47,7 @@ with open(snakemake.log['log'],'w') as logfile:
             dataframes = []
             unique_queries = list(df['qseqid'].unique())
 
-            logfile.write("working on {} unique queries\n".format(len(unique_queries)))
+            logfile.write("INFO:working on {} unique queries\n".format(len(unique_queries)))
             for query in unique_queries:
                 dataframe = df.loc[df['qseqid'] == query].copy()
                 dataframe['sacc'] = dataframe['sacc'].map(lambda protid: protid.split(".")[0])
@@ -67,7 +67,7 @@ with open(snakemake.log['log'],'w') as logfile:
                 begin = 0
                 step = 500
                 steps = 500
-                logfile.write("inference of taxonomic informations for all rbhs of {}\n".format(query,len(dataframe)))
+                logfile.write("INFO:inference of taxonomic informations for all rbhs of {}\n".format(query,len(dataframe)))
                 while begin < end:
                     if step >= end:
                         step = end
@@ -145,19 +145,20 @@ with open(snakemake.log['log'],'w') as logfile:
                     sys.exit(ERRORCODE)
 
                 dataframes.append(dataframe)
-                logfile.write("DONE extracting taxonomic informations for query sequence {}\n".format(query))
+                logfile.write("INFO:extracting taxonomic informations for query sequence {}\n".format(query))
 
             result_df = pd.concat(dataframes)
 
             return result_df
+        logfile.write("INFO:constructing result dataframe\n")
 
         result_data.to_csv(snakemake.output['result_csv'],header=list(result_data.columns))
-        logfile.write("DONE constructing result dataframe\n")
 
         big_result_data = add_taxonomic_information_to_result_dataframe(result_data, snakemake.input['query_file'])
+        logfile.write("INFO:writing result dataframe\n")
 
         big_result_data.to_csv(snakemake.output['taxonomy_result_csv'],header=list(big_result_data.columns))
-        logfile.write("DONE writing result dataframe\n")
+        logfile.write("DONE\n")
 
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))

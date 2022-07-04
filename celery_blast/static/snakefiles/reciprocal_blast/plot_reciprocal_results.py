@@ -11,10 +11,10 @@ overlap.remove("lightgrey")
 ERRORCODE=10
 with open(snakemake.log[0],'w') as logfile:
     try:
-        logfile.write("starting to produce plots for the results of the reciprocal BLAST pipeline\n")
-        logfile.write("loading reciprocal result dataframe into pandas\n")
+        logfile.write("INFO:starting to produce plots for the results of the reciprocal BLAST pipeline\n")
+        logfile.write("INFO:loading reciprocal result dataframe into pandas\n")
         rec_prot=pd.read_table(snakemake.input['rec_res'])
-        logfile.write("loading forward BLAST results dataframe into pandas\n")
+        logfile.write("INFO:loading forward BLAST results dataframe into pandas\n")
         fw_res=pd.read_table(snakemake.input['fw_res'],header=None)
         fw_res.columns=["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
                           "stitle"]
@@ -23,7 +23,7 @@ with open(snakemake.log[0],'w') as logfile:
         fw_res['sacc'] = fw_res['sacc'].map(lambda line: line.split('.')[0])
         rec_prot = rec_prot.rename(columns={"forward_genome_id": "sacc"})
         rec_prot = rec_prot.rename(columns={"backward_genome_id": "qseqid"})
-        logfile.write("merging forward BLAST dataframe with reciprocal results dataframe\n")
+        logfile.write("INFO:merging forward BLAST dataframe with reciprocal results dataframe\n")
         result_data = rec_prot.merge(fw_res,how='inner', on=['sacc','qseqid','staxids'])
         #the backward blast is currently limited to output only the best match, but the best match can contain several hsps,
         #thus it is possible that there are multiple lines of one qseqid present, which gets loaded by reading the dictionary for
@@ -31,7 +31,7 @@ with open(snakemake.log[0],'w') as logfile:
         result_data = result_data.drop_duplicates(['sacc','staxids'], keep='first')
         result_data = result_data.reset_index(drop=True)
 
-        logfile.write("reading query file\n")
+        logfile.write("INFO:reading query file\n")
         queries = open(snakemake.input['query_file'],'r')
         lines = queries.readlines()
         queries.close()
@@ -41,7 +41,7 @@ with open(snakemake.log[0],'w') as logfile:
             if ">" in line:
                 queries.append(line.split(" ")[0].split(".")[0].split(">")[1])
 
-        logfile.write("parsing result dataframe\n")
+        logfile.write("INFO:parsing result dataframe\n")
         accid_taxids={}
         for query in queries:
             accid_taxids[query] = result_data[result_data['qseqid'] == query]
@@ -53,7 +53,7 @@ with open(snakemake.log[0],'w') as logfile:
         if rows * columns < len(queries):
             rows += 1
 
-        logfile.write("starting to produce e-value figure\n")
+        logfile.write("INFO:starting to produce e-value figure\n")
         fig, axs = plt.subplots(rows, columns, figsize=(15, 6),
                                 facecolor='w', edgecolor='k', constrained_layout=True)
         # fig.subplots_adjust(hspace = .5, wspace=.001)
@@ -97,7 +97,7 @@ with open(snakemake.log[0],'w') as logfile:
             plt.savefig(snakemake.output['evalue_plot'],dpi=300)
             plt.savefig(snakemake.params['plot_evalues'], dpi=300,transparent=True)
 
-        logfile.write("starting to produce taxids to hit figure\n")
+        logfile.write("INFO:starting to produce taxids to hit figure\n")
         fig, axs = plt.subplots(rows, columns, figsize=(15, 6),
                                 facecolor='w', edgecolor='k', constrained_layout=True)
 

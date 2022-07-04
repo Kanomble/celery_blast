@@ -228,30 +228,6 @@
             });
     } );
     </script>
-    <!--
-    <script>
-        $(document).ready(function(){
-            {
-            var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-
-                var query_info = document.getElementById('QUERY_INFO');
-                var data=this.responseText;
-                var jsonResponse = JSON.parse(data);
-                var elementList =createElementListForTable(jsonResponse)
-                var table = buildHtmlTable(elementList);
-
-                table.className = 'table table-hover';
-                query_info.appendChild(table)
-                }
-            };
-            xhttp.open("GET", "{% url 'ajax_wp_to_links' project_id=BlastProject.id %}", true);
-            xhttp.send();
-            }
-        });
-    </script>
-    -->
     <script>
     $(document).ready(function(){
         var result_table = document.getElementById('myTable');

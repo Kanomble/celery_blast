@@ -4,12 +4,12 @@ ERRORCODE=8
 
 with open(snakemake.log['log'],'w') as logfile:
     try:
-        logfile.write("starting to write RBH summary file and directories for query sequences\n")
+        logfile.write("INFO:starting to write RBH summary file and directories for query sequences\n")
         result_df = pd.read_csv(snakemake.input['result_csv'],header=0, index_col=0)
 
         hit_info_file = open(snakemake.output['hit_information'],'w')
         queries = []
-        logfile.write("extracting query sequence identifier based on query file\n")
+        logfile.write("INFO:extracting query sequence identifier based on query file\n")
         with open(snakemake.input['query_file'],'r') as fhandle:
             for line in fhandle.readlines():
                 if line[0] == '>':
@@ -19,7 +19,7 @@ with open(snakemake.log['log'],'w') as logfile:
                     logfile.write("\textracted query: {}\n".format(query))
                     queries.append(query)
 
-        logfile.write("looping over query sequences to identify amount of RBHs and to build directories\n")
+        logfile.write("INFO:looping over query sequences to identify amount of RBHs and to build directories\n")
         for query in queries:
             target_df = result_df[result_df['qseqid'] == query]
             sacc_list = list(target_df['sacc'].unique())
@@ -32,8 +32,10 @@ with open(snakemake.log['log'],'w') as logfile:
             output.close()
 
             hit_info_file.write("qseqid: {} hits: {}\n".format(query, len(target_df)))
-            logfile.write("\tworking with:{}\n".format(query))
+            logfile.write("\tINFO:working with:{}\n".format(query))
+
         hit_info_file.close()
+        logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))
         exit(ERRORCODE)

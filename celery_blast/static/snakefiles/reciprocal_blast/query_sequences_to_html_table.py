@@ -253,14 +253,14 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
 
 with open(snakemake.log['log'],'w') as logfile:
     try:
-        logfile.write("starting to create query sequence html table\n")
-        logfile.write("reading query sequence file\n")
+        logfile.write("INFO:starting to create query sequence html table\n")
+        logfile.write("INFO:reading query sequence file\n")
         proteins = get_target_header(snakemake.input['target_file'])
-        logfile.write("fetching protein records with biopython\n")
+        logfile.write("INFO:fetching protein records with biopython\n")
         records = fetch_protein_records(proteins,snakemake.params['email'])
-        logfile.write("parsing records and extracting informations\n")
+        logfile.write("INFO:parsing records and extracting informations\n")
         protein_informations = parse_entrez_xml(records)
-        logfile.write("writing html file with pandas\n")
+        logfile.write("INFO:writing html file with pandas\n")
         create_pandas_df_and_html_table(proteins,protein_informations,snakemake.output['output_html'],snakemake.output['output_csv'])
         logfile.write("DONE\n")
     except Exception as e:
