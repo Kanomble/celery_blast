@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
+from blast_project.py_services import get_html_results
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
     entrez_search_task, download_entrez_search_associated_protein_sequences
@@ -9,6 +10,7 @@ from .forms import EntrezSearchForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
 from django.http import JsonResponse
+from django.utils.html import format_html
 from time import sleep
 
 @login_required(login_url='login')
@@ -217,6 +219,8 @@ def phylogenetic_information(request, project_id, query_sequence_id):
         context['qseqids'] = qseqids
         context['query_sequence_id']= query_sequence_id
         context['project_id'] = project_id
+
+        context['html_results'] = ''.join(get_html_results(project_id,str(query_sequence_id)+'/results_rbhs.html'))
         return render(request,"external_tools/phylogenetic_dashboard.html",context)
     except Exception as e:
         return failure_view(request,e)

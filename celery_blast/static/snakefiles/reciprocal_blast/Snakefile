@@ -22,6 +22,7 @@ rule all:
 		 "reciprocal_results_info.txt",
 		 "query_sequence_information.html",
 		"query_sequence_information.csv",
+		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -104,7 +105,7 @@ rule backward_blast:
 				#backward blast procedure
 				inter_blast_out = open("blast.table",'w')
 				for file in filenames:
-					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file}")
+					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file} 2> {log}")
 					with open(params.intermediate_filename,'r') as interfilename:
 						for line in interfilename.readlines():
 							inter_blast_out.write(line)
@@ -152,7 +153,7 @@ rule blast_tables_to_html:
 #outputs a summary for the RBH inference and constructs directories for each query sequence
 rule reciprocal_results_table_to_target_sequences:
 	input: result_csv="reciprocal_results.csv", query_file=config['query_sequence']
-	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
+	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS), rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS)
 	log: log="log/reciprocal_results_table_to_target_sequences.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
@@ -161,11 +162,20 @@ rule reciprocal_results_table_to_target_sequences:
 #extracts sequences of RBHs from the forward database
 rule extract_subject_sequences_from_database:
 	input: "{qseqid}/target_sequence_ids.txt"
-	output: "{qseqid}/target_sequences.faa"
+	output: "{qseqid}/target_sequences_raw.faa"
 	params: database=config["blastdb"]
-	#log: log="log/extract_subject_sequences_from_database.log"
 	shell:
 		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
+
+#RULE 16
+#checks if the query sequence resides in the target_sequences.faa file
+rule check_if_query_sequence_is_in_target_sequences_faa:
+	input: target_file=expand("{qseqid}/target_sequences_raw.faa",qseqid=QSEQIDS), query_file=config['query_sequence']
+	output: expand("{qseqid}/target_sequences.faa",qseqid=QSEQIDS)
+	params: qseqs=QSEQIDS,
+	log: log="log/check_target_fasta.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/check_if_query_sequence_is_in_target_sequences_faa.py"
 
 #RULE 10
 #creates plots for the visualization of pipeline results
@@ -212,7 +222,7 @@ rule conduct_phylogeny_fast_tree:
 			if len(infile.readlines()) > 1:
 				shell("fasttree {input} > {output} 2> {log}")
 			else:
-				shell("touch {output} 2> {log.log}")
+				shell("touch {output} 2> {log}")
 
 #RULE 14
 rule update_tree_with_taxid:
@@ -230,3 +240,6 @@ rule ete3_tree_to_png:
 	log: log="log/{qseqid}/ete3_tree_to_png.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/ete3_tree_to_png.py"
+
+#RULE 16
+#searching for protein domains in the CDD database

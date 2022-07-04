@@ -77,3 +77,5 @@ def check_if_msa_file_is_available(path_to_msa_file: str) -> int:
     except Exception as e:
         raise Exception("[-] error during checking if msa file exists with exception: {}".format(e))
 
+
+
