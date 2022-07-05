@@ -178,7 +178,6 @@ class ProjectCreationForm(forms.Form):
                             try:
                                 acc = line.split(" ")[0].split('>')[-1].split(".")[0]
                                 header.append(acc)
-
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
 
@@ -189,6 +188,9 @@ class ProjectCreationForm(forms.Form):
                         valid = check_if_sequences_are_in_database(backward_db.id, header)
                         if valid != True:
                             self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+
+                    if len(header) != len(set(header)):
+                        self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
         except Exception as e:
             raise ValidationError(
                 "validation error in project creation, due to this exception: {}".format(

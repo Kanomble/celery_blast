@@ -14,7 +14,7 @@ import pandas as pd
 import altair as alt
 from sys import exit
 
-RETURNCODE=2
+ERRORCODE=2
 with open(snakemake.log['log'],'w') as logfile:
     try:
         Entrez.email = snakemake.params['user_email']
@@ -60,7 +60,7 @@ with open(snakemake.log['log'],'w') as logfile:
                     staxids.append(ids)
 
             result_record = []
-            logfile.write("")
+            logfile.write("\tINFO:adjusting sub result dataframe for query sequence\n")
             end = len(dataframe[dataframe['qseqid'] == query])
             begin = 0
             step = 500
@@ -120,13 +120,11 @@ with open(snakemake.log['log'],'w') as logfile:
             # dataframe['taxonomic_name'] = taxonomy
             if (len(genus) == len(dataframe) and len(family) == len(dataframe) and len(superfamily) == len(dataframe) and len(
                     query_info) == len(dataframe)):
-                # print("Yes!")
                 dataframe['genus'] = genus
                 dataframe['superfamily'] = superfamily
                 dataframe['family'] = family
                 dataframe['query_info'] = query_info
             else:
-                # print("Nope!")
                 break
             dataframes.append(dataframe)
 
@@ -259,4 +257,4 @@ with open(snakemake.log['log'],'w') as logfile:
             f.write(html_string.format(table=result_df.to_html(classes='mystyle')))
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))
-        exit(RETURNCODE)
+        exit(ERRORCODE)

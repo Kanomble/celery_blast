@@ -70,11 +70,11 @@ $("#add_another").click(function() {
     new_form_div_file.setAttribute("class","custom-file")
 
     new_file_field_label.setAttribute("for",file_field_name)
-    new_file_field_label.setAttribute("class","custom-file-label")
+    new_file_field_label.setAttribute("class","form-control-file-label")
     new_file_field_label.appendChild(genome_file_text)
     new_file_field_input.setAttribute("id",file_field_name)
     new_file_field_input.setAttribute("type","file")
-    new_file_field_input.setAttribute("class","custom-file-input")
+    new_file_field_input.setAttribute("class","form-control-file")
     //the name field is especially important for django!
     new_file_field_input.setAttribute("name",file_field_name)
 

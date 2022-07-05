@@ -45,19 +45,21 @@
             </div>
     </div>
         <div class="row"  style="text-align: center;">
-            <div class="col-sm dashboard_project_list_col" style="height: 600px">
+            <div class="col-sm dashboard_project_list_col" style="height: 600px;">
                 <h3 class="col_header"> Reciprocal Results </h3>
-              <!--<p style="font-size: medium"> Some details  from Lukas about orthologs in different organism </p>-->
-                {{html_results|safe}}
-
+                    {{html_results|safe}}
             </div>
 
             <div class="col-sm dashboard_project_list_col" style="height: 600px">
                 <h3 class="col_header"> Phylogenetic Tree</h3>
-              <p style="font-size: medium">Phylogenetic tree ceated with ete3</p>
+                <p style="font-size: medium">Phylogenetic tree ceated with ete3</p>
                     {% load static %}
-                     <img class="img-phylo" src={% static '/images/result_images'%}/{{project_id}}/{{ query_sequence_id }}_target_sequences.svg
-                    alt="Phylogenetic Tree created with ete3">
+
+                    <img class="img-phylo" src={% static '/images/result_images'%}/{{project_id}}/{{ query_sequence_id }}_target_sequences.svg
+                        alt="Phylogenetic Tree created with ete3"
+                        style='height: 100%; width: 100%; object-fit: contain'>
+
+
               <p style="font-size: medium">Some cool information about the tree, such as what the bar means etc.</p>
             </div>
     </div>

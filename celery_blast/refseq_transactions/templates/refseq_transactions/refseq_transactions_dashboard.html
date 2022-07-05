@@ -58,10 +58,11 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
 {% block scripts %}
 <script>
 $(document).ready(function(){
+  $('#activeDatabasesTable').DataTable();
+  $('#unactiveDatabasesTable').DataTable();
   $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
 {% if DownloadInProgressBlastDatabases.count > 0 %}
     {% for database in DownloadInProgressBlastDatabases %}

@@ -28,8 +28,8 @@
                 {% if "genome_file" in field.name %}
                  <div class="form-group">
                      <div class="custom-file">
-                        <label for="{{ field.name }}" class="custom-file-label">Upload Genome File</label>
-                        <input type="file" class="custom-file-input" id="{{ field.name }}" name="{{ field.name }}">
+                        <label for="{{ field.name }}" class="form-control-file-label">Upload Genome File</label>
+                        <input type="file" class="form-control-file" id="{{ field.name }}" name="{{ field.name }}">
                         {% if field.errors %}
                         <div class="alert alert-danger">
                             <strong>{{ field.errors }}</strong>

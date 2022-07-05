@@ -151,10 +151,14 @@ rule blast_tables_to_html:
 
 #RULE 8
 #outputs a summary for the RBH inference and constructs directories for each query sequence
-rule reciprocal_results_table_to_target_sequences:
+rule reciprocal_results_to_query_result_tables:
 	input: result_csv="reciprocal_results.csv", query_file=config['query_sequence']
-	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS), rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS)
-	log: log="log/reciprocal_results_table_to_target_sequences.log"
+	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
+		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
+		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
+	params:	result_statistics_static=expand("../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_statistics.png",qseqid=QSEQIDS),
+			project_id=config['project_id']
+	log: log="log/reciprocal_results_to_query_result_tables.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
 
