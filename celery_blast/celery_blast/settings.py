@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'blast_project',
     'django_celery_results',
     'refseq_transactions',
@@ -125,7 +126,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
-
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/media/'
@@ -146,7 +146,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_TASK_SOFT_TIME_LIMIT = 7200 #2 * 60min = 120min * 60sec = 7200sec
 CELERY_TASK_TIME_LIMIT = 8000
 SUBPROCESS_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT - 5
-#CELERY_RESULT_BACKEND = 'django-cache'
+
 '''
 # django setting.
 CACHES = {
