@@ -49,6 +49,7 @@ rule fw_result_processing:
 					for gi in fw_results[7][:].unique():
 						out.write(gi+"\n")
 				logfile.write(('INFO:done writing {} target sequences into output file'.format(len(fw_results[7][:].unique()))))
+				logfile.write("DONE\n")
 			except Exception as e:
 				logfile.write("ERROR:{}\n".format(e))
 				raise Exception("ERROR in forward blast result processing: {}".format(e))

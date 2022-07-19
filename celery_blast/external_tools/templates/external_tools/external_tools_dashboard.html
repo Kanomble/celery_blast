@@ -86,7 +86,7 @@
                     <td>
                         {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
                             {% load static %}
-                            <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.png">
+                            <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.svg">
                                 <button class="btn btn-dark"> View Phylogeny </button>
                             </a>
                             <!-- <iframe src="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}/target_sequences.html"> </iframe> -->
@@ -94,7 +94,7 @@
                     </td>
                     <td>
                         {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-                        <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.png" download="{{project_id}}/{{ qseq.query_accession_id }}_target_sequences">
+                        <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.svg" download="{{project_id}}/{{ qseq.query_accession_id }}_target_sequences">
                             <button class="btn btn-dark"> Download Phylogeny </button>
                         </a>
                         {% endif %}

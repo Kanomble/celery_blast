@@ -71,7 +71,6 @@ def one_way_blast_project_creation_view(request):
 def one_way_project_details_view(request, project_id):
     try:
         import os
-        print("[*] {}".format(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         blast_project = get_one_way_project_by_id(project_id)
         genus_plot_template = "one_way_blast/"+str(blast_project.id)+'/genus_bars.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)

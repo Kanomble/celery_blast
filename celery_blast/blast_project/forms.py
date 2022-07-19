@@ -43,7 +43,13 @@ class CreateTaxonomicFileForm(forms.Form):
         except Exception as e:
             raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
 
-#TODO Documentation
+'''CreateTaxonomicFileForMultipleScientificNames
+This form replaces the old CreateTaxonomicFileForm. 
+In addition to all attributes from the previous form, this form
+inherits a filename field, which will be used as the actual filename,
+ thus several species names will end up in too long names.
+
+'''
 class CreateTaxonomicFileForMultipleScientificNames(forms.Form):
     filename = forms.CharField(max_length=200, required=True)
     species_names = forms.CharField(max_length=600, required=True)
@@ -60,7 +66,14 @@ class CreateTaxonomicFileForMultipleScientificNames(forms.Form):
 
         try:
             species_names = species_names.split(",")
-            return get_list_of_species_taxids_by_list_of_scientific_names(user_email, species_names)
+            taxids, errors = get_list_of_species_taxids_by_list_of_scientific_names(user_email, species_names)
+            if len(errors) > 0:
+                error_string = ''
+                for name in errors:
+                    error_string = error_string + name + ' '
+                raise ValidationError(
+                    "{}".format(error_string))
+            return taxids
         except Exception as e:
             raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
 

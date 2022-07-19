@@ -323,16 +323,20 @@ def check_if_taxid_is_in_database(database_id, taxonomic_node):
     boolean = int(taxonomic_node) in list(df['taxid'])
     return boolean
 
-#TODO documentation - form validation
+'''check_if_sequences_are_in_databases
+This function is used in forms.py for the reciprocal BLAST project creation. 
+It validates 
+'''
 def check_if_sequences_are_in_database(database_id, sequences):
     path_to_database = 'media/databases/' + str(database_id) + '/'
 
     taxmap_files = os.listdir(path_to_database)
     taxmap_files = [file for file in taxmap_files if file.endswith('table')]
 
-    #for file in taxmap_files:
     pandas_table_file = path_to_database + taxmap_files[0]
 
+    #TODO
+    #what to do if database is too big?
     df = read_csv(pandas_table_file, header=None, sep="\t")
     df.columns = ['AccessionId', 'TaxId']
     df = df['AccessionId'].map(lambda acc: acc.split(".")[0])

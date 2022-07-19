@@ -174,9 +174,7 @@ def create_taxonomic_file_view_old(request):
 @login_required(login_url='login')
 def create_taxonomic_file_view(request):
     try:
-        print("HELLO")
         taxform = CreateTaxonomicFileForMultipleScientificNames(request.user)
-        print("HELLO")
         if request.method == 'POST':
             taxform = CreateTaxonomicFileForMultipleScientificNames(request.user,request.POST)
             if taxform.is_valid():
@@ -184,7 +182,6 @@ def create_taxonomic_file_view(request):
                 filename = filename + '.taxids'
                 taxonomic_nodes = taxform.cleaned_data['species_names']
                 task = write_species_taxids_into_file(taxonomic_nodes,filename)
-        print("HELLO1")
         taxid_files = list_taxonomic_files()
         taxid_files = zip(taxid_files[0], taxid_files[1])
         context = {'taxform': taxform, 'taxid_files': taxid_files}
@@ -262,7 +259,6 @@ def upload_multiple_genomes_post_view(request):
             if multiple_files_genome_form.is_valid():
                 with transaction.atomic():
 
-                    # TODO: implementation of correct functionality for multiple file uploads
                     new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
                                                                                int(extra_field_count) + 1,
                                                                                request.user.email)

@@ -46,22 +46,30 @@ def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
     except Exception as e:
         raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
 
-#TODO documentation
+'''get_list_of_species_taxids_by_list_of_scientific_names
+this function iterates over a list of scientific/taxonomic names and converts those names into taxonomic identifier.
+Those identifier are stored in a list. Exception can occure if taxonomic names are not specified. 
+
+'''
 def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scientific_names:list)->list:
     try:
         Entrez.email = user_email
         taxonomic_nodes = []
+        errors = []
         for name in scientific_names:
             try:
                 search = Entrez.esearch(term=name, db="taxonomy", retmode="xml")
                 record = Entrez.read(search)
                 taxids = record['IdList']
+                if len(taxids) == 0:
+                    errors.append(name)
                 taxonomic_nodes.extend(taxids)
             except:
+                errors.append(name)
                 continue
         if len(taxonomic_nodes) == 0:
             raise Exception("There are no taxonomic nodes for the provided scientific names : {}".format(' '.join(scientific_names)))
-        return taxonomic_nodes
+        return taxonomic_nodes, errors
     except Exception as e:
         raise Exception("[-] ERROR: {}".format(e))
 
