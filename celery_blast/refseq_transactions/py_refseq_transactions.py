@@ -1,3 +1,4 @@
+#functions for the creation of BLAST databases which are triggered via POST and GET requests in the views.py file of this package
 from blast_project.models import BlastDatabase
 from blast_project.py_services import create_blastdatabase_directory, upload_file
 from blast_project.py_django_db_services import create_and_save_refseq_database_model, get_database_by_id

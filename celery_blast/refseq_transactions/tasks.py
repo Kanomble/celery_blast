@@ -1,14 +1,12 @@
 import os
-import subprocess
 from os import getcwd, mkdir, remove
 from os.path import isdir, isfile
-from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
+from subprocess import Popen, SubprocessError, TimeoutExpired
 import pandas as pd
 import math
 
 from blast_project.py_django_db_services import get_database_by_id, update_blast_database_with_task_result_model
-from .py_services import write_blastdatabase_snakemake_configfile,\
-    get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
+from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
 from celery.exceptions import SoftTimeLimitExceeded
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -20,13 +18,13 @@ logger = get_task_logger(__name__)
 
 ''' download_refseq_assembly_summary_file
 
-    this function downloads the current assembly_summary_refseq.txt file into 
+    This function downloads the current assembly_summary_refseq.txt file into 
     the media directory /databases/refseq_summary_file/ if this directory does not exists the function
-    creates the directory
+    creates the directory.
 
     it uses subprocess.Popen to invoke wget, stdout (e.g. percentage is printed out inside celery worker console)
 
-    :returns download_file
+    :returns returncode of Popen
         :type str
 '''
 @shared_task()
@@ -67,7 +65,6 @@ def download_refseq_assembly_summary():
 
         logger.info('download completed')
 
-        # refseq_url.split('/')[-1]
         return returncode
 
     except SoftTimeLimitExceeded:
@@ -94,11 +91,23 @@ def download_refseq_assembly_summary():
     except Exception as e:
         raise Exception("couldn't download assembly_summary_refseq.txt file : {}".format(e))
 
-#TODO documentation
+f'''write_alias_file
+
+    This function produces a .pal file, which lists all fasta files belonging to the dedicated database.
+    
+    :param alias_filename - Name of the .pal file.
+        :type str
+        
+    :param available_databases - List of all database_chunks_integer.fasta
+        :type list
+        
+    :returns 0 on success
+        :type int
+'''
 @shared_task()
-def write_alias_file(alias_filename,available_databases):
+def write_alias_file(alias_filename:str,available_databases:list)->int:
     try:
-        #logger.info('starting to write database alias file : {}'.format(alias_filename))
+        logger.info('starting to write database alias file : {}'.format(alias_filename))
         with open(alias_filename,'w') as alias_file:
             database_title = '.'.join(alias_filename.split("/")[3].split(".")[0:2])
             alias_file.write("TITLE {}\n".format(database_title))
@@ -122,9 +131,30 @@ def write_alias_file(alias_filename,available_databases):
         raise Exception("error during creation of aliasfile with exception : {}".format(e))
 
 
-#TODO documentation
+'''format_blast_databases
+
+    This function executes the makeblastdb command in an subprocess Popen instance.
+    Makeblastdb is used to format fasta files into BLAST databases. 
+    The function operates on all database chunks that are provided via a list of integers. 
+    E.g. [0,1,2] will produce three database files: database_chunk_1.faa ...
+    
+    :param path_to_database - Filepath, e.g. media/databases/1
+        :type str
+    
+    :param chunks - List of integers.
+        :type list
+    
+    :param progress_recorder - Used to update the celery task.
+        :type ProgressRecorder class
+    
+    :returns available databases - List of successfully formatted database names
+        :type list
+    
+    :returns errorlist - List of databases with errors during the formatting procedure.
+        :type list
+'''
 @shared_task()
-def format_blast_databases(path_to_database,chunks, progress_recorder):
+def format_blast_databases(path_to_database:str,chunks:list,progress_recorder:ProgressRecorder)->tuple:
     try:
         errorlist=[]
         available_databases=[]
@@ -174,9 +204,25 @@ def format_blast_databases(path_to_database,chunks, progress_recorder):
         logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
         raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
 
-#TODO documentation
+'''create_chunks_of_databases
+    This function combines each 500 fasta files to one database chunk that can gets formatted to 
+    BLAST databases by makeblastdb. The provided pandas dataframe (dict[str,int]) is based on the output
+    of download_wget_ftp_paths.
+    
+    :param df - based on dict[str, int] with str=filepath and int=taxid
+        :type pd.DataFrame
+    
+    :param path_to_database
+        :type str
+    
+    :param progress_recorder
+        :type ProgressRecorder
+        
+    :returns chunks - list of integers that define the database chunks
+        :type list - list[int]
+'''
 @shared_task()
-def create_chunks_of_databases(df, path_to_database, progress_recorder):
+def create_chunks_of_databases(df:pd.DataFrame,path_to_database:str,progress_recorder:ProgressRecorder)->list:
     try:
         total_formatted = 0
         chunk = 1
@@ -229,6 +275,7 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
                     remove(path_to_database+assembly_name)
 
                     for line in lines:
+                        #transformes accession id and adds additional informations
                         if line[0] == ">":
                             split = line.split(" ")
                             header = ' '.join(split[1:])
@@ -275,7 +322,7 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
     
 '''
 @shared_task()
-def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progress_recorder):
+def download_wget_ftp_paths(path_to_database:str,dictionary_ftp_paths_taxids:dict,progress_recorder:ProgressRecorder)->dict:
     try:
         error_log = open(path_to_database+'download_error.log', 'w')
         transform_ftp_path = lambda file: file.split('/')[-1].rstrip(file[-3:])
@@ -319,12 +366,13 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
                             error_log.write('couldnt download: {} '.format(file))
                             logger.warning('couldnt download: {} after 10 attempts'.format(file))
                             if(isfile(path_to_database + gunzip_output) == True):
-                                remove(path_to_database + gunzip_output)
+                                remove(path_to_database + gunzip_output)#removes partially downloaded files
                                 logger.warning("removed empty file: {}".format(gunzip_output))
 
                             progress += progress_steps
                             progress_recorder.set_progress(progress, 100, "failed trying to download {}".format(file))
                             #break
+                    #fills the returned dictionary with successfully downloaded genome files
                     else:
                         logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
                         downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
