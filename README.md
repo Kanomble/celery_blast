@@ -24,6 +24,7 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] include taxonomic information in BLAST database tables
 - [ ] adjust text size of titles in reciprocal blast result dashboard plots
 - [ ] esearch output into subfolders for each user
 - [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
