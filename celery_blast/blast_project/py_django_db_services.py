@@ -16,7 +16,7 @@ This script provides functions that should serve as a layer between the database
 '''
 
 #TODO documentation
-def create_external_tools_after_snakemake_workflow_finishes(project_id):
+def create_external_tools_after_snakemake_workflow_finishes(project_id:int)->ExternalTools:
     try:
         with transaction.atomic():
             external_tool = ExternalTools.objects.create_external_tools(project_id)
@@ -324,27 +324,30 @@ def check_if_taxid_is_in_database(database_id, taxonomic_node):
     return boolean
 
 '''check_if_sequences_are_in_databases
-This function is used in forms.py for the reciprocal BLAST project creation. 
-It validates 
+    This function is used in forms.py for the reciprocal BLAST project creation. 
+    The function checks if the query sequence resides in the backward BLAST database.
+    
+    :params sequences
 '''
-def check_if_sequences_are_in_database(database_id, sequences):
+def check_if_sequences_are_in_database(database_id:int, sequences:list):
     path_to_database = 'media/databases/' + str(database_id) + '/'
 
     taxmap_files = os.listdir(path_to_database)
-    taxmap_files = [file for file in taxmap_files if file.endswith('table')]
-
-    pandas_table_file = path_to_database + taxmap_files[0]
-
-    #TODO
-    #what to do if database is too big?
-    df = read_csv(pandas_table_file, header=None, sep="\t")
-    df.columns = ['AccessionId', 'TaxId']
-    df = df['AccessionId'].map(lambda acc: acc.split(".")[0])
+    taxmap_files = [file for file in taxmap_files if file.endswith('.table')]
 
     to_compare = Series(sequences)
-    to_compare = to_compare[~to_compare.isin(df)]
-    print(df)
+    for index,taxfile in enumerate(taxmap_files):
+        pandas_taxmap_table_file = path_to_database + taxmap_files[index]
+
+        #TODO refactor
+        #what to do if database is too big?
+        df = read_csv(pandas_taxmap_table_file, header=None, sep="\t")
+        df.columns = ['AccessionId', 'TaxId']
+        df = df['AccessionId'].map(lambda acc: acc.split(".")[0])
+        to_compare = to_compare[~to_compare.isin(df)]
+
     if len(to_compare) != 0:
         return list(to_compare)
-    else:
+
+    elif len(to_compare) == 0:
         return True

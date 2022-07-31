@@ -2,11 +2,9 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.forms import ModelChoiceField
-from django.utils import timezone
-from pandas import read_csv
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, get_list_of_species_taxids_by_list_of_scientific_names
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
+
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
 
@@ -85,8 +83,9 @@ class CreateUserForm(UserCreationForm):
 
 ''' ProjectCreationForm
     This form is used in the form_project_creation.html.
-    All form fields are processed into the BlastProject model instance via the project_creation_view functions 
-    in the views.py file. 
+    All form fields are processed into the BlastProject model instance via the project_creation_view functions.
+    Field validation is done in the clean function of this form.
+    
     
     fields | types:
         - project_title | charfield
@@ -156,21 +155,14 @@ class ProjectCreationForm(forms.Form):
                 self.add_error('species_name_for_backward_blast','your provided species has no taxonomic node - check on NCBI'.format(species_name))
 
             backward_db = cleaned_data['project_backward_database']
-            # forward_db = self.cleaned_data['project_forward_database']
             try:
                 booleanbw = check_if_taxid_is_in_database(backward_db.id, taxonomic_node)
-
-                print("1")
-            # booleanfw = check_if_taxid_is_in_database(forward_db.id,taxonomic_node)
                 if booleanbw == False:
                     self.add_error('species_name_for_backward_blast',
                                    'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
                                        taxonomic_node, backward_db.database_name))
-                # if booleanfw == False:
-                #    self.add_error('species_name_for_backward_blast','specified taxonomic node: {} does not reside in the selected FORWARD database: {}'.format(taxonomic_node,forward_db.database_name))
-                if booleanbw == True:  # if booleanfw == True
+                if booleanbw == True:
                     cleaned_data['species_name_for_backward_blast'] = (species_name, taxonomic_node)
-                print("2")
 
             except Exception:
                 self.add_error('species_name_for_backward_blast',
@@ -178,12 +170,13 @@ class ProjectCreationForm(forms.Form):
                                    taxonomic_node, backward_db.database_name))
 
             query_file = cleaned_data['query_sequence_file']
-            #backward_db = self.cleaned_data['project_backward_database']
-            #print(cleaned_data)
+
+            #check for fasta files
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-                raise self.add_error("query_sequence_file","please upload only fasta files!")
+                self.add_error("query_sequence_file","please upload only fasta files!")
             else:
                 header = []
+                #checks accession identifier of query sequences
                 for chunk in query_file.chunks():
                     lines = chunk.decode().split("\n")
                     for line in lines:
@@ -193,15 +186,17 @@ class ProjectCreationForm(forms.Form):
                                 header.append(acc)
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
-
+                    #maximum number of query sequences = 300
                     if len(header) > 300:
                         self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
                                                              ' this is not allowed, consider to separate the query sequences.')
+                    #checks if query sequences reside in the backward database
                     else:
                         valid = check_if_sequences_are_in_database(backward_db.id, header)
                         if valid != True:
                             self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
 
+                    #check for duplicate entries in the query file
                     if len(header) != len(set(header)):
                         self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
         except Exception as e:
