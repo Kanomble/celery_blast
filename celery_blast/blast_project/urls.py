@@ -14,7 +14,7 @@ registration_urls = [
 service_urls = [
     path('create_taxonomic_file', views.create_taxonomic_file_view, name='species_taxids'),
     path('upload_genomes/',views.upload_genome_view,name='upload_genomes'),
-    path('upload_multiple_genomes/',views.upload_multiple_genomes_post_view,name='upload_multiple_genomes'),
+    path('upload_multiple_genomes/', views.upload_multiple_genomes_view, name='upload_multiple_genomes'),
 
     path('project_creation',views.project_creation_view,name='project_creation'),
     path('<int:project_id>/project_details',views.project_details_view,name='project_details'),

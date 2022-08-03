@@ -143,8 +143,6 @@ def load_reciprocal_result_html_table_view(request, project_id):
     except Exception as e:
         return failure_view(request, e)
 
-
-
 ''' create_taxonomic_file_view
 
 view for creation of taxonomic files, produced by the get_species_taxids.sh script.
@@ -191,10 +189,10 @@ def create_taxonomic_file_view(request):
         return failure_view(request, e)
 
 
-
-#upload_types: standard for GET one_file and multiple_files for POST
 #TODO documentation rename function to upload_single_genome_ ...
-#two upload genome views one for single and one for multiple files
+#two upload genome options one for single and one for multiple files
+#first view function - upload_genome_view for the single files
+#second view function - upload_multiple_genomes_post view
 @login_required(login_url='login')
 def upload_genome_view(request):
     try:
@@ -249,7 +247,7 @@ def upload_genome_view(request):
 
 #TODO implement view for disentangling big genome upload view ...
 @login_required(login_url='login')
-def upload_multiple_genomes_post_view(request):
+def upload_multiple_genomes_view(request):
     try:
         if request.method == 'POST':
             upload_genome_form = UploadGenomeForm(request.user)

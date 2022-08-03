@@ -1,7 +1,5 @@
 import os
-
 import pandas as pd
-
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
 from external_tools.models import ExternalTools
 from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
@@ -83,6 +81,7 @@ def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,que
         return blast_project
     except Exception as e:
         raise IntegrityError('couldnt create blast project with exception : {}'.format(e))
+
 #TODO documentation
 def create_blast_settings_from_form(fwOrBw,valid_settings_form):
     try:
@@ -250,7 +249,7 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
     #2nd upload files
     #3rd write accession table
     #4th concatenate files
-    #5th makeblastdb cmd
+    #5th makeblastdb cmd --> this is done within celery?
 
     database_title = cleaned_data_multiple_files['database_title']
     database_description = cleaned_data_multiple_files['database_description']
