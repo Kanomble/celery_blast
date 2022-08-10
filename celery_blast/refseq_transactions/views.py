@@ -1,19 +1,13 @@
-from django.shortcuts import render
-
-# Create your views here.
+#MAIN VIEWS REFSEQ TRANSACTIONS FOR BLAT DATABASES
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.core import serializers
-
-
-from .py_refseq_transactions import get_downloaded_databases, get_failed_tasks, get_databases_in_progress,\
+from .py_refseq_transactions import get_downloaded_databases, get_databases_in_progress,\
                                     get_databases_without_tasks, create_blastdatabase_table_and_directory, \
                                     read_database_table_by_database_id_and_return_json
-from .py_services import refseq_file_exists, read_database_download_and_format_logfile, get_database_download_and_formatting_task_result
+from .py_services import refseq_file_exists, get_database_download_and_formatting_task_result_progress
 from .forms import RefseqDatabaseForm
-from .tasks import download_refseq_assembly_summary, download_blast_databases, download_blast_databases_based_on_summary_file
-
+from .tasks import download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
 from blast_project.py_django_db_services import get_database_by_id
 from blast_project.views import failure_view
 from blast_project.py_services import delete_blastdb_and_associated_directories_by_id
@@ -96,11 +90,24 @@ def create_blast_database_model_and_directory(request):
                 #do something here if validation succeeds
                 create_blastdatabase_table_and_directory(refseq_database_form)
                 return redirect('refseq_transactions_dashboard')
+
             #validation error
             else:
+
+                if (refseq_file_exists()):
+                    context['refseq_exists'] = True
+
                 #user stays at the page because of validation errors
+                executed_databases = get_downloaded_databases()
+                not_executed_databases = get_databases_without_tasks()
+                download_in_progress_databases = get_databases_in_progress()
+
+                context['ActiveBlastDatabases'] = executed_databases
+                context['DownloadInProgressBlastDatabases'] = download_in_progress_databases
+                context['UnactiveBlastDatabases'] = not_executed_databases
                 context['RefseqDatabaseForm'] = refseq_database_form
-                return render(request,'refseq_transactions/refseq_transactions_dashboard.html',context)
+
+            return render(request,'refseq_transactions/refseq_transactions_dashboard.html',context)
         # should never been executed
         else:
             return redirect('refseq_transactions_dashboard')
@@ -170,21 +177,49 @@ def ajax_call_for_database_details(request, database_id):
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
 
-#TODO documentation
+'''ajax_call_for_database_download_progress
+
+    This function is used for displaying the progress of the BLAST database download and formatting procedure.
+    The progress is displayed within a HTML DataTables instance. 
+    The progress is saved within a celery task database entry.
+    
+    :params request
+        :type request
+        
+    :params database_id
+        :type int
+    
+    :returns progress, status
+        :type JsonResponse
+'''
 def ajax_call_for_database_download_progress(request, database_id):
     try:
         if request.is_ajax and request.method == "GET":
             #progress = read_database_download_and_format_logfile(database_id)
-            progress = get_database_download_and_formatting_task_result(database_id)
+            progress = get_database_download_and_formatting_task_result_progress(database_id)
             return JsonResponse({"progress":progress},status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
-#TODO documentation
+'''download_and_format_blast_database
+    
+    This function triggers the download and formatting procedure for BLAST databases.
+    First the user has to crate a database table. This view function spawns a (long running) celery task.
+    The task progress can be viewed in the celery_worker container.
+    
+    :params request
+        :type request
+        
+    :params database_id
+        :type int
+        
+    :returns redirection to refseq_transactions_dashboard
+        :type redirection
+
+'''
 def download_and_format_blast_database(request, database_id):
     try:
         task = download_blast_databases_based_on_summary_file.delay(database_id)
-        #task = download_blast_databases.delay(database_id)
         return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request,e)

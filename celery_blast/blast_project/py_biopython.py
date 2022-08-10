@@ -4,27 +4,77 @@ functions that use the biopython package, more informations: https://biopython.o
 
 '''
 from Bio import Entrez
-import json
 from .py_django_db_services import get_project_by_id
 ''' get_species_taxid_by_name 
 
 utilization in the clean_species_name form field of CreateTaxonomicFileForm
 
-:param user_email
-    :type str
-:param scientific_name
-    :type str
-:returns taxonomic node (int) defined in Entrez.esearch dictionary instance
+    :param user_email
+        :type str
+        
+    :param scientific_name
+        :type str
+    
+    :returns taxonomic nodes defined in Entrez.esearch dictionary instance
+        :type list
 '''
-def get_species_taxid_by_name(user_email,scientific_name):
+def get_species_taxid_by_name(user_email:str,scientific_name:str)->list:
     try:
         Entrez.email = user_email
         search = Entrez.esearch(term=scientific_name, db="taxonomy", retmode="xml")
         record = Entrez.read(search)
-        taxid = record['IdList'][0]
+        taxids = record['IdList']
+        return taxids
+    except Exception as e:
+        raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+
+'''get_list_of_species_taxid_by_name
+sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)
+therefore this function can be used to iterate over all available nodes. Those nodes will be written into one file that is 
+than processed for database parsing.
+
+:param user_email
+    :type str
+:param scientific_name
+    :type str
+:returns taxonomic nodes (list:int)
+'''
+def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
+    try:
+        Entrez.email = user_email
+        search = Entrez.esearch(term=scientific_name, db="taxonomy", retmode="xml")
+        record = Entrez.read(search)
+        taxid = record['IdList']
         return taxid
     except Exception as e:
         raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+
+'''get_list_of_species_taxids_by_list_of_scientific_names
+this function iterates over a list of scientific/taxonomic names and converts those names into taxonomic identifier.
+Those identifier are stored in a list. Exception can occure if taxonomic names are not specified. 
+
+'''
+def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scientific_names:list)->list:
+    try:
+        Entrez.email = user_email
+        taxonomic_nodes = []
+        errors = []
+        for name in scientific_names:
+            try:
+                search = Entrez.esearch(term=name, db="taxonomy", retmode="xml")
+                record = Entrez.read(search)
+                taxids = record['IdList']
+                if len(taxids) == 0:
+                    errors.append(name)
+                taxonomic_nodes.extend(taxids)
+            except:
+                errors.append(name)
+                continue
+        if len(taxonomic_nodes) == 0:
+            raise Exception("There are no taxonomic nodes for the provided scientific names : {}".format(' '.join(scientific_names)))
+        return taxonomic_nodes, errors
+    except Exception as e:
+        raise Exception("[-] ERROR: {}".format(e))
 
 #TODO documentation
 def check_given_taxonomic_node(user_email, taxid):

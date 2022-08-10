@@ -1,5 +1,5 @@
 import os
-from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
+from subprocess import Popen, SubprocessError, TimeoutExpired
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -38,17 +38,11 @@ def execute_one_way_blast_project(self,project_id):
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
-             '--keep-incomplete'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+             '--keep-incomplete'], shell=False)
         progress_recorder.set_progress(50, 100, "executed snakemake")
 
-    except SubprocessError as e:
-        logger.info('subprocess throwed exception: {}'.format(e))
-        raise Exception(
-            'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
-
-    try:
-        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(one_way_blast_snakemake.pid, 4000))
-        returncode = one_way_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
+        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(one_way_blast_snakemake.pid,settings.SUBPROCESS_TIME_LIMIT))
+        returncode = one_way_blast_snakemake.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
         if returncode > 0:
             logger.warning('received a negative returncode : {} ... '.format(returncode))
             raise Exception
@@ -62,6 +56,10 @@ def execute_one_way_blast_project(self,project_id):
 
         raise Exception(
             'exception during waiting for popen instance : {} \n\t returncode of popen.wait : {}'.format(e, returncode))
+    except SubprocessError as e:
+        logger.info('subprocess throwed exception: {}'.format(e))
+        raise Exception(
+            'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
 
 
 
@@ -91,17 +89,13 @@ def execute_one_way_remote_blast_project(self,project_id):
              '--cores','1',
              '--configfile',snakemake_config_file,
              '--directory',snakemake_working_dir,
-             '--keep-incomplete'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
+             '--keep-incomplete'], shell=False)
         progress_recorder.set_progress(50, 100, "executed snakemake")
 
-    except SubprocessError as e:
-        logger.info('subprocess throwed exception: {}'.format(e))
-        raise Exception(
-            'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
 
-    try:
-        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(one_way_remote_blast_snakemake.pid, 4000))
-        returncode = one_way_remote_blast_snakemake.wait(timeout=604800) #66 min 604800 = 7d
+
+        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(one_way_remote_blast_snakemake.pid, settings.SUBPROCESS_TIME_LIMIT))
+        returncode = one_way_remote_blast_snakemake.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
         if returncode > 0:
             logger.warning('received a negative returncode {} ... '.format(returncode))
             raise Exception
@@ -112,6 +106,10 @@ def execute_one_way_remote_blast_project(self,project_id):
     except TimeoutExpired as e:
         logger.info('timeout expired ... trying to kill process {}'.format(one_way_remote_blast_snakemake.pid))
         one_way_remote_blast_snakemake.kill()
-
         raise Exception(
             'exception during waiting for popen instance : {} \n\t returncode of popen.wait > 0'.format(e))
+
+    except SubprocessError as e:
+        logger.info('subprocess throwed exception: {}'.format(e))
+        raise Exception(
+            'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))

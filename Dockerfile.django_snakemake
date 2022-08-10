@@ -74,6 +74,10 @@ RUN perl ../ncbi-blast-2.11.0+/bin/update_blastdb.pl taxdb
 # Install it in the BLASTDB directory
 RUN gunzip -cd taxdb.tar.gz | (cd $BLASTDB; tar xvf - )
 
+# Install EMBOSS, mafft and fasttree
+RUN apt-get update && (apt-get install -t buster-backports -y emboss emboss-data embassy-domsearch embassy-domalign embassy-domainatrix mafft fasttree || apt-get install -y emboss emboss-data embassy-domsearch embassy-domalign embassy-domainatrix mafft fasttree)
+
+
 #wait-for script to make the web-app and celery worker waiting for the services to finish
 RUN apt-get update -y && apt-get install -y netcat
 RUN wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for
@@ -81,6 +85,13 @@ RUN chmod u+x wait-for
 
 COPY requirements.txt /blast/reciprocal_blast
 RUN pip install -r requirements.txt
+
+#Download requirements for ete3
+RUN pip install --upgrade ete3
+RUN apt-get -y update && apt-get -y install python-numpy python-lxml python-six libglib2.0-0 libgtk2.0-dev libqt5x11extras5 libgl1-mesa-glx
+RUN conda install -y pyqt
+#PyQt5 in requirements
+
 EXPOSE 8080
 # Delete not required packages etc..
 RUN apt-get autoremove --purge --yes && apt-get clean && rm -rf /var/lib/apt/lists/*

@@ -1,5 +1,8 @@
 from django.db import models, IntegrityError
 from blast_project.models import BlastProject
+from django_celery_results.models import TaskResult
+import os
+import pandas as pd
 
 class ExternalToolsManager(models.Manager):
     def create_external_tools(self,project_id):
@@ -37,3 +40,26 @@ class QuerySequenceManager(models.Manager):
             return query_sequence
         except Exception as e:
             raise IntegrityError("[-] couldnt save query sequence model into database with exception : {}".format(e))
+
+class EntrezSearchManager(models.Manager):
+    def create_entrez_search(self, database, entrez_query, file_path, search_task_result, entrez_user):
+        file_name = file_path
+        if os.path.isfile(file_name) == False:
+            paper_entries = 0
+        else:
+            paper_entries = len(pd.read_table(file_name, header=None))
+        task_result = TaskResult.objects.get(task_id=search_task_result)
+        edirect_paper = self.create(database=database,
+                                    entrez_query=entrez_query,
+                                    file_name=file_name,
+                                    paper_entries=paper_entries,
+                                    search_task_result=task_result,
+                                    entrez_user=entrez_user)
+        return edirect_paper
+
+    def get_entrezsearch_on_query(self, search_query, database):
+        return self.filter(search_query=search_query,database=database)
+
+    def get_all_entrez_searches_from_current_user(self,user_id):
+        return self.filter(entrez_user__id=user_id)
+

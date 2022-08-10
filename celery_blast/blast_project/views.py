@@ -7,10 +7,10 @@ from .view_access_decorators import unauthenticated_user
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
-    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm
-from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes
+    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, CreateTaxonomicFileForMultipleScientificNames
+from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb
 from .py_services import list_taxonomic_files, upload_file, \
-    delete_project_and_associated_directories_by_id, get_html_results
+    delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
 from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
@@ -19,6 +19,7 @@ from .py_django_db_services import get_users_blast_projects, get_all_blast_datab
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
+
 ''' dashboard
 
 view for the first dashboard page, this page enables monitoring of blast_projects,
@@ -72,18 +73,25 @@ def project_creation_view(request):
                         path_to_query_file = 'media/blast_projects/' + str(
                             blast_project.id) + '/' + query_sequences.name
                         upload_file(query_sequences, path_to_query_file)
-
                 except IntegrityError as e:
                     return failure_view(request,e)
-                return success_view(request)
-        else:
-            project_creation_form = ProjectCreationForm(request.user)
-            blast_settings_forward_form = BlastSettingsFormForward()
-            blast_settings_backward_form = BlastSettingsFormBackward()
 
-        context = {'ProjectCreationForm':project_creation_form,
-                   'BlastSettingsForwardForm':blast_settings_forward_form,
-                   'BlastSettingsBackwardForm':blast_settings_backward_form}
+                return redirect('project_details',project_id=blast_project.id)
+
+        else:
+            if check_if_taxdb_exists():
+                project_creation_form = ProjectCreationForm(request.user)
+                blast_settings_forward_form = BlastSettingsFormForward()
+                blast_settings_backward_form = BlastSettingsFormBackward()
+
+                context = {'ProjectCreationForm':project_creation_form,
+                           'BlastSettingsForwardForm':blast_settings_forward_form,
+                           'BlastSettingsBackwardForm':blast_settings_backward_form,
+                           'taxdb':True}
+
+            else:
+                context = {'taxdb':False}
+                task = download_and_format_taxdb.delay()
 
         return render(request,'blast_project/project_creation_dashboard.html',context)
     except Exception as e:
@@ -96,7 +104,7 @@ def project_details_view(request, project_id):
         blast_project = get_project_by_id(project_id)
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'BlastProject':blast_project,
-                    'Database':blast_project.project_forward_database, }
+                   'Database':blast_project.project_forward_database, }
                    #'ProtPfam':prot_to_pfam}
         return render(request,'blast_project/project_details_dashboard.html',context)
     except Exception as e:
@@ -141,8 +149,6 @@ def load_reciprocal_result_html_table_view(request, project_id):
     except Exception as e:
         return failure_view(request, e)
 
-
-
 ''' create_taxonomic_file_view
 
 view for creation of taxonomic files, produced by the get_species_taxids.sh script.
@@ -154,14 +160,14 @@ view for creation of taxonomic files, produced by the get_species_taxids.sh scri
     synchronous call of write_species_taxids_into_file
 '''
 @login_required(login_url='login')
-def create_taxonomic_file_view(request):
+def create_taxonomic_file_view_old(request):
     try:
         taxform = CreateTaxonomicFileForm(request.user)
         if request.method == 'POST':
             taxform = CreateTaxonomicFileForm(request.user,request.POST)
             if taxform.is_valid():
-                species_name,taxonomic_node = taxform.cleaned_data['species_name']
-                task = write_species_taxids_into_file(taxonomic_node,species_name+'.taxids')
+                species_name,taxonomic_nodes = taxform.cleaned_data['species_name']
+                task = write_species_taxids_into_file(taxonomic_nodes,species_name+'.taxids')
         taxid_files = list_taxonomic_files()
         taxid_files = zip(taxid_files[0],taxid_files[1])
         context = {'taxform': taxform, 'taxid_files': taxid_files}
@@ -169,9 +175,30 @@ def create_taxonomic_file_view(request):
     except Exception as e:
         return failure_view(request,e)
 
-#upload_types: standard for GET one_file and multiple_files for POST
+@login_required(login_url='login')
+def create_taxonomic_file_view(request):
+    try:
+        taxform = CreateTaxonomicFileForMultipleScientificNames(request.user)
+        if request.method == 'POST':
+            taxform = CreateTaxonomicFileForMultipleScientificNames(request.user,request.POST)
+            if taxform.is_valid():
+                filename = taxform.cleaned_data['filename']
+                filename = filename + '.taxids'
+                taxonomic_nodes = taxform.cleaned_data['species_names']
+                task = write_species_taxids_into_file(taxonomic_nodes,filename)
+        taxid_files = list_taxonomic_files()
+        taxid_files = zip(taxid_files[0], taxid_files[1])
+        context = {'taxform': taxform, 'taxid_files': taxid_files}
+        return render(request, 'blast_project/create_taxonomic_file.html', context)
+
+    except Exception as e:
+        return failure_view(request, e)
+
+
 #TODO documentation rename function to upload_single_genome_ ...
-#two upload genome views one for single and one for multiple files
+#two upload genome options one for single and one for multiple files
+#first view function - upload_genome_view for the single files
+#second view function - upload_multiple_genomes_post view
 @login_required(login_url='login')
 def upload_genome_view(request):
     try:
@@ -226,7 +253,7 @@ def upload_genome_view(request):
 
 #TODO implement view for disentangling big genome upload view ...
 @login_required(login_url='login')
-def upload_multiple_genomes_post_view(request):
+def upload_multiple_genomes_view(request):
     try:
         if request.method == 'POST':
             upload_genome_form = UploadGenomeForm(request.user)
@@ -236,7 +263,6 @@ def upload_multiple_genomes_post_view(request):
             if multiple_files_genome_form.is_valid():
                 with transaction.atomic():
 
-                    # TODO: implementation of correct functionality for multiple file uploads
                     new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
                                                                                int(extra_field_count) + 1,
                                                                                request.user.email)

@@ -1,9 +1,11 @@
+import os
+import pandas as pd
 from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
 from external_tools.models import ExternalTools
 from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
-from pandas import read_csv
+from pandas import read_csv, Series
 
 '''py_django_db_services
 
@@ -12,10 +14,11 @@ This script provides functions that should serve as a layer between the database
 '''
 
 #TODO documentation
-def create_external_tools_after_snakemake_workflow_finishes(project_id):
+def create_external_tools_after_snakemake_workflow_finishes(project_id:int)->ExternalTools:
     try:
         with transaction.atomic():
-            ExternalTools.objects.create_external_tools(project_id)
+            external_tool = ExternalTools.objects.create_external_tools(project_id)
+        return external_tool
     except IntegrityError as e:
         raise IntegrityError("[-] couldnt create external tools model with exception : {}".format(e))
 
@@ -78,6 +81,7 @@ def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,que
         return blast_project
     except Exception as e:
         raise IntegrityError('couldnt create blast project with exception : {}'.format(e))
+
 #TODO documentation
 def create_blast_settings_from_form(fwOrBw,valid_settings_form):
     try:
@@ -245,7 +249,7 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
     #2nd upload files
     #3rd write accession table
     #4th concatenate files
-    #5th makeblastdb cmd
+    #5th save database into postgresql
 
     database_title = cleaned_data_multiple_files['database_title']
     database_description = cleaned_data_multiple_files['database_description']
@@ -310,10 +314,54 @@ def create_database_directory_and_upload_files(blast_database,genome_file,taxmap
         raise IntegrityError('couldnt upload genome or taxmap file into database directory with exception : {}'.format(e))
 
 #TODO documentation
-def check_if_taxid_is_in_database(database_id, taxonomic_node):
+def check_if_taxid_is_in_database(database_id:int, taxonomic_nodes:list):
     path_to_database = 'media/databases/' + str(database_id) + '/'
     database = get_database_by_id(database_id)
     pandas_table_file = path_to_database + database.get_pandas_table_name()
     df = read_csv(pandas_table_file, header=0, index_col=0)
-    boolean = int(taxonomic_node) in list(df['taxid'])
-    return boolean
+    not_in_database=[]
+    for node in taxonomic_nodes:
+        if int(node) in list(df['taxid']) == False:
+            not_in_database.append(node)
+    if len(not_in_database) != 0:
+        return not_in_database
+    else:
+        return True
+
+'''check_if_sequences_are_in_databases
+    This function is used in forms.py for the reciprocal BLAST project creation. 
+    The function checks if the query sequence resides in the backward BLAST database.
+    
+    :params database_id
+        :type int
+    
+    :params sequences - Accession IDs of the query sequences
+        :type list[str]
+        
+    :returns True if all sequences reside in the database OR list[str] with sequences that do not reside in the database
+        :type boolean OR list
+'''
+def check_if_sequences_are_in_database(database_id:int, sequences:list):
+    path_to_database = 'media/databases/' + str(database_id) + '/'
+
+    taxmap_files = os.listdir(path_to_database)
+    taxmap_files = [file for file in taxmap_files if file.endswith('.table')]
+
+    to_compare = Series(sequences)
+    for index,taxfile in enumerate(taxmap_files):
+        pandas_taxmap_table_file = path_to_database + taxmap_files[index]
+
+        #what to do if database is too big? -> acc_taxmap files are always restricted to contain the accession ids of maximal 500 genome entries
+        df = read_csv(pandas_taxmap_table_file, header=None, sep="\t")
+        df.columns = ['AccessionId', 'TaxId']
+        df = df['AccessionId'].map(lambda acc: acc.split(".")[0])
+        to_compare = to_compare[~to_compare.isin(df)]
+        #no need for parsing additional taxmap files if the sequences reside in the current one
+        if len(to_compare) == 0:
+            return True
+
+    if len(to_compare) != 0:
+        return list(to_compare)
+
+    elif len(to_compare) == 0:
+        return True

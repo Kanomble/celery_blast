@@ -4,90 +4,86 @@
 BLAST Database
 {% endblock %}
 
-{% block add_headers %}
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css" crossorigin="anonymous">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.2/css/select.dataTables.min.css" crossorigin="anonymous">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
-{% endblock %}
 
 {% block page_title %} Blast Database Table {% endblock %}
 {% block infoheader %} SynMibi Blast Database Table{% endblock %}
 
-{% block page_header %}
-BLAST Database Details
+{% block header %}
 {% endblock %}
 
 {% block page_description %}
-This website displays informations to the {{Database.database_name}} BLAST database.
+This website displays information of the {{Database.database_name}} BLAST database.
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid transparent-box">
-    <table class="table table-hover" id="blastdatabase">
-        <thead>
-         <tr>
-            <th>Index</th>
-             <th> Assembly Accession</th>
-             <th> Organism Name</th>
-             <th> Taxid </th>
-             <th> Species Taxid </th>
-             <th> Assembly Level </th>
-             <th> FTP Path </th>
-         </tr>
-        </thead>
-        <tbody>
-         <tr>
-         </tr>
-        </tbody>
-    </table>
-</div>
-{% endblock %}
+<div class="container-fluid">
+    <div class="dashboard_project_list_col">
+        <h2 style="text-align: center; font-family: 'Courier New'">
+            <b>BLAST Database Details </b>
+        </h2>
+        <form
+           action="{% url 'delete_blast_database' database_id=Database.id%}"
+           method="POST"
+           onSubmit="return confirm('Are you sure you wish to delete?');" >
+        {% csrf_token %}
+        <input type="submit" value="Delete Blast Database" class="btn btn-danger" style="position: absolute; top: 10px; right: 10px;">
+        </form>
+    </div>
 
-{% block disable_base_scripts %}
+</div>
+<div class="container-fluid">
+    <div class="dashboard_project_list_col">
+        <table class="table table-hover" id="blastdatabase">
+            <thead>
+             <tr>
+                <th>Index</th>
+                 <th> Assembly Accession</th>
+                 <th> Organism Name</th>
+                 <th> Taxid </th>
+                 <th> Species Taxid </th>
+                 <th> Assembly Level </th>
+                 <th> FTP Path </th>
+             </tr>
+            </thead>
+            <tbody>
+             <tr>
+             </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" crossorigin="anonymous"></script>
-<!-- input scripts for DataTables: https://datatables.net/ -->
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"> </script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.3.2/js/dataTables.select.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#blastdatabase').DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            'copy',
+            'csv',
+            'selectAll',
+            'selectNone',
+            'selectRows'
+        ],
+        select: true,
 
-
-
-    <script>
-    $(document).ready(function() {
-        $('#blastdatabase').DataTable({
-            dom: 'Bfrtip',
-            buttons: [
-                'copy',
-                'csv',
-                'selectAll',
-                'selectNone',
-                'selectRows'
-            ],
-            select: true,
-
-            "ajax": {
-                "url": "{% url 'ajax_call' database_id=Database.id %}",
-                "type": "GET",
-                "dataSrc": "data",
-            },
-            "columns": [
-                {"data":'index'},
-                {"data":'assembly_accession'},
-                {"data":'organism_name'},
-                {"data":'taxid'},
-                {"data":'species_taxid'},
-                {"data":'assembly_level'},
-                {"data":'ftp_path'}],
-            "deferRender": true
-            });
-    } );
-    </script>
-
+        "ajax": {
+            "url": "{% url 'ajax_call' database_id=Database.id %}",
+            "type": "GET",
+            "dataSrc": "data",
+        },
+        "columns": [
+            {"data":'index'},
+            {"data":'assembly_accession'},
+            {"data":'organism_name'},
+            {"data":'taxid'},
+            {"data":'species_taxid'},
+            {"data":'assembly_level'},
+            {"data":'ftp_path'}],
+        "deferRender": true
+        });
+} );
+</script>
 {% endblock %}

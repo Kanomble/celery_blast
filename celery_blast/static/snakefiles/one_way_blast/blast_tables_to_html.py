@@ -3,7 +3,7 @@ import pandas as pd
 
 
 result_data=pd.read_table(snakemake.input['res'],header=None)
-result_data.columns=["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
+result_data.columns=["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
                   "stitle"]
 
 pd.set_option('colheader_justify', 'left')

@@ -1,11 +1,11 @@
-<div class="table-responsive">
-    <table class="table table-hover" id="blastProjectTable">
+<div class="table-responsive" >
+    <table class="table table-hover scrollbar scrollbar-black bordered-black square thin" id="blastProjectTable">
             <thead>
                 <tr>
                     <th>Project Title</th>
-                    <th>Forward Database Name</th>
-                    <th>Backward Database Name</th>
-                    <th>Timestamp</th>
+                    <th>Forward Database</th>
+                    <th>Backward Database</th>
+                    <!-- <th>Timestamp</th> -->
                     <th>Project Details</th>
                 </tr>
             </thead>
@@ -15,13 +15,13 @@
                         <td>{{project.project_title}}</td>
                         <td>{{project.project_forward_database.database_name}}</td>
                         <td>{{project.project_backward_database.database_name}}</td>
-                        <td>{{ project.timestamp|date:'d.m.Y, h:m:s' }}</td>
+                        <!-- <td>{{ project.timestamp|date:'d.m.Y, h:m:s' }}</td> -->
                         <td>
                              <form class="col"
                                    action="{% url 'project_details' project_id=project.id%}"
                                    method="GET">
                                 {% csrf_token %}
-                                <input type="submit" value="Project Details" class="btn btn-dark">
+                                <input type="submit" value="Details" class="btn btn-dark">
                             </form>
                         </td>
                     </tr>

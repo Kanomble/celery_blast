@@ -1,4 +1,5 @@
-from os.path import isdir
+from os.path import isdir, isfile
+import pandas as pd
 from os import mkdir
 from django.db import models
 from django.contrib.auth.models import User
@@ -83,6 +84,7 @@ class OneWayBlastProject(models.Model):
             snk_config_file.write('blastdb: ' + "\"" + "../../databases/" + str(
                 self.project_database.id) + "/" + self.project_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: ' + "\"" + self.project_query_sequences + "\"\n")
+            snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
 
 
             settings_dict = self.project_settings.get_values_as_dict()
@@ -96,6 +98,19 @@ class OneWayBlastProject(models.Model):
         except Exception as e:
             raise IntegrityError(
                 "couldnt write snakemake configuration file in directory with exception : {}".format(e))
+
+    def read_query_information_table(self, filepath='media/one_way_blast/'):
+        try:
+            path_to_information_table = filepath+str(self.id)+"/"+"query_sequence_information.csv"
+            if isfile(path_to_information_table):
+                table = pd.read_table(path_to_information_table,header=0,sep="\t",index_col=0)
+                table = table.fillna(value='')
+                table = table.to_html(classes='my_class" id="myTable')
+                return table
+            else:
+                return "there is no query_sequence_information.csv in the project directory"
+        except Exception as e:
+            raise Exception("[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
 
 #TODO documentation - on_delete=models.CASCADE!?
 class OneWayRemoteBlastProject(models.Model):
@@ -189,6 +204,7 @@ class OneWayRemoteBlastProject(models.Model):
             snk_config_file.write('query_sequence: ' + "\"" + self.r_project_query_sequences + "\"\n")
             snk_config_file.write('search_strategy: ' + str(self.r_search_strategy) +"\n")
             snk_config_file.write('entrez_query:'+"\n")
+            snk_config_file.write('user_email: '+str(self.r_project_user.email)+"\n")
 
             settings_dict = self.r_project_settings.get_values_as_dict()
 
@@ -201,3 +217,17 @@ class OneWayRemoteBlastProject(models.Model):
         except Exception as e:
             raise IntegrityError(
                 "couldnt write snakemake configuration file in directory with exception : {}".format(e))
+
+    def read_query_information_table(self, filepath='media/one_way_blast/remote_searches/'):
+        try:
+            path_to_information_table = filepath+str(self.id)+"/"+"query_sequence_information.csv"
+            print("[*] {}".format(path_to_information_table))
+            if isfile(path_to_information_table):
+                table = pd.read_table(path_to_information_table,header=0,sep="\t",index_col=0)
+                table = table.fillna(value='')
+                table = table.to_html(classes='my_class" id="myTable')
+                return table
+            else:
+                return "there is no query_sequence_information.csv in the project directory"
+        except Exception as e:
+            raise Exception("[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))

@@ -18,11 +18,20 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
         <form method="post" onsubmit="showLoader('loading_div','post_form_container')">
             {% csrf_token %}
             <div class="form-group">
-                <label for="species_name"> Organism Name </label>
-                <input type="text" class="form-control" id="species_name" name="species_name">
-                {% if taxform.species_name.errors %}
+                <label for="species_names"> Organism Names </label>
+                <input type="text" class="form-control" id="species_names" name="species_names">
+                {% if taxform.species_names.errors %}
                     <div class="alert alert-danger">
-                        <strong>{{taxform.species_name.errors}}</strong>
+                        <strong>{{taxform.species_names.errors}}</strong>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="filename"> Filename </label>
+                <input type="text" class="form-control" id="filename" name="filename">
+                {% if taxform.filename.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{taxform.filename.errors}}</strong>
                     </div>
                 {% endif %}
             </div>

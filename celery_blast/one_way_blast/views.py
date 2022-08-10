@@ -1,3 +1,5 @@
+import os
+
 from django.shortcuts import render, redirect, HttpResponse
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -11,7 +13,6 @@ from .py_django_db_services import get_one_way_project_by_id, get_one_way_remote
 from .py_biopython import calculate_pfam_and_protein_links_from_one_way_queries
 from blast_project.py_services import upload_file
 from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_project
-
 
 #TODO documentation
 @login_required(login_url='login')
@@ -69,10 +70,11 @@ def one_way_blast_project_creation_view(request):
 @login_required(login_url='login')
 def one_way_project_details_view(request, project_id):
     try:
+        import os
         blast_project = get_one_way_project_by_id(project_id)
         genus_plot_template = "one_way_blast/"+str(blast_project.id)+'/genus_bars.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
-        context = {'BlastProject':blast_project,
+        context = {'OneWayBlastProject':blast_project,
                     'Database':blast_project.project_database,
                    'GenusPlotTemplate':genus_plot_template
                    }
@@ -84,6 +86,7 @@ def one_way_project_details_view(request, project_id):
 @login_required(login_url='login')
 def one_way_remote_project_details_view(request, project_id):
     try:
+
         blast_project = get_one_way_remote_project_by_id(project_id)
         genus_plot_template = "one_way_blast/remote_searches/"+str(blast_project.id)+'/genus_bars.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
@@ -151,3 +154,36 @@ def load_one_way_result_html_table_view(request, project_id, remote):
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
+
+#TODO documentation
+@login_required(login_url='login')
+def one_way_download_target_sequences(request, project_id, project_type, filename='',):
+    try:
+        if filename != '':
+            if project_type == "one_way_blast":
+                filepath = '/blast/reciprocal_blast/media/' + project_type + '/' + str(project_id) + '/' + filename
+                if os.path.isfile(filepath):
+                    with open(filepath,'r') as download_file:
+                        content = [str(line) for line in download_file.readlines()]
+                        content = ''.join(content)
+                    response = HttpResponse(content,content_type="text/plain")
+                    response['Contnt-Disposition'] = "attachment; filename={}".format(filename)
+                else:
+                    raise FileNotFoundError
+
+            elif project_type == 'remote_searches':
+                filepath = '/blast/reciprocal_blast/media/one_way_blast/' + project_type + '/' + str(project_id) + '/' + filename
+                if os.path.isfile(filepath):
+                    with open(filepath, 'r') as download_file:
+                        content = [str(line) for line in download_file.readlines()]
+                        content = ''.join(content)
+                    response = HttpResponse(content, content_type="text/plain")
+                    response['Contnt-Disposition'] = "attachment; filename={}".format(filename)
+                else:
+                    raise FileNotFoundError
+            else:
+                raise Exception("There is no such project_type available!")
+            return response
+
+    except Exception as e:
+        return failure_view(request,e)

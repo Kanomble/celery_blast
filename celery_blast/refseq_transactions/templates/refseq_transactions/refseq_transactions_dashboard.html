@@ -20,33 +20,33 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
 
 {% block content %}
 
-<div class="container-fluid" id="post_form_container">
-    <div class="row" >
-        <div class="col" style="text-align: right">
+<div class="container-fluid" id="whole_dashboard">
+    <div class="row">
+        <div class="col" style="text-align: right" >
             {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
         </div>
     </div>
 
     {% if refseq_exists %}
-    <div class="transparent-box" style="margin-bottom: 30px;">
+    <div class="dashboard_project_list_col" style="margin-bottom: 30px;" id="post_form_container">
         {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
     </div>
     {% endif %}
 
     {% if DownloadInProgressBlastDatabases.count > 0 %}
-        <div class="transparent-box" style="margin-bottom: 30px">
+        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
             {% include "refseq_transactions/table_download_in_progress_databases.html" %}
         </div>
     {% endif %}
 
     {% if ActiveBlastDatabases.count > 0 %}
-        <div class="transparent-box" style="margin-bottom: 30px">
+        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
             {% include "refseq_transactions/table_active_blast_databases.html" %}
         </div>
     {% endif %}
 
     {% if UnactiveBlastDatabases.count > 0 %}
-        <div class="transparent-box" style="margin-bottom: 30px">
+        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
             {% include "refseq_transactions/table_unactive_blast_databases.html" %}
         </div>
     {% endif %}
@@ -58,10 +58,11 @@ to create BLAST databases with the makeblastdb script, or they refresh the assem
 {% block scripts %}
 <script>
 $(document).ready(function(){
+  $('#activeDatabasesTable').DataTable();
+  $('#unactiveDatabasesTable').DataTable();
   $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
 {% if DownloadInProgressBlastDatabases.count > 0 %}
     {% for database in DownloadInProgressBlastDatabases %}

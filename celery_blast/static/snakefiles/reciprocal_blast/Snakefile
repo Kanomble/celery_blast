@@ -1,6 +1,8 @@
 configfile: "./snakefile_config"
 import pandas as pd
+import math
 
+#PIPELINE PREPARATION
 #filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
 QSEQIDS = []
 with open(config['query_sequence'],'r') as qseqfile:
@@ -12,82 +14,237 @@ with open(config['query_sequence'],'r') as qseqfile:
 
 rule all:
 	input:
-		expand("{qseqid}/target_sequences.faa",qseqid=QSEQIDS),
+		expand("{qseqid}/target_sequences.svg", qseqid=QSEQIDS),
 		"reciprocal_results.html",
 		 "plot_amount_hits_of_target_taxon.png",
 		 "plot_evalue_distribution.png",
 		 "reciprocal_results.csv",
 		 "reciprocal_results_info.txt",
+		 "query_sequence_information.html",
+		"query_sequence_information.csv",
+		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
 
+#RULE 1
+#Forward BLAST - inference of target sequences within the search space
 rule forward_blast:
 	input: fw_queries=config['query_sequence']
 	output: "blastp_fw_out.table"
 	params: word_size=config['fw_word_size'], e_value=config['fw_e_value'], num_alignments=config['fw_num_alignments'], num_threads=config['fw_num_threads'], database=config['blastdb']
+	log:log="log/forward_blast.log"
 	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries}"
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries} 2> {log}"
 
-#collects the subject id's of the forward BLAST and writes those id's into a file that is used by the next rule
+#RULE 2
+#collects the subject id's of the forward BLAST and writes those id's into a file that is used by the bw_query_preparation rule (RULE 3)
 rule fw_result_processing:
 	input: fw_res="blastp_fw_out.table"
 	output: gi_list="bw_queries_gi_list_for_blastdbcmd.txt"
+	log: log="log/fw_result_processing.log"
 	run:
-		fw_results = pd.read_table(input[0], header=None)
-		out = open(output[0],"w+")
-		for gi in fw_results[6][:].unique():
-			out.write(gi+"\n")
-		out.close()
+		with open(log[0],'w') as logfile:
+			try:
+				logfile.write("INFO:working with forward blast results: writing target sequences into output file\n")
+				fw_results = pd.read_table(input[0], header=None)
+				with open(output[0],"w+") as out:
+					for gi in fw_results[7][:].unique():
+						out.write(gi+"\n")
+				logfile.write(('INFO:done writing {} target sequences into output file'.format(len(fw_results[7][:].unique()))))
+				logfile.write("DONE\n")
+			except Exception as e:
+				logfile.write("ERROR:{}\n".format(e))
+				raise Exception("ERROR in forward blast result processing: {}".format(e))
 
-#prepares the backward query fasta file
+
+#RULE 3
+#prepares the backward query fasta file for the backward blast
 rule bw_query_preparation:
 	input: "bw_queries_gi_list_for_blastdbcmd.txt"
 	output: "bw_queries.faa"
 	params: database=config["blastdb"]
+	log: log="log/bw_query_preparation.log"
 	shell:
-		"blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
+		"blastdbcmd -db {params.database} -entry_batch {input} -out {output} 2> {log}"
 
+#RULE 4
+#backward blast rule. the backward blast is divided into chunks of 100 query sequences.
 rule backward_blast:
 	input: bw_queries="bw_queries.faa"
 	output: "blastp_bw_out.table"
-	params: word_size=config['bw_word_size'], e_value=config['bw_e_value'], num_alignments=config['bw_num_alignments'], max_hsps=config['bw_max_hsps'], num_threads=config['bw_num_threads'], taxid=config['bw_taxid'], database=config['backwarddb']
-	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output[0]} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {input.bw_queries}"
+	params: word_size=config['bw_word_size'],e_value=config['bw_e_value'],num_alignments=config['bw_num_alignments'],max_hsps=config['bw_max_hsps'],num_threads=config['bw_num_threads'],taxid=config['bw_taxid'],database=config['backwarddb'],intermediate_filename="inter_blast.table"
+	log: log="log/backward_blast.log"
+	run:
+		with open(log[0],'w') as logfile:
+			try:
+				logfile.write("INFO:starting backward blast ...\n")
+				step = 100
+				sequence_dict = {}
+				#loading query sequences into python dictionary
+				with open(input[0],'r') as infile:
+					for line in infile.readlines():
+						if line.startswith(">"):
+							header = line.split(" ")[0].split(">")[-1]
+							sequence_dict[header] = ''
+						if header:
+							sequence_dict[header] += line
 
+				#preparation of transient input files for the backward blast. maximal 100 query sequences will reside in the input fasta files
+				filenames = ["bw_queries_" + str(i) + ".faa" for i in range(math.ceil(len(sequence_dict.keys()) / float(step)))]
+				logfile.write("INFO:working with: {} input fasta files\n".format(len(filenames)))
+				keys = list(sequence_dict.keys())
+				start = 0
+				filecounter = 0
+				end = step
+				while start < len(keys) and filecounter <= len(filenames):
+					with open(filenames[filecounter],'w') as outfile:
+						for key in keys[start:end]:
+							for line in sequence_dict[key]:
+								outfile.write(line)
+						start = end
+						end += step
+						filecounter += 1
+
+				#backward blast procedure
+				inter_blast_out = open("blast.table",'w')
+				for file in filenames:
+					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file} 2> {log}")
+					with open(params.intermediate_filename,'r') as interfilename:
+						for line in interfilename.readlines():
+							inter_blast_out.write(line)
+				inter_blast_out.close()
+				#removing intermediate query files
+				for file in filenames:
+					shell("rm {file}")
+				#removing intermediate blast table (table of the last backward blast run)
+				shell("rm inter_blast.table")
+				#changing output filename to snakemake output name
+				shell("mv blast.table {output}")
+				logfile.write("DONE\n")
+			except Exception as e:
+				logfile.write("ERROR:{}\n".format(e))
+				raise Exception("[-] ERROR during backward blast with exception: {}".format(e))
+
+#RULE 5
+#extracting reciprocal best hits with pandas blast tables
 rule reciprocal_best_hits:
 	input: bw_res="blastp_bw_out.table", fw_res="blastp_fw_out.table"
 	output: rec_best_hits="reciprocal_best_hits_protein_ids.txt"
+	log: log="log/reciprocal_best_hits.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/extract_reciprocal_best_hits.py"
 
-rule blast_tables_to_html:
-	input: rec_res="reciprocal_results_with_taxonomy.csv"
-	output: rec_html="reciprocal_results.html"
-	script:
-		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"
-
+#RULE 6
+#transforms the forward blast and backward blast tables with the rbhs table to a result output table with additional taxonomic informations.
 rule blast_tables_to_csv:
 	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt", query_file=config['query_sequence']
 	output: result_csv="reciprocal_results.csv", taxonomy_result_csv='reciprocal_results_with_taxonomy.csv'
+	log: log="log/blast_tables_to_csv.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_orthologous_table.py"
 
-rule reciprocal_results_table_to_target_sequences:
+#RULE 7
+#transforming csv files to html files for the frontend
+rule blast_tables_to_html:
+	input: rec_res="reciprocal_results_with_taxonomy.csv"
+	output: rec_html="reciprocal_results.html"
+	log: log="log/blast_tables_to_html.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"
+
+#RULE 8
+#outputs a summary for the RBH inference and constructs directories for each query sequence
+rule reciprocal_results_to_query_result_tables:
 	input: result_csv="reciprocal_results.csv", query_file=config['query_sequence']
-	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
+	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
+		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
+		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
+	params:	result_statistics_static=expand("../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_statistics.png",qseqid=QSEQIDS),
+			project_id=config['project_id']
+	log: log="log/reciprocal_results_to_query_result_tables.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
 
+#RULE 9
+#extracts sequences of RBHs from the forward database
 rule extract_subject_sequences_from_database:
 	input: "{qseqid}/target_sequence_ids.txt"
-	output: "{qseqid}/target_sequences.faa"
+	output: "{qseqid}/target_sequences_raw.faa"
 	params: database=config["blastdb"]
 	shell:
 		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
 
+#RULE 16
+#checks if the query sequence resides in the target_sequences.faa file
+rule check_if_query_sequence_is_in_target_sequences_faa:
+	input: target_file=expand("{qseqid}/target_sequences_raw.faa",qseqid=QSEQIDS), query_file=config['query_sequence']
+	output: expand("{qseqid}/target_sequences.faa",qseqid=QSEQIDS)
+	params: qseqs=QSEQIDS
+	log: log="log/check_target_fasta.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/check_if_query_sequence_is_in_target_sequences_faa.py"
+
+#RULE 10
+#creates plots for the visualization of pipeline results
 rule blast_tables_to_plots:
 	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt",query_file=config['query_sequence']
 	params:
 		plot_hits_organisms_png="../../../static/images/result_images/" + str(config['project_id']) + '/plot_amount_hits_of_target_taxon.png',
 		plot_evalues="../../../static/images/result_images/" + str(config['project_id']) + '/plot_evalue_distribution.png'
 	output: taxids_hits_plot="plot_amount_hits_of_target_taxon.png",evalue_plot="plot_evalue_distribution.png"
+	log: log="log/blast_tables_to_plots.log"
 	script:
 		  "../../../static/snakefiles/reciprocal_blast/plot_reciprocal_results.py"
+
+#RULE 11
+#creates a html table with information of the query sequences
+rule query_sequences_to_html_table:
+	input: target_file=config['query_sequence']
+	params: email=config['user_email']
+	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
+	log: log="log/query_sequences_to_html_table.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"
+
+#Conni BA
+#RULE 12
+rule conduct_multiple_sequence_alignment_mafft:
+	input: "{qseqid}/target_sequences.faa"
+	output: "{qseqid}/target_sequences.msa"
+	log: log="log/{qseqid}/msa.log"
+	run:
+		with open(input[0],'r') as infile:
+			if len(infile.readlines()) > 1:
+				shell("mafft --auto {input} > {output} 2> {log}")
+			else:
+				shell("touch {output} 2> {log.log}")
+
+#RULE 13
+rule conduct_phylogeny_fast_tree:
+	input: "{qseqid}/target_sequences.msa"
+	output: "{qseqid}/target_sequences.tree"
+	log: log="log/{qseqid}/phylogeny.log"
+	run:
+		with open(input[0],"r") as infile:
+			if len(infile.readlines()) > 1:
+				shell("fasttree {input} > {output} 2> {log}")
+			else:
+				shell("touch {output} 2> {log}")
+
+#RULE 14
+rule update_tree_with_taxid:
+	input: nw="{qseqid}/target_sequences.tree", df="reciprocal_results_with_taxonomy.csv"
+	output: "{qseqid}/transformed_treefile.nwk"
+	log: log="log/{qseqid}/update_tree_with_taxid.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/update_seq_id_taxinfo.py"
+
+#RULE 15
+rule ete3_tree_to_png:
+	input: tree="{qseqid}/transformed_treefile.nwk"
+	params: static_pic="../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
+	output: pic="{qseqid}/target_sequences.svg"
+	log: log="log/{qseqid}/ete3_tree_to_png.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/ete3_tree_to_png.py"
+
+#RULE 16
+#searching for protein domains in the CDD database

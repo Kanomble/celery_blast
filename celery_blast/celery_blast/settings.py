@@ -25,11 +25,9 @@ SECRET_KEY = '=0@uu%q3xsu%w+$h)p7(f*5&1fxgw8#x+n^(t)kt$17!(n1*-y'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1','192.168.1.131']
-
+ALLOWED_HOSTS = ['127.0.0.1','192.168.1.97']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'blast_project',
     'django_celery_results',
     'refseq_transactions',
@@ -60,7 +59,7 @@ ROOT_URLCONF = 'celery_blast.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['celery_blast/templates','static/images/result_images'],
+        'DIRS': ['celery_blast/templates','static/images/result_images','media/blast_projects'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -116,7 +115,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Berlin'
 
 USE_I18N = True
 
@@ -127,7 +126,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
-
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/media/'
@@ -143,7 +141,12 @@ CELERY_BROKER_URL= 'pyamqp://rabbitmq:5672'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-#CELERY_RESULT_BACKEND = 'django-cache'
+
+
+CELERY_TASK_SOFT_TIME_LIMIT = 7200 #2 * 60min = 120min * 60sec = 7200sec
+CELERY_TASK_TIME_LIMIT = 8000
+SUBPROCESS_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT - 5
+
 '''
 # django setting.
 CACHES = {

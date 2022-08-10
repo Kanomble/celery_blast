@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block header %}
+{% endblock %}
+
+{% block content %}
+    {% if EntrezSearch.database == 'protein' %}
+    <div class="dashboard_project_list_col" id="fasta_download_1" style="display: block">
+        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Entrez Search Details </b> </h2>
+        <a href="{% url 'download_protein_accessions' search_id=EntrezSearch.id %}">
+            <button class="btn btn-dark"  style="position: absolute;top: 10px; right: 10px;">Download Associated Protein Accessions</button>
+        </a>
+    </div>
+    {% endif %}
+    <div class="dashboard_project_list_col" id="fasta_download_2" style="display: none">
+        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Entrez Search Details </b> </h2>
+        <div classs="container" style="text-align:right;float:right;top: 10px; right: 10px;">
+            <iframe src="https://giphy.com/embed/11FuEnXyGsXFba" style="border:0px" class="giphy-embed" allowFullScreen></iframe>
+            <a href="https://giphy.com/gifs/icon-loading-beaker-11FuEnXyGsXFba"></a>
+        </div>
+    </div>
+
+    <div class="dashboard_project_list_col" id="fasta_download_3" style="display: none">
+        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Entrez Search Details </b> </h2>
+        <a href="{% url 'view_downloaded_sequences' search_id=EntrezSearch.id %}" download="target_sequences.faa">
+            <button class="btn btn-dark"  style="position: absolute;top: 10px; right: 10px;">View Downloaded Sequences</button>
+        </a>
+    </div>
+
+    <div class="dashboard_project_list_col" style="display: none" id="entrez_table">
+        {{ HtmlTable | safe }}
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#searchResultTable').DataTable({
+        });
+    var entrezTable = document.getElementById("entrez_table")
+    entrezTable.style.display = "block"
+} );
+</script>
+
+<script>
+    {% if DownloadTaskSuccess == 1 %}
+
+    (function() {
+        var divElementToShow = document.getElementById("fasta_download_3")
+        var divElement = document.getElementById("fasta_download_2")
+        var divElementToHide = document.getElementById("fasta_download_1")
+        divElementToHide.style.display = "none";
+        divElement.style.display = "block";
+        poll = function() {
+            jQuery.ajax({
+                url: "{% url 'ajax_call_progress_entrezsearch_to_fasta' search_id=EntrezSearch.id %}",
+                dataType: 'json',
+                type: 'get',
+                success: function(data) { // check if available
+                    if ( data ) { // get and check data value
+                        //status.text(data.progress); // get and print data string
+                        console.log(data.progress)
+
+                        if(data.progress == "SUCCESS"){
+                            divElement.style.display = "none";
+                            divElementToShow.style.display = "block";
+                            clearInterval(pollInterval); // optional: stop poll function
+                        } else if(data.progress == "FAILURE"){
+                            divElement.style.display = "none";
+                            divElementToHide.style.display = "block";
+                            clearInterval(pollInterval);
+                        }
+
+                    }
+                 },
+                error: function() { // error logging
+                    //console.log('Error!');
+                    status.text("error polling progress data")
+                }
+            });
+        },
+        pollInterval = setInterval(function() { // run function every 5000 ms
+            poll();
+          }, 5000);
+        poll(); // also run function on init
+    })();
+    {% elif DownloadTaskSuccess == 0 %}
+        var divElementToHide = document.getElementById("fasta_download_1")
+        var divElementToShow = document.getElementById("fasta_download_3")
+        divElementToHide.style.display = "none";
+        divElementToShow.style.display = "block";
+    {% endif %}
+
+</script>
+{% endblock %}

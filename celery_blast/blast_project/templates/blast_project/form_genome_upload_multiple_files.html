@@ -27,14 +27,17 @@
             {% for field in MultipleFileUploadGenomeForm %}
                 {% if "genome_file" in field.name %}
                  <div class="form-group">
-                    <label for="{{ field.name }}">Upload Genome File</label>
-                    <input type="file" class="form-control-file" id="{{ field.name }}" name="{{ field.name }}">
-                    {% if field.errors %}
-                    <div class="alert alert-danger">
-                        <strong>{{ field.errors }}</strong>
+                     <div class="custom-file">
+                        <label for="{{ field.name }}" class="form-control-file-label">Upload Genome File</label>
+                        <input type="file" class="form-control-file" id="{{ field.name }}" name="{{ field.name }}">
+                        {% if field.errors %}
+                        <div class="alert alert-danger">
+                            <strong>{{ field.errors }}</strong>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                </div>
+                 </div>
+
                 {% elif "organism" in field.name %}
                  <div class="form-group">
                     <label for="{{ field.name }}">Organism Name - {{ field.value }}</label>
@@ -59,6 +62,6 @@
         <br>
         <input type="submit" value="Submit" class="btn btn-dark"  id="submit_multiple_field_form">
     </form>
-
+    <br>
     <button id="add_another" class="btn btn-secondary">Add Another Genome File</button>
 </div>

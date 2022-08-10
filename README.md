@@ -19,15 +19,37 @@ docker exec -it celery_blast /bin/bash
 cd ../edirect && sh ./setup.sh
 #answer with y
 ````
+
+
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] allow stopping database downloading and formatting tasks, allow deletion of paused/stopped database download/format procedures
+- [ ] include taxonomic information in BLAST database tables
+- [ ] adjust text size of titles in reciprocal blast result dashboard plots
+- [ ] esearch output into subfolders for each user
+- [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
+- [ ] refactor the external project information dashboard
+  - [ ] replace MSA and Phylogeny buttons with the number of RBH's
+- [ ] fill the other 2 boxes in connies phylogeny dashboard
+- [ ] there are some bugs in the EntrezSearch - e.g. if you search for rhino in pubmed
+- [X] pipeline log files
+  - [ ] view logfile content on pipeline dashboard
+- [ ] what happens if a user deletes a database that is still connected to some projects?
+- [ ] remote BLAST without entrez query: results in an error: Error: [blastp] internal_error: Message ID#54 Error: Failed to process the Entrez query: Only organism entrez queries are supported
+- [ ] snakemake incomplete flag - restart function for snakemake
+- [ ] limit for query sequences in onewayblast
+- [ ] redirect to onewayblast detail page after project creation
+- [ ] form validation in blastsettings
+- [X] integrate MAFFT and FastTree in Snakefile
+- [X] define global timeout variable --> use celery timeouts --> soft and hard timeouts
+- [ ] one_way_blast_results - if there is an error in the biopython request for building genus graphs display at least the hit table
 - [ ] correct ajax requests if it results into an error
 - [ ] wait-for script checking - LF / CLRF
 - [ ] add genbank database option
 - [ ] if no reciprocal hits are available for at least one gene the snakmake workflow will result into an error - rule extract_sequences
 - [ ] upload genome: if \n is in any uploaded txt file it will count as a value for insertion
-- [ ] implement custom snakemake logfile that lists all of the executed functions
+- [X] implement custom snakemake logfile that lists all of the executed functions
 - [ ] display warning if backward organism not in the forward database as there is no controlling step - cause hits against the identical protein are not considered
 - [ ] reciprocal_result.csv should also contain assembly accession for each hit and genus, family .. informations
   - [X] genus, family and other taxonomic informations are integrated
@@ -36,12 +58,9 @@ The web container will automatically try to restart if the startup fails, unless
   - [ ] if there is no taxonomic node available (which can be the case for some organisms) it is not possible to upload a taxmap file ...
   - [ ] provide a tool for writing taxmap files of combined genomes 
   - [ ] forward and backward BLAST databases should both contain the backward BLAST taxonomic node, otherwise you wont see your 100% results in the backward BLAST!
-- [X] if you specify explicitly all assembly levels, they get doubled in the database model
-  - [ ] doubled assembly level entries in database, during start up? or because of manual edit?
-- [ ] celery_progress is needed for initial TaskResult database saving?!
-- [ ] add correct docker timezone (currently it is Europe/Berlin but still 2h difference)
-- [ ] add pident ssequence and other output options to the blast results
-- [ ] check genome upload option | all options - begin with the view function
+- [X] add correct docker timezone (currently it is Europe/Berlin but still 2h difference)
+- [X] add pident ssequence and other output options to the blast results
+- [X] check genome upload option | all options - begin with the view function
 - [ ] with uploaded DNA / RNA sequences it is currently not possible to perform the reciprocal BLAST analysis
     - [ ] multiple sequence alignment and phylogenetic tree reconstruction is also not supported with DNA/RNA seqs
     - [ ] refactor the reciprocal BLAST creation view - model supports blastn command (search strategy)
@@ -60,11 +79,11 @@ The web container will automatically try to restart if the startup fails, unless
     - [x] build ml or neighbour joining trees from all msa's
 - [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [x] check if backward organism is in database
-  - [ ] check if query sequences are in backward database
+  - [X] check if query sequences are in backward database
 - [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
-    - [ ] think about multiple species_name inputs ...
+    - [X] think about multiple species_name inputs ... --> not possible
 - [X] add configuration environment variables for SNAKEMAKE - settings.py
 - [X] use a config file for all configuration options, e.g. the panoptes - settings.py
 - [X] reciprocal BLAST results, sequence in output and string of taxonomy; EXAMPLE: https://docs.google.com/spreadsheets/d/1EBwEp-C0ocCUBx3zVaCtxrMlTKGTZHx19lPq8q7W_bE/edit#gid=649158632
@@ -89,7 +108,7 @@ The web container will automatically try to restart if the startup fails, unless
 ## TODO Database Models
 - [ ] add validation
 - [ ] write tests
-- [ ] wrap database transactions inside `with transactions.atomic()` blocks
+- [X] wrap database transactions inside `with transactions.atomic()` blocks
 - [X] create models:
     - [X] BlastProject
         - [X] add backward BlastDatabase
@@ -98,13 +117,16 @@ The web container will automatically try to restart if the startup fails, unless
     - [X] BlastDatabaseManager
     - [X] BlastSettings
     - [X] AssemblyLevels
+    - [X] UploadedGenomes
+    - [X] ExternalTools --> Connected to BlastProjects
+    - [X] QuerySequences --> Connected to ExternalTools
 
 
 
 
 ## BLAST Databases
 ### BLAST database preparation
-Protein sequence files are downloaded from the NCBI FTP site and are passed to the .
+Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command.
 First the software downloads the refseq assembly summary file from the
 refseq [FTP](ftp://ftp.ncbi.nih.gov/genomes/refseq/) directory.
 The application loads this summary file into a pandas dataframe, 

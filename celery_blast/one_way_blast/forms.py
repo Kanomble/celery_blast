@@ -37,8 +37,26 @@ class OneWayProjectCreationForm(forms.Form):
         query_file = self.cleaned_data['query_sequence_file']
         if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
             raise ValidationError("please upload only fasta files!")
-        else:
-            return query_file
+        header = []
+        for chunk in query_file.chunks():
+            lines = chunk.decode().split("\n")
+            for line in lines:
+                if line.startswith('>'):
+                    try:
+                        acc = line.split(" ")[0].split('>')[-1].split(".")[0]
+                        header.append(acc)
+                    except Exception as e:
+                        self.add_error('query_sequence_file', 'error during parsing of query_file : {}'.format(e))
+
+        if len(header) > 300:
+            self.add_error('query_sequence_file', 'You try to infer orthologs for more than 300 query sequences,'
+                                                  ' this is not allowed, consider to separate the query sequences.')
+
+        if len(header) != len(set(header)):
+            self.add_error('query_sequence_file',
+                           'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+
+        return query_file
 
 #TODO documentation
 class BlastSettingsForm(forms.Form):
@@ -109,6 +127,23 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         query_file = self.cleaned_data['r_query_sequence_file']
         if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
             raise ValidationError("please upload only fasta files!")
-        else:
-            return query_file
+        header = []
+        for chunk in query_file.chunks():
+            lines = chunk.decode().split("\n")
+            for line in lines:
+                if line.startswith('>'):
+                    try:
+                        acc = line.split(" ")[0].split('>')[-1].split(".")[0]
+                        header.append(acc)
+                    except Exception as e:
+                        self.add_error('query_sequence_file', 'error during parsing of query_file : {}'.format(e))
 
+        if len(header) > 300:
+            self.add_error('query_sequence_file', 'You try to infer orthologs for more than 300 query sequences,'
+                                                  ' this is not allowed, consider to separate the query sequences.')
+
+        if len(header) != len(set(header)):
+            self.add_error('query_sequence_file',
+                           'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+
+        return query_file

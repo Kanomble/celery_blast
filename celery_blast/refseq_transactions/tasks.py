@@ -1,29 +1,30 @@
+import os
 from os import getcwd, mkdir, remove
 from os.path import isdir, isfile
-from subprocess import Popen, PIPE as subPIPE, STDOUT as subSTDOUT
+from subprocess import Popen, SubprocessError, TimeoutExpired
 import pandas as pd
 import math
 
 from blast_project.py_django_db_services import get_database_by_id, update_blast_database_with_task_result_model
-from .py_services import write_blastdatabase_snakemake_configfile,\
-    get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
-
+from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
+from celery.exceptions import SoftTimeLimitExceeded
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
+from django.conf import settings
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
 ''' download_refseq_assembly_summary_file
 
-    this function downloads the current assembly_summary_refseq.txt file into 
+    This function downloads the current assembly_summary_refseq.txt file into 
     the media directory /databases/refseq_summary_file/ if this directory does not exists the function
-    creates the directory
+    creates the directory.
 
     it uses subprocess.Popen to invoke wget, stdout (e.g. percentage is printed out inside celery worker console)
 
-    :returns download_file
+    :returns returncode of Popen
         :type str
 '''
 @shared_task()
@@ -48,8 +49,7 @@ def download_refseq_assembly_summary():
 
         # invoke wget program
         logger.info('creating popen process')
-        wget_process = Popen(['wget', refseq_url, '-q', '-O', path_to_assembly_file], shell=False, stdout=subPIPE,
-                             stderr=subSTDOUT)
+        wget_process = Popen(['wget', refseq_url, '-q', '-O', path_to_assembly_file], shell=False)
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(
@@ -65,31 +65,96 @@ def download_refseq_assembly_summary():
 
         logger.info('download completed')
 
-        # refseq_url.split('/')[-1]
         return returncode
+
+    except SoftTimeLimitExceeded:
+        if 'path_to_assembly_file' in locals():
+            if isfile(path_to_assembly_file):
+                os.remove(path_to_assembly_file)
+        raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due to soft time limit")
+
+    except TimeoutExpired as e:
+        wget_process.kill()
+        if 'path_to_assembly_file' in locals():
+            if isfile(path_to_assembly_file):
+                os.remove(path_to_assembly_file)
+
+        raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due Popen call time limit : {}".format(e))
+
+    except SubprocessError as e:
+        wget_process.kill()
+        if 'path_to_assembly_file' in locals():
+            if isfile(path_to_assembly_file):
+                os.remove(path_to_assembly_file)
+        raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due Popen call exception : {}".format(e))
+
     except Exception as e:
         raise Exception("couldn't download assembly_summary_refseq.txt file : {}".format(e))
 
+f'''write_alias_file
 
+    This function produces a .pal file, which lists all fasta files belonging to the dedicated database.
+    
+    :param alias_filename - Name of the .pal file.
+        :type str
+        
+    :param available_databases - List of all database_chunks_integer.fasta
+        :type list
+        
+    :returns 0 on success
+        :type int
+'''
 @shared_task()
-def write_alias_file(alias_filename,available_databases):
+def write_alias_file(alias_filename:str,available_databases:list)->int:
     try:
-        #logger.info('starting to write database alias file : {}'.format(alias_filename))
-        alias_file = open(alias_filename,'w')
-        database_title = '.'.join(alias_filename.split("/")[3].split(".")[0:2])
-        alias_file.write("TITLE {}\n".format(database_title))
-        alias_file.write("DBLIST")
-        for database_file in available_databases:
-            alias_file.write(" \""+database_file.split("/")[3]+"\"")
-        alias_file.write("\n")
-        alias_file.close()
+        logger.info('starting to write database alias file : {}'.format(alias_filename))
+        with open(alias_filename,'w') as alias_file:
+            database_title = '.'.join(alias_filename.split("/")[3].split(".")[0:2])
+            alias_file.write("TITLE {}\n".format(database_title))
+            alias_file.write("DBLIST")
+            for database_file in available_databases:
+                alias_file.write(" \""+database_file.split("/")[3]+"\"")
+            alias_file.write("\n")
+            alias_file.close()
         return 0
+    except SoftTimeLimitExceeded:
+        if 'alias_file' in locals():
+            if isfile(alias_file):
+                os.remove(alias_file)
+        raise Exception("ERROR wiritng alias file due to soft time limit")
+
     except Exception as e:
         logger.warning("error during creation of aliasfile with exception : {}".format(e))
+        if 'alias_file' in locals():
+            if isfile(alias_file):
+                os.remove(alias_file)
         raise Exception("error during creation of aliasfile with exception : {}".format(e))
 
+
+'''format_blast_databases
+
+    This function executes the makeblastdb command in an subprocess Popen instance.
+    Makeblastdb is used to format fasta files into BLAST databases. 
+    The function operates on all database chunks that are provided via a list of integers. 
+    E.g. [0,1,2] will produce three database files: database_chunk_1.faa ...
+    
+    :param path_to_database - Filepath, e.g. media/databases/1
+        :type str
+    
+    :param chunks - List of integers.
+        :type list
+    
+    :param progress_recorder - Used to update the celery task.
+        :type ProgressRecorder class
+    
+    :returns available databases - List of successfully formatted database names
+        :type list
+    
+    :returns errorlist - List of databases with errors during the formatting procedure.
+        :type list
+'''
 @shared_task()
-def format_blast_databases(path_to_database,chunks, progress_recorder):
+def format_blast_databases(path_to_database:str,chunks:list,progress_recorder:ProgressRecorder)->tuple:
     try:
         errorlist=[]
         available_databases=[]
@@ -108,7 +173,7 @@ def format_blast_databases(path_to_database,chunks, progress_recorder):
                                      '-taxid_map',taxonomic_mapfile,
                                      '-parse_seqids',
                                      '-out',database,'-blastdb_version','5'])
-            returncode = proc.wait(timeout=6000)
+            returncode = proc.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
             if(returncode != 0):
                 logger.warning("ERROR during database creation of chunk {}".format(chunk))
                 errorlist.append(chunk)
@@ -121,12 +186,43 @@ def format_blast_databases(path_to_database,chunks, progress_recorder):
         progress_recorder.set_progress(99, 100, "formatted chunk {}".format(chunk))
         return available_databases,errorlist
 
+    except TimeoutExpired as e:
+        logger.warning("ERROR in makeblastdb for database chunk: {} - process timed out".format(database))
+        if 'proc' in locals():
+            proc.kill()
+        raise Exception("ERROR in makeblastdb for database chunk: {} with exception: {} - process timed out".format(database,e))
+
+    except SubprocessError as e:
+        logger.warning("ERROR in makeblastdb for database chunk: {}".format(database))
+        if 'proc' in locals():
+            proc.kill()
+        raise Exception("ERROR in makeblastdb for database chunk: {} with exception: {}".format(database,e))
+
+    except SoftTimeLimitExceeded:
+        raise Exception("ERROR in formatting blast databases with makeblastdb soft time limit exceeded ...")
     except Exception as e:
         logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
         raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
 
+'''create_chunks_of_databases
+    This function combines each 500 fasta files to one database chunk that can gets formatted to 
+    BLAST databases by makeblastdb. The provided pandas dataframe (dict[str,int]) is based on the output
+    of download_wget_ftp_paths.
+    
+    :param df - based on dict[str, int] with str=filepath and int=taxid
+        :type pd.DataFrame
+    
+    :param path_to_database
+        :type str
+    
+    :param progress_recorder
+        :type ProgressRecorder
+        
+    :returns chunks - list of integers that define the database chunks
+        :type list - list[int]
+'''
 @shared_task()
-def create_chunks_of_databases(df, path_to_database, progress_recorder):
+def create_chunks_of_databases(df:pd.DataFrame,path_to_database:str,progress_recorder:ProgressRecorder)->list:
     try:
         total_formatted = 0
         chunk = 1
@@ -138,7 +234,7 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
         logger.info("starting to concatenate available fasta assemblies")
         progress_recorder.set_progress(progress, 100, "concatenate available fasta assemblies")
 
-        iteration_steps = 500
+        iteration_steps = 500 #chunks --> 500 fasta files build "one" database chunk
         if round(len(df['ftp_path']) / iteration_steps) > 35:
             iteration_steps = math.ceil( len(df['ftp_path']) / 35)
 
@@ -179,6 +275,7 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
                     remove(path_to_database+assembly_name)
 
                     for line in lines:
+                        #transformes accession id and adds additional informations
                         if line[0] == ">":
                             split = line.split(" ")
                             header = ' '.join(split[1:])
@@ -197,10 +294,14 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
                 chunks.append(chunk)
                 chunk += 1
                 acc_to_tax.close()
+
+        return chunks
+    except SoftTimeLimitExceeded:
+        logger.warning("ERROR soft time limit exceeded for creation of database chunks")
+        raise Exception("ERROR soft time limit exceeded for creation of database chunks")
     except Exception as e:
         logger.warning('couldnt create database chunks with exception : {}'.format(e))
         raise Exception('couldnt create database chunks with exception : {}'.format(e))
-    return chunks
 
 
 ''' download_wget_ftp_paths
@@ -221,7 +322,7 @@ def create_chunks_of_databases(df, path_to_database, progress_recorder):
     
 '''
 @shared_task()
-def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progress_recorder):
+def download_wget_ftp_paths(path_to_database:str,dictionary_ftp_paths_taxids:dict,progress_recorder:ProgressRecorder)->dict:
     try:
         error_log = open(path_to_database+'download_error.log', 'w')
         transform_ftp_path = lambda file: file.split('/')[-1].rstrip(file[-3:])
@@ -265,12 +366,13 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
                             error_log.write('couldnt download: {} '.format(file))
                             logger.warning('couldnt download: {} after 10 attempts'.format(file))
                             if(isfile(path_to_database + gunzip_output) == True):
-                                remove(path_to_database + gunzip_output)
+                                remove(path_to_database + gunzip_output)#removes partially downloaded files
                                 logger.warning("removed empty file: {}".format(gunzip_output))
 
                             progress += progress_steps
                             progress_recorder.set_progress(progress, 100, "failed trying to download {}".format(file))
                             #break
+                    #fills the returned dictionary with successfully downloaded genome files
                     else:
                         logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
                         downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
@@ -304,7 +406,6 @@ def download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progres
         available_db_chunks, errorlist = format_blast_databases(db_path,chunks,progress_recorder)
         
 '''
-#TODO documentation task 1
 @shared_task(bind=True)
 def download_blast_databases_based_on_summary_file(self, database_id):
     try:
@@ -341,117 +442,8 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         logger.info('starting to write database alias file : {}'.format(alias_filename))
 
         returncode = write_alias_file(alias_filename,databases[0])
-        '''
-        alias_file = open(alias_filename,'w')
-        alias_file.write("TITLE {}\n".format(database_pandas_table_name+'.database'))
-        alias_file.write("DBLIST")
-        for database_file in database_files:
-            alias_file.write(" \""+database_file+"\"")
-        alias_file.write("\n")
-        alias_file.close()
-        '''
-
         progress_recorder.set_progress(100, 100, "writing alias file")
         return returncode
     except Exception as e:
         logger.warning('couldnt perform task because of exception : {}'.format(e))
         raise Exception('couldnt perform compute ftp path task with exception {}'.format(e))
-
-
-#TODO documentation
-#task_track_started --> no need for celery-progress?
-@shared_task(bind=True)
-def download_blast_databases(self, database_id):
-
-
-    progress_recorder = ProgressRecorder(self)
-    progress_recorder.set_progress(0, 100,"started process")
-
-    try:
-        update_blast_database_with_task_result_model(database_id, str(self.request.id))
-    except Exception as e:
-        logger.warning("couldnt save taskresult into blastdatabase ... ")
-        raise Exception("coulndt save taskresult into blastdatabase ...")
-
-    #check if blast summary file is available
-    blast_database_summary_table = get_database_by_id(database_id).get_pandas_table_name()
-    logger.info('load blastdatabase: {} from database'.format(blast_database_summary_table))
-    bdb_summary_table_path = 'media/databases/' + str(database_id) + '/' + blast_database_summary_table
-    if (isfile(bdb_summary_table_path) == False):
-        logger.warning('there is no database table with path : {}', format(bdb_summary_table_path))
-        raise Exception(
-            "couldnt download assembly files, there is no summary table with path : {}".format(bdb_summary_table_path))
-
-    # summary file and ProgressRecord
-    try:
-        write_blastdatabase_snakemake_configfile(database_id, str(self.request.id))
-    except Exception as e:
-        logger.warning("couldnt write snakemake configuration file")
-        raise Exception("couldnt write snakemake configuration file")
-
-
-    progress_recorder.set_progress(20, 100, "starting snakemake process")
-
-    try:
-        snakemake_working_dir = 'media/databases/' + str(database_id) + '/'
-        snakemake_config_file = 'media/databases/' + str(database_id) + '/snakefile_config'
-        snakefile_dir = 'static/snakefiles/assembly_download/Snakefile'
-        #cmd to copy
-        #snakemake --snakefile 'static/snakefiles/assembly_download/Snakefile' --cores 2 --configfile 'media/databases/12/snakefile_config' --directory 'media/databases/12/' --wms-monitor 'http://172.23.0.5:5000' --latency-wait 10 --dry-run
-        snakemake_process = Popen(['snakemake',
-                                   '--snakefile',snakefile_dir,
-                                   '--wms-monitor','http://172.23.0.6:5000',
-                                   '--cores','1',
-                                   '--configfile',snakemake_config_file,
-                                   '--directory',snakemake_working_dir,
-                                   '--latency-wait','10',
-                                   '--quiet',
-                                   '--keep-incomplete'], shell=False, stdout=subPIPE, stderr=subSTDOUT)
-        logger.info('waiting for popen snakemake instance {} to finish'.format(snakemake_process.pid))
-        progress_recorder.set_progress(40, 100, "waiting for snakemake to finish")
-        returncode = snakemake_process.wait(timeout=4000) # 66 Minutes
-
-        if (returncode != 0):
-            logger.warning('subprocess Popen snakemake instance resulted in an error!')
-            raise Exception('Popen hasnt succeeded ...')
-
-        logger.info('returncode : {}'.format(returncode))
-        logger.info('blast database download and formatting completed')
-        progress_recorder.set_progress(100, 100, "complete")
-        return returncode
-    except Exception as e:
-        raise Exception("couldnt download assembly files, error during execution of snakemake, with exception : ".format(e))
-
-
-'''
-#TODO documentation
-@shared_task()
-def format_available_databases(path_to_database, database_files_taxids_dict, progress_recorder):
-    try:
-        progress_steps = 100 / ((len(database_files_taxids_dict.keys())) * 2)
-        progress = 50
-        progress_recorder.set_progress(progress, 100, "starting makeblastdb processes")
-        for assembly_file in database_files_taxids_dict.keys():
-            database = path_to_database + assembly_file
-            taxid = database_files_taxids_dict[assembly_file]
-            cmd = "makeblastdb -in {} -dbtype prot -out {} -taxid {}".format(database,database,taxid)
-
-            if (isfile(database+'.pdb') == True):
-                logger.info('file {} exists, scipping formatting'.format(database))
-            else:
-                proc = Popen("makeblastdb -in {} -dbtype prot -out {} -taxid {} -parse_seqids"
-                             .format(database,database,taxid), shell=True)
-                returncode = proc.wait(timeout=600)#10*60 Sec.
-                logger.info('processed database with makeblastdb : {}'.format(cmd))
-                if(returncode != 0):
-                    logger.warning("something went wrong during creation of database: {}".format(database))
-
-            progress += progress_steps
-            progress_recorder.set_progress(progress, 100, "starting makeblastdb processes")
-
-        progress_recorder.set_progress(99, 100, "ended database formatting")
-        return database_files_taxids_dict.keys()
-    except Exception as e:
-        logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
-        raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
-'''
