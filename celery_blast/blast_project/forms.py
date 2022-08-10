@@ -150,24 +150,25 @@ class ProjectCreationForm(forms.Form):
             species_name = cleaned_data['species_name_for_backward_blast']
             user_email = self.fields['user_email'].charfield
             try:
-                taxonomic_node = get_species_taxid_by_name(user_email, species_name)
+                taxonomic_nodes = get_species_taxid_by_name(user_email, species_name)
             except Exception as e:
                 self.add_error('species_name_for_backward_blast','your provided species has no taxonomic node - check on NCBI'.format(species_name))
 
             backward_db = cleaned_data['project_backward_database']
             try:
-                booleanbw = check_if_taxid_is_in_database(backward_db.id, taxonomic_node)
+                booleanbw = check_if_taxid_is_in_database(backward_db.id, taxonomic_nodes)
                 if booleanbw == False:
                     self.add_error('species_name_for_backward_blast',
                                    'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
-                                       taxonomic_node, backward_db.database_name))
+                                       taxonomic_nodes, backward_db.database_name))
                 if booleanbw == True:
-                    cleaned_data['species_name_for_backward_blast'] = (species_name, taxonomic_node)
+                    #taking the first taxonomic node in the provided list
+                    cleaned_data['species_name_for_backward_blast'] = (species_name, taxonomic_nodes[0])
 
             except Exception:
                 self.add_error('species_name_for_backward_blast',
                                'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
-                                   taxonomic_node, backward_db.database_name))
+                                   taxonomic_nodes, backward_db.database_name))
 
             query_file = cleaned_data['query_sequence_file']
 
@@ -336,7 +337,9 @@ class UploadGenomeForm(forms.Form):
                 for line in lines:
                     if line != '':
                         try:
-                            get_species_taxid_by_name(user_email,line)
+                            taxids = get_species_taxid_by_name(user_email,line)
+                            if taxids != True:
+                                raise Exception
                         except:
                             self.add_error('organism_name_file','there is no taxonomic node available for : {}'.format(line))
                 organisms += chunk.decode().count('\n')
@@ -411,7 +414,9 @@ class UploadMultipleFilesGenomeForm(forms.Form):
                     self.add_error(field,"You have to provide a valid scientific name")
                 else:
                     try:
-                        taxid = get_species_taxid_by_name(user_email,cleaned_data.get(field))
+                        taxids = get_species_taxid_by_name(user_email,cleaned_data.get(field))
+                        if taxids != True:
+                            raise Exception
                     except Exception as e:
                         self.add_error(field,"{} : {} is no valid name!".format(e,cleaned_data.get(field)))
 

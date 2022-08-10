@@ -31,11 +31,8 @@ def get_database_download_and_formatting_task_result_progress(database_id:int)->
     try:
         blastdb = get_database_by_id(database_id)
         results = blastdb.database_download_and_format_task.result
-        try:
-            progress = json.loads(results)['percent']
-            return progress
-        except Exception as e:
-            return 'DONE'
+        progress = json.loads(results)['percent']
+        return progress
     except Exception as e:
         raise Exception("couldnt read progress with exception : {}".format(e))
 
@@ -96,7 +93,6 @@ def write_pandas_table_to_project_dir(blastdatabase_path:str, database_table:pd.
 '''
 def transform_data_table_to_json_dict(df:pd.DataFrame):
     json_records = df.reset_index().to_json(orient='records')
-    data = []
     data = json.loads(json_records)
     return data
 

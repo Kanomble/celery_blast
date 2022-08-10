@@ -177,7 +177,7 @@ rule extract_subject_sequences_from_database:
 rule check_if_query_sequence_is_in_target_sequences_faa:
 	input: target_file=expand("{qseqid}/target_sequences_raw.faa",qseqid=QSEQIDS), query_file=config['query_sequence']
 	output: expand("{qseqid}/target_sequences.faa",qseqid=QSEQIDS)
-	params: qseqs=QSEQIDS,
+	params: qseqs=QSEQIDS
 	log: log="log/check_target_fasta.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/check_if_query_sequence_is_in_target_sequences_faa.py"
