@@ -15,9 +15,6 @@ def run():
         chromosome.save()
         complete.save()
         scaffold.save()
-
-    if isfile('media/databases/')
-
     if isfile('media/databases/taxdb.btd') and isfile('media/databases/taxdb.bti'):
         print("INFO:TAXONOMY DATABASE IS LOADED")
     else:
