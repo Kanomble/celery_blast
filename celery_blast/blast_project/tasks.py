@@ -9,9 +9,71 @@ from external_tools.models import ExternalTools
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
+from shutil import move
 from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes
 #logger for celery worker instances
 logger = get_task_logger(__name__)
+
+'''download_and_format_taxdb
+
+    This task downloads the taxonomy database from the NCBI FTP site.
+    
+    :returns returncode
+        :type int
+
+'''
+@shared_task(bind=True)
+def download_and_format_taxdb(self):
+    logger.info("INFO:NO TAXONOMY DATABASE")
+    if os.path.isfile("media/databases/taxdb.tar.gz"):
+        os.remove("media/databases/taxdb.tar.gz")
+    if os.path.isfile("media/databases/taxdb.tar"):
+        os.remove("media/databases/taxdb.tar")
+    logger.info("INFO:STARTING TO DOWNLOAD TAXONOMY DATABASE")
+
+    try:
+        taxdb_ftp_path = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
+        current_working_directory = os.getcwd()  # /blast/reciprocal_blast
+        path_to_taxdb_location = current_working_directory + '/media/databases/'
+        path_to_taxdb_location = path_to_taxdb_location + 'taxdb.tar.gz'
+
+        proc = Popen(["wget",taxdb_ftp_path,"-q","-O",path_to_taxdb_location], shell=False)
+        returncode = proc.wait(timeout=600)
+        if returncode != 0:
+            raise SubprocessError
+        logger.info("INFO:TRYING TO DECOMPRESS THE TAXONOMY DATABASE")
+
+
+
+        proc = Popen(["tar","-zxvf",path_to_taxdb_location,"-C","/blast/reciprocal_blast/media/databases/"], shell=False)
+        returncode = proc.wait(timeout=600)
+        if returncode != 0:
+            raise SubprocessError
+        logger.info("INFO:DONE")
+        return returncode
+    except TimeoutExpired as e:
+        logger.warning("ERROR:TIMEOUT EXPIRED DURING DOWNLOAD OF TAXONOMY DATABASE: {}".format(e))
+        logger.info(
+            "INFO:IF YOU HAVE NO STABLE INTERNET CONNECTION TRY TO RESTART THE WEBSERVER ONCE YOU HAVE A BETTER CONNECTION")
+        logger.info("INFO:YOU CAN MANUALLY LOAD THE TAXONOMY DATABASE INTO THE DATABASE FOLDER")
+
+        pid = proc.pid
+        parent = psutil.Process(pid)
+
+        for child in parent.children(recursive=True):
+            child.kill()
+        parent.kill()
+
+    except SubprocessError as e:
+        logger.warning("ERROR:WGET RESULTED IN AN ERROR: {}".format(e))
+        logger.info("INFO:YOU CAN MANUALLY LOAD THE TAXONOMY DATABASE INTO THE DATABASE FOLDER")
+
+        pid = proc.pid
+        parent = psutil.Process(pid)
+
+        for child in parent.children(recursive=True):
+            child.kill()
+        parent.kill()
 
 ''' get_species_taxids_into_file
 

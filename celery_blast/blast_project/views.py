@@ -8,9 +8,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, CreateTaxonomicFileForMultipleScientificNames
-from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes
+from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb
 from .py_services import list_taxonomic_files, upload_file, \
-    delete_project_and_associated_directories_by_id, get_html_results
+    delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
 from .py_project_creation import create_blast_project
 from django.db import IntegrityError, transaction
 
@@ -79,13 +79,19 @@ def project_creation_view(request):
                 return redirect('project_details',project_id=blast_project.id)
 
         else:
-            project_creation_form = ProjectCreationForm(request.user)
-            blast_settings_forward_form = BlastSettingsFormForward()
-            blast_settings_backward_form = BlastSettingsFormBackward()
+            if check_if_taxdb_exists():
+                project_creation_form = ProjectCreationForm(request.user)
+                blast_settings_forward_form = BlastSettingsFormForward()
+                blast_settings_backward_form = BlastSettingsFormBackward()
 
-        context = {'ProjectCreationForm':project_creation_form,
-                   'BlastSettingsForwardForm':blast_settings_forward_form,
-                   'BlastSettingsBackwardForm':blast_settings_backward_form}
+                context = {'ProjectCreationForm':project_creation_form,
+                           'BlastSettingsForwardForm':blast_settings_forward_form,
+                           'BlastSettingsBackwardForm':blast_settings_backward_form,
+                           'taxdb':True}
+
+            else:
+                context = {'taxdb':False}
+                task = download_and_format_taxdb.delay()
 
         return render(request,'blast_project/project_creation_dashboard.html',context)
     except Exception as e:

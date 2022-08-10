@@ -71,11 +71,18 @@ This Website can be used for the creation of reciprocal BLAST projects.
         <button class="btn btn-dark" onclick="displayDivElement('input_field_information')" style="position: absolute;top: 10px; right: 10px;">Display Information For Input Fields </button>
     </div>
 
-    <div class="dashboard_project_list_col" >
+    {% if taxdb == True %}
+        <div class="dashboard_project_list_col" >
 
-        {% include "blast_project/form_project_creation.html" %}
-        <br>
-        <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
-    </div>
+            {% include "blast_project/form_project_creation.html" %}
+            <br>
+            <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
+        </div>
+    {% endif %}
+    {% if taxdb == False %}
+        <div class="dashboard_project_list_col">
+
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

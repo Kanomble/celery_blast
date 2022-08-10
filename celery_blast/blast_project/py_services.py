@@ -6,6 +6,20 @@ from django.db import IntegrityError, transaction
 from blast_project import py_biopython as pyb
 import pandas as pd
 
+'''check_if_taxdb_exists
+    
+    This function is used before project creation to check if the taxonomy database exists in the database directory.
+    
+    :returns True or False
+        :type boolean
+'''
+def check_if_taxdb_exists()->bool:
+    if isfile('media/databases/taxdb.btd') and isfile('media/databases/taxdb.bti'):
+        return True
+    else:
+        return False
+
+
 '''list_taxonomic_files
 
 utilization in create_taxonomic_file_view and refseqdatabaseform 
