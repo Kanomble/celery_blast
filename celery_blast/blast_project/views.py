@@ -78,6 +78,18 @@ def project_creation_view(request):
 
                 return redirect('project_details',project_id=blast_project.id)
 
+            else:
+                #TODO what happens if taxdb is not there
+                if check_if_taxdb_exists():
+                    taxdb=True
+                else:
+                    taxdb=False
+
+                context = {'ProjectCreationForm':project_creation_form,
+                           'BlastSettingsForwardForm':blast_settings_forward_form,
+                           'BlastSettingsBackwardForm':blast_settings_backward_form,
+                           'taxdb':taxdb}
+
         else:
             if check_if_taxdb_exists():
                 project_creation_form = ProjectCreationForm(request.user)
