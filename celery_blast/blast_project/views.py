@@ -12,6 +12,7 @@ from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_proj
 from .py_services import list_taxonomic_files, upload_file, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
 from .py_project_creation import create_blast_project
+from .py_database_statistics import calculate_database_statistics
 from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database, \
@@ -349,10 +350,10 @@ def registration_view(request):
 
 ''' failure view
 
-returned if an exception ocurred within execution of view functions.
-
-:param exception
-    :type str
+    Returns if an exception occurred within execution of view functions.
+    
+    :param exception
+        :type str
 '''
 #if an exception occurres this page is rendered in order to evaluate the exception context
 def failure_view(request,exception):
@@ -363,3 +364,19 @@ def failure_view(request,exception):
 @login_required(login_url='login')
 def success_view(request):
     return render(request,'blast_project/success.html')
+
+'''database_statistics
+    
+    Function triggers execution of the database statistics optional postprocessing.
+    Executes the task function that includes py_database_statistic function database_statistics.
+    
+    :param project_id
+        :type int
+'''
+@login_required(login_url='login')
+def database_statistics(request, project_id):
+    try:
+        calculate_database_statistics(project_id)
+        return redirect('project_details',project_id=project_id)
+    except Exception as e:
+        return failure_view(request, e)

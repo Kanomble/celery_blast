@@ -84,6 +84,7 @@
                         {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
                             <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}"> External Tools</a></td>
+                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
                         {% endif %}
                         <td>
                             <form class="col"

@@ -27,13 +27,17 @@ ajax_urls = [
     path('<int:project_id>/ajax_wp_to_links',views.ajax_wp_to_links,name='ajax_wp_to_links')
 ]
 
+py_optional_postprocessing = [
+    path('<int:project_id>/project_details/database_statistics', views.database_statistics, name='database_statistics')
+]
+
 success_failure_urls = [
     path('failure', views.failure_view, name='failure_view'),
     path('success',views.success_view,name='success_view')
 ]
 urlpatterns = [
     path('', views.dashboard_view, name='blast_project_dashboard'),
-
+    path('', include(py_optional_postprocessing)),
     path('', include(ajax_urls)),
     path('', include(registration_urls)),
     path('', include(service_urls)),
