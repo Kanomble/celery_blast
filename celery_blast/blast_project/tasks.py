@@ -9,7 +9,6 @@ from external_tools.models import ExternalTools
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
-from shutil import move
 from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes
 #logger for celery worker instances
 logger = get_task_logger(__name__)
