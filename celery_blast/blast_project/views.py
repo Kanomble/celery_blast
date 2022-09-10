@@ -374,9 +374,10 @@ def success_view(request):
         :type int
 '''
 @login_required(login_url='login')
-def database_statistics(request, project_id):
+def database_statistics_dashboard(request, project_id):
     try:
-        calculate_database_statistics(project_id)
-        return redirect('project_details',project_id=project_id)
+        context={'project_id':project_id}
+        #calculate_database_statistics(project_id)
+        return render(request,'blast_project/database_statistics_dashboard.html',context)
     except Exception as e:
         return failure_view(request, e)

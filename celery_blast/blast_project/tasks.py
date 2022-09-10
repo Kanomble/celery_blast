@@ -9,7 +9,8 @@ from external_tools.models import ExternalTools
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
-from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes
+from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
+    update_blast_project_with_database_statistics_task_result_model
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
@@ -17,6 +18,8 @@ logger = get_task_logger(__name__)
 
     This task downloads the taxonomy database from the NCBI FTP site.
     
+    :param self
+        :type TaskResult object?
     :returns returncode
         :type int
 
@@ -216,7 +219,7 @@ def execute_reciprocal_blast_project(self,project_id):
             parent.kill()
         raise Exception("ERROR Reciprocal BLAST reached Task Time Limit")
 
-
+#TODO documentation
 @shared_task(bind=True)
 def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,taxmap_file=None, taxonomic_node=None):
     try:
@@ -292,3 +295,28 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
         logger.info("ERROR:makeblastdb process reached Task Time Limit")
         makeblastdb_popen.kill()
         raise Exception("ERROR:makeblastdb process reached Task Time Limit")
+
+'''calculate_database_statistics_task
+
+    :param self
+        :type TaskResult object
+    :param project_id
+        :type int
+
+'''
+@shared_task(bind=True)
+def calculate_database_statistics_task(self, project_id):
+    try:
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "started process")
+        logger.info("INFO:started database statistics for project: {}".format(project_id))
+        try:
+            update_blast_project_with_database_statistics_task_result_model(project_id, self.request.id)
+        except Exception as e:
+            logger.warning('ERROR:couldnt update blast project with exception : {}'.format(e))
+            raise Exception('ERROR:couldnt update blast project with exception : {}'.format(e))
+
+    except SoftTimeLimitExceeded as e:
+        logger.info("ERROR:database statistics calculation reached Task Time Limit")
+        #makeblastdb_popen.kill()
+        raise Exception("ERROR:database statistics calculation reached Task Time Limit")

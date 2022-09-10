@@ -169,7 +169,15 @@ class BlastProject(models.Model):
         TaskResult,
         on_delete=models.SET_NULL,
         blank=True, null=True,
-        verbose_name="django_celery_results taskresult model for this project")
+        related_name="project_execution_snakemake_task",
+        verbose_name="django_celery_results taskresult model for this projects snakemake pipeline")
+
+    project_database_statistics_task = models.OneToOneField(
+        TaskResult,
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        related_name="project_database_statistics_task",
+        verbose_name="django_celery_results taskresult model for this projects database statistics")
 
     # customized initialization can be added in BlastProjectManager (e.g. direct creation of project directory
     objects = BlastProjectManager()
