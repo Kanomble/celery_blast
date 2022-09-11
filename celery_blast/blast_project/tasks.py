@@ -11,6 +11,7 @@ from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
 from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
     update_blast_project_with_database_statistics_task_result_model
+from .py_database_statistics import calculate_database_statistics
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
@@ -308,15 +309,21 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
 def calculate_database_statistics_task(self, project_id):
     try:
         progress_recorder = ProgressRecorder(self)
-        progress_recorder.set_progress(0, 100, "started process")
+        progress_recorder.set_progress(0, 100, "STARTED")
         logger.info("INFO:started database statistics for project: {}".format(project_id))
         try:
             update_blast_project_with_database_statistics_task_result_model(project_id, self.request.id)
+            progress_recorder.set_progress(25, 100, "PROGRESS")
+
+
         except Exception as e:
             logger.warning('ERROR:couldnt update blast project with exception : {}'.format(e))
             raise Exception('ERROR:couldnt update blast project with exception : {}'.format(e))
+        calculate_database_statistics(project_id)
+        logger.info("DONE:calculating database statistics for project: {}".format(project_id))
 
     except SoftTimeLimitExceeded as e:
         logger.info("ERROR:database statistics calculation reached Task Time Limit")
-        #makeblastdb_popen.kill()
         raise Exception("ERROR:database statistics calculation reached Task Time Limit")
+    except Exception as e:
+        raise Exception("ERROR: unknown exception occurred: {}".format(e))

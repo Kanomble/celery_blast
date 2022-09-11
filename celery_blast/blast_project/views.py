@@ -8,11 +8,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, CreateTaxonomicFileForMultipleScientificNames
-from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb
+from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
+    calculate_database_statistics_task
 from .py_services import list_taxonomic_files, upload_file, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
 from .py_project_creation import create_blast_project
-from .py_database_statistics import calculate_database_statistics
+from .py_database_statistics import calculate_database_statistics, get_database_statistics_task_status
 from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database, \
@@ -376,8 +377,26 @@ def success_view(request):
 @login_required(login_url='login')
 def database_statistics_dashboard(request, project_id):
     try:
-        context={'project_id':project_id}
+        task_status=get_database_statistics_task_status(project_id)
+        context={'project_id':project_id,'task_status':task_status}
         #calculate_database_statistics(project_id)
         return render(request,'blast_project/database_statistics_dashboard.html',context)
+    except Exception as e:
+        return failure_view(request, e)
+
+
+'''database_statistics
+
+    Function triggers execution of the database statistics optional postprocessing.
+    Executes the task function that includes py_database_statistic function database_statistics.
+
+    :param project_id
+        :type int
+'''
+@login_required(login_url='login')
+def execute_database_statistics_task(request, project_id):
+    try:
+        calculate_database_statistics_task.delay(project_id)
+        return redirect('database_statistics',project_id=project_id)
     except Exception as e:
         return failure_view(request, e)

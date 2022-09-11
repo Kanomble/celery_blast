@@ -15,16 +15,13 @@
     <br>
     <p style="text-align: center;font-size: small"> Monitor Database Statistics, {{ request.user }}!</p>
     <div class="row" style="text-align:center;justify-content: center;">
+        {% if task_status == 'NOTEXEC' %}
         <div>
-            <a  href="{% url 'project_creation' %}">
-                <button class="btn btn-dark" style="height: 80px;width: 130px; margin-right: 5px"> RecBLAST Project </button>
+            <a  href="{% url 'execute_database_statistics_task' project_id=project_id %}">
+                <button class="btn btn-dark" style="height: 80px;width: 130px; margin-right: 5px"> Calculate DB Statistics </button>
             </a>
         </div>
-        <div>
-            <a href="{% url 'upload_genomes' %}">
-                <button class="btn btn-dark" style="height: 80px;width: 130px;margin-left: 5px">Upload Genomes</button>
-            </a>
-        </div>
+        {% endif %}
     </div>
 </div>
 

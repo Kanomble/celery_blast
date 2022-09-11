@@ -78,3 +78,28 @@ def calculate_database_statistics(project_id: int)->pd.core.frame.DataFrame:
 
     except Exception as e:
         raise Exception("ERROR during calculation of database statistics with exception: {}".format(e))
+
+'''get_database_statistics_task_status
+    
+    This function returns the status of the database statistic task.
+    Status not executed: NOTEXEC
+    Status ongoing: PROGRESS
+    Status finished: SUCCESS
+    Status failed: FAILURE
+    
+    :param project_id
+        :type int
+        
+    :return status
+        :type str
+'''
+def get_database_statistics_task_status(project_id:int)->str:
+    try:
+        project = py_db_service.get_project_by_id(project_id)
+        if(project.project_database_statistics_task):
+            task_status = str(project.project_database_statistics_task.status)
+        else:
+            task_status = "NOTEXEC"
+        return task_status
+    except Exception as e:
+        raise Exception("ERROR during database statistics task status query with exception: {}".format(e))
