@@ -151,7 +151,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
     #init parsing refseq table with pandas
     try:
         refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None, usecols=range(22),
-                                     dtype={20: str,
+                                     dtype={20:str,
                                             5:str,
                                             6:str})
 

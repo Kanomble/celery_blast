@@ -13,7 +13,7 @@ from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_proj
 from .py_services import list_taxonomic_files, upload_file, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
 from .py_project_creation import create_blast_project
-from .py_database_statistics import calculate_database_statistics, get_database_statistics_task_status
+from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output
 from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database, \
@@ -351,7 +351,7 @@ def registration_view(request):
 
 ''' failure view
 
-    Returns if an exception occurred within execution of view functions.
+    Standard view for exceptions raised by other view functions.
     
     :param exception
         :type str
@@ -400,3 +400,19 @@ def execute_database_statistics_task(request, project_id):
         return redirect('database_statistics',project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
+
+'''delete_database_statistics
+
+    Function for deletion of files and task object of the database statistics task.
+    
+    :param project_id
+        :type int
+
+'''
+@login_required(login_url='login')
+def delete_database_statistics(request, project_id):
+    try:
+        delete_database_statistics_task_and_output(project_id)
+        return redirect('database_statistics',project_id=project_id)
+    except Exception as e:
+        return failure_view(request,e)

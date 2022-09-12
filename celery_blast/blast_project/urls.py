@@ -29,7 +29,8 @@ ajax_urls = [
 
 py_optional_postprocessing = [
     path('<int:project_id>/project_details/database_statistics', views.database_statistics_dashboard, name='database_statistics'),
-    path('<int:project_id>/project_details/execute_database_statistics_task', views.execute_database_statistics_task,name='execute_database_statistics_task')
+    path('<int:project_id>/project_details/execute_database_statistics_task', views.execute_database_statistics_task,name='execute_database_statistics_task'),
+    path('<int:project_id>/project_details/delete_database_statistics_task_and_output', views.delete_database_statistics,name='delete_database_statistics')
 ]
 
 success_failure_urls = [

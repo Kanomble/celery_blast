@@ -24,6 +24,8 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] add taxonomic information processing to database creation
+- [ ] failure BLAST database task
 - [ ] delete .gitkeep in postgres folder and fix wait for script line ending
 - [ ] allow stopping database downloading and formatting tasks, allow deletion of paused/stopped database download/format procedures
 - [ ] include taxonomic information in BLAST database tables
