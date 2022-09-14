@@ -396,7 +396,7 @@ def database_statistics_dashboard(request, project_id):
 @login_required(login_url='login')
 def execute_database_statistics_task(request, project_id):
     try:
-        calculate_database_statistics_task.delay(project_id)
+        calculate_database_statistics_task.delay(project_id,request.user.email)
         return redirect('database_statistics',project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
@@ -407,12 +407,13 @@ def execute_database_statistics_task(request, project_id):
     
     :param project_id
         :type int
-
+ 
 '''
 @login_required(login_url='login')
 def delete_database_statistics(request, project_id):
     try:
-        delete_database_statistics_task_and_output(project_id)
+        logfile='media/blast_projects/'+str(project_id)+'/log/delete_database_statistics_task_and_output.log'
+        delete_database_statistics_task_and_output(project_id,logfile=logfile)
         return redirect('database_statistics',project_id=project_id)
     except Exception as e:
         return failure_view(request,e)

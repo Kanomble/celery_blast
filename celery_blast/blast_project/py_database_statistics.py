@@ -63,7 +63,7 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
                                 for akaid in record[i]['AkaTaxIds']:
                                     if int(akaid) in splitted_ids:
                                         taxid.append(akaid)
-                                        log.write("\tINFO: AkaTaxIds detected: {}".format(akaid))
+                                        log.write("\tINFO: AkaTaxIds detected: {}\n".format(akaid))
                                         break
                                 else:
                                     taxid.append(record[i]['TaxId'])
@@ -118,7 +118,7 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
             tax_db = pd.DataFrame([taxid, taxonomy, genus, family, superfamily, order, classt, phylum])
             tax_db = tax_db.transpose()
             tax_db.columns = columns
-            return tax_db, taxid
+            return tax_db
     except Exception as e:
         log.write("ERROR:problem during fetching and appending taxonomic information with exception: {}\n".format(e))
         raise Exception("ERROR during database table extension with taxonomic information with excpetion: {}".format(e))
@@ -141,8 +141,9 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
         :type pd.core.frame.DataFrame
 '''
 def calculate_database_statistics(project_id: int,logfile:str,user_email:str)->pd.core.frame.DataFrame:
-    try:
-        with open(logfile,'w') as log:
+    with open(logfile, 'w') as log:
+        try:
+
             log.write("INFO:Starting to calculate database statistics\n")
 
             path_to_project='media/blast_projects/' + str(project_id)
@@ -162,6 +163,7 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str)->p
             result_data = pd.read_csv(path_to_reciprocal_results,index_col=0)
 
             if(isfile(new_database_name)):
+                log.write("INFO:database: {} exists\n".format(new_database_name))
                 db_df = pd.read_csv(new_database_name, index_col=0)
                 log.write("INFO:Done loading result and database dataframe\n")
             else:
@@ -195,7 +197,10 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str)->p
                         df = df.drop_duplicates(subset=['assembly_accession'], keep='first')
                         m_df = db_df.merge(df, on='assembly_accession')
                         m_df = m_df.drop_duplicates(subset=['scomnames'], keep='first')
-                        values = m_df['class'].value_counts()
+                        if 'class_x' in m_df.columns:
+                            values = m_df['class_x'].value_counts()
+                        else:
+                            values = m_df['class'].value_counts()
                         values = values.rename(query)
                         class_counts.append(values)
 
@@ -204,15 +209,18 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str)->p
                 log.write("INFO:working on uploaded database entries\n")
                 class_counts = []
                 result_data.rename(columns={'staxids': 'species_taxid'}, inplace=True)
+
                 for query in result_data['qseqid'].unique():
                     df = result_data[result_data['qseqid'] == query]
                     if len(df) > 0:
                         db_df = db_df.drop_duplicates(subset=["assembly_accession"], keep='first')
                         db_df = db_df.drop_duplicates(subset=["species_taxid"], keep='first')
-
-                        m_df = db_df[['species_taxid', 'organism_name']].merge(df, on='species_taxid')
+                        m_df = db_df.merge(df, on='species_taxid')
                         m_df = m_df.drop_duplicates(subset=['scomnames'], keep='first')
-                        values = m_df['class'].value_counts()
+                        if 'class_x' in m_df.columns:
+                            values = m_df['class_x'].value_counts()
+                        else:
+                            values = m_df['class'].value_counts()
                         values = values.rename(query)
                         class_counts.append(values)
 
@@ -229,15 +237,35 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str)->p
                     plot_path = 'media/blast_projects/' + str(project_id)+ '/' + str(column) + '/' + 'database_result_statistics.png'
                     plt.tight_layout()
                     plt.savefig(plot_path)
+
+                log.write("INFO:trying to normalize values\n")
+                percentage = db_df['class'].value_counts()
+                percentage = percentage.rename('Normalizer')
+                f = lambda x, y: (100 / y) * x
+                normalizing_results = class_counts
+                normalizing_results.append(percentage)
+                normalized_df = pd.DataFrame(normalizing_results)
+                normalized_df = normalized_df.transpose().fillna(0)
+                normalized_table = []
+                for query in normalized_df.columns:
+                    if query != 'Normalizer':
+                        temp_res = f(normalized_df[query], normalized_df['Normalizer'])
+                        temp_res.name = query
+                        normalized_table.append(temp_res)
+
+                normalized_df = pd.DataFrame(normalized_table)
+                normalized_df = normalized_df.fillna(0)
+                df_path = 'media/blast_projects/' + str(project_id) + '/database_statistics_normalized.csv'
+                normalized_df.to_csv(df_path)
             else:
                 log.write("INFO:Dataframe is empty\n")
                 df=pd.DataFrame()
             log.write("DONE\n")
             return df
 
-    except Exception as e:
-        log.write("ERROR: problems during calculation of database statistics {}\n".format(e))
-        raise Exception("ERROR during calculation of database statistics with exception: {}".format(e))
+        except Exception as e:
+            log.write("ERROR: problems during calculation of database statistics {}\n".format(e))
+            raise Exception("ERROR during calculation of database statistics with exception: {}".format(e))
 
 '''get_database_statistics_task_status
     

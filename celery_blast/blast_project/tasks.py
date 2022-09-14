@@ -306,7 +306,7 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
 
 '''
 @shared_task(bind=True)
-def calculate_database_statistics_task(self, project_id):
+def calculate_database_statistics_task(self, project_id, user_email):
     try:
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "STARTED")
@@ -319,7 +319,13 @@ def calculate_database_statistics_task(self, project_id):
         except Exception as e:
             logger.warning('ERROR:couldnt update blast project with exception : {}'.format(e))
             raise Exception('ERROR:couldnt update blast project with exception : {}'.format(e))
-        calculate_database_statistics(project_id)
+
+        logfile='media/blast_projects/'+str(project_id)+'/log/calculate_database_statistics.log'
+        if os.path.isdir('media/blast_projects/'+str(project_id)+'/log'):
+            logger.info("INFO:Starting database statistics task")
+            calculate_database_statistics(project_id,logfile=logfile, user_email=user_email)
+        else:
+            logger.warning("WARNING: cant write {}".format(logfile))
         logger.info("DONE:calculating database statistics for project: {}".format(project_id))
 
     except SoftTimeLimitExceeded as e:
