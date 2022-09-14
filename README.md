@@ -20,21 +20,23 @@ cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 
-
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
-- [ ] add taxonomic information processing to database creation
+- [ ] refactor blast_tables_to_orthologous_table.py with new entrez function of the database statistics ncbi_transaction script
+- [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
+- [X] fix javascript download button for the protein database in the entrez search
+- [ ] add taxonomic information processing to database creation or database statistics calculation
 - [ ] failure BLAST database task
-- [ ] delete .gitkeep in postgres folder and fix wait for script line ending
+- [ ] delete .gitkeep in postgres folder and fix wait-for script line ending
+  - [ ] wait-for script checking - LF / CLRF
 - [ ] allow stopping database downloading and formatting tasks, allow deletion of paused/stopped database download/format procedures
 - [ ] include taxonomic information in BLAST database tables
 - [ ] adjust text size of titles in reciprocal blast result dashboard plots
 - [ ] esearch output into subfolders for each user
-- [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
-- [ ] refactor the external project information dashboard
-  - [ ] replace MSA and Phylogeny buttons with the number of RBH's
-- [ ] fill the other 2 boxes in connies phylogeny dashboard
+- [X] refactor the external project information dashboard
+  - [X] replace MSA and Phylogeny buttons with the number of RBH's
+- [X] fill the other 2 boxes in connies phylogeny dashboard
 - [ ] there are some bugs in the EntrezSearch - e.g. if you search for rhino in pubmed
 - [X] pipeline log files
   - [ ] view logfile content on pipeline dashboard
@@ -48,7 +50,6 @@ The web container will automatically try to restart if the startup fails, unless
 - [X] define global timeout variable --> use celery timeouts --> soft and hard timeouts
 - [ ] one_way_blast_results - if there is an error in the biopython request for building genus graphs display at least the hit table
 - [ ] correct ajax requests if it results into an error
-- [ ] wait-for script checking - LF / CLRF
 - [ ] add genbank database option
 - [ ] if no reciprocal hits are available for at least one gene the snakmake workflow will result into an error - rule extract_sequences
 - [ ] upload genome: if \n is in any uploaded txt file it will count as a value for insertion
@@ -70,8 +71,8 @@ The web container will automatically try to restart if the startup fails, unless
     - [ ] integrate the possible execution of blastn also in snakemake
 - [x] download taxdb during build process of the docker image
   - [ ] update taxdb option!
-- [ ] is the uneven species distribution harmful for identifying orthologs? - add warning if e.coli sequences are uploaded
 - [ ] input fasta query file headers have to be separated by a space, not by a pipe symbol (|) or others
+  - [ ] reformat input sequences during upload
 - [ ] clinker like synteny plots (basic plot with x axis scaling depending on biggest genome size ..) just for filtered organisms
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [ ] write documentation for added functions
@@ -83,7 +84,7 @@ The web container will automatically try to restart if the startup fails, unless
 - [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [x] check if backward organism is in database
   - [X] check if query sequences are in backward database
-- [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
+- [X] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [X] think about multiple species_name inputs ... --> not possible
