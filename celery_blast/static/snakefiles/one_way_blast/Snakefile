@@ -16,45 +16,42 @@ rule all:
 		'blast_results_with_tax.table',
 		expand("{qseqid}/blast_results_with_tax.table",qseqid=QSEQIDS),
 		expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
-		expand("{qseqid}/target_sequences.png",qseqid=QSEQIDS)
+		expand("{qseqid}/target_sequences.svg",qseqid=QSEQIDS)
 
-#RULE 1
-#normal blast procedure
 rule blast:
 	input: queries=config['query_sequence']
 	output: "blast_results.table"
 	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb']
-	log: log="log/blast.log"
 	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries} 2> {log}"
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries}"
 
-#RULE 2
-#plot taxonomy related graphs for blast results
+'''
+rule blast_table_to_html:
+	input: res="blast_results.table"
+	output: html_table="blast_results.html"
+	script:
+		"../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
+'''
+
 rule blast_results_to_plots:
 	input: blast_results="blast_results.table", query_file=config['query_sequence']
 	params: genus_bars_static="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + '/genus_bars.html',user_email=config['user_email']
 	output: genus_bars="genus_bars.html",html_table="blast_results.html", taxonomic_table='blast_results_with_tax.table'
-	log: log="log/blast_results_to_plots.log"
 	script:
 		"../../../static/snakefiles/one_way_blast/plot_results.py"
 
-#RULE 3
-#collects online available informations of query sequences based on identifier
 rule query_sequences_to_html_table:
 	input: target_file=config['query_sequence']
 	params: email=config['user_email']
 	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
-	log: log="log/query_sequences_to_html_table.log"
 	script:
 		"../../../static/snakefiles/one_way_blast/query_sequences_to_html_table.py"
 
-#RULE 4
-#filters the blast result table with taxonomic information for the best hits(10%) and outputs query specific result files
 rule filter_blast_results_table_to_csv:
-	input: results_table="blast_results_with_tax.table", query_file=config['query_sequence']
-	output: result_csv=expand("{qseqid}/blast_results_with_tax.table",qseqid=QSEQIDS),ids=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
-	params: qseqs=QSEQIDS
-	log: log="log/filter_blast_results_table_to_csv.log"
+	input: results_table="blast_results_with_tax.table"
+	output: result_csv=expand("{qseqid}/blast_results_with_tax.table",qseqid=QSEQIDS),
+            ids=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
+	log: log="filter_blast_results_table_to_csv.log"
 	script:
 		"../../../static/snakefiles/one_way_blast/filter_blast_results_table_to_csv.py"
 
@@ -62,32 +59,60 @@ rule extract_subject_sequences_from_database:
 	input: "{qseqid}/target_sequence_ids.txt"
 	output: "{qseqid}/target_sequences.faa"
 	params: database=config["blastdb"]
-	shell:
-		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
+	log: "log/{qseqid}/extract_subject_sequences_from_database.log"
+	run:
+	    with open(input[0], 'r') as infile:
+	        if len(infile.readlines()) > 1:
+	            shell("blastdbcmd -db {params.database} -entry_batch {input} -out {output} 2> {log}")
+	        else:
+	            shell("touch {output} 2> {log}")
 
 rule conduct_multiple_sequence_alignment_mafft:
     input: "{qseqid}/target_sequences.faa"
     output: "{qseqid}/target_sequences.msa"
-    shell:
-        "mafft --auto {input} > {output}"
+    log:"log/{qseqid}/conduct_multiple_sequence_alignment_mafft.log"
+    run:
+        with open(input[0],'r') as infile:
+            if len(infile.readlines()) > 1:
+                shell("mafft --auto {input} > {output} 2> {log}")
+            else:
+                shell("touch {output} 2> {log}")
 
 rule conduct_phylogeny_fast_tree:
     input: "{qseqid}/target_sequences.msa"
     output: "{qseqid}/target_sequences.tree"
-    shell:
-        "fasttree {input} > {output}"
+    log: "log/{qseqid}/conduct_phylogeny_fast_tree.log"
+    run:
+        with open(input[0],"r") as infile:
+            if len(infile.readlines()) > 1:
+                shell("fasttree {input} > {output} 2> {log}")
+            else:
+                shell("touch {output} 2> {log}")
 
+'''
 rule update_tree_with_taxid:
     input: nw="{qseqid}/target_sequences.tree",
             df= "{qseqid}/blast_results_with_tax.table"
     output: "{qseqid}/transformed_treefile.nwk"
+    log: log="log/{qseqid}/update_tree_with_taxid.log"
     script:
         "../../../static/snakefiles/one_way_blast/update_seq_id_taxinfo.py"
 
 rule ete3_tree_to_png:
     input: tree="{qseqid}/transformed_treefile.nwk"
     params:
-        static_pic="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + "/{qseqid}_target_sequences.png"
-    output: pic="{qseqid}/target_sequences.png"
+        static_pic="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
+    output: pic="{qseqid}/target_sequences.svg"
+    log: "{qseqid}/ete3_tree_to_png.log"
+    script:
+        "../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"
+'''
+
+rule ete3_tree_to_png:
+    input: tree="{qseqid}/target_sequences.tree"
+    params:
+        static_pic="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
+    output: pic="{qseqid}/target_sequences.svg"
+    log: log="{qseqid}/ete3_tree_to_png.log"
     script:
         "../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"

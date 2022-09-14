@@ -1,7 +1,6 @@
 from Bio import Entrez
 import pandas as pd
-from sys import exit
-ERRORCODE=3
+
 ''' get_target_header
 
 '''
@@ -111,6 +110,7 @@ def parse_entrez_xml(records) -> dict:
     except Exception as e:
         raise Exception("[-] ERROR during parsing entrez records with exception: {}".format(e))
 
+
 ''' create_pandas_df_and_html_table
 Function that takes as input the protein_informations dictionary from parse_entrez_xml and
 outputs an html and tsf table with all informations for the provided query sequences.
@@ -118,6 +118,8 @@ outputs an html and tsf table with all informations for the provided query seque
 Returns an integer:
     0 : Function returns successfully
 '''
+
+
 def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, path_to_html_output: str, path_to_csv_output:str) -> int:
     try:
         # 'queries':[],'features':{},'links':{},'general_information':{}
@@ -250,18 +252,7 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
     except Exception as e:
         raise Exception("[-] ERROR during creation of pandas html tables with exception: {}".format(e))
 
-with open(snakemake.log['log'],'w') as logfile:
-    try:
-        logfile.write("INFO:starting to create query sequence html table\n")
-        logfile.write("INFO:reading query sequence file\n")
-        proteins = get_target_header(snakemake.input['target_file'])
-        logfile.write("INFO:fetching protein records with biopython\n")
-        records = fetch_protein_records(proteins,snakemake.params['email'])
-        logfile.write("INFO:parsing records and extracting informations\n")
-        protein_informations = parse_entrez_xml(records)
-        logfile.write("INFO:writing html file with pandas\n")
-        create_pandas_df_and_html_table(proteins,protein_informations,snakemake.output['output_html'],snakemake.output['output_csv'])
-        logfile.write("DONE\n")
-    except Exception as e:
-        logfile.write("ERROR:{}\n".format(e))
-        exit(ERRORCODE)
+proteins = get_target_header(snakemake.input['target_file'])
+records = fetch_protein_records(proteins,snakemake.params['email'])
+protein_informations = parse_entrez_xml(records)
+create_pandas_df_and_html_table(proteins,protein_informations,snakemake.output['output_html'],snakemake.output['output_csv'])

@@ -6,6 +6,7 @@ from .py_services import write_pandas_table_to_project_dir, transform_data_table
 from os.path import isfile
 import pandas as pd
 from django.db import IntegrityError, transaction
+from Bio import Entrez
 
 ''' 
 transactions with models (manager)
@@ -229,4 +230,3 @@ def read_database_table_by_database_id_and_return_json(database_id):
     table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name,header=0,index_col=0)
     json = transform_data_table_to_json_dict(table)
     return json
-
