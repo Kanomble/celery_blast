@@ -191,34 +191,51 @@ class EntrezSearch(models.Model):
         related_name="download_task",
         null=True
     )
+    #TODO integrate this the right way
+    #class Meta:
+        #unique_together = [['entrez_query', 'database']]
 
     timestamp = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
     edirect_objects = EntrezSearchManager()
 
-    def get_paper_content(self):
-        pandas_header = {}
-        pandas_header['pubmed'] = ['Id', 'PubDate', 'Source', 'Title', 'ElocationID']
-        pandas_header['protein'] = ['Id','Caption','Title','Organism']
-
-        paper = pd.read_table(self.file_name, header=None)
-        paper.columns = pandas_header[self.database]
-
-        paper = paper.to_html(classes='entrezsearch" id="searchResultTable')
-        return paper
-
     def get_pandas_table(self):
         pandas_header = {}
         pandas_header['pubmed'] = ['Id', 'PubDate', 'Source', 'Title', 'ElocationID']
         pandas_header['protein'] = ['Id','Caption','Title','Organism']
+        pandas_header['assembly'] = ['Id', 'AssemblyName', 'AssemblyStatus', 'Organism', 'Taxid']
+        pandas_header['cdd'] = ["Id", "Title: Subtitle", "Abstract"]
+        pandas_header['protfam'] = ["Id", "DispMethod", "DispReviewLevel", "string"]
 
         paper = pd.read_table(self.file_name, header=None)
         paper.columns = pandas_header[self.database]
         return paper
 
+    def get_paper_content(self):
+        paper = self.get_pandas_table()
+
+        def make_clickable(ncbi_id):
+            return '<a href="https://www.ncbi.nlm.nih.gov/{}/{}" rel="noopener noreferrer" target="_blank">{}</a>'.format(self.database,ncbi_id,ncbi_id)
+
+        paper = paper.style.format({'Id': make_clickable})\
+            .set_table_attributes('class="main_table table table-hover dataTable no-footer" style="width:100%"')
+
+        paper = paper.render(render_links=True ,uuid="searchResultTable")
+        return paper
+
+
+
     def get_paper_number(self):
         return len(pd.read_table(self.file_name, header=None))
+
+    def get_organisms(self):
+        paper = self.get_pandas_table()
+
+        if self.database == "protein":
+            oragnism_list = paper['Organism'].unique().tolist()
+
+        return oragnism_list
 
     def update_paper_entries(self):
         paper_entries = len(pd.read_table(self.file_name, header=None))

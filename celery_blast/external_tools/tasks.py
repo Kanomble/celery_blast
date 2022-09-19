@@ -8,13 +8,13 @@ from celery_progress.backend import ProgressRecorder
 from subprocess import Popen
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
 from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model, download_esearch_protein_fasta_files, \
-    update_entrezsearch_with_download_task_result
+    update_entrezsearch_with_download_task_result, download_by_organism
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
 @shared_task(bind=True)
-def download_entrez_search_associated_protein_sequences(self, search_id):
+def download_entrez_search_associated_protein_sequences(self, search_id: int):
     try:
         progress_recorder = ProgressRecorder(self)
 
@@ -46,6 +46,7 @@ def download_entrez_search_associated_protein_sequences(self, search_id):
 
     except Exception as e:
         raise Exception("[-] an error occurred during downloading fasta files with entrez: {}".format(e))
+
 
 @shared_task(bind=True)
 def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
@@ -80,6 +81,26 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
             raise Exception("soft time limit exceeded for entrez search task ...")
     except Exception as e:
         raise Exception("[-] Couldnt perform entrez search with exception: {}".format(e))
+
+@shared_task(bind=True)
+def download_organism_protein_sequences_task(self, search_id: int, organism_download: str, email: str):
+    try:
+        logger.info("trying to start organism sequence download")
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
+
+        returncode = download_by_organism(search_id, organism_download, email)
+
+        if returncode != 0:
+            logger.info("couldnt perform download task of organisms with exception : {}".format(returncode))
+            return returncode
+        else:
+            progress_recorder.set_progress(100, 100, "SUCCESS")
+            return 0
+
+
+    except Exception as e:
+        raise Exception("[-] couldnt perform download of organisms with exception: {}".format(e))
 
 
 '''
@@ -262,3 +283,10 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
                 raise FileNotFoundError("msa file does not exist!")
     except Exception as e:
         raise Exception("[-] couldnt perform fasttree task for all query sequences with exception: {}".format(e))
+
+
+
+
+
+
+

@@ -29,92 +29,124 @@
 {% endblock %}
 
 {% block content %}
-        <div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
-            <form id="entrez_form" method="POST">
-                {% csrf_token %}
-                <div class="form-group row">
-                     <div class="form-group col-sm-4" style="margin: 20px">
-                        <label for="entrez_query"> Enter a search query </label>
-                        <input type="text" class="form-control" id="entrez_query" name="entrez_query">
-                        {% if EntrezSearchForm.entrez_query.errors %}
-                        <div class="alert alert-danger">
-                            <strong>{{ EntrezSearchForm.entrez_query.errors }}</strong>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group col-sm-4" style="margin: 20px">
-                        <label for="database">Select a BLAST Database </label>
-                        <select class="form-control" id="database" name="database">
-                            {% for database in EntrezSearchForm.database %}
-                                {{database}}
-                            {% endfor %}
-                        </select>
-                    </div>
+<div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
+    <form id="entrez_form" method="POST">
+        {% csrf_token %}
+        <div class="form-group row">
+             <div class="form-group col-sm-4" style="margin: 20px">
+                <label for="entrez_query"> Enter a search query </label>
+                <input type="text" class="form-control" id="entrez_query" name="entrez_query">
+                {% if EntrezSearchForm.entrez_query.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ EntrezSearchForm.entrez_query.errors }}</strong>
                 </div>
-                <input type="submit" value="Submit" class="btn btn-dark" style="margin: 20px">
-            </form>
+                {% endif %}
+            </div>
+
+            <div class="form-group col-sm-4" style="margin: 20px">
+                <label for="database">Select a BLAST Database </label>
+                <select class="form-control" id="database" name="database">
+                    {% for database in EntrezSearchForm.database %}
+                        {{database}}
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-        <div class="dashboard_project_list_col">
-                    <h3 class="col_header" style="text-align: center">Current EDirect Search Results</h3>
-                  <p style="font-size: medium; text-align: center">Perform BLAST similarity searches on NCBI Server</p>
-            <hr>
-                <div class="table-responsive">
-                     <table class="main_table table table-hover">
+        <input type="submit" value="Submit" class="btn btn-dark" style="margin: 20px">
+    </form>
+</div>
 
-                         <tr>
-                             <th> Database </th>
-                             <th> Esearch Query </th>
-                             <th> Paper Entries </th>
-                             <th> Timestamp </th>
-                             <th> Task Status </th>
-                             <th> Link to Result-Table </th>
-                             <th> Delete Query </th>
-                         </tr>
 
-                         {% for search in EntrezSearches %}
-                         <tr>
-                             <td> {{ search.database }}</td>
-                             <td> {{ search.entrez_query }} </td>
-                             <td> {{ search.paper_entries }}</td>
-                             <td>{{ search.timestamp|date:'d.m.Y, h:m:s' }}</td>
 
-                             <td> {{ search.search_task_result.status }} </td>
+<div class="dashboard_project_list_col">
+    <div>
+        <h3 class="col_header" style="text-align: center">Current EDirect Search Results</h3>
+        <hr>
+    </div>
+    <div>
+    <div class="table-responsive">
+         <table id="table_id" class="main_table table table-hover">
+             <thead>
+                 <tr>
+                    <th>Database</th>
+                    <th> Esearch Query </th>
+                    <th> Paper Entries </th>
+                    <th> Timestamp </th>
+                    <th> Task Status </th>
+                    <th> Link to Result-Table </th>
+                    <th> Delete Query </th>
+                 </tr>
+             </thead>
+             {% for search in EntrezSearches %}
+                 <tr>
+                     <td> {{ search.database }}</td>
+                     <td><a href="https://www.ncbi.nlm.nih.gov/{{ search.database }}/?term={{ search.entrez_query }}">{{ search.entrez_query }}</a></td>
+                     <td> {{ search.paper_entries }}</td>
+                     <td>{{ search.timestamp|date:'d.m.Y, h:m:s' }}</td>
 
-                             {% if search.search_task_result.status == 'SUCCESS' %}
-                             <td>
-                                 <a href="{% url 'search_details' search_id=search.id %}">
-                                     <button class="btn btn-dark">
-                                         Result-Table
-                                     </button>
-                                 </a>
-                             </td>
-                             <td>
-                                 <a href="{% url 'search_delete' search_id=search.id %}">
-                                     <button class="btn btn-danger">
-                                         Delete-Search
-                                     </button>
-                                 </a>
-                             </td>
-                             {% endif %}
+                     <td> {{ search.search_task_result.status }} </td>
 
-                         {% if search.search_task_result.status == 'FAILURE' %}
-                             <td>There are no results for this search.</td>
-                             <td>
-                                 <a href="{% url 'search_delete' search_id=search.id %}">
-                                     <button class="btn btn-danger">
-                                         Delete-Search
-                                     </button>
-                                 </a>
-                             </td>
-                             {% endif %}
-                         </tr>
-                         {% endfor %}
-                     </table>
-                </div>
-            <hr>
-        </div>
+                     {% if search.search_task_result.status == 'SUCCESS' %}
+                     <td>
+                         <a href="{% url 'search_details' search_id=search.id %}">
+                             <button class="btn btn-dark">
+                                 Result-Table
+                             </button>
+                         </a>
+                     </td>
+                     <td>
+                         <a href="{% url 'search_delete' search_id=search.id %}">
+                             <button class="btn btn-danger">
+                                 Delete-Search
+                             </button>
+                         </a>
+                     </td>
+                     {% endif %}
 
+                     {% if search.search_task_result.status == 'FAILURE' %}
+                         <td>There are no results for this search.</td>
+                         <td>
+                             <a href="{% url 'search_delete' search_id=search.id %}">
+                                 <button class="btn btn-danger">
+                                     Delete-Search
+                                 </button>
+                             </a>
+                         </td>
+                     {% endif %}
+                     {% if search.search_task_result.status == 'PROGRESS' %}
+                         <td>Result are loading.</td>
+                         <td>
+                             <button class="btn btn-danger" disabled>
+                                 <s>Delete-Search</s>
+                             </button>
+                         </td>
+                     {% endif %}
+                 </tr>
+             {% endfor %}
+
+         </table>
+    </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#table_id').DataTable({
+        "pageLength": 25,
+        /*dom: 'Bfrtip',
+        buttons: [  'copy',
+                    'csv',
+                    'selectAll',
+                    'selectNone',
+                    'selectRows'
+                ],*/
+        searchPane: {
+        columns: [0]}
+        });
+});
+</script>
 
 {% endblock %}
 

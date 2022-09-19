@@ -9,6 +9,10 @@ urlpatterns = [
          views.download_proteins_from_entrez_search, name='download_protein_accessions'),
     path('<int:search_id>/search_details/view_downloaded_sequences',
          views.view_downloaded_sequences, name='view_downloaded_sequences'),
+    path('<int:search_id>/<str:organism_download>/search_details/view_downloaded_organism_sequences',
+         views.view_downloaded_organism_sequences, name='view_downloaded_organism_sequences'),
+    path('<int:search_id>/<str:organism_download>/download_protein_organisms',
+         views.download_protein_by_organisms_from_entrez_search, name='download_protein_organisms'),
 
     path('<int:project_id>/external_project_information', views.project_informations, name='external_project_informations'),
     path('<int:project_id>/<str:query_sequence_id>/perform_simple_msa',

@@ -7,7 +7,10 @@ of conducted entrez searches. Supported databases can be included into the DATAB
 class EntrezSearchForm(forms.Form):
 
     DATABASES = [('pubmed','pubmed'),
-                 ('protein','protein')]
+                 ('protein','protein'),
+                 ('assembly','assembly'),
+                 ('cdd','cdd'),
+                 ('protfam','protfam')]
 
     entrez_query = forms.CharField(initial="ribosomes AND cyanobacteria AND review [PT]", widget=forms.widgets.Textarea)
 
