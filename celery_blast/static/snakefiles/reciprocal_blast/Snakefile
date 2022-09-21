@@ -239,7 +239,7 @@ rule update_tree_with_taxid:
 
 #RULE 15
 rule ete3_tree_to_png:
-	input: tree="{qseqid}/transformed_treefile.nwk"
+	input: tree="{qseqid}/transformed_treefile.nwk", nw="{qseqid}/target_sequences.tree"
 	params: static_pic="../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
 	output: pic="{qseqid}/target_sequences.svg"
 	log: log="log/{qseqid}/ete3_tree_to_png.log"
