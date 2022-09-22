@@ -125,6 +125,7 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
 
 
 #TODO extend this function to produce not only class based statistics
+#TODO refactor function, this function if too long and has several logic layers
 '''calculate_database_statistics
 
     This function calculates database statistics based on the reciprocal results of a finished pipeline project.
