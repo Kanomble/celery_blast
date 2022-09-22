@@ -28,7 +28,7 @@ services:
 
   web:
     image: kanomble/rec_blast_base_image:1.7
-    command:  sh -c "chmod u+x wait-for && ./wait-for rabbitmq:5672 && ./wait-for postgres:5432
+    command:  sh -c "wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for && ./wait-for rabbitmq:5672 && ./wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
      && python manage.py runserver 0.0.0.0:8080"
