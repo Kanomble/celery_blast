@@ -64,7 +64,7 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
                                  task_result_id=self.request.id,
                                  user_id=user_id)
 
-        returncode = execute_entrez_search(database, entrez_query, esearch_output_filepath,entrez_search)
+        returncode = execute_entrez_search(database, entrez_query, esearch_output_filepath, entrez_search)
 
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))

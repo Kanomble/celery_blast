@@ -34,14 +34,60 @@
         </div>
         {% endif %}
     </div>
+
 </div>
 
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
+    <!-- Just Display Class Based Database Statistic Result Dataframe-->
+    {%  if task_status == 'SUCCESS' %}
+    <hr>
+    <div class="dashboard_project_list_col">
+        <table id="class_db_statistics" class="table table-responsive table-hover"> </table>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 {% block scripts %}
+<script>
+    $(document).ready(function showData(){
+
+        $.ajax({
+            type:"GET",
+            url: '{% url 'ajax_call_for_class' project_id=project_id %}',
+            dataType: "json",
+            dataSrc: "",
+            success: function(response){
+                var columns = [];
+                columnNames = Object.keys(response.data[0])
+
+                for (var i in columnNames) {
+                    columns.push({
+                            data:columnNames[i],
+                            title:columnNames[i]
+                        });
+                    console.log(columns)
+                }
+
+                $('#class_db_statistics').DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'copy',
+                        'csv',
+                        'selectAll',
+                        'selectNone',
+                        'selectRows'
+                    ],
+                    select: true,
+                    columns: columns,
+                    data:response.data,
+                    "deferRender": true
+                    });
+            }
+        })
+    })
+</script>
 {% endblock %}
 

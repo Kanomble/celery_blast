@@ -226,7 +226,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
             log.write("INFO:starting statistical inference for {}\n".format(taxonomic_unit))
             if len(tax_counts) > 0:
 
-                percentage = db_df['class'].value_counts()
+                percentage = db_df[taxonomic_unit].value_counts()
                 percentage = percentage.rename('Database')
                 tax_counts.append(percentage)
 
@@ -234,7 +234,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
                 df = pd.DataFrame(tax_counts)
                 df = df.fillna(0)
                 df = df.transpose()
-                df_path = 'media/blast_projects/' + str(project_id) + '/database_statistics.csv'
+                df_path = 'media/blast_projects/' + str(project_id) + '/' + taxonomic_unit + '_database_statistics.csv'
                 df.to_csv(df_path)
                 log.write("INFO:produced {} table\n".format(df_path))
 
@@ -257,7 +257,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
                         taxonomic_unit))
                 normalized_df = pd.DataFrame(normalized_table)
                 normalized_df = normalized_df.fillna(0)
-                df_path = 'media/blast_projects/' + str(project_id) + '/database_statistics_normalized.csv'
+                df_path = 'media/blast_projects/' + str(project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
                 normalized_df.to_csv(df_path)
                 log.write("INFO:produced {} table\n".format(df_path))
             else:
@@ -269,7 +269,6 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
             log.write("ERROR:{}".format(e))
             raise Exception("[-] ERROR in tax_counts_to_db_statistics_tables function with exception {}".format(e))
 
-#TODO extend this function to produce not only class based statistics
 '''calculate_database_statistics
 
     This function calculates database statistics based on the reciprocal results of a finished pipeline project.
@@ -281,13 +280,17 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
         :type str
     :param user_email
         :type str
+    :param taxonomic_units
+        :type list[str]
         
-    :returns df
-        :type pd.core.frame.DataFrame
+    :returns 0
+        :type int
 '''
-def calculate_database_statistics(project_id: int,logfile:str,user_email:str)->pd.core.frame.DataFrame:
+def calculate_database_statistics(project_id: int,logfile:str,user_email:str, taxonomic_units:list)->int:
     with open(logfile, 'w') as log:
         try:
+            log.write("INFO:defining taxonomic units")
+
 
             log.write("INFO:Starting to calculate database statistics\n")
 
@@ -313,26 +316,36 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str)->p
             else:
                 db_df = pd.read_csv(path_to_db_csv,index_col=0)
                 log.write("INFO:Done loading result and database dataframe\n")
+
+                #addition of taxonomic information via the biopython entrez module in add_taxonomic_information_to_db
                 log.write("INFO:Trying to add taxonomic information to dataframe ...\n")
                 add_tax_logfile=path_to_project+'/log/add_taxonomic_information_to_db.log'
                 tax_df = add_taxonomic_information_to_db(user_email, add_tax_logfile, list(db_df['taxid'].unique()))
                 tax_df['taxid'] = tax_df['taxid'].astype('int64')
                 db_df = db_df.merge(tax_df, on='taxid')
                 log.write("INFO:DONE with adding taxonomic information\n")
+
                 log.write("INFO:trying to write database csv file into project directory\n")
                 db_df.to_csv(new_database_name)
                 log.write("INFO:DONE writing database csv file\n")
 
-            log.write("INFO:starting function extract_taxonomic_information ...")
-            logfile_tax_count_function=path_to_project+'log/extract_taxonomic_information.log'
-            tax_counts=extract_taxonomic_information(logfile_tax_count_function, forward_db.uploaded_files, result_data, db_df, 'class')
-            log.write("INFO:Done extracting list of taxonomic informations\n")
+            #extraction of taxonomic information
+            for taxonomic_unit in taxonomic_units:
+                path_to_project = 'media/blast_projects/' + str(project_id)
+                normalized_df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
+                df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics.csv'
+                if isfile(normalized_df_filepath) is False or isfile(df_filepath) is False:
+                    log.write("INFO:starting function extract_taxonomic_information ...")
+                    logfile_tax_count_function = path_to_project + '/log/' + taxonomic_unit + '_extract_taxonomic_information.log'
+                    tax_counts=extract_taxonomic_information(logfile_tax_count_function, forward_db.uploaded_files, result_data, db_df, taxonomic_unit)
+                    log.write("INFO:Done extracting list of taxonomic informations\n")
 
-            log.write("INFO:Starting to produce output tables and graphs\n")
-            logfile_tax_to_db_stat_function = path_to_project + 'log/tax_counts_to_db_statistics_tables.log'
-            df, normalized_df = tax_counts_to_db_statistic_tables(logfile_tax_to_db_stat_function, project_id, db_df, tax_counts, 'class')
-            log.write("DONE\n")
-            return df
+                    log.write("INFO:Starting to produce output tables and graphs\n")
+                    logfile_tax_to_db_stat_function = path_to_project + '/log/' + taxonomic_unit + '_tax_counts_to_db_statistics_tables.log'
+                    df, normalized_df = tax_counts_to_db_statistic_tables(logfile_tax_to_db_stat_function, project_id, db_df, tax_counts, taxonomic_unit)
+                    log.write("INFO:DONE extraction of {} database statistics\n".format(taxonomic_unit))
+
+            return 0
 
         except Exception as e:
             log.write("ERROR: problems during calculation of database statistics {}\n".format(e))
@@ -409,14 +422,23 @@ def delete_database_statistics_task_and_output(project_id:int,logfile:str)->int:
 
 
 
-
+#NOTE THIS FUNCTION IS NOT IN USE!
 '''transform_normalized_database_table_to_json
-
+    
+    This function reads the taxonomic_unit specific normalized database statistics dataframe from the project directory
+    and returns a json object, that is used for feeding the datatables ajax calls in the database statistics dashboard. 
+    
+    :param project_id
+        :type int
+    :param taxonomic_unit
+        :type str
+        
+    :returns data
+        :type list[json_dicts]
 '''
-def transform_normalized_database_table_to_json(project_id:int):
+def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:str)->list:
     try:
-
-        df_path = 'media/blast_projects/' + str(project_id) + '/database_statistics_normalized.csv'
+        df_path = 'media/blast_projects/' + str(project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
         if isfile(df_path):
             table = pd.read_csv(df_path,header=0,index_col=0)
             json_records = table.reset_index().to_json(orient='records')

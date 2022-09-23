@@ -204,7 +204,6 @@ rule query_sequences_to_html_table:
 	script:
 		"../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"
 
-#Conni BA
 #RULE 12
 rule conduct_multiple_sequence_alignment_mafft:
 	input: "{qseqid}/target_sequences.faa"
@@ -245,6 +244,3 @@ rule ete3_tree_to_png:
 	log: log="log/{qseqid}/ete3_tree_to_png.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/ete3_tree_to_png.py"
-
-#RULE 16
-#searching for protein domains in the CDD database

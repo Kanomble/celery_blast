@@ -13,7 +13,8 @@ from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_proj
 from .py_services import list_taxonomic_files, upload_file, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
 from .py_project_creation import create_blast_project
-from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output
+from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output,\
+    transform_normalized_database_table_to_json
 from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database, \
@@ -370,6 +371,10 @@ def success_view(request):
     
     Function triggers execution of the database statistics optional postprocessing.
     Executes the task function that includes py_database_statistic function database_statistics.
+    Status not executed: NOTEXEC
+    Status ongoing: PROGRESS
+    Status finished: SUCCESS
+    Status failed: FAILURE
     
     :param project_id
         :type int
@@ -379,11 +384,27 @@ def database_statistics_dashboard(request, project_id):
     try:
         task_status=get_database_statistics_task_status(project_id)
         context={'project_id':project_id,'task_status':task_status}
+        if task_status == 'SUCCESS':
+            taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
         #calculate_database_statistics(project_id)
         return render(request,'blast_project/database_statistics_dashboard.html',context)
     except Exception as e:
         return failure_view(request, e)
 
+'''load_database_statistics_for_class_ajax
+    
+    Function returns database statistics json dataframe of the specified taxonomic unit.
+    
+'''
+@login_required(login_url='login')
+def load_database_statistics_for_class_ajax(request, project_id):
+    try:
+        if request.is_ajax and request.method == "GET":
+            data = transform_normalized_database_table_to_json(project_id,'class')
+            return JsonResponse({"data":data}, status=200)
+        return JsonResponse({"ERROR":"NOT OK"},status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
 
 '''database_statistics
 
@@ -396,7 +417,8 @@ def database_statistics_dashboard(request, project_id):
 @login_required(login_url='login')
 def execute_database_statistics_task(request, project_id):
     try:
-        calculate_database_statistics_task.delay(project_id,request.user.email)
+        taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
+        calculate_database_statistics_task.delay(project_id,request.user.email,taxonomic_units)
         return redirect('database_statistics',project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
