@@ -32,7 +32,7 @@ try:
         qseq_df.to_csv(output_file_path,sep='\t', header=list(qseq_df.columns))
 
         try:
-            sacc_list= list(qseq_df['sacc'].unique())
+            sacc_list= list(qseq_df['sseqid'].unique())
             id_path= str(qseq) + '/' + 'target_sequence_ids.txt'
             output= open(id_path,'w')
             for sacc in sacc_list:
