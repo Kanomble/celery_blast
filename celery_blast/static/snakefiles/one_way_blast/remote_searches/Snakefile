@@ -71,7 +71,7 @@ rule filter_blast_results_table_to_csv:
     input: results_table="blast_results.table"
     output: result_csv=expand("{qseqid}/blast_results.table",qseqid=QSEQIDS),
             ids=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
-    log:"log/{qseqid}/filter_blast_results_table_to_csv.log"
+    log:log="log/filter_blast_results_table_to_csv.log"
     script:
     	"../../../../static/snakefiles/one_way_blast/remote_searches/filter_blast_results_table_to_csv.py"
 
