@@ -6,7 +6,7 @@ ERRORCODE=7
 with open(snakemake.log['log'],'w') as logfile:
     try:
         logfile.write("INFO:transforming reciprocal results csv files into html tables\n")
-        result_data = pd.read_csv(snakemake.input['rec_res'],header=0,index_col=False)
+        result_data = pd.read_csv(snakemake.input['rec_res'],header=0,index_col=0)
         '''
         for i in range(0, len(result_data), 1):
             taxids = result_data.iat[i, 7]

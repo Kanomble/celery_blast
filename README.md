@@ -24,7 +24,7 @@ If you want to rebuild your docker images due to some (maybe fixed) error consid
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
 - [ ] refactor html result tables
-  - [ ] reciprocal results -> index column
+  - [x] reciprocal results -> index column
   - [ ] database statistics -> decimal place
 - [ ] refactor one-way remote BLAST pipeline
 - [ ] refactor logging in exceptions
