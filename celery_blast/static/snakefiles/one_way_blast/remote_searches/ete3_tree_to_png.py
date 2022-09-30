@@ -35,13 +35,14 @@ with open(snakemake.log['log'],'w') as logfile:
             tree.render(snakemake.params['static_pic'], tree_style=ts)
             tree.render(snakemake.output['pic'], tree_style=ts)
         logfile.write("DONE\n")
+    #exception is often thrown due to characters in the sequence ids that dont fit newick specifications
     except Exception as e:
         try:
             with open(snakemake.input['nw'], 'r') as t:
                 tree = t.readlines()
             if len(tree) < 1:
                 with open(snakemake.log['log'], 'w') as log_f:
-                    log_f.write('ERROR: The Newick file used in this command has no content.')
+                    log_f.write('ERROR: The Newick file used in this command has no content.\n')
                 shutil.copyfile('../../../static/images/no_results.svg', snakemake.params['static_pic'])
                 shutil.copyfile('../../../static/images/no_results.svg', snakemake.output['pic'])
             else:

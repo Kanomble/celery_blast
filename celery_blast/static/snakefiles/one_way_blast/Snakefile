@@ -25,20 +25,13 @@ rule blast:
 	shell:
 		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries}"
 
-'''
-rule blast_table_to_html:
-	input: res="blast_results.table"
-	output: html_table="blast_results.html"
-	script:
-		"../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
-'''
-
-rule blast_results_to_plots:
+rule blast_results_to_plots_and_html_table:
 	input: blast_results="blast_results.table", query_file=config['query_sequence']
 	params: genus_bars_static="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + '/genus_bars.html',user_email=config['user_email']
 	output: genus_bars="genus_bars.html",html_table="blast_results.html", taxonomic_table='blast_results_with_tax.table'
+	log:log="log/blast_results_to_plots_and_html_table.log"
 	script:
-		"../../../static/snakefiles/one_way_blast/plot_results.py"
+		"../../../static/snakefiles/one_way_blast/blast_results_to_plots_and_html_table.py"
 
 rule query_sequences_to_html_table:
 	input: target_file=config['query_sequence']
@@ -89,6 +82,14 @@ rule conduct_phylogeny_fast_tree:
             else:
                 shell("touch {output} 2> {log}")
 
+rule ete3_tree_to_png:
+    input: tree="{qseqid}/target_sequences.tree"
+    params:
+        static_pic="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
+    output: pic="{qseqid}/target_sequences.svg"
+    log: log="{qseqid}/ete3_tree_to_png.log"
+    script:
+        "../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"
 '''
 rule update_tree_with_taxid:
     input: nw="{qseqid}/target_sequences.tree",
@@ -107,12 +108,11 @@ rule ete3_tree_to_png:
     script:
         "../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"
 '''
+'''
+rule blast_table_to_html:
+	input: res="blast_results.table"
+	output: html_table="blast_results.html"
+	script:
+		"../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
+'''
 
-rule ete3_tree_to_png:
-    input: tree="{qseqid}/target_sequences.tree"
-    params:
-        static_pic="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
-    output: pic="{qseqid}/target_sequences.svg"
-    log: log="{qseqid}/ete3_tree_to_png.log"
-    script:
-        "../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"

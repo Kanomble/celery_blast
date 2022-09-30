@@ -43,11 +43,11 @@ with open(snakemake.log['log'], 'w') as logfile:
                 queryfile.close()
                 return queries
 
-            queries = read_query_file(query_file)
+            #queries = read_query_file(query_file)
 
             logfile.write("INFO:working on {} taxids\n".format(len(taxids)))
 
-            query_info = []
+            #query_info = []
             taxid = []
             taxonomy = []
             genus = []

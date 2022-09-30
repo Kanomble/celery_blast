@@ -23,11 +23,16 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] refactor html result tables
+  - [ ] reciprocal results -> index column
+  - [ ] database statistics -> decimal place
+- [ ] refactor one-way remote BLAST pipeline
 - [ ] refactor logging in exceptions
 - [ ] table column names in entrez esearch dashboard
 - [ ] exception is thrown if there is no result in the esearch output
 - [ ] refactor blast_tables_to_orthologous_table.py with new entrez function of the database statistics ncbi_transaction script
 - [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
+  - [ ] test with uploaded genomes and sequences
 - [X] fix javascript download button for the protein database in the entrez search
 - [ ] add taxonomic information processing to database creation or database statistics calculation
 - [ ] failure BLAST database task
