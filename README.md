@@ -132,10 +132,7 @@ The web container will automatically try to restart if the startup fails, unless
     - [X] UploadedGenomes
     - [X] ExternalTools --> Connected to BlastProjects
     - [X] QuerySequences --> Connected to ExternalTools
-
-
-
-
+    
 ## BLAST Databases
 ### BLAST database preparation
 Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command.
@@ -145,7 +142,7 @@ The application loads this summary file into a pandas dataframe,
 that gets processed. As a first step of BLAST database creation, 
 the user has to define the level of assembly completeness
 (e.g. 'Complete Genome', 'Chromosome', 'Contig' and 'Scaffold'),
-secondly the user can filter the summary file with taxonomic informations.
+furthermore users can filter the summary file with taxonomic informations.
 For example, the user could specify the assembly levels 
 of the new database as `Complete Genome` and `Chromosome` and the `apes.taxids`
 file as basis for taxonomic limitation. 

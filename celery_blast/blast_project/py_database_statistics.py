@@ -421,6 +421,9 @@ def delete_database_statistics_task_and_output(project_id:int,logfile:str)->int:
                         if(isfile(path_to_database_statistics_image)):
                             remove(path_to_database_statistics_image)
                             log.write("INFO:removed: {}\n".format(path_to_database_statistics_image))
+
+            #path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
+            #path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
             log.write("DONE\n")
             return 0
     except IntegrityError as e:
@@ -431,8 +434,6 @@ def delete_database_statistics_task_and_output(project_id:int,logfile:str)->int:
         raise Exception("ERROR during removing database statistics output with exception: {}".format(e))
 
 
-
-#NOTE THIS FUNCTION IS NOT IN USE!
 '''transform_normalized_database_table_to_json
     
     This function reads the taxonomic_unit specific normalized database statistics dataframe from the project directory
@@ -451,6 +452,7 @@ def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:st
         df_path = 'media/blast_projects/' + str(project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
         if isfile(df_path):
             table = pd.read_csv(df_path,header=0,index_col=0)
+            table = table.round(2)
             json_records = table.reset_index().to_json(orient='records')
             data = json.loads(json_records)
             return data
@@ -466,17 +468,24 @@ def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:st
 '''
 def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,full_df:pd.DataFrame,normalized_df:pd.DataFrame,logfile:str):
     try:
-        path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
-        if isdir(path_to_static_dir):
-            altair_df = pd.melt(normalized_df)
-            altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
-            chart = alt.Chart(altair_df).mark_bar().encode(
-                x=taxonomic_unit,
-                y="Relative # of RBHs",
-                color=taxonomic_unit
-            )
-            chart.save(path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html")
-        else:
-            raise IsADirectoryError(path_to_static_dir)
+        with open(logfile,'w') as log:
+            path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
+            log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
+            if isdir(path_to_static_dir):
+                log.write("INFO:static directory exists, producing altair plots\n")
+                altair_df = pd.melt(normalized_df)
+                altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
+                chart = alt.Chart(altair_df).mark_bar().encode(
+                    x=taxonomic_unit,
+                    y="Relative # of RBHs",
+                    color=taxonomic_unit
+                )
+
+                path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
+                chart.save(path_to_altair_plot)
+                log.write("INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
+            else:
+                log.write("ERROR:static directory does not exist\n")
+                raise IsADirectoryError(path_to_static_dir)
     except Exception as e:
         raise Exception("[-] ERROR in producing altair plots for database statistics with exception: {}".format(e))
