@@ -386,6 +386,7 @@ def database_statistics_dashboard(request, project_id):
         context={'project_id':project_id,'task_status':task_status}
         if task_status == 'SUCCESS':
             taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
+            context['DatabaseStatisticsNormalizedClassDF'] = str(project_id) + "/class_altair_plot_normalized.html"
         #calculate_database_statistics(project_id)
         return render(request,'blast_project/database_statistics_dashboard.html',context)
     except Exception as e:

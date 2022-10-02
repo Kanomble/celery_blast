@@ -47,6 +47,9 @@
     <div class="dashboard_project_list_col">
         <table id="class_db_statistics" class="table table-responsive table-hover"> </table>
     </div>
+    <div class="dashboard_project_list_col">
+        {% include DatabaseStatisticsNormalizedClassDF %}
+    </div>
     {% endif %}
 </div>
 {% endblock %}
@@ -68,7 +71,6 @@
                             data:columnNames[i],
                             title:columnNames[i]
                         });
-                    console.log(columns)
                 }
 
                 $('#class_db_statistics').DataTable({

@@ -1,6 +1,7 @@
 from blast_project import py_django_db_services as py_db_service
 import pandas as pd
 import matplotlib.pyplot as plt
+import altair as alt
 from os.path import isfile, isdir
 from os import remove, listdir
 from django.db import IntegrityError
@@ -344,7 +345,16 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
                     logfile_tax_to_db_stat_function = path_to_project + '/log/' + taxonomic_unit + '_tax_counts_to_db_statistics_tables.log'
                     df, normalized_df = tax_counts_to_db_statistic_tables(logfile_tax_to_db_stat_function, project_id, db_df, tax_counts, taxonomic_unit)
                     log.write("INFO:DONE extraction of {} database statistics\n".format(taxonomic_unit))
+                else:
+                    log.write("INFO:the database statistics dataframes do exist, skipping creation procedure\n")
+                    df = pd.read_csv(df_filepath,index_col=0,header=0)
+                    normalized_df = pd.read_csv(normalized_df_filepath,index_col=0,header=0)
 
+                #database_statistics_to_altair_plots(project_id: int, taxonomic_unit: str, full_df: pd.DataFrame, normalized_df: pd.DataFrame, logfile: str)
+                log.write("INFO:starting to produce altair plots for database statistics dataframes\n")
+                logfile_altair_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_altair_plots.log'
+                database_statistics_to_altair_plots(project_id,taxonomic_unit,df,normalized_df,logfile_altair_plots)
+                log.write("DONE\n")
             return 0
 
         except Exception as e:
@@ -451,3 +461,22 @@ def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:st
     except Exception as e:
         raise Exception("[-] Couldnt transform normalized database statistics to json with exception: {}".format(e))
 
+'''database_statistics_to_altair_plots
+
+'''
+def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,full_df:pd.DataFrame,normalized_df:pd.DataFrame,logfile:str):
+    try:
+        path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
+        if isdir(path_to_static_dir):
+            altair_df = pd.melt(normalized_df)
+            altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
+            chart = alt.Chart(altair_df).mark_bar().encode(
+                x=taxonomic_unit,
+                y="Relative # of RBHs",
+                color=taxonomic_unit
+            )
+            chart.save(path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html")
+        else:
+            raise IsADirectoryError(path_to_static_dir)
+    except Exception as e:
+        raise Exception("[-] ERROR in producing altair plots for database statistics with exception: {}".format(e))
