@@ -386,7 +386,9 @@ def database_statistics_dashboard(request, project_id):
         context={'project_id':project_id,'task_status':task_status}
         if task_status == 'SUCCESS':
             taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
-            context['DatabaseStatisticsNormalizedClassDF'] = str(project_id) + "/class_altair_plot_normalized.html"
+            for unit in taxonomic_units:
+                context_key = 'DatabaseStatisticsNormalized' + unit.capitalize() + 'DF'
+                context[context_key] = str(project_id) + "/" + unit + "_altair_plot_normalized.html"
         #calculate_database_statistics(project_id)
         return render(request,'blast_project/database_statistics_dashboard.html',context)
     except Exception as e:
@@ -398,10 +400,10 @@ def database_statistics_dashboard(request, project_id):
     
 '''
 @login_required(login_url='login')
-def load_database_statistics_for_class_ajax(request, project_id):
+def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxonomic_unit:str):
     try:
         if request.is_ajax and request.method == "GET":
-            data = transform_normalized_database_table_to_json(project_id,'class')
+            data = transform_normalized_database_table_to_json(project_id,taxonomic_unit)
             return JsonResponse({"data":data}, status=200)
         return JsonResponse({"ERROR":"NOT OK"},status=200)
     except Exception as e:

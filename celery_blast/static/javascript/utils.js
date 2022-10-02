@@ -30,16 +30,17 @@ function loadRemoteOrLocal(project_type) {
 }
 
 function loadMultipleOrSingleFileUpload(file_upload_type) {
-    if( document.getElementById('upload_form_master_div').style.display == 'none'){
+    if (document.getElementById('upload_form_master_div').style.display == 'none') {
         document.getElementById('upload_form_master_div').style.display = "block";
     }
 
-    document.getElementById('post_form_'+file_upload_type+'_container').style.display = "block";
-    if(file_upload_type == 'single'){
+    document.getElementById('post_form_' + file_upload_type + '_container').style.display = "block";
+    if (file_upload_type == 'single') {
         document.getElementById('post_form_multiple_container').style.display = 'none'
         document.getElementById('multiple').checked = false
-    } else if (file_upload_type == 'multiple'){
+    } else if (file_upload_type == 'multiple') {
         document.getElementById('post_form_single_container').style.display = 'none'
         document.getElementById('single').checked = false
     }
 }
+

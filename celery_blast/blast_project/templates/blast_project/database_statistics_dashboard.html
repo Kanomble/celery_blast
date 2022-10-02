@@ -40,56 +40,128 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div>
     <!-- Just Display Class Based Database Statistic Result Dataframe-->
     {%  if task_status == 'SUCCESS' %}
     <hr>
+
     <div class="dashboard_project_list_col">
-        <table id="class_db_statistics" class="table table-responsive table-hover"> </table>
+        <form name="database_statistics_selector" action="javascript:void(0)" id="database_statistics_dashboard_selector">
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input class="custom-control-input" type="radio" id="genus" name="genus_button" value="genus" onchange="loadDBStatistic(this.value)">
+                    <label class="custom-control-label" for="genus">Genus DB Statistic</label>
+                </div>
+
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input class="custom-control-input" type="radio" id="family" name="family_button" value="family" onchange="loadDBStatistic(this.value)">
+                    <label class="custom-control-label" for="family">Family DB Statistic</label>
+                </div>
+
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input class="custom-control-input" type="radio" id="class" name="class_button" value="class" onchange="loadDBStatistic(this.value)">
+                    <label class="custom-control-label" for="class">Class DB Statistic</label>
+                </div>
+        </form>
     </div>
-    <div class="dashboard_project_list_col">
-        {% include DatabaseStatisticsNormalizedClassDF %}
+
+    <div id="genus_datatable" style="display: none">
+         <div class="dashboard_project_list_col">
+            <table id="genus_table" class="table table-responsive table-hover"> </table>
+        </div>
+        <div class="dashboard_project_list_col">
+            {% include DatabaseStatisticsNormalizedGenusDF %}
+        </div>
     </div>
+    <div  id="family_datatable" style="display: none">
+        <div class="dashboard_project_list_col">
+            <table id="family_table" class="table table-responsive table-hover"> </table>
+        </div>
+        <div class="dashboard_project_list_col">
+            {% include DatabaseStatisticsNormalizedFamilyDF %}
+        </div>
+    </div>
+
+    <div id="class_datatable" style="display: none">
+        <div class="dashboard_project_list_col">
+            <table id="class_table" class="table table-responsive table-hover"> </table>
+        </div>
+        <hr>
+        <div class="dashboard_project_list_col">
+            {% include DatabaseStatisticsNormalizedClassDF %}
+        </div>
+    </div>
+
     {% endif %}
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-    $(document).ready(function showData(){
+    function loadDBStatistic(tax_unit) {
 
-        $.ajax({
-            type:"GET",
-            url: '{% url 'ajax_call_for_class' project_id=project_id %}',
-            dataType: "json",
-            dataSrc: "",
-            success: function(response){
-                var columns = [];
-                columnNames = Object.keys(response.data[0])
+        if (tax_unit == 'genus') {
+            document.getElementById('genus_datatable').style.display = 'block'
 
-                for (var i in columnNames) {
-                    columns.push({
-                            data:columnNames[i],
-                            title:columnNames[i]
+            document.getElementById('class_datatable').style.display = 'none'
+            document.getElementById('family_datatable').style.display = 'none'
+            document.getElementById('family').checked = false
+            document.getElementById('class').checked = false
+        } else if (tax_unit == 'family') {
+            document.getElementById('family_datatable').style.display = 'block'
+
+            document.getElementById('class_datatable').style.display = 'none'
+            document.getElementById('genus_datatable').style.display = 'none'
+            document.getElementById('genus').checked = false
+            document.getElementById('class').checked = false
+        } else if (tax_unit == 'class') {
+            document.getElementById('class_datatable').style.display = 'block'
+            document.getElementById('genus_datatable').style.display = 'none'
+            document.getElementById('family_datatable').style.display = 'none'
+            document.getElementById('family').checked = false
+            document.getElementById('genus').checked = false
+        }
+
+        var url = '{% url 'ajax_call_for_taxonomic_unit' project_id=project_id taxonomic_unit="taxonomic_unit" %}'
+        var url = url.replace("taxonomic_unit",tax_unit)
+        var tab = "#" + tax_unit + "_table"
+        var table = document.getElementById(tax_unit + "_table");
+        if(table.rows.length <= 0) {
+            console.log(url)
+            $.ajax({
+                type: "GET",
+                url: url,
+                dataType: "json",
+                dataSrc: "",
+                success: function (response) {
+                    var columns = [];
+                    columnNames = Object.keys(response.data[0])
+                    console.log(columnNames)
+
+                    for (var i in columnNames) {
+                        columns.push({
+                            data: columnNames[i],
+                            title: columnNames[i]
                         });
-                }
+                    }
 
-                $('#class_db_statistics').DataTable({
-                    dom: 'Bfrtip',
-                    buttons: [
-                        'copy',
-                        'csv',
-                        'selectAll',
-                        'selectNone',
-                        'selectRows'
-                    ],
-                    select: true,
-                    columns: columns,
-                    data:response.data,
-                    "deferRender": true
+                    $(tab).DataTable({
+                        dom: 'Bfrtip',
+                        buttons: [
+                            'copy',
+                            'csv',
+                            'selectAll',
+                            'selectNone',
+                            'selectRows'
+                        ],
+                        select: true,
+                        columns: columns,
+                        data: response.data,
+                        "deferRender": true
                     });
-            }
-        })
-    })
+
+                }
+            })
+        }
+    }
 </script>
 {% endblock %}
 
