@@ -453,6 +453,9 @@ def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:st
         if isfile(df_path):
             table = pd.read_csv(df_path,header=0,index_col=0)
             table = table.round(2)
+            table = table.transpose()[(table == 0.0).sum() != 3]
+            if(table.shape[1] > table.shape[0]):
+                table = table.transpose()
             json_records = table.reset_index().to_json(orient='records')
             data = json.loads(json_records)
             return data
@@ -473,17 +476,43 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,full_d
             log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
             if isdir(path_to_static_dir):
                 log.write("INFO:static directory exists, producing altair plots\n")
-                altair_df = pd.melt(normalized_df)
-                altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
-                chart = alt.Chart(altair_df).mark_bar().encode(
-                    x=taxonomic_unit,
-                    y="Relative # of RBHs",
-                    color=taxonomic_unit
-                )
 
-                path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
-                chart.save(path_to_altair_plot)
-                log.write("INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
+                if taxonomic_unit == "phylum":
+                    path_to_result_df = "media/blast_projects/" + str(project_id) + "/reciprocal_results_with_taxonomy.csv"
+                    result_dataframe = pd.read_csv(path_to_result_df,index_col=0,header=0)
+                    result_dataframe.order.astype = str
+                    brush = alt.selection(type='interval')
+
+                    bitscore = alt.Chart(result_dataframe).mark_point().encode(
+                        x='bitscore',
+                        y='pident',
+                        tooltip='qseqid',
+                        color=alt.condition(brush, 'phylum', alt.value('lightgray'))
+                    ).add_selection(
+                        brush
+                    )
+
+                    bar = alt.Chart(result_dataframe).mark_bar().encode(
+                        y='phylum',
+                        color='phylum',
+                        x='count(phylum)'
+                    ).transform_filter(
+                        brush
+                    )
+                    chart = bitscore & bar
+                    path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
+                    chart.save(path_to_altair_plot)
+                else:
+                    altair_df = pd.melt(normalized_df)
+                    altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
+                    chart = alt.Chart(altair_df).mark_bar().encode(
+                        x=taxonomic_unit,
+                        y="Relative # of RBHs",
+                        color=taxonomic_unit
+                    )
+                    path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
+                    chart.save(path_to_altair_plot)
+                    log.write("INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
             else:
                 log.write("ERROR:static directory does not exist\n")
                 raise IsADirectoryError(path_to_static_dir)

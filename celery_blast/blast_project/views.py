@@ -394,6 +394,22 @@ def database_statistics_dashboard(request, project_id):
     except Exception as e:
         return failure_view(request, e)
 
+'''database_statistics_details
+    
+    
+'''
+def database_statistics_details(request,project_id:int,taxonomic_unit:str):
+    try:
+        task_status=get_database_statistics_task_status(project_id)
+        context={'project_id':project_id,'task_status':task_status}
+        if task_status == 'SUCCESS':
+            context_key = 'DatabaseStatisticsAltairPlot'
+            context[context_key] = str(project_id) + "/" + taxonomic_unit + "_altair_plot_normalized.html"
+            context['taxonomic_unit'] = taxonomic_unit
+        return render(request,'blast_project/database_statistics_details.html',context)
+    except Exception as e:
+        return failure_view(request,e)
+
 '''load_database_statistics_for_class_ajax
     
     Function returns database statistics json dataframe of the specified taxonomic unit.

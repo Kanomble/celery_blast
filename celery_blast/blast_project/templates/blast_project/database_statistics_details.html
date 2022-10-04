@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %} BLAST Database Statistics Details Dashboard {% endblock %}
+
+{% block page_title %} {% endblock %}
+
+{% block infoheader %} BLAST Database Statistics Details for {{ taxonomic_unit }} {% endblock %}
+
+{% block page_description %}
+    Database Statistic Dashboard for the taxonomic unit: {{ taxonomic_unit }}.
+{% endblock %}
+{% block page_header %}
+    Database Statistic Dashboard for the taxonomic unit: {{ taxonomic_unit }}.
+{% endblock %}
+{% block content %}
+    <div id="{{ taxonomic_unit }}_datatable">
+         <div class="dashboard_project_list_col">
+            <table id="{{ taxonomic_unit }}_table" class="table table-responsive table-hover"> </table>
+        </div>
+         <div class="dashboard_project_list_col">
+            {% include DatabaseStatisticsAltairPlot %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    var tab = "#{{taxonomic_unit}}_table"
+    var url = '{% url 'ajax_call_for_taxonomic_unit' project_id=project_id taxonomic_unit=taxonomic_unit %}'
+    var table = document.getElementById("{{taxonomic_unit}}_table");
+    if(table.rows.length <= 0) {
+        $.ajax({
+            type: "GET",
+            url: url,
+            dataType: "json",
+            dataSrc: "",
+            success: function (response) {
+                var columns = [];
+                columnNames = Object.keys(response.data[0])
+                console.log(columnNames)
+
+                for (var i in columnNames) {
+                    columns.push({
+                        data: columnNames[i],
+                        title: columnNames[i]
+                    });
+                }
+
+                $(tab).DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'copy',
+                        'csv',
+                        'selectAll',
+                        'selectNone',
+                        'selectRows'
+                    ],
+                    select: true,
+                    columns: columns,
+                    data: response.data,
+                    "deferRender": true
+                });
+
+            }
+        })
+    }
+})
+</script>
+{% endblock %}

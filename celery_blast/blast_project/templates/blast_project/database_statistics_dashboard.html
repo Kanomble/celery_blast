@@ -64,31 +64,51 @@
         </form>
     </div>
 
+    <div class="dashboard_project_list_col">
+        <div class="row" style="text-align:center;justify-content: center;">
+            <div class="col-sm">
+                <a  href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='genus' %}">
+                    <button class="btn btn-dark"> Genus </button>
+                </a>
+            </div>
+            <div class="col-sm">
+                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='family' %}">
+                    <button class="btn btn-dark"> Family </button>
+                </a>
+            </div>
+            <div class="col-sm">
+                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='order' %}">
+                    <button class="btn btn-dark"> Order </button>
+                </a>
+            </div>
+            <div class="col-sm">
+                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='class' %}">
+                    <button class="btn btn-dark"> Class </button>
+                </a>
+            </div>
+            <div class="col-sm">
+                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='phylum' %}">
+                    <button class="btn btn-dark"> Phylum </button>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div id="genus_datatable" style="display: none">
          <div class="dashboard_project_list_col">
             <table id="genus_table" class="table table-responsive table-hover"> </table>
-        </div>
-        <div class="dashboard_project_list_col">
-            {% include DatabaseStatisticsNormalizedGenusDF %}
         </div>
     </div>
     <div  id="family_datatable" style="display: none">
         <div class="dashboard_project_list_col">
             <table id="family_table" class="table table-responsive table-hover"> </table>
         </div>
-        <div class="dashboard_project_list_col">
-            {% include DatabaseStatisticsNormalizedFamilyDF %}
-        </div>
     </div>
-
     <div id="class_datatable" style="display: none">
         <div class="dashboard_project_list_col">
             <table id="class_table" class="table table-responsive table-hover"> </table>
         </div>
         <hr>
-        <div class="dashboard_project_list_col">
-            {% include DatabaseStatisticsNormalizedClassDF %}
-        </div>
     </div>
 
     {% endif %}
