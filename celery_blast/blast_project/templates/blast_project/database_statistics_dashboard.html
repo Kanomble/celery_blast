@@ -43,8 +43,42 @@
 <div>
     <!-- Just Display Class Based Database Statistic Result Dataframe-->
     {%  if task_status == 'SUCCESS' %}
+    <div class="dashboard_project_list_col" style="justify-content: center;align-content: center">
+        <table class="table table-responsive table-hover" >
+            <tr>
+                <th> Genus </th>
+                <th> Family </th>
+                <th> Order </th>
+                <th> Class </th>
+                <th> Pyhlum </th>
+            </tr>
+            <tr>
+                <td> {{ genus_number }}</td>
+                <td> {{ family_number }}</td>
+                <td> {{ order_number }}</td>
+                <td> {{ class_number }}</td>
+                <td> {{ phylum_number }}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="dashboard_project_list_col">
+        <div style="text-align: center">
+            <h3 class="col_header"> Class based database statistics</h3>
+             <p style="font-size: medium"> Relative number of RBHs across class taxonomic clades </p>
+        </div>
+
+        <hr>
+        <table id="class_table" class="table table-responsive table-hover"> </table>
+    </div>
     <hr>
     <div class="dashboard_project_list_col">
+
+        <div style="text-align: center">
+            <h3 class="col_header"> Taxonomic based database statistics</h3>
+            <p style="font-size: medium"> Press on a button to view database statistics for the chosen taxonomic unit </p>
+            <hr>
+        </div>
+
         <div class="row" style="text-align:center;justify-content: center;">
             <div class="col-sm">
                 <a  href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='genus' %}">
@@ -79,52 +113,47 @@
 {% endblock %}
 {% block scripts %}
 <script>
-    function loadDBStatistic(tax_unit) {
+$(document).ready(function() {
 
+    var url = '{% url 'ajax_call_for_taxonomic_unit' project_id=project_id taxonomic_unit="class" %}'
+    var table = document.getElementById("class_table");
+    if(table.rows.length <= 0) {
+        $.ajax({
+            type: "GET",
+            url: url,
+            dataType: "json",
+            dataSrc: "",
+            success: function (response) {
+                var columns = [];
+                columnNames = Object.keys(response.data[0])
+                console.log(columnNames)
 
-
-        var url = '{% url 'ajax_call_for_taxonomic_unit' project_id=project_id taxonomic_unit="taxonomic_unit" %}'
-        var url = url.replace("taxonomic_unit",tax_unit)
-        var tab = "#" + tax_unit + "_table"
-        var table = document.getElementById(tax_unit + "_table");
-        if(table.rows.length <= 0) {
-            console.log(url)
-            $.ajax({
-                type: "GET",
-                url: url,
-                dataType: "json",
-                dataSrc: "",
-                success: function (response) {
-                    var columns = [];
-                    columnNames = Object.keys(response.data[0])
-                    console.log(columnNames)
-
-                    for (var i in columnNames) {
-                        columns.push({
-                            data: columnNames[i],
-                            title: columnNames[i]
-                        });
-                    }
-
-                    $(tab).DataTable({
-                        dom: 'Bfrtip',
-                        buttons: [
-                            'copy',
-                            'csv',
-                            'selectAll',
-                            'selectNone',
-                            'selectRows'
-                        ],
-                        select: true,
-                        columns: columns,
-                        data: response.data,
-                        "deferRender": true
+                for (var i in columnNames) {
+                    columns.push({
+                        data: columnNames[i],
+                        title: columnNames[i]
                     });
-
                 }
-            })
-        }
+
+                $("#class_table").DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'copy',
+                        'csv',
+                        'selectAll',
+                        'selectNone',
+                        'selectRows'
+                    ],
+                    select: true,
+                    columns: columns,
+                    data: response.data,
+                    "deferRender": true
+                });
+
+            }
+        })
     }
+})
 </script>
 {% endblock %}
 
