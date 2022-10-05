@@ -1,3 +1,4 @@
+import pandas as pd
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
 from django.http import JsonResponse
@@ -10,7 +11,7 @@ from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesG
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, CreateTaxonomicFileForMultipleScientificNames
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
     calculate_database_statistics_task
-from .py_services import list_taxonomic_files, upload_file, \
+from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output,\
@@ -387,8 +388,17 @@ def database_statistics_dashboard(request, project_id):
         if task_status == 'SUCCESS':
             taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
             for unit in taxonomic_units:
-                context_key = 'DatabaseStatisticsNormalized' + unit.capitalize() + 'DF'
-                context[context_key] = str(project_id) + "/" + unit + "_altair_plot_normalized.html"
+                project_path = "media/blast_projects/" + str(project_id) + "/" + unit + "_database_statistics_normalized.csv"
+                if check_if_file_exists(project_path):
+                    table = pd.read_csv(project_path,index_col=0,header=0)
+                    number = len(table.columns)
+                    key = unit + "_number"
+                    context[key] = number
+                else:
+                    key = unit + "_number"
+                    error_phrase = "table does not exist, please recompute the database statistics by pressing the button"
+                    context[key] = error_phrase
+
         #calculate_database_statistics(project_id)
         return render(request,'blast_project/database_statistics_dashboard.html',context)
     except Exception as e:

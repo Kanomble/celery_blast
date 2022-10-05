@@ -332,6 +332,8 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
 
             #extraction of taxonomic information
             for taxonomic_unit in taxonomic_units:
+                #result_data[taxonomic_unit].astype = str
+
                 path_to_project = 'media/blast_projects/' + str(project_id)
                 normalized_df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
                 df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics.csv'
@@ -353,7 +355,7 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
                 #database_statistics_to_altair_plots(project_id: int, taxonomic_unit: str, full_df: pd.DataFrame, normalized_df: pd.DataFrame, logfile: str)
                 log.write("INFO:starting to produce altair plots for database statistics dataframes\n")
                 logfile_altair_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_altair_plots.log'
-                database_statistics_to_altair_plots(project_id,taxonomic_unit,df,normalized_df,logfile_altair_plots)
+                database_statistics_to_altair_plots(project_id,taxonomic_unit,result_data,normalized_df,logfile_altair_plots)
                 log.write("DONE\n")
             return 0
 
@@ -452,8 +454,9 @@ def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:st
         df_path = 'media/blast_projects/' + str(project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
         if isfile(df_path):
             table = pd.read_csv(df_path,header=0,index_col=0)
+            number_queries = len(table.index)
             table = table.round(2)
-            table = table.transpose()[(table == 0.0).sum() != 3]
+            table = table.transpose()[(table == 0.0).sum() != number_queries]
             if(table.shape[1] > table.shape[0]):
                 table = table.transpose()
             json_records = table.reset_index().to_json(orient='records')
@@ -469,50 +472,69 @@ def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:st
 '''database_statistics_to_altair_plots
 
 '''
-def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,full_df:pd.DataFrame,normalized_df:pd.DataFrame,logfile:str):
+def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result_data:pd.DataFrame,normalized_df:pd.DataFrame,logfile:str):
     try:
         with open(logfile,'w') as log:
             path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
             log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
+            path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
             if isdir(path_to_static_dir):
                 log.write("INFO:static directory exists, producing altair plots\n")
 
-                if taxonomic_unit == "phylum":
-                    path_to_result_df = "media/blast_projects/" + str(project_id) + "/reciprocal_results_with_taxonomy.csv"
-                    result_dataframe = pd.read_csv(path_to_result_df,index_col=0,header=0)
-                    result_dataframe.order.astype = str
+                if len(normalized_df.columns) >= 2 and len(normalized_df.columns) < 10:
+
                     brush = alt.selection(type='interval')
 
-                    bitscore = alt.Chart(result_dataframe).mark_point().encode(
+                    bitscore = alt.Chart(result_data).mark_point().encode(
                         x='bitscore',
                         y='pident',
-                        tooltip='qseqid',
-                        color=alt.condition(brush, 'phylum', alt.value('lightgray'))
+                        tooltip=['qseqid', 'sacc_transformed', 'pident', 'bitscore'],
+                        color=alt.condition(brush, taxonomic_unit, alt.value('lightgray'))
                     ).add_selection(
                         brush
                     )
 
-                    bar = alt.Chart(result_dataframe).mark_bar().encode(
-                        y='phylum',
-                        color='phylum',
-                        x='count(phylum)'
+                    bar = alt.Chart(result_data).mark_bar().encode(
+                        y=taxonomic_unit,
+                        color=taxonomic_unit,
+                        x='count('+taxonomic_unit+')'
                     ).transform_filter(
                         brush
                     )
                     chart = bitscore & bar
-                    path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
                     chart.save(path_to_altair_plot)
                 else:
-                    altair_df = pd.melt(normalized_df)
-                    altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
-                    chart = alt.Chart(altair_df).mark_bar().encode(
-                        x=taxonomic_unit,
-                        y="Relative # of RBHs",
-                        color=taxonomic_unit
-                    )
-                    path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
-                    chart.save(path_to_altair_plot)
-                    log.write("INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
+                    number_queries = len(normalized_df.index)
+                    normalized_df = normalized_df.transpose()[(normalized_df == 0.0).sum() != number_queries]
+                    normalized_df = normalized_df.transpose()
+                    if len(normalized_df.columns) <= 15 and len(normalized_df.columns) >= 2:
+                        altair_df = pd.melt(normalized_df)
+                        altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
+                        chart = alt.Chart(altair_df).mark_bar().encode(
+                            x=taxonomic_unit,
+                            y="Relative # of RBHs",
+                            color=taxonomic_unit
+                        )
+                        chart.save(path_to_altair_plot)
+                    else:
+                        input_dropdown = alt.binding_select(options=list(normalized_df.columns), name=taxonomic_unit)
+                        selection = alt.selection_single(fields=[taxonomic_unit], bind=input_dropdown)
+                        color = alt.condition(selection,
+                                              alt.Color(taxonomic_unit+':N', legend=None),
+                                              alt.value('lightgray'))
+
+                        chart = alt.Chart(result_data).mark_point().encode(
+                            x='bitscore',
+                            y='pident',
+                            tooltip=['qseqid', 'sacc_transformed', 'pident', 'bitscore',taxonomic_unit],
+                            color=color
+                        ).add_selection(
+                            selection
+                        ).interactive(
+                        )
+                        chart.save(path_to_altair_plot)
+
+                log.write("INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
             else:
                 log.write("ERROR:static directory does not exist\n")
                 raise IsADirectoryError(path_to_static_dir)

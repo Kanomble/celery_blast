@@ -19,6 +19,9 @@ def check_if_taxdb_exists()->bool:
     else:
         return False
 
+def check_if_file_exists(file_path)->bool:
+    return isfile(file_path)
+
 
 '''list_taxonomic_files
 

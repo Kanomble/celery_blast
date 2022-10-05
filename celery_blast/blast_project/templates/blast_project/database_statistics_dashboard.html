@@ -44,26 +44,6 @@
     <!-- Just Display Class Based Database Statistic Result Dataframe-->
     {%  if task_status == 'SUCCESS' %}
     <hr>
-
-    <div class="dashboard_project_list_col">
-        <form name="database_statistics_selector" action="javascript:void(0)" id="database_statistics_dashboard_selector">
-                <div class="custom-control custom-radio custom-control-inline">
-                    <input class="custom-control-input" type="radio" id="genus" name="genus_button" value="genus" onchange="loadDBStatistic(this.value)">
-                    <label class="custom-control-label" for="genus">Genus DB Statistic</label>
-                </div>
-
-                <div class="custom-control custom-radio custom-control-inline">
-                    <input class="custom-control-input" type="radio" id="family" name="family_button" value="family" onchange="loadDBStatistic(this.value)">
-                    <label class="custom-control-label" for="family">Family DB Statistic</label>
-                </div>
-
-                <div class="custom-control custom-radio custom-control-inline">
-                    <input class="custom-control-input" type="radio" id="class" name="class_button" value="class" onchange="loadDBStatistic(this.value)">
-                    <label class="custom-control-label" for="class">Class DB Statistic</label>
-                </div>
-        </form>
-    </div>
-
     <div class="dashboard_project_list_col">
         <div class="row" style="text-align:center;justify-content: center;">
             <div class="col-sm">
@@ -94,23 +74,6 @@
         </div>
     </div>
 
-    <div id="genus_datatable" style="display: none">
-         <div class="dashboard_project_list_col">
-            <table id="genus_table" class="table table-responsive table-hover"> </table>
-        </div>
-    </div>
-    <div  id="family_datatable" style="display: none">
-        <div class="dashboard_project_list_col">
-            <table id="family_table" class="table table-responsive table-hover"> </table>
-        </div>
-    </div>
-    <div id="class_datatable" style="display: none">
-        <div class="dashboard_project_list_col">
-            <table id="class_table" class="table table-responsive table-hover"> </table>
-        </div>
-        <hr>
-    </div>
-
     {% endif %}
 </div>
 {% endblock %}
@@ -118,27 +81,7 @@
 <script>
     function loadDBStatistic(tax_unit) {
 
-        if (tax_unit == 'genus') {
-            document.getElementById('genus_datatable').style.display = 'block'
 
-            document.getElementById('class_datatable').style.display = 'none'
-            document.getElementById('family_datatable').style.display = 'none'
-            document.getElementById('family').checked = false
-            document.getElementById('class').checked = false
-        } else if (tax_unit == 'family') {
-            document.getElementById('family_datatable').style.display = 'block'
-
-            document.getElementById('class_datatable').style.display = 'none'
-            document.getElementById('genus_datatable').style.display = 'none'
-            document.getElementById('genus').checked = false
-            document.getElementById('class').checked = false
-        } else if (tax_unit == 'class') {
-            document.getElementById('class_datatable').style.display = 'block'
-            document.getElementById('genus_datatable').style.display = 'none'
-            document.getElementById('family_datatable').style.display = 'none'
-            document.getElementById('family').checked = false
-            document.getElementById('genus').checked = false
-        }
 
         var url = '{% url 'ajax_call_for_taxonomic_unit' project_id=project_id taxonomic_unit="taxonomic_unit" %}'
         var url = url.replace("taxonomic_unit",tax_unit)
@@ -184,4 +127,63 @@
     }
 </script>
 {% endblock %}
+
+<!--
+    <div class="dashboard_project_list_col">
+        <form name="database_statistics_selector" action="javascript:void(0)" id="database_statistics_dashboard_selector">
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input class="custom-control-input" type="radio" id="genus" name="genus_button" value="genus" onchange="loadDBStatistic(this.value)">
+                    <label class="custom-control-label" for="genus">Genus DB Statistic</label>
+                </div>
+
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input class="custom-control-input" type="radio" id="family" name="family_button" value="family" onchange="loadDBStatistic(this.value)">
+                    <label class="custom-control-label" for="family">Family DB Statistic</label>
+                </div>
+
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input class="custom-control-input" type="radio" id="class" name="class_button" value="class" onchange="loadDBStatistic(this.value)">
+                    <label class="custom-control-label" for="class">Class DB Statistic</label>
+                </div>
+        </form>
+    </div>
+    <div id="genus_datatable" style="display: none">
+         <div class="dashboard_project_list_col">
+            <table id="genus_table" class="table table-responsive table-hover"> </table>
+        </div>
+    </div>
+    <div  id="family_datatable" style="display: none">
+        <div class="dashboard_project_list_col">
+            <table id="family_table" class="table table-responsive table-hover"> </table>
+        </div>
+    </div>
+    <div id="class_datatable" style="display: none">
+        <div class="dashboard_project_list_col">
+            <table id="class_table" class="table table-responsive table-hover"> </table>
+        </div>
+        <hr>
+    </div>
+
+        if (tax_unit == 'genus') {
+            document.getElementById('genus_datatable').style.display = 'block'
+
+            document.getElementById('class_datatable').style.display = 'none'
+            document.getElementById('family_datatable').style.display = 'none'
+            document.getElementById('family').checked = false
+            document.getElementById('class').checked = false
+        } else if (tax_unit == 'family') {
+            document.getElementById('family_datatable').style.display = 'block'
+
+            document.getElementById('class_datatable').style.display = 'none'
+            document.getElementById('genus_datatable').style.display = 'none'
+            document.getElementById('genus').checked = false
+            document.getElementById('class').checked = false
+        } else if (tax_unit == 'class') {
+            document.getElementById('class_datatable').style.display = 'block'
+            document.getElementById('genus_datatable').style.display = 'none'
+            document.getElementById('family_datatable').style.display = 'none'
+            document.getElementById('family').checked = false
+            document.getElementById('genus').checked = false
+        }
+-->
 
