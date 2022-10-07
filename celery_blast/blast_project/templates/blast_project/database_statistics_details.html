@@ -18,8 +18,13 @@
             <table id="{{ taxonomic_unit }}_table" class="table table-responsive table-hover"> </table>
         </div>
     </div>
+    <hr>
     <div class="dashboard_project_list_col" style="justify-content: center;align-content: center;text-align: center">
         {% include DatabaseStatisticsAltairPlot %}
+    </div>
+    <hr>
+    <div class="dashboard_project_list_col" style="justify-content: center;align-content: center;text-align: center">
+        {% include DatabaseStatisticsBokehPlot %}
     </div>
 {% endblock %}
 

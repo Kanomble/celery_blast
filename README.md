@@ -23,6 +23,7 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] refactor correct deletion of static files - if database gets deleted, also delete project dirs associated to this database
 - [ ] refactor html result tables
   - [x] reciprocal results -> index column
   - [ ] database statistics -> decimal place

@@ -404,8 +404,8 @@ def database_statistics_dashboard(request, project_id):
     except Exception as e:
         return failure_view(request, e)
 
+#TODO documentation
 '''database_statistics_details
-    
     
 '''
 def database_statistics_details(request,project_id:int,taxonomic_unit:str):
@@ -413,8 +413,10 @@ def database_statistics_details(request,project_id:int,taxonomic_unit:str):
         task_status=get_database_statistics_task_status(project_id)
         context={'project_id':project_id,'task_status':task_status}
         if task_status == 'SUCCESS':
-            context_key = 'DatabaseStatisticsAltairPlot'
-            context[context_key] = str(project_id) + "/" + taxonomic_unit + "_altair_plot_normalized.html"
+            context_key_altair = 'DatabaseStatisticsAltairPlot'
+            context_key_bokeh = 'DatabaseStatisticsBokehPlot'
+            context[context_key_altair] = str(project_id) + "/" + taxonomic_unit + "_altair_plot_normalized.html"
+            context[context_key_bokeh] = str(project_id) + "/" + taxonomic_unit + "_bokeh_plot.html"
             context['taxonomic_unit'] = taxonomic_unit
         return render(request,'blast_project/database_statistics_details.html',context)
     except Exception as e:
