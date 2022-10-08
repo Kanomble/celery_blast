@@ -520,6 +520,7 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
                     number_queries = len(normalized_df.index)
                     normalized_df = normalized_df.transpose()[(normalized_df == 0.0).sum() != number_queries]
                     normalized_df = normalized_df.transpose()
+                    #TODO this plot is wrong -> qseqid is not correctly integrated
                     if len(normalized_df.columns) <= 15 and len(normalized_df.columns) >= 2:
                         altair_df = pd.melt(normalized_df)
                         altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
@@ -560,7 +561,7 @@ def create_bokeh_plots(result_df:pd.DataFrame,database:pd.DataFrame,taxonomic_un
             path_to_project = 'media/blast_projects/' + str(project_id)
             length_database = len(database[taxonomic_unit].unique())
             logfile_bokeh_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_bokeh_plots.log'
-            if length_database <= 10:
+            if length_database <= 15:
                 create_linked_bokeh_plot(logfile_bokeh_plots,result_df,database,taxonomic_unit,project_id)
             else:
                 create_unlinked_bokeh_plot(logfile_bokeh_plots,result_df,taxonomic_unit,project_id)
@@ -697,7 +698,7 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
                        plot_height=700, plot_width=700,
                        tooltips=TOOLTIPS,
                        tools="box_select, reset, box_zoom, pan",
-                       title="Number of RBHs - pident vs bitscore")  # ,tools="box_select, reset" creating figure object
+                       title="Reciprocal Best Hit - percent identity vs bitscore")  # ,tools="box_select, reset" creating figure object
             circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black',
                               source=Curr)  # plotting the data using glyph circle
             menu.js_on_change('value', callback)  # calling the function on change of selection
@@ -787,7 +788,8 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             circle_size_spinner.js_link("value", circle.glyph, "size")
             line_color_picker.js_link('color', circle.glyph, 'line_color')
 
-            grid = gridplot([[column(p), column(b, b2, menu, circle_size_spinner)]], toolbar_location='right')
+            grid = gridplot([[column(p), column(b, b2, menu, circle_size_spinner)]],
+                            toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
             output_file(filename=path_to_bokeh_plot, title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(taxonomic_unit))
             save(grid)
         return 0
@@ -900,7 +902,7 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
 
             grid = gridplot(
                 [[column(p), column(menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider)]],
-                toolbar_location='right')
+                toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
 
             output_file(filename=path_to_bokeh_plot,
                         title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(

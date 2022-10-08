@@ -43,9 +43,10 @@
 <div>
     <!-- Just Display Class Based Database Statistic Result Dataframe-->
     {%  if task_status == 'SUCCESS' %}
-    <div class="dashboard_project_list_col" style="justify-content: center;align-content: center">
+    <div class="dashboard_project_list_col" style="text-align: center;align-content: center">
         <table class="table table-responsive table-hover" >
             <tr>
+                <th></th>
                 <th> Genus </th>
                 <th> Family </th>
                 <th> Order </th>
@@ -53,11 +54,20 @@
                 <th> Pyhlum </th>
             </tr>
             <tr>
+                <td>Database Entries</td>
                 <td> {{ genus_number }}</td>
                 <td> {{ family_number }}</td>
                 <td> {{ order_number }}</td>
                 <td> {{ class_number }}</td>
                 <td> {{ phylum_number }}</td>
+            </tr>
+            <tr>
+                <td>Filtered Database Entries</td>
+                <td> {{ genus_normalized_number }}</td>
+                <td> {{ family_normalized_number }}</td>
+                <td> {{ order_normalized_number }}</td>
+                <td> {{ class_normalized_number }}</td>
+                <td> {{ phylum_normalized_number }}</td>
             </tr>
         </table>
     </div>
@@ -126,7 +136,7 @@ $(document).ready(function() {
             success: function (response) {
                 var columns = [];
                 columnNames = Object.keys(response.data[0])
-                console.log(columnNames)
+                //console.log(columnNames)
 
                 for (var i in columnNames) {
                     columns.push({

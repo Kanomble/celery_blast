@@ -16,7 +16,7 @@ utilization in the clean_species_name form field of CreateTaxonomicFileForm
         :type str
     
     :returns taxonomic nodes defined in Entrez.esearch dictionary instance
-        :type list
+        :type list  
 '''
 def get_species_taxid_by_name(user_email:str,scientific_name:str)->list:
     try:

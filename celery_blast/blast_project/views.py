@@ -394,6 +394,12 @@ def database_statistics_dashboard(request, project_id):
                     number = len(table.columns)
                     key = unit + "_number"
                     context[key] = number
+                    key_norm = unit + "_normalized_number"
+                    number_queries = len(table.index)
+                    table = table.round(2)
+                    table = table.transpose()[(table == 0.0).sum() != number_queries]
+                    number = len(table.transpose().columns)
+                    context[key_norm] = number
                 else:
                     key = unit + "_number"
                     error_phrase = "table does not exist, please recompute the database statistics by pressing the button"
