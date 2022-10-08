@@ -368,7 +368,9 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
                 log.write("INFO:starting to produce altair plots for database statistics dataframes\n")
                 logfile_altair_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_altair_plots.log'
                 database_statistics_to_altair_plots(project_id,taxonomic_unit,result_data,normalized_df,logfile_altair_plots)
-                create_bokeh_plots(result_df=result_data,database=db_df,taxonomic_unit=taxonomic_unit,project_id=project_id)
+
+                create_bokeh_plots(result_df=result_data,database=db_df,normalized_df=normalized_df,
+                                   taxonomic_unit=taxonomic_unit,project_id=project_id)
                 log.write("DONE\n")
             return 0
 
@@ -494,6 +496,9 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
             path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
             if isdir(path_to_static_dir):
                 log.write("INFO:static directory exists, producing altair plots\n")
+                number_queries = len(normalized_df.index)
+                normalized_df = normalized_df.transpose()[(normalized_df == 0.0).sum() != number_queries]
+                normalized_df = normalized_df.transpose()
 
                 if len(normalized_df.columns) >= 2 and len(normalized_df.columns) < 10:
 
@@ -556,10 +561,14 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
         raise Exception("[-] ERROR in producing altair plots for database statistics with exception: {}".format(e))
 
 #TODO documentation
-def create_bokeh_plots(result_df:pd.DataFrame,database:pd.DataFrame,taxonomic_unit: str, project_id: int):
+def create_bokeh_plots(result_df:pd.DataFrame,database:pd.DataFrame,normalized_df:pd.DataFrame,taxonomic_unit: str, project_id: int):
         try:
+            number_queries = len(normalized_df.index)
+            normalized_df = normalized_df.transpose()[(normalized_df == 0.0).sum() != number_queries]
+            normalized_df = normalized_df.transpose()
+
             path_to_project = 'media/blast_projects/' + str(project_id)
-            length_database = len(database[taxonomic_unit].unique())
+            length_database = len(normalized_df.columns)
             logfile_bokeh_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_bokeh_plots.log'
             if length_database <= 15:
                 create_linked_bokeh_plot(logfile_bokeh_plots,result_df,database,taxonomic_unit,project_id)

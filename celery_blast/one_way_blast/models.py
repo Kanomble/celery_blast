@@ -4,7 +4,8 @@ from os import mkdir
 from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
-from blast_project.models import BlastSettings, BlastDatabase
+from blast_project.models import BlastSettings
+from refseq_transactions.models import BlastDatabase
 from .managers import OneWayBlastProjectManager, OneWayRemoteBlastProjectManager
 from django.db import IntegrityError
 from ast import literal_eval

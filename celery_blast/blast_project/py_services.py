@@ -1,10 +1,10 @@
-from .models import BlastDatabase, BlastProject
+from .models import BlastProject
+from refseq_transactions.models import BlastDatabase
 from os.path import isdir, isfile
 from os import mkdir, listdir
 from shutil import rmtree
 from django.db import IntegrityError, transaction
 from blast_project import py_biopython as pyb
-import pandas as pd
 
 '''check_if_taxdb_exists
     
@@ -116,7 +116,7 @@ def get_html_results(project_id,filename):
             data = res.readlines()
         return data
     except Exception as e:
-        raise FileNotFoundError("Couldn't read file {} with Exception: {}".format(e))
+        raise FileNotFoundError("[-] ERROR: Couldn't read file {} with Exception: {}".format(filename,e))
 
 #TODO documentation
 def html_table_exists(project_id,filename):
@@ -143,7 +143,7 @@ def write_pandas_table_for_one_genome_file(blast_database,organism_name,assembly
         ))
         pandas_table_file.close()
     except Exception as e:
-        raise IntegrityError("Couldnt write pandas dataframe for your uploaded genome file, with exception : {}".format(e))
+        raise IntegrityError("[-] ERROR: Couldnt write pandas dataframe for your uploaded genome file, with exception : {}".format(e))
 
 
 #TODO documentation
@@ -246,3 +246,17 @@ def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_emai
         return taxids, organisms
     except Exception as e:
         raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))
+
+
+'''get_taxonomic_files_tuple
+
+    This function is used in the RefseqDatabaseForm for displaying available 
+    taxonomic files. It returns a tuple with taxonomic_file_names.
+
+    :returns form_choice_field_input
+        :type tuple[list:str, list:str]
+'''
+def get_taxonomic_files_tuple():
+    taxid_files_list = list_taxonomic_files()[0]
+    form_choice_field_input = tuple(zip(taxid_files_list, taxid_files_list))
+    return form_choice_field_input

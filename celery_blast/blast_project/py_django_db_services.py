@@ -1,6 +1,7 @@
 import os
 import pandas as pd
-from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
+from .models import BlastProject, BlastSettings
+from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from external_tools.models import ExternalTools
 from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
 from django_celery_results.models import TaskResult
@@ -40,7 +41,6 @@ def get_users_blast_projects(userid):
 '''
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
-
 
 #TODO documentation
 def get_project_by_id(project_id):

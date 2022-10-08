@@ -1,13 +1,11 @@
 #functions for the creation of BLAST databases which are triggered via POST and GET requests in the views.py file of this package
-from blast_project.models import BlastDatabase
+from .models import BlastDatabase
 from blast_project.py_services import create_blastdatabase_directory, upload_file
 from blast_project.py_django_db_services import create_and_save_refseq_database_model, get_database_by_id
 from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict, filter_duplicates_by_ftp_path
 from os.path import isfile
 import pandas as pd
 from django.db import IntegrityError, transaction
-from Bio import Entrez
-
 ''' 
 transactions with models (manager)
 '''

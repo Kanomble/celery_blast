@@ -18,7 +18,7 @@ from .py_database_statistics import get_database_statistics_task_status, delete_
     transform_normalized_database_table_to_json
 from django.db import IntegrityError, transaction
 
-from .py_django_db_services import get_users_blast_projects, get_all_blast_databases, get_project_by_id, save_uploaded_genomes_into_database, \
+from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
     save_uploaded_multiple_file_genomes_into_database
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries

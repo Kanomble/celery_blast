@@ -1,17 +1,14 @@
 import os
-
 from django.shortcuts import render, redirect, HttpResponse
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
 from .forms import OneWayProjectCreationForm, BlastSettingsForm, OneWayRemoteProjectCreationForm
-from django.db import transaction, IntegrityError
 from .py_project_creation import create_one_way_blast_project, create_one_way_remote_blast_project
 from .py_services import delete_one_way_blast_project_and_associated_directories_by_id,\
     delete_one_way_remote_blast_project_and_associated_directories_by_id, get_one_way_html_results
 from .py_django_db_services import get_one_way_project_by_id, get_one_way_remote_project_by_id
 from .py_biopython import calculate_pfam_and_protein_links_from_one_way_queries
-from blast_project.py_services import upload_file
 from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_project
 
 #TODO documentation

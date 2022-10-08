@@ -1,4 +1,4 @@
-from blast_project.models import AssemblyLevels
+from refseq_transactions.models import AssemblyLevels
 from os.path import isfile
 from os import remove, getcwd
 import subprocess

@@ -1,20 +1,5 @@
 from django import forms
-from django.core.exceptions import ValidationError
-from blast_project.py_services import list_taxonomic_files
-
-'''get_taxonomic_files_tuple
-    
-    This function is used in the RefseqDatabaseForm for displaying available 
-    taxonomic files. It returns a tuple with taxonomic_file_names.
-    
-    :returns form_choice_field_input
-        :type tuple[list:str, list:str]
-'''
-def get_taxonomic_files_tuple():
-    taxid_files_list = list_taxonomic_files()[0]
-    form_choice_field_input = tuple(zip(taxid_files_list,taxid_files_list))
-    return form_choice_field_input
-
+from blast_project.py_services import list_taxonomic_files, get_taxonomic_files_tuple
 
 class RefseqDatabaseForm(forms.Form):
     ASSEMBLY_LEVELS = [
