@@ -160,6 +160,7 @@ class BlastProject(models.Model):
         else:
             return None
 
+
     ''' initialize_project_directory
     
         invokation is done with BlastProject.objects.initialize_project_directory() or 
@@ -240,3 +241,12 @@ class BlastProject(models.Model):
         except Exception as e:
             raise Exception(
                 "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
+
+    '''check_for_reciprocal_result_table
+        
+    '''
+    def check_for_reciprocal_result_table(self):
+        if isfile(self.get_project_dir() + '/' + 'reciprocal_results.html'):
+            return True
+        else:
+            return False

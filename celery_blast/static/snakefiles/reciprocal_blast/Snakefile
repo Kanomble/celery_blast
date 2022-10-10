@@ -212,7 +212,15 @@ rule conduct_multiple_sequence_alignment_mafft:
 	run:
 		with open(input[0],'r') as infile:
 			if len(infile.readlines()) > 1:
-				shell("mafft --auto {input} > {output} 2> {log}")
+				try:
+					mafft=shell("mafft --auto {input} > {output} 2> {log}")
+					if mafft != 0:
+						raise Exception("mafft returncode is != 0\n")
+				except Exception as e:
+					with open(log['log'],'w') as lfile:
+						lfile.write("ERROR: in mafft with exception: {}\n".format(e))
+						shell("touch {output}")
+						lfile.write("WARNING: producing empty alignment file with touch\n")
 			else:
 				shell("touch {output} 2> {log.log}")
 

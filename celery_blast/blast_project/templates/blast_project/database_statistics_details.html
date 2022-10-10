@@ -19,9 +19,6 @@
         </div>
     </div>
     <hr>
-    <div class="dashboard_project_list_col" style="justify-content: center;align-content: center;text-align: center">
-        {% include DatabaseStatisticsAltairPlot %}
-    </div>
     <hr>
     <div class="dashboard_project_list_col" style="justify-content: center;align-content: center;text-align: center">
         {% include DatabaseStatisticsBokehPlot %}
@@ -43,8 +40,6 @@ $(document).ready(function() {
             success: function (response) {
                 var columns = [];
                 columnNames = Object.keys(response.data[0])
-                console.log(columnNames)
-
                 for (var i in columnNames) {
                     columns.push({
                         data: columnNames[i],
