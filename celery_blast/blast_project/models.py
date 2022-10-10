@@ -244,6 +244,7 @@ class BlastProject(models.Model):
 
     '''check_for_reciprocal_result_table
         
+        This function checks if the reciprocal_result.html file is in the project directory or not.
     '''
     def check_for_reciprocal_result_table(self):
         if isfile(self.get_project_dir() + '/' + 'reciprocal_results.html'):

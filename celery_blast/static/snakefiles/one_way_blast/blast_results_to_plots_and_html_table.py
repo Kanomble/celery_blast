@@ -7,7 +7,6 @@ Expands blast results table with tax information.
 Creates altair plots based on tax information.
 Produces blast results in html file.
 '''
-#TODO fix print statements, add snakemake log
 
 from Bio import Entrez
 import pandas as pd
@@ -40,7 +39,7 @@ try:
         #maximum query sequences == 10?
         logfile.write("INFO:just parsing the first ten queries for altair plots\n".format(len(unique_queries)))
 
-        for query in unique_queries[0:10]:
+        for query in unique_queries:
             logfile.write("\tINFO:working on {}\n".format(query))
             # print("processing : {}".format(query))
             dataframe = df.loc[df['qseqid'] == query].copy()
@@ -121,7 +120,8 @@ try:
                 logfile.write("ERROR:taxonomic informations cant get added to result dataframe due to different lengths\n")
                 raise Exception("ERROR:taxonomic informations cant get added to result dataframe due to different lengths\n")
             dataframes.append(dataframe)
-        logfile.write("INFO:parsing taxonomic information for queries (first ten)\n")
+
+        logfile.write("INFO:parsing taxonomic information for queries\n")
         result_df = pd.concat(dataframes)
         result_df.to_csv(snakemake.output['taxonomic_table'], sep='\t')
         logfile.write("INFO:start producing dynamic altair plots for target species families\n")

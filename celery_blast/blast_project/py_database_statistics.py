@@ -350,7 +350,7 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
                 normalized_df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
                 df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics.csv'
                 if isfile(normalized_df_filepath) is False or isfile(df_filepath) is False:
-                    log.write("INFO:starting function extract_taxonomic_information ...")
+                    log.write("INFO:starting function extract_taxonomic_information ...\n")
                     logfile_tax_count_function = path_to_project + '/log/' + taxonomic_unit + '_extract_taxonomic_information.log'
                     tax_counts=extract_taxonomic_information(logfile_tax_count_function, forward_db.uploaded_files, result_data, db_df, taxonomic_unit)
                     log.write("INFO:Done extracting list of taxonomic informations\n")

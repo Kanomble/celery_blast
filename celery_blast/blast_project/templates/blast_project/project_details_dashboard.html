@@ -85,7 +85,7 @@
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
                             <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}"> External Tools</a></td>
                             <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
-                        {% elif BlastProject.check_for_reciprocal_result_table() == True %}
+                        {% elif BlastProject.check_for_reciprocal_result_table == True %}
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
                             <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
                         {% endif %}

@@ -23,6 +23,11 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] fix plotting: /blast/reciprocal_blast/media/blast_projects/2/.snakemake/scripts/tmp0ybykovj.build_folders_with_hit_info_for_each_qseqid.py:89: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
+  fig, ax = plt.subplots(2, 2)
+- [ ] refactor one way blast rules
+  - [ ] blast_results_to_plots_and_html_table
+  - [ ] change altair to bokeh plots
 - [ ] refactor correct deletion of static files - if database gets deleted, also delete project dirs associated to this database
 - [ ] refactor html result tables
   - [x] reciprocal results -> index column
@@ -32,7 +37,7 @@ The web container will automatically try to restart if the startup fails, unless
 - [ ] table column names in entrez esearch dashboard
 - [ ] exception is thrown if there is no result in the esearch output
 - [ ] refactor blast_tables_to_orthologous_table.py with new entrez function of the database statistics ncbi_transaction script
-- [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
+- [ ] refactor query_sequences_to_html_table.py - what happens if there are no information on NCBI available?
   - [ ] test with uploaded genomes and sequences
 - [X] fix javascript download button for the protein database in the entrez search
 - [ ] add taxonomic information processing to database creation or database statistics calculation
@@ -65,7 +70,7 @@ The web container will automatically try to restart if the startup fails, unless
 - [X] implement custom snakemake logfile that lists all of the executed functions
 - [ ] display warning if backward organism not in the forward database as there is no controlling step - cause hits against the identical protein are not considered
 - [ ] reciprocal_result.csv should also contain assembly accession for each hit and genus, family .. informations
-  - [X] genus, family and other taxonomic informations are integrated
+  - [X] genus, family and other taxonomic information are integrated
   - [ ] assembly accession id
 - [ ] uploaded databases might have problems with taxonomic nodes - especially if the user selects different databases for the forward and backward blast
   - [ ] if there is no taxonomic node available (which can be the case for some organisms) it is not possible to upload a taxmap file ...
@@ -90,7 +95,7 @@ The web container will automatically try to restart if the startup fails, unless
     - [x] integrate docker container for mafft and fasttree 
     - [x] perform msa with orthologous subject sequences
     - [x] build ml or neighbour joining trees from all msa's
-- [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
+- [ ] blastn one way searches can't display query sequence information (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [x] check if backward organism is in database
   - [X] check if query sequences are in backward database
 - [X] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation

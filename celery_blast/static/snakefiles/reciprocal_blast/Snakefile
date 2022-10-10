@@ -48,7 +48,7 @@ rule fw_result_processing:
 				with open(output[0],"w+") as out:
 					for gi in fw_results[7][:].unique():
 						out.write(gi+"\n")
-				logfile.write(('INFO:done writing {} target sequences into output file'.format(len(fw_results[7][:].unique()))))
+				logfile.write(('INFO:done writing {} target sequences into output file\n'.format(len(fw_results[7][:].unique()))))
 				logfile.write("DONE\n")
 			except Exception as e:
 				logfile.write("ERROR:{}\n".format(e))
