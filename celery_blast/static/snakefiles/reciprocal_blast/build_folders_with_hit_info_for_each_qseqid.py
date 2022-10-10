@@ -17,7 +17,7 @@ with open(snakemake.log['log'],'w') as logfile:
                     query = line.split('>')[1].split(' ')[0]
                     if '.' in query:
                         query = query.split('.')[0]
-                    logfile.write("\textracted query: {}\n".format(query))
+                    logfile.write("\tINFO:extracted query: {}\n".format(query))
                     queries.append(query)
 
         logfile.write("INFO:looping over query sequences to identify amount of RBHs and to build directories\n")
@@ -89,10 +89,10 @@ with open(snakemake.log['log'],'w') as logfile:
             ax[0, 1].set_title("bitscore")
             ax[1, 0].scatter(y=target_df['evalue'], x=range(len(target_df['evalue'])), edgecolor="black", color='red')
             ax[1, 0].set_title("evalue")
-            ax[1, 1].bar(height=target_df.groupby('staxids').size().sort_values(ascending=False)[0:12],
-                         x=range(1, len(target_df.groupby('staxids').size().index[0:12]) + 1))
-            ax[1, 1].set_xticks(range(1, len(target_df.groupby('staxids').size().index[0:12]) + 1))
-            ax[1, 1].set_xticklabels(target_df.groupby('staxids').size().index[0:12], rotation=90)
+            ax[1, 1].bar(height=target_df.groupby('scomnames').size().sort_values(ascending=False)[0:12],
+                         x=range(1, len(target_df.groupby('scomnames').size().index[0:12]) + 1))
+            ax[1, 1].set_xticks(range(1, len(target_df.groupby('scomnames').size().index[0:12]) + 1))
+            ax[1, 1].set_xticklabels(target_df.groupby('scomnames').size().index[0:12], rotation=90)
             plt.tight_layout()
             logfile.write("\tINFO:saving plots to static and project directories\n")
 
@@ -109,8 +109,8 @@ with open(snakemake.log['log'],'w') as logfile:
                 output.write(sacc+'\n')
             output.close()
 
-            hit_info_file.write("qseqid: {} hits: {}\n".format(query, len(target_df)))
-
+            hit_info_file.write("\tINFO:qseqid: {} hits: {}\n".format(query, len(target_df)))
+            plt.close('all')
         hit_info_file.close()
         logfile.write("DONE\n")
     except Exception as e:

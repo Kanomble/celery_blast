@@ -32,7 +32,7 @@ with open(snakemake.log['log'],'w') as logfile:
         for qseq_id in qseqids:
             with open(str(qseq_id)+'/target_sequences_raw.faa','r') as targetfile:
                 lines=targetfile.readlines()
-                logfile.write("\tINFO:working with target sequence file - length: {}\n".format(len(lines)))
+                logfile.write("\tINFO:working with target sequence file - total number of lines: {}\n".format(len(lines)))
                 with open(str(qseq_id)+'/target_sequences.faa','w') as new_targetfile:
                     target_ids = []
                     for line in lines:

@@ -78,8 +78,8 @@ $(document).ready(function(){
                             if ( data ) { // get and check data value
                                 status.text(data.progress); // get and print data string
                                 //console.log(data.progress)
-                                if(data.progress == 100){
-                                    //console.log(data.progress)
+                                if(data.progress > 99){
+                                    status.text("DONE")
                                     clearInterval(pollInterval); // optional: stop poll function
                                 } else if(data.progress == "ERROR"){
                                     clearInterval(pollInterval);
@@ -88,7 +88,6 @@ $(document).ready(function(){
                             }
                          },
                         error: function() { // error logging
-                            //console.log('Error!');
                             status.text("error polling progress data")
                         }
                     });

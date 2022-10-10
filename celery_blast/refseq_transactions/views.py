@@ -196,8 +196,12 @@ def ajax_call_for_database_download_progress(request, database_id):
     try:
         if request.is_ajax and request.method == "GET":
             #progress = read_database_download_and_format_logfile(database_id)
-            progress = get_database_download_and_formatting_task_result_progress(database_id)
-            return JsonResponse({"progress":progress},status=200)
+            database = get_database_by_id(database_id)
+            if database.database_download_and_format_task.status == 'SUCCESS':
+                return JsonResponse({"progress":100},status=200)
+            else:
+                progress = get_database_download_and_formatting_task_result_progress(database_id)
+                return JsonResponse({"progress":progress},status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
