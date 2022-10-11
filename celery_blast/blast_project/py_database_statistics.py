@@ -633,11 +633,13 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             sc.data['sacc_transformed']=[]
             var dict = new Object()
             var dict = {}
+            var indexDict = {}
             var taxid_count = {}
         
             for(var j = 0; j < call_back_object.length; j++){
                 dict[call_back_object[j]]=0
                 taxid_count[call_back_object[j]]=[]
+                indexDict[call_back_object[j]]=j+1
             }
         
         
@@ -668,24 +670,25 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             sbc.data['value']=[]
             sbc.data[tax_unit]=[]
             sbc.data['color']=[]
-        
+            sbc.data['index']=[]
             for(let key in dict) {
                 sbc.data['value'].push(dict[key])
                 sbc.data[tax_unit].push(key)
                 sbc.data['color'].push(color_code[key])
+                sbc.data['index'].push(indexDict[key])
             }
         
             sbcDb.data['value']=[]
             sbcDb.data[tax_unit]=[]
             sbcDb.data['color']=[]
+            sbcDb.data['index']=[]
             for(let key in taxid_count) {
                 sbcDb.data['value'].push(taxid_count[key].length)
                 sbcDb.data[tax_unit].push(key)
                 sbcDb.data['color'].push(color_code[key])
+                sbcDb.data['index'].push(indexDict[key])
             }
         
-            console.log(sbcDb.data)
-            console.log(sbc.data)
         
             sbcDb.change.emit();
             sbc.change.emit();
