@@ -578,16 +578,18 @@ def create_bokeh_plots(result_df:pd.DataFrame,database:pd.DataFrame,normalized_d
             raise Exception("[-] ERROR during creation of bokeh plots with exception : {}".format(e))
 
 #TODO documentation
-def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.DataFrame, taxonomic_unit:str, project_id:int):
+def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: pd.DataFrame, taxonomic_unit: str,
+                             project_id: int):
     try:
-        with open(logfile,'w') as log:
+        with open(logfile, 'w') as log:
 
             path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
-            #log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
+            log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
             path_to_bokeh_plot = path_to_static_dir + taxonomic_unit + "_bokeh_plot.html"
 
             data_all = result_data.loc[:,
-                       [taxonomic_unit, 'bitscore', 'pident', 'stitle', 'scomnames', 'staxids', 'qseqid', 'sacc_transformed']]
+                       [taxonomic_unit, 'bitscore', 'pident', 'stitle', 'scomnames', 'staxids', 'qseqid',
+                        'sacc_transformed']]
             data_all = data_all.sort_values(by=taxonomic_unit)
             num_colors = len(data_all[taxonomic_unit].unique())
             clrs = sns.color_palette('pastel', n_colors=num_colors)
@@ -608,7 +610,8 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             df['color'] = df[taxonomic_unit].apply(create_color_scheme)
 
             dbStatistics = pd.DataFrame(
-                database[database[taxonomic_unit].isin(data_all[taxonomic_unit].unique())][taxonomic_unit].value_counts())
+                database[database[taxonomic_unit].isin(data_all[taxonomic_unit].unique())][
+                    taxonomic_unit].value_counts())
             dbStatistics.columns = ["value"]
             dbStatistics[taxonomic_unit] = dbStatistics.index
             dbStatistics.index = [x for x in range(0, len(dbStatistics.values))]
@@ -617,84 +620,182 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             dbData = ColumnDataSource(data=dbStatistics)
             bCurr = ColumnDataSource(data=df)
 
-            callback = CustomJS(
-                args=dict(source=Overall, sc=Curr, sbcDb=dbData, sbc=bCurr, color_code=color_dict, tax_unit=taxonomic_unit),
-                code="""
-            var call_back_object = cb_obj.value
-            sc.data['bitscore']=[]
-            sc.data['pident']=[]
-            sc.data['color']=[]
-            sc.data[tax_unit]=[]
-            sc.data['index']=[]
-            sc.data['stitle']=[]
-            sc.data['scomnames']=[]
-            sc.data['staxids']=[]
-            sc.data['qseqid']=[]
-            sc.data['sacc_transformed']=[]
-            var dict = new Object()
-            var dict = {}
-            var indexDict = {}
-            var taxid_count = {}
-        
-            for(var j = 0; j < call_back_object.length; j++){
-                dict[call_back_object[j]]=0
-                taxid_count[call_back_object[j]]=[]
-                indexDict[call_back_object[j]]=j+1
-            }
-        
-        
-            for(var i = 0; i < source.get_length(); i++){
-                for(var j = 0; j < call_back_object.length; j++){        
-                    if(source.data[tax_unit][i] == call_back_object[j]){
-                        sc.data['bitscore'].push(source.data['bitscore'][i])
-                        sc.data['pident'].push(source.data['pident'][i])
-                        sc.data['color'].push(source.data['color'][i])
-                        sc.data[tax_unit].push(source.data[tax_unit][i])
-                        sc.data['index'].push(source.data['index'][i])
-                        sc.data['stitle'].push(source.data['stitle'][i])
-                        sc.data['scomnames'].push(source.data['scomnames'][i])
-                        sc.data['staxids'].push(source.data['staxids'][i])
-                        sc.data['qseqid'].push(source.data['qseqid'][i])
-                        sc.data['sacc_transformed'].push(source.data['sacc_transformed'][i])
-                        dict[call_back_object[j]]+=1
-        
-                        if(taxid_count[call_back_object[j]].includes(source.data['staxids'][i]) == false){
-                                taxid_count[call_back_object[j]].push(source.data['staxids'][i])
-                                console.log("PUSH: ",source.data['staxids'][i])
-                            }
-        
-                    }
-                }
-            }
-        
-            sbc.data['value']=[]
-            sbc.data[tax_unit]=[]
-            sbc.data['color']=[]
-            sbc.data['index']=[]
-            for(let key in dict) {
-                sbc.data['value'].push(dict[key])
-                sbc.data[tax_unit].push(key)
-                sbc.data['color'].push(color_code[key])
-                sbc.data['index'].push(indexDict[key])
-            }
-        
-            sbcDb.data['value']=[]
-            sbcDb.data[tax_unit]=[]
-            sbcDb.data['color']=[]
-            sbcDb.data['index']=[]
-            for(let key in taxid_count) {
-                sbcDb.data['value'].push(taxid_count[key].length)
-                sbcDb.data[tax_unit].push(key)
-                sbcDb.data['color'].push(color_code[key])
-                sbcDb.data['index'].push(indexDict[key])
-            }
-        
-        
-            sbcDb.change.emit();
-            sbc.change.emit();
-            sc.change.emit();
-            """)
+            unique_qseqids = list(data_all['qseqid'].unique())
+            menu_qseqids = MultiSelect(options=unique_qseqids, value=unique_qseqids,
+                                       title='Select target query sequence')  # drop down menu
+            unique_orders = list(data_all[taxonomic_unit].unique())
+            menu = MultiSelect(options=unique_orders, value=unique_orders,
+                               title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
 
+            callback = CustomJS(args=dict(
+                source=Overall,
+                sc=Curr,
+                sbcDb=dbData,
+                sbc=bCurr,
+                color_code=color_dict,
+                tax_unit=taxonomic_unit,
+                menu_qseqids=menu_qseqids), code="""
+                            var call_back_object = cb_obj.value
+                            sc.data['bitscore']=[]
+                            sc.data['pident']=[]
+                            sc.data['color']=[]
+                            sc.data[tax_unit]=[]
+                            sc.data['index']=[]
+                            sc.data['stitle']=[]
+                            sc.data['scomnames']=[]
+                            sc.data['staxids']=[]
+                            sc.data['qseqid']=[]
+                            sc.data['sacc_transformed']=[]
+                            var dict = new Object()
+                            var dict = {}
+                            var indexDict = {}
+                            var taxid_count = {}
+
+                            for(var j = 0; j < call_back_object.length; j++){
+                                dict[call_back_object[j]]=0
+                                taxid_count[call_back_object[j]]=[]
+                                indexDict[call_back_object[j]]=j+1
+                            }
+
+
+                            for(var i = 0; i < source.get_length(); i++){
+                                for(var j = 0; j < call_back_object.length; j++){
+                                    for(var k = 0; k < menu_qseqids.value.length; k++){
+                                        if(source.data['qseqid'][i] == menu_qseqids.value[k]){
+                                            if(source.data[tax_unit][i] == call_back_object[j]){
+                                                sc.data['bitscore'].push(source.data['bitscore'][i])
+                                                sc.data['pident'].push(source.data['pident'][i])
+                                                sc.data['color'].push(source.data['color'][i])
+                                                sc.data[tax_unit].push(source.data[tax_unit][i])
+                                                sc.data['index'].push(source.data['index'][i])
+                                                sc.data['stitle'].push(source.data['stitle'][i])
+                                                sc.data['scomnames'].push(source.data['scomnames'][i])
+                                                sc.data['staxids'].push(source.data['staxids'][i])
+                                                sc.data['qseqid'].push(source.data['qseqid'][i])
+                                                sc.data['sacc_transformed'].push(source.data['sacc_transformed'][i])
+                                                dict[call_back_object[j]]+=1
+                                                if(taxid_count[call_back_object[j]].includes(source.data['staxids'][i]) == false){
+                                                        taxid_count[call_back_object[j]].push(source.data['staxids'][i])
+                                                    }
+                                            }                                        
+                                        }
+                                    }
+
+                                }
+                            }
+
+                            sbc.data['value']=[]
+                            sbc.data[tax_unit]=[]
+                            sbc.data['color']=[]
+                            sbc.data['index']=[]
+                            for(let key in dict) {
+                                sbc.data['value'].push(dict[key])
+                                sbc.data[tax_unit].push(key)
+                                sbc.data['color'].push(color_code[key])
+                                sbc.data['index'].push(indexDict[key])
+                            }
+
+                            sbcDb.data['value']=[]
+                            sbcDb.data[tax_unit]=[]
+                            sbcDb.data['color']=[]
+                            sbcDb.data['index']=[]
+                            for(let key in taxid_count) {
+                                sbcDb.data['value'].push(taxid_count[key].length)
+                                sbcDb.data[tax_unit].push(key)
+                                sbcDb.data['color'].push(color_code[key])
+                                sbcDb.data['index'].push(indexDict[key])
+                            }
+
+
+                            sbcDb.change.emit();
+                            sbc.change.emit();
+                            sc.change.emit();
+                            """)
+
+            qseqid_callback = CustomJS(args=dict(
+                source=Overall,
+                sc=Curr,
+                sbcDb=dbData,
+                sbc=bCurr,
+                color_code=color_dict,
+                tax_unit=taxonomic_unit,
+                menu_tax=menu), code="""
+                            var call_back_object = cb_obj.value
+                            sc.data['bitscore']=[]
+                            sc.data['pident']=[]
+                            sc.data['color']=[]
+                            sc.data[tax_unit]=[]
+                            sc.data['index']=[]
+                            sc.data['stitle']=[]
+                            sc.data['scomnames']=[]
+                            sc.data['staxids']=[]
+                            sc.data['qseqid']=[]
+                            sc.data['sacc_transformed']=[]
+                            var dict = new Object()
+                            var dict = {}
+                            var indexDict = {}
+                            var taxid_count = {}
+
+                            for(var j = 0; j < call_back_object.length; j++){
+                                dict[call_back_object[j]]=0
+                                taxid_count[call_back_object[j]]=[]
+                                indexDict[call_back_object[j]]=j+1
+                            }
+
+
+                            for(var i = 0; i < source.get_length(); i++){
+                                for(var j = 0; j < call_back_object.length; j++){
+                                    for(var k = 0; k < menu_tax.value.length; k++){
+                                        if(source.data[tax_unit][i] == menu_tax.value[k]){
+                                            if(source.data['qseqid'][i] == call_back_object[j]){
+                                                sc.data['bitscore'].push(source.data['bitscore'][i])
+                                                sc.data['pident'].push(source.data['pident'][i])
+                                                sc.data['color'].push(source.data['color'][i])
+                                                sc.data[tax_unit].push(source.data[tax_unit][i])
+                                                sc.data['index'].push(source.data['index'][i])
+                                                sc.data['stitle'].push(source.data['stitle'][i])
+                                                sc.data['scomnames'].push(source.data['scomnames'][i])
+                                                sc.data['staxids'].push(source.data['staxids'][i])
+                                                sc.data['qseqid'].push(source.data['qseqid'][i])
+                                                sc.data['sacc_transformed'].push(source.data['sacc_transformed'][i])
+                                                dict[call_back_object[j]]+=1
+                                                if(taxid_count[call_back_object[j]].includes(source.data['staxids'][i]) == false){
+                                                        taxid_count[call_back_object[j]].push(source.data['staxids'][i])
+                                                    }
+                                            }                                        
+                                        }
+                                    }
+
+                                }
+                            }
+
+                            sbc.data['value']=[]
+                            sbc.data[tax_unit]=[]
+                            sbc.data['color']=[]
+                            sbc.data['index']=[]
+                            for(let key in dict) {
+                                sbc.data['value'].push(dict[key])
+                                sbc.data[tax_unit].push(key)
+                                sbc.data['color'].push(color_code[key])
+                                sbc.data['index'].push(indexDict[key])
+                            }
+
+                            sbcDb.data['value']=[]
+                            sbcDb.data[tax_unit]=[]
+                            sbcDb.data['color']=[]
+                            sbcDb.data['index']=[]
+                            for(let key in taxid_count) {
+                                sbcDb.data['value'].push(taxid_count[key].length)
+                                sbcDb.data[tax_unit].push(key)
+                                sbcDb.data['color'].push(color_code[key])
+                                sbcDb.data['index'].push(indexDict[key])
+                            }
+
+
+                            sbcDb.change.emit();
+                            sbc.change.emit();
+                            sc.change.emit();
+                            """)
             TOOLTIPS = [
                 ("stitle", "@stitle"),
                 ("bitscore,pident", "@bitscore, @pident"),
@@ -703,18 +804,16 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             ]
 
             # plot and the menu is linked with each other by this callback function
-            unique_orders = list(data_all[taxonomic_unit].unique())
-            menu = MultiSelect(options=unique_orders, value=unique_orders,
-                               title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
+
             p = figure(x_axis_label='bitscore', y_axis_label='pident',
-                       plot_height=700, plot_width=700,
+                       plot_height=800, plot_width=700,
                        tooltips=TOOLTIPS,
                        tools="box_select, reset, box_zoom, pan",
                        title="Reciprocal Best Hit - percent identity vs bitscore")  # ,tools="box_select, reset" creating figure object
             circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black',
                               source=Curr)  # plotting the data using glyph circle
             menu.js_on_change('value', callback)  # calling the function on change of selection
-
+            menu_qseqids.js_on_change('value', qseqid_callback)
             circle_size_spinner = Spinner(title="Circle size",
                                           low=0, high=60, step=5,
                                           value=circle.glyph.size,
@@ -738,72 +837,78 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             b.xaxis.major_label_orientation = "vertical"
             b2.xaxis.major_label_orientation = "vertical"
 
-            bar_callback = CustomJS(args=dict(sc=Curr, sbc=bCurr, sbcDb=dbData, color_code=color_dict, tax_unit=taxonomic_unit),
-                                    code="""
-                var call_back_object = cb_obj.indices
-                var dict = {}
-                var taxid_count = {}
-                var arr = []
-                var indexDict = {}
+            bar_callback = CustomJS(args=dict(sc=Curr,
+                                              sbc=bCurr,
+                                              sbcDb=dbData,
+                                              color_code=color_dict,
+                                              tax_unit=taxonomic_unit,
+                                              menu_qseqids=menu_qseqids), code="""
+                                                var call_back_object = cb_obj.indices
+                                                var dict = {}
+                                                var taxid_count = {}
+                                                var arr = []
+                                                var indexDict = {}
+                                                for(var j = 0; j < call_back_object.length; j++){
+                                                    if(arr.includes(sc.data[tax_unit][call_back_object[j]]) == false){
+                                                        arr.push(sc.data[tax_unit][call_back_object[j]])
+                                                    }
+                                                }
 
-                for(var j = 0; j < call_back_object.length; j++){
-                    if(arr.includes(sc.data[tax_unit][call_back_object[j]]) == false){
-                        arr.push(sc.data[tax_unit][call_back_object[j]])
-                    }
-                }
-        
-                for(var j = 0; j < arr.length; j++){
-                    dict[arr[j]]=0
-                    taxid_count[arr[j]]=[]
-                    indexDict[arr[j]]=j+1
-                }
-        
-                for(var i = 0; i < sc.get_length(); i++){
-                    for(var j = 0; j < arr.length; j++){        
-                        if(arr[j] == sc.data[tax_unit][call_back_object[i]]){
-                            dict[arr[j]]+=1
-                            if(taxid_count[arr[j]].includes(sc.data['staxids'][call_back_object[i]]) == false){
-                                taxid_count[arr[j]].push(sc.data['staxids'][call_back_object[i]])
-                            }
-        
-                        }
-                    }
-                }
-        
-                sbc.data['value']=[]
-                sbc.data[tax_unit]=[]
-                sbc.data['color']=[]
-                sbc.data['index']=[]
-                for(let key in dict) {
-                    sbc.data['value'].push(dict[key])
-                    sbc.data[tax_unit].push(key)
-                    sbc.data['color'].push(color_code[key])
-                    sbc.data['index'].push(indexDict[key])
-                }
-        
-        
-                sbcDb.data['value']=[]
-                sbcDb.data[tax_unit]=[]
-                sbcDb.data['color']=[]
-                sbcDb.data['index']=[]
-                for(let key in taxid_count) {
-                    sbcDb.data['value'].push(taxid_count[key].length)
-                    sbcDb.data[tax_unit].push(key)
-                    sbcDb.data['color'].push(color_code[key])
-                    sbcDb.data['index'].push(indexDict[key])
-                }
-        
-        
-                sbcDb.change.emit();
-                sbc.change.emit();
-            """)
+                                                for(var j = 0; j < arr.length; j++){
+                                                    dict[arr[j]]=0
+                                                    taxid_count[arr[j]]=[]
+                                                    indexDict[arr[j]]=j+1
+                                                }
+
+                                                for(var i = 0; i < sc.get_length(); i++){
+                                                    for(var j = 0; j < arr.length; j++){
+                                                        for(var k = 0; k < menu_qseqids.value.length; k++){
+                                                            if(sc.data['qseqid'][call_back_object[i]] == menu_qseqids.value[k])
+                                                                if(arr[j] == sc.data[tax_unit][call_back_object[i]]){
+                                                                    dict[arr[j]]+=1
+                                                                    if(taxid_count[arr[j]].includes(sc.data['staxids'][call_back_object[i]]) == false){
+                                                                        taxid_count[arr[j]].push(sc.data['staxids'][call_back_object[i]])
+                                                                    }
+
+                                                                }                                                        
+                                                        }
+                                                    }
+                                                }
+
+                                                sbc.data['value']=[]
+                                                sbc.data[tax_unit]=[]
+                                                sbc.data['color']=[]
+                                                sbc.data['index']=[]
+                                                for(let key in dict) {
+                                                    sbc.data['value'].push(dict[key])
+                                                    sbc.data[tax_unit].push(key)
+                                                    sbc.data['color'].push(color_code[key])
+                                                    sbc.data['index'].push(indexDict[key])
+                                                }
+
+
+                                                sbcDb.data['value']=[]
+                                                sbcDb.data[tax_unit]=[]
+                                                sbcDb.data['color']=[]
+                                                sbcDb.data['index']=[]
+                                                for(let key in taxid_count) {
+                                                    sbcDb.data['value'].push(taxid_count[key].length)
+                                                    sbcDb.data[tax_unit].push(key)
+                                                    sbcDb.data['color'].push(color_code[key])
+                                                    sbcDb.data['index'].push(indexDict[key])
+                                                }
+
+
+                                                sbcDb.change.emit();
+                                                sbc.change.emit();
+                                            """)
             Curr.selected.js_on_change('indices', bar_callback)
 
             line_size_spinner.js_link("value", circle.glyph, "line_width")
             circle_size_spinner.js_link("value", circle.glyph, "size")
             line_color_picker.js_link('color', circle.glyph, 'line_color')
 
-            grid = gridplot([[column(p), column(b, b2, menu, circle_size_spinner)]],
+            grid = gridplot([[column(p), column(b, b2, menu, menu_qseqids, circle_size_spinner)]],
                             toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
             output_file(filename=path_to_bokeh_plot, title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(taxonomic_unit))
             save(grid)
@@ -830,6 +935,8 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
 
             # plot and the menu is linked with each other by this callback function
             unique_tax = list(data_all[taxonomic_unit].unique())
+            unique_qseqids = list(data_all['qseqid'].unique())
+
 
             data_all['color'] = data_all[taxonomic_unit].apply(create_color_scheme)
             data_selection = data_all[(data_all[taxonomic_unit] == unique_tax[0]) | (data_all[taxonomic_unit] == unique_tax[1])]
@@ -838,39 +945,7 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
             Curr = ColumnDataSource(data=data_selection)
             # dbData=ColumnDataSource(data=dbData)
 
-            callback = CustomJS(args=dict(source=Overall, sc=Curr, color_code=color_dict, tax_unit=taxonomic_unit), code="""
-            var call_back_object = cb_obj.value
-            sc.data['bitscore']=[]
-            sc.data['pident']=[]
-            sc.data['color']=[]
-            sc.data[tax_unit]=[]
-            sc.data['index']=[]
-            sc.data['stitle']=[]
-            sc.data['scomnames']=[]
-            sc.data['staxids']=[]
-            sc.data['qseqid']=[]
-            sc.data['sacc_transformed']=[]
-        
-            for(var i = 0; i < source.get_length(); i++){
-                for(var j = 0; j < call_back_object.length; j++){        
-                    if(source.data[tax_unit][i] == call_back_object[j]){
-                        sc.data['bitscore'].push(source.data['bitscore'][i])
-                        sc.data['pident'].push(source.data['pident'][i])
-                        sc.data['color'].push(source.data['color'][i])
-                        sc.data[tax_unit].push(source.data[tax_unit][i])
-                        sc.data['index'].push(source.data['index'][i])
-                        sc.data['stitle'].push(source.data['stitle'][i])
-                        sc.data['scomnames'].push(source.data['scomnames'][i])
-                        sc.data['staxids'].push(source.data['staxids'][i])
-                        sc.data['qseqid'].push(source.data['qseqid'][i])
-                        sc.data['sacc_transformed'].push(source.data['sacc_transformed'][i])
-                    }
-                }
-            }
-        
-        
-            sc.change.emit();
-            """)
+
 
             TOOLTIPS = [
                 ("stitle", "@stitle"),
@@ -879,8 +954,96 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
                 ("scomname", "@scomnames"),
             ]
 
-            menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
-                               title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
+            tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
+                               title='Select: ' + taxonomic_unit.capitalize())
+            qseqid_menu = MultiSelect(options=unique_qseqids,value=unique_qseqids,title="Select target query sequences")
+
+            tax_menu_callback = CustomJS(args=dict(source=Overall,
+                                                   sc=Curr,
+                                                   color_code=color_dict,
+                                                   tax_unit=taxonomic_unit,
+                                                   menu_qseqids=qseqid_menu), code="""
+                        var call_back_object = cb_obj.value
+                        sc.data['bitscore']=[]
+                        sc.data['pident']=[]
+                        sc.data['color']=[]
+                        sc.data[tax_unit]=[]
+                        sc.data['index']=[]
+                        sc.data['stitle']=[]
+                        sc.data['scomnames']=[]
+                        sc.data['staxids']=[]
+                        sc.data['qseqid']=[]
+                        sc.data['sacc_transformed']=[]
+
+                        for(var i = 0; i < source.get_length(); i++){
+                            for(var j = 0; j < call_back_object.length; j++){
+                                for(var k = 0; k < menu_qseqids.value.length; k++){
+                                    if(source.data[tax_unit][i] == call_back_object[j]){
+                                        if(source.data['qseqid'][i] == menu_qseqids.value[k]){
+                                            sc.data['bitscore'].push(source.data['bitscore'][i])
+                                            sc.data['pident'].push(source.data['pident'][i])
+                                            sc.data['color'].push(source.data['color'][i])
+                                            sc.data[tax_unit].push(source.data[tax_unit][i])
+                                            sc.data['index'].push(source.data['index'][i])
+                                            sc.data['stitle'].push(source.data['stitle'][i])
+                                            sc.data['scomnames'].push(source.data['scomnames'][i])
+                                            sc.data['staxids'].push(source.data['staxids'][i])
+                                            sc.data['qseqid'].push(source.data['qseqid'][i])
+                                            sc.data['sacc_transformed'].push(source.data['sacc_transformed'][i])                                        
+                                        }
+                                    }                                
+                                }        
+                            }
+                        }
+
+
+                        sc.change.emit();
+                        """)
+            qseqid_menu_callback = CustomJS(args=dict(source=Overall,
+                                                   sc=Curr,
+                                                   color_code=color_dict,
+                                                   tax_unit=taxonomic_unit,
+                                                   tax_selection=tax_menu), code="""
+                        var call_back_object = cb_obj.value
+                        sc.data['bitscore']=[]
+                        sc.data['pident']=[]
+                        sc.data['color']=[]
+                        sc.data[tax_unit]=[]
+                        sc.data['index']=[]
+                        sc.data['stitle']=[]
+                        sc.data['scomnames']=[]
+                        sc.data['staxids']=[]
+                        sc.data['qseqid']=[]
+                        sc.data['sacc_transformed']=[]
+
+                        for(var i = 0; i < source.get_length(); i++){
+                            for(var j = 0; j < call_back_object.length; j++){
+                                for(var k = 0; k < tax_selection.value.length; k++){
+                                    if(source.data[tax_unit][i] == tax_selection.value[k]){
+                                        if(source.data['qseqid'][i] == call_back_object[j]){
+                                            sc.data['bitscore'].push(source.data['bitscore'][i])
+                                            sc.data['pident'].push(source.data['pident'][i])
+                                            sc.data['color'].push(source.data['color'][i])
+                                            sc.data[tax_unit].push(source.data[tax_unit][i])
+                                            sc.data['index'].push(source.data['index'][i])
+                                            sc.data['stitle'].push(source.data['stitle'][i])
+                                            sc.data['scomnames'].push(source.data['scomnames'][i])
+                                            sc.data['staxids'].push(source.data['staxids'][i])
+                                            sc.data['qseqid'].push(source.data['qseqid'][i])
+                                            sc.data['sacc_transformed'].push(source.data['sacc_transformed'][i])                                        
+                                        }
+                                    }                                
+                                }        
+                            }
+                        }
+
+
+                        sc.change.emit();
+                        """)
+
+            tax_menu.js_on_change('value', tax_menu_callback)  # calling the function on change of selection
+            qseqid_menu.js_on_change('value', qseqid_menu_callback)
+
             p = figure(x_axis_label='bitscore', y_axis_label='pident',
                        plot_height=700, plot_width=700,
                        tooltips=TOOLTIPS,
@@ -889,7 +1052,6 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
                        )  # ,tools="box_select, reset" creating figure object
             circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black', source=Curr,
                               legend_field=taxonomic_unit)  # plotting the data using glyph circle
-            menu.js_on_change('value', callback)  # calling the function on change of selection
 
             range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + result_data['bitscore'].min(),
                                        value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
@@ -916,7 +1078,7 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
             line_color_picker.js_link('color', circle.glyph, 'line_color')
 
             grid = gridplot(
-                [[column(p), column(menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider)]],
+                [[column(p), column(tax_menu,qseqid_menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider)]],
                 toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
 
             output_file(filename=path_to_bokeh_plot,

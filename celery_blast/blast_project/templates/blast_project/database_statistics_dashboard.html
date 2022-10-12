@@ -43,8 +43,14 @@
 <div>
     <!-- Just Display Class Based Database Statistic Result Dataframe-->
     {%  if task_status == 'SUCCESS' %}
-    <div class="dashboard_project_list_col" style="text-align: center;align-content: center">
-        <table class="table table-responsive table-hover" >
+    <div class="dashboard_project_list_col" style="text-align: center;">
+        <div style="text-align: center">
+            <h3 class="col_header"> Number of entries of different taxonomic units</h3>
+            <p style="font-size: medium"> Total number of entries of the relevant taxonomic units in the forward Database
+                of this project vs relative number of taxonomic units of the RBHs </p>
+            <hr>
+        </div>
+        <table class="table table-responsive table-hover" style="width:70%; margin-left:15%;margin-right:15%;" >
             <tr>
                 <th></th>
                 <th> Genus </th>
@@ -54,7 +60,7 @@
                 <th> Pyhlum </th>
             </tr>
             <tr>
-                <td>Database Entries</td>
+                <td>Number of taxonomic units in the forward BLAST database</td>
                 <td> {{ genus_number }}</td>
                 <td> {{ family_number }}</td>
                 <td> {{ order_number }}</td>
@@ -62,7 +68,7 @@
                 <td> {{ phylum_number }}</td>
             </tr>
             <tr>
-                <td>Filtered Database Entries</td>
+                <td>Number of taxonomic units in detected RBHs</td>
                 <td> {{ genus_normalized_number }}</td>
                 <td> {{ family_normalized_number }}</td>
                 <td> {{ order_normalized_number }}</td>
@@ -71,15 +77,7 @@
             </tr>
         </table>
     </div>
-    <div class="dashboard_project_list_col">
-        <div style="text-align: center">
-            <h3 class="col_header"> Class based database statistics</h3>
-             <p style="font-size: medium"> Relative number of RBHs across class taxonomic clades </p>
-        </div>
 
-        <hr>
-        <table id="class_table" class="table table-responsive table-hover"> </table>
-    </div>
     <hr>
     <div class="dashboard_project_list_col">
 
@@ -116,8 +114,17 @@
                 </a>
             </div>
         </div>
+        <hr>
     </div>
+    <div class="dashboard_project_list_col">
+        <div style="text-align: center">
+            <h3 class="col_header"> Class based database statistics</h3>
+             <p style="font-size: medium"> Relative number of RBHs across class taxonomic clades </p>
+        </div>
 
+        <hr>
+        <table id="class_table" class="table table-responsive table-hover"> </table>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
