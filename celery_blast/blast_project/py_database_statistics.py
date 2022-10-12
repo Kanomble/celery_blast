@@ -697,7 +697,7 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
 
             TOOLTIPS = [
                 ("stitle", "@stitle"),
-                ("bitscore,pident", "$x, $y"),
+                ("bitscore,pident", "@bitscore, @pident"),
                 ("sacc RBH to qseqid", "@sacc_transformed RBH to @qseqid "),
                 ("scomname", "@scomnames"),
             ]
@@ -741,12 +741,11 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
             bar_callback = CustomJS(args=dict(sc=Curr, sbc=bCurr, sbcDb=dbData, color_code=color_dict, tax_unit=taxonomic_unit),
                                     code="""
                 var call_back_object = cb_obj.indices
-                //console.log(call_back_object)
-                var dict = new Object()
                 var dict = {}
                 var taxid_count = {}
                 var arr = []
-                console.log(sc.data)
+                var indexDict = {}
+
                 for(var j = 0; j < call_back_object.length; j++){
                     if(arr.includes(sc.data[tax_unit][call_back_object[j]]) == false){
                         arr.push(sc.data[tax_unit][call_back_object[j]])
@@ -756,9 +755,9 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
                 for(var j = 0; j < arr.length; j++){
                     dict[arr[j]]=0
                     taxid_count[arr[j]]=[]
+                    indexDict[arr[j]]=j+1
                 }
         
-                //console.log(arr)
                 for(var i = 0; i < sc.get_length(); i++){
                     for(var j = 0; j < arr.length; j++){        
                         if(arr[j] == sc.data[tax_unit][call_back_object[i]]){
@@ -774,20 +773,24 @@ def create_linked_bokeh_plot(logfile:str,result_data:pd.DataFrame, database: pd.
                 sbc.data['value']=[]
                 sbc.data[tax_unit]=[]
                 sbc.data['color']=[]
+                sbc.data['index']=[]
                 for(let key in dict) {
                     sbc.data['value'].push(dict[key])
                     sbc.data[tax_unit].push(key)
                     sbc.data['color'].push(color_code[key])
+                    sbc.data['index'].push(indexDict[key])
                 }
         
         
                 sbcDb.data['value']=[]
                 sbcDb.data[tax_unit]=[]
                 sbcDb.data['color']=[]
+                sbcDb.data['index']=[]
                 for(let key in taxid_count) {
                     sbcDb.data['value'].push(taxid_count[key].length)
                     sbcDb.data[tax_unit].push(key)
                     sbcDb.data['color'].push(color_code[key])
+                    sbcDb.data['index'].push(indexDict[key])
                 }
         
         
@@ -871,7 +874,7 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
 
             TOOLTIPS = [
                 ("stitle", "@stitle"),
-                ("bitscore,pident", "$x, $y"),
+                ("bitscore,pident", "@bitscore, @pident"),
                 ("sacc RBH to qseqid", "@sacc_transformed RBH to @qseqid "),
                 ("scomname", "@scomnames"),
             ]
