@@ -1,13 +1,11 @@
 from blast_project import py_django_db_services as py_db_service
 import pandas as pd
-import matplotlib.pyplot as plt
 import altair as alt
 from os.path import isfile, isdir
 from os import remove, listdir
 from django.db import IntegrityError
 from Bio import Entrez
 import json
-from bokeh.models import CustomJS, Dropdown
 import seaborn as sns
 #output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
 from bokeh.io import output_file, save
@@ -16,7 +14,7 @@ from bokeh.models import ColumnDataSource, Spinner, MultiSelect, ColorPicker, Ra
 #Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
 from bokeh.plotting import figure
 #To create intractive plot we need this to add callback method.
-from bokeh.models import CustomJS
+from bokeh.models import CustomJS, Button
 #This is for creating layout
 from bokeh.layouts import column, gridplot
 
@@ -806,7 +804,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             # plot and the menu is linked with each other by this callback function
 
             p = figure(x_axis_label='bitscore', y_axis_label='pident',
-                       plot_height=800, plot_width=700,
+                       plot_height=850, plot_width=700,
                        tooltips=TOOLTIPS,
                        tools="box_select, reset, box_zoom, pan",
                        title="Reciprocal Best Hit - percent identity vs bitscore")  # ,tools="box_select, reset" creating figure object
@@ -908,7 +906,22 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             circle_size_spinner.js_link("value", circle.glyph, "size")
             line_color_picker.js_link('color', circle.glyph, 'line_color')
 
-            grid = gridplot([[column(p), column(b, b2, menu, menu_qseqids, circle_size_spinner)]],
+            download_selection_callback = CustomJS(args=dict(sc=Curr), code="""
+                var downloadable_items = []
+                for(var i = 0; i < sc.selected.indices.length; i++){
+                    downloadable_items.push(sc.data['sacc_transformed'][sc.selected.indices[i]])
+                }
+
+                var json = JSON.stringify(downloadable_items);
+                var blob = new Blob([json],{type: "octet/stream"});
+                var url = window.URL.createObjectURL(blob);
+                window.location.assign(url);
+            """)
+
+            download_selection_button = Button(label="Download Selection")
+            download_selection_button.js_on_click(download_selection_callback)
+
+            grid = gridplot([[column(p), column(b, b2, menu, menu_qseqids, circle_size_spinner, download_selection_button)]],
                             toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
             output_file(filename=path_to_bokeh_plot, title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(taxonomic_unit))
             save(grid)
@@ -1077,8 +1090,24 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
             circle_size_spinner.js_link("value", circle.glyph, "size")
             line_color_picker.js_link('color', circle.glyph, 'line_color')
 
+            download_selection_callback = CustomJS(args=dict(sc=Curr),code="""
+                var downloadable_items = []
+                for(var i = 0; i < sc.selected.indices.length; i++){
+                    downloadable_items.push(sc.data['sacc_transformed'][sc.selected.indices[i]])
+                }
+                
+                var json = JSON.stringify(downloadable_items);
+                var blob = new Blob([json],{type: "octet/stream"});
+                var url = window.URL.createObjectURL(blob);
+                window.location.assign(url);
+            """)
+
+            download_selection_button = Button(label="Download Selection")
+            download_selection_button.js_on_click(download_selection_callback)
+
+
             grid = gridplot(
-                [[column(p), column(tax_menu,qseqid_menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider)]],
+                [[column(p), column(tax_menu,qseqid_menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider, download_selection_button)]],
                 toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
 
             output_file(filename=path_to_bokeh_plot,
