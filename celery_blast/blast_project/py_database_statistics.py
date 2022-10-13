@@ -734,10 +734,10 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                             var indexDict = {}
                             var taxid_count = {}
 
-                            for(var j = 0; j < call_back_object.length; j++){
-                                dict[call_back_object[j]]=0
-                                taxid_count[call_back_object[j]]=[]
-                                indexDict[call_back_object[j]]=j+1
+                            for(var j = 0; j < menu_tax.value.length; j++){
+                                dict[menu_tax.value[j]]=0
+                                taxid_count[menu_tax.value[j]]=[]
+                                indexDict[menu_tax.value[j]]=j+1
                             }
 
 
@@ -756,9 +756,9 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                                                 sc.data['staxids'].push(source.data['staxids'][i])
                                                 sc.data['qseqid'].push(source.data['qseqid'][i])
                                                 sc.data['sacc_transformed'].push(source.data['sacc_transformed'][i])
-                                                dict[call_back_object[j]]+=1
-                                                if(taxid_count[call_back_object[j]].includes(source.data['staxids'][i]) == false){
-                                                        taxid_count[call_back_object[j]].push(source.data['staxids'][i])
+                                                dict[menu_tax.value[k]]+=1
+                                                if(taxid_count[menu_tax.value[k]].includes(source.data['staxids'][i]) == false){
+                                                        taxid_count[menu_tax.value[k]].push(source.data['staxids'][i])
                                                     }
                                             }                                        
                                         }
@@ -801,7 +801,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 ("scomname", "@scomnames"),
             ]
 
-            # plot and the menu is linked with each other by this callback function
 
             p = figure(x_axis_label='bitscore', y_axis_label='pident',
                        plot_height=850, plot_width=700,
@@ -809,8 +808,8 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                        tools="box_select, reset, box_zoom, pan",
                        title="Reciprocal Best Hit - percent identity vs bitscore")  # ,tools="box_select, reset" creating figure object
             circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black',
-                              source=Curr)  # plotting the data using glyph circle
-            menu.js_on_change('value', callback)  # calling the function on change of selection
+                              source=Curr)
+            menu.js_on_change('value', callback)
             menu_qseqids.js_on_change('value', qseqid_callback)
             circle_size_spinner = Spinner(title="Circle size",
                                           low=0, high=60, step=5,
@@ -825,11 +824,11 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                                         )
             line_color_picker = ColorPicker(color='black', title="Line Color")
 
-            b = figure(x_range=unique_orders, height=250,
+            b = figure(x_range=unique_orders, height=250, width=700,
                        title="Number of selected RBHs in the clade: {}".format(taxonomic_unit))
             b.vbar(x=taxonomic_unit, top='value', color='color', width=0.9, source=bCurr)
 
-            b2 = figure(x_range=unique_orders, height=250,
+            b2 = figure(x_range=unique_orders, height=250, width=700,
                         title="Number of different organisms within the {} clade".format(taxonomic_unit))
             b2.vbar(x=taxonomic_unit, top='value', color='color', width=0.9, source=dbData)
             b.xaxis.major_label_orientation = "vertical"
@@ -946,7 +945,6 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
             color_dict = dict(zip(data_all[taxonomic_unit].unique(), clrs))
             create_color_scheme = lambda value: color_dict[value]
 
-            # plot and the menu is linked with each other by this callback function
             unique_tax = list(data_all[taxonomic_unit].unique())
             unique_qseqids = list(data_all['qseqid'].unique())
 
@@ -956,7 +954,6 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
 
             Overall = ColumnDataSource(data=data_all)
             Curr = ColumnDataSource(data=data_selection)
-            # dbData=ColumnDataSource(data=dbData)
 
 
 
@@ -1054,7 +1051,7 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
                         sc.change.emit();
                         """)
 
-            tax_menu.js_on_change('value', tax_menu_callback)  # calling the function on change of selection
+            tax_menu.js_on_change('value', tax_menu_callback)
             qseqid_menu.js_on_change('value', qseqid_menu_callback)
 
             p = figure(x_axis_label='bitscore', y_axis_label='pident',
@@ -1062,9 +1059,9 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame, taxonomic_
                        tooltips=TOOLTIPS,
                        tools="box_select, reset, box_zoom, pan", title="Number of RBHs - pident vs bitscore",
                        x_range=(0, result_data['bitscore'].max() + result_data['bitscore'].min())
-                       )  # ,tools="box_select, reset" creating figure object
+                       )
             circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black', source=Curr,
-                              legend_field=taxonomic_unit)  # plotting the data using glyph circle
+                              legend_field=taxonomic_unit)
 
             range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + result_data['bitscore'].min(),
                                        value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
