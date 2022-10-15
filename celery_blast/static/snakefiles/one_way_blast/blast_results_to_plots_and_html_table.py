@@ -12,12 +12,322 @@ from Bio import Entrez
 import pandas as pd
 import altair as alt
 import sys
+import seaborn as sns
+#output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
+from bokeh.io import output_file, save
+#ColumnDataSource makes selection of the column easier and Select is used to create drop down
+from bokeh.models import ColumnDataSource, Spinner, MultiSelect, ColorPicker, RangeSlider
+#Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
+from bokeh.plotting import figure
+#To create intractive plot we need this to add callback method.
+from bokeh.models import CustomJS, Button
+#This is for creating layout
+from bokeh.layouts import column, gridplot
+
+def create_unlinked_bokeh_plot(logfile: str,path_to_bokeh_plot:str,path_to_static:str, result_data: pd.DataFrame, taxonomic_unit: str) -> int:
+    try:
+        # log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
+
+        data_all = result_data.loc[:,
+                   [taxonomic_unit, 'bitscore', 'pident', 'stitle', 'scomnames', 'staxids', 'qseqid',
+                    'sacc']]
+        data_all = data_all.sort_values(by=taxonomic_unit)
+        num_colors = len(data_all[taxonomic_unit].unique())
+        clrs = sns.color_palette('pastel', n_colors=num_colors)
+        clrs = clrs.as_hex()
+        color_dict = dict(zip(data_all[taxonomic_unit].unique(), clrs))
+        create_color_scheme = lambda value: color_dict[value]
+
+        # plot and the menu is linked with each other by this callback function
+        unique_tax = list(data_all[taxonomic_unit].unique())
+        unique_qseqids = list(data_all['qseqid'].unique())
+
+        data_all['color'] = data_all[taxonomic_unit].apply(create_color_scheme)
+        data_selection = data_all[
+            (data_all[taxonomic_unit] == unique_tax[0]) | (data_all[taxonomic_unit] == unique_tax[1])]
+
+        Overall = ColumnDataSource(data=data_all)
+        Curr = ColumnDataSource(data=data_selection)
+        # dbData=ColumnDataSource(data=dbData)
+
+        TOOLTIPS = [
+            ("stitle", "@stitle"),
+            ("bitscore,pident", "@bitscore, @pident"),
+            ("sacc RBH to qseqid", "@sacc RBH to @qseqid "),
+            ("scomname", "@scomnames"),
+        ]
+
+        tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
+                               title='Select: ' + taxonomic_unit.capitalize())
+        qseqid_menu = MultiSelect(options=unique_qseqids, value=unique_qseqids,
+                                  title="Select target query sequences")
+
+        tax_menu_callback = CustomJS(args=dict(source=Overall,
+                                               sc=Curr,
+                                               color_code=color_dict,
+                                               tax_unit=taxonomic_unit,
+                                               menu_qseqids=qseqid_menu), code="""
+                    var call_back_object = cb_obj.value
+                    sc.data['bitscore']=[]
+                    sc.data['pident']=[]
+                    sc.data['color']=[]
+                    sc.data[tax_unit]=[]
+                    sc.data['index']=[]
+                    sc.data['stitle']=[]
+                    sc.data['scomnames']=[]
+                    sc.data['staxids']=[]
+                    sc.data['qseqid']=[]
+                    sc.data['sacc']=[]
+
+                    for(var i = 0; i < source.get_length(); i++){
+                        for(var j = 0; j < call_back_object.length; j++){
+                            for(var k = 0; k < menu_qseqids.value.length; k++){
+                                if(source.data[tax_unit][i] == call_back_object[j]){
+                                    if(source.data['qseqid'][i] == menu_qseqids.value[k]){
+                                        sc.data['bitscore'].push(source.data['bitscore'][i])
+                                        sc.data['pident'].push(source.data['pident'][i])
+                                        sc.data['color'].push(source.data['color'][i])
+                                        sc.data[tax_unit].push(source.data[tax_unit][i])
+                                        sc.data['index'].push(source.data['index'][i])
+                                        sc.data['stitle'].push(source.data['stitle'][i])
+                                        sc.data['scomnames'].push(source.data['scomnames'][i])
+                                        sc.data['staxids'].push(source.data['staxids'][i])
+                                        sc.data['qseqid'].push(source.data['qseqid'][i])
+                                        sc.data['sacc'].push(source.data['sacc'][i])                                        
+                                    }
+                                }                                
+                            }        
+                        }
+                    }
+
+
+                    sc.change.emit();
+                    """)
+        qseqid_menu_callback = CustomJS(args=dict(source=Overall,
+                                                  sc=Curr,
+                                                  color_code=color_dict,
+                                                  tax_unit=taxonomic_unit,
+                                                  tax_selection=tax_menu), code="""
+                    var call_back_object = cb_obj.value
+                    sc.data['bitscore']=[]
+                    sc.data['pident']=[]
+                    sc.data['color']=[]
+                    sc.data[tax_unit]=[]
+                    sc.data['index']=[]
+                    sc.data['stitle']=[]
+                    sc.data['scomnames']=[]
+                    sc.data['staxids']=[]
+                    sc.data['qseqid']=[]
+                    sc.data['sacc']=[]
+
+                    for(var i = 0; i < source.get_length(); i++){
+                        for(var j = 0; j < call_back_object.length; j++){
+                            for(var k = 0; k < tax_selection.value.length; k++){
+                                if(source.data[tax_unit][i] == tax_selection.value[k]){
+                                    if(source.data['qseqid'][i] == call_back_object[j]){
+                                        sc.data['bitscore'].push(source.data['bitscore'][i])
+                                        sc.data['pident'].push(source.data['pident'][i])
+                                        sc.data['color'].push(source.data['color'][i])
+                                        sc.data[tax_unit].push(source.data[tax_unit][i])
+                                        sc.data['index'].push(source.data['index'][i])
+                                        sc.data['stitle'].push(source.data['stitle'][i])
+                                        sc.data['scomnames'].push(source.data['scomnames'][i])
+                                        sc.data['staxids'].push(source.data['staxids'][i])
+                                        sc.data['qseqid'].push(source.data['qseqid'][i])
+                                        sc.data['sacc'].push(source.data['sacc'][i])                                        
+                                    }
+                                }                                
+                            }        
+                        }
+                    }
+
+
+                    sc.change.emit();
+                    """)
+
+        tax_menu.js_on_change('value', tax_menu_callback)  # calling the function on change of selection
+        qseqid_menu.js_on_change('value', qseqid_menu_callback)
+
+        p = figure(x_axis_label='bitscore', y_axis_label='pident',
+                   plot_height=700, plot_width=700,
+                   tooltips=TOOLTIPS,
+                   tools="box_select, reset, box_zoom, pan", title="Number of RBHs - pident vs bitscore",
+                   x_range=(0, result_data['bitscore'].max() + result_data['bitscore'].min())
+                   )  # ,tools="box_select, reset" creating figure object
+        circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black',
+                          source=Curr,
+                          legend_field=taxonomic_unit)  # plotting the data using glyph circle
+
+        range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + result_data['bitscore'].min(),
+                                   value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
+                                   title="Bitscore Range Slider")
+
+        circle_size_spinner = Spinner(title="Circle size",
+                                      low=0, high=60, step=5,
+                                      value=circle.glyph.size,
+                                      width=200
+                                      )
+
+        line_size_spinner = Spinner(title="Circle line size",
+                                    low=0, high=20, step=1,
+                                    value=circle.glyph.line_width,
+                                    width=200
+                                    )
+        line_color_picker = ColorPicker(color='black', title="Line Color")
+
+        range_slider.js_link("value", p.x_range, "start", attr_selector=0)
+        range_slider.js_link("value", p.x_range, "end", attr_selector=1)
+
+        line_size_spinner.js_link("value", circle.glyph, "line_width")
+        circle_size_spinner.js_link("value", circle.glyph, "size")
+        line_color_picker.js_link('color', circle.glyph, 'line_color')
+
+        download_selection_callback = CustomJS(args=dict(sc=Curr), code="""
+            var downloadable_items = []
+            for(var i = 0; i < sc.selected.indices.length; i++){
+                downloadable_items.push(sc.data['sacc'][sc.selected.indices[i]])
+            }
+
+            var json = JSON.stringify(downloadable_items);
+            var blob = new Blob([json],{type: "octet/stream"});
+            var url = window.URL.createObjectURL(blob);
+            window.location.assign(url);
+        """)
+
+        download_selection_button = Button(label="Download Selection")
+        download_selection_button.js_on_click(download_selection_callback)
+
+        grid = gridplot(
+            [[column(p),
+              column(tax_menu, qseqid_menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider,
+                     download_selection_button)]],
+            toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
+
+        output_file(filename=path_to_bokeh_plot,
+                    title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(
+                        taxonomic_unit))
+        save(grid)
+
+        output_file(filename=path_to_static,
+                    title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(
+                        taxonomic_unit))
+
+        save(grid)
+
+        return 0
+    except Exception as e:
+        raise Exception("ERROR in producing bokeh plots for database statistics with exception: {}".format(e))
+
+def add_taxonomic_information_to_db(user_email:str,log:str,taxids:list)->pd.DataFrame:
+    try:
+        Entrez.email = user_email
+        taxid = []
+        taxonomy = []
+        genus = []
+        superfamily = []
+        family = []
+        order = []
+        classt = []
+        phylum = []
+
+        # looping over taxids in db df
+        # looping steps for every 500 taxonomic identifier
+        end = len(taxids)
+        begin = 0
+        step = 500
+        steps = 500
+
+        log.write("INFO:Starting Analysis from 0 to {}\n".format(end))
+        while begin < end:
+            if step >= end:
+                step = end
+            splitted_ids = taxids[begin:step]
+            for attempt in range(10):
+                try:
+                    handle = Entrez.efetch(id=splitted_ids, db="taxonomy", retmode="xml")
+                    record = Entrez.read(handle)
+                    handle.close()
+                except Exception as e:
+                    if attempt == 9:
+                        raise Exception
+
+                else:
+                    for i in range(len(record)):
+                        taxonomy.append(record[i]['ScientificName'])
+                        if 'AkaTaxIds' in record[i].keys():
+                            for akaid in record[i]['AkaTaxIds']:
+                                if int(akaid) in splitted_ids:
+                                    taxid.append(akaid)
+                                    log.write("\tINFO: AkaTaxIds detected: {}\n".format(akaid))
+                                    break
+                            else:
+                                taxid.append(record[i]['TaxId'])
+                        else:
+                            taxid.append(record[i]['TaxId'])
+                        for j in record[i]['LineageEx']:
+                            if j['Rank'] == 'genus':
+                                genus.append(j['ScientificName'])
+                            if j['Rank'] == 'superfamily':
+                                superfamily.append(j['ScientificName'])
+                            if j['Rank'] == 'family':
+                                family.append(j['ScientificName'])
+                            if j['Rank'] == 'order':
+                                order.append(j['ScientificName'])
+                            if j['Rank'] == 'class':
+                                classt.append(j['ScientificName'])
+                            if j['Rank'] == 'phylum':
+                                phylum.append(j['ScientificName'])
+
+                        if (len(taxonomy) != len(genus)):
+                            genus.append('unknown')
+                        if (len(taxonomy) != len(superfamily)):
+                            superfamily.append('unknown')
+                        if (len(taxonomy) != len(family)):
+                            family.append('unknown')
+                        if (len(taxonomy) != len(order)):
+                            order.append('unknown')
+                        if (len(taxonomy) != len(classt)):
+                            classt.append('unknown')
+                        if (len(taxonomy) != len(phylum)):
+                            phylum.append('unknown')
+
+                        if len(record) != len(splitted_ids):
+                            missing_ids = [m_taxid for m_taxid in splitted_ids if m_taxid not in taxid]
+                            for m_taxid in missing_ids:
+                                log.write(
+                                    "WARNING: problem during fetching of taxonomic information for: {}\n".format(m_taxid))
+                                taxid.append(m_taxid)
+                                taxonomy.append('unknown')
+                                genus.append('unknown')
+                                superfamily.append('unknown')
+                                family.append('unknown')
+                                order.append('unknown')
+                                classt.append('unknown')
+                                phylum.append('unknown')
+                    break
+
+            log.write("INFO: Done with chunk: {} - {}\n".format(begin, step))
+            begin += steps
+            step += steps
+
+        columns = ["staxids", 'organism_name_taxdb', 'genus', 'family', 'superfamily', 'order', 'class', 'phylum']
+        tax_db = pd.DataFrame([taxid, taxonomy, genus, family, superfamily, order, classt, phylum])
+        tax_db = tax_db.transpose()
+        tax_db.columns = columns
+        return tax_db
+
+    except Exception as e:
+        log.write("ERROR:problem during fetching and appending taxonomic information with exception: {}\n".format(e))
+        raise Exception("ERROR during database table extension with taxonomic information with excpetion: {}".format(e))
+
+
+############################ MAIN SCRIPT ##############################
 
 RETURNCODE=4
 try:
     with open(snakemake.log['log'],'w') as logfile:
         logfile.write("INFO:starting to fetch taxonomic information...\n")
-        Entrez.email = snakemake.params['user_email']
+        #Entrez.email = snakemake.params['user_email']
 
         queries = {}
         queryfile = open(snakemake.input['query_file'], "r")
@@ -31,168 +341,24 @@ try:
         df = pd.read_table(snakemake.input['blast_results'], delimiter="\t", header=None)
         df.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
                       "stitle"]
-        unique_queries = list(df["qseqid"].unique())
-        logfile.write("INFO:found {} unique query sequences\n".format(len(unique_queries)))
+        unique_taxids = list(df["staxids"].unique())
+
+        tax_df = add_taxonomic_information_to_db(snakemake.params['user_email'], logfile, unique_taxids)
+        tax_df['staxids'] = tax_df['staxids'].astype('int64')
+        result_df = df.merge(tax_df, on='staxids')
+
 
         dataframes = []
 
-        #maximum query sequences == 10?
-        logfile.write("INFO:just parsing the first ten queries for altair plots\n".format(len(unique_queries)))
-
-        for query in unique_queries:
-            logfile.write("\tINFO:working on {}\n".format(query))
-            # print("processing : {}".format(query))
-            dataframe = df.loc[df['qseqid'] == query].copy()
-            dataframe['sacc'] = dataframe['sacc'].map(lambda protid: protid.split(".")[0])
-            dataframe = dataframe.drop_duplicates(subset=['sacc'], keep="first")
-            if len(dataframe) >= 4999:
-                logfile.write("\tINFO:blast result dataframe for {} exceeds 5000 entries (entries:{}), shrinking to 5000 entries for altair graphs\n".format(query,len(dataframe)))
-                dataframe = dataframe[0:4999]
-
-            staxids=[]
-            for ids in list(dataframe['staxids']):
-                if type(ids) == str:
-                    staxids.append(ids.split(";")[0])
-                elif type(ids) == int:
-                    staxids.append(ids)
-
-            result_record = []
-
-            end = len(staxids)
-            begin = 0
-            step = 500
-            steps = 500
-            while begin < end:
-                if step >= end:
-                    step = end
-                logfile.write("\tINFO:parsing taxids in dataframe - from {} to {}\n".format(begin,step))
-                splitted_ids = staxids[begin:step]
-                for attempt in range(10):
-                    try:
-                        handle = Entrez.efetch(id=splitted_ids, db="taxonomy", retmode="xml")
-                        record = Entrez.read(handle)
-                        handle.close()
-                    except Exception as e:
-                        logfile.write("\tWARNING: failed attempt : {}\n".format(attempt))
-                        if attempt == 9:
-                            raise Exception
-
-                    else:
-                        for rec in record:
-                            result_record.append(rec)
-                        break
-                begin += steps
-                step += steps
-
-            logfile.write("\tINFO:done fetching taxonomic information for query {}\n".format(query))
-            logfile.write("\tINFO:starting to write taxonomic information to result dataframe\n")
-            query_info = []
-            taxonomy = []
-            genus = []
-            superfamily = []
-            family = []
-            for i in range(len(result_record)):
-                query_info.append(queries[query])
-                taxonomy.append(result_record[i]['ScientificName'])
-
-                for j in result_record[i]['LineageEx']:
-                    if j['Rank'] == 'genus':
-                        genus.append(j['ScientificName'])
-                    if j['Rank'] == 'superfamily':
-                        superfamily.append(j['ScientificName'])
-                    if j['Rank'] == 'family':
-                        family.append(j['ScientificName'])
-
-                if (len(taxonomy) != len(genus)):
-                    genus.append('unknown')
-                if (len(taxonomy) != len(superfamily)):
-                    superfamily.append('unknown')
-                if (len(taxonomy) != len(family)):
-                    family.append('unknown')
-
-            if (len(genus) == len(dataframe) and len(family) == len(dataframe) and len(superfamily) == len(dataframe) and len(
-                    query_info) == len(dataframe)):
-                dataframe['genus'] = genus
-                dataframe['superfamily'] = superfamily
-                dataframe['family'] = family
-                dataframe['query_info'] = query_info
-            else:
-                logfile.write("ERROR:taxonomic informations cant get added to result dataframe due to different lengths\n")
-                raise Exception("ERROR:taxonomic informations cant get added to result dataframe due to different lengths\n")
-            dataframes.append(dataframe)
-
         logfile.write("INFO:parsing taxonomic information for queries\n")
-        result_df = pd.concat(dataframes)
         result_df.to_csv(snakemake.output['taxonomic_table'], sep='\t')
-        logfile.write("INFO:start producing dynamic altair plots for target species families\n")
-        #altair code
-        rf = result_df.drop_duplicates(subset='family', keep="first")
-        bars = []
-        selection = alt.selection_multi(fields=['family'])
-        for df in dataframes:
-            # make_selector = alt.Chart(df).mark_rect().encode(y='genus', color='genus').add_selection(selection)
-            bar = alt.Chart(df).mark_bar(tooltip=True).encode(
-                alt.X("count()"),
-                alt.Y("family"),
-                color=alt.Color('genus', legend=None),
-                tooltip=['count()', 'mean(bitscore)', 'mean(evalue)','genus'],
-            ).transform_filter(selection).interactive().facet(facet='query_info')
+        logfile.write("INFO:start producing interactive bokeh plots for target species families\n")
 
-            graph = bar
-            bars.append(graph)
-
-        make_selector = alt.Chart(rf).mark_rect().encode(y='family', color='family').add_selection(selection)
-        graphics = make_selector | bars[0]
-        if len(bars) > 1:
-            for bar in bars[1:]:
-                graphics |= bar
-
-        graphics.save(snakemake.output['genus_bars'])
-        graphics.save(snakemake.params['genus_bars_static'])
-        logfile.write("INFO:done producing dynamic altair plots for target species families\n")
-        #Requirements for altair
-        charts_template = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            #visCustom {{
-              overflow-y: scroll;
-              overflow-x: scroll;
-              height: 50%;
-              }}
-          </style>
-          <script src="https://cdn.jsdelivr.net/npm/vega@{vega_version}"></script>
-          <script src="https://cdn.jsdelivr.net/npm/vega-lite@{vegalite_version}"></script>
-          <script src="https://cdn.jsdelivr.net/npm/vega-embed@{vegaembed_version}"></script>
-        </head>
-        <body>
-        
-        <div id="visCustom"> 
-            <div id="vis1"></div>
-        </div>
-        
-        <script type="text/javascript">
-          vegaEmbed('#vis1', {spec}).catch(console.error);
-        </script>
-        </body>
-        </html>
-        """
-        with open(snakemake.output['genus_bars'], 'w') as f:
-            f.write(charts_template.format(
-                vega_version=alt.VEGA_VERSION,
-                vegalite_version=alt.VEGALITE_VERSION,
-                vegaembed_version=alt.VEGAEMBED_VERSION,
-                spec=graphics.to_json(indent=None),
-            ))
-        with open(snakemake.params['genus_bars_static'], 'w') as f:
-            f.write(charts_template.format(
-                vega_version=alt.VEGA_VERSION,
-                vegalite_version=alt.VEGALITE_VERSION,
-                vegaembed_version=alt.VEGAEMBED_VERSION,
-                spec=graphics.to_json(indent=None),
-            ))
-
+        #bokeh code
+        bokeh_function = create_unlinked_bokeh_plot(logfile,
+                                                    snakemake.output['genus_bars'],
+                                                    snakemake.params['genus_bars_static'],
+                                                    result_df,'family')
 
         pd.set_option('colheader_justify', 'left')
         html_string = '''

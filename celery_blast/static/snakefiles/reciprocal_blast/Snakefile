@@ -210,19 +210,24 @@ rule conduct_multiple_sequence_alignment_mafft:
 	output: "{qseqid}/target_sequences.msa"
 	log: log="log/{qseqid}/msa.log"
 	run:
+		execute_mafft=True
 		with open(input[0],'r') as infile:
-			if len(infile.readlines()) > 1:
-				try:
-					mafft=shell("mafft --auto {input} > {output} 2> {log}")
-					if mafft != 0:
-						raise Exception("mafft returncode is != 0\n")
-				except Exception as e:
-					with open(log['log'],'w') as lfile:
-						lfile.write("ERROR: in mafft with exception: {}\n".format(e))
-						shell("touch {output}")
-						lfile.write("WARNING: producing empty alignment file with touch\n")
+			if len(infile.readlines()) <= 1:
+				execute_mafft=False
+		try:
+			if execute_mafft==True:
+				mafft=shell("mafft --auto {input} > {output} 2> {log}")
+				if mafft != 0:
+					raise Exception("mafft returncode is != 0\n")
 			else:
+				with open(log['log'],'w') as lfile:
+					lfile.write("WARNING: producing empty alignment file with touch\n")
 				shell("touch {output} 2> {log.log}")
+		except Exception as e:
+			with open(log['log'],'w') as lfile:
+				lfile.write("WARNING: producing empty alignment file with touch\n")
+				lfile.write("ERROR: in mafft with exception: {}\n".format(e))
+				shell("touch {output}")
 
 #RULE 13
 rule conduct_phylogeny_fast_tree:
@@ -230,11 +235,25 @@ rule conduct_phylogeny_fast_tree:
 	output: "{qseqid}/target_sequences.tree"
 	log: log="log/{qseqid}/phylogeny.log"
 	run:
+		execute_fasttree=True
 		with open(input[0],"r") as infile:
-			if len(infile.readlines()) > 1:
-				shell("fasttree {input} > {output} 2> {log}")
+			if len(infile.readlines()) <= 1:
+				execute_fasttree == False
+		try:
+			if execute_fasttree == True:
+				fasttree = shell("fasttree {input} > {output} 2> {log}")
+				if fasttree != 0:
+					raise Exception("fasttree returncode is != 0\n")
 			else:
-				shell("touch {output} 2> {log}")
+				with open(log['log'],'w') as lfile:
+					lfile.write("WARNING: producing empty tree file with touch\n")
+				shell("touch {output} 2> {log.log}")
+		except Exception as e:
+			with open(log['log'],'w') as lfile:
+				lfile.write("WARNING: producing empty tree file with touch\n")
+				lfile.write("ERROR: in fasttree with exception: {}\n".format(e))
+				shell("touch {output}")
+
 
 #RULE 14
 rule update_tree_with_taxid:
