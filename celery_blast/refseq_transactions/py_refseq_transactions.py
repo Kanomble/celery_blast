@@ -143,21 +143,38 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
 
     #function for changing the ftp_header in the pandas table
     def set_protein_assembly_file(ftp_path):
-        protein_genome = ftp_path.split('/')[-1:][0]
-        protein_genome = ftp_path + '/' + str(protein_genome) + '_protein.faa.gz'
-        return protein_genome
+        try:
+            if type(ftp_path) == str:
+                protein_genome = ftp_path.split('/')[-1:][0]
+                protein_genome = ftp_path + '/' + str(protein_genome) + '_protein.faa.gz'
+                return protein_genome
+            else:
+                return ftp_path
+        except:
+            raise Exception("[-] Problem during parsing the ftp_path")
 
+    #TODO Documentation
     #init parsing refseq table with pandas
     try:
-        refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None, usecols=range(22),
-                                     dtype={20:str,
-                                            5:str,
-                                            6:str})
+        with open(summary_file_path, 'r') as rfile:
+            line = rfile.readline()
+            line = rfile.readline()
+            header=line.replace('#', '').replace(" ", '').rstrip().split("\t")
 
+        refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None,
+                                     dtype={20:str, #20 excluded from refseq
+                                            5:str,                #5 taxid
+                                            6:str, #6 species taxid
+                                            'ftp_path':str})
+
+        '''
+        with usecols=range(22)
         header = ["assembly_accession", "bioproject", "biosample", "wgs_master", "refseq_category", "taxid",
-                  "species_taxid", "organism_name", "infraspecific_name", "isolate", "version_status", "assembly_level",
-                  "release_type", "genome_rep", "seq_rel_date", "asm_name", "submitter", "gbrs_paired_asm",
-                  "paired_asm_comp", "ftp_path", "excluded_from_refseq", "relation_to_type_material"]
+          "species_taxid", "organism_name", "infraspecific_name", "isolate", "version_status", "assembly_level",
+          "release_type", "genome_rep", "seq_rel_date", "asm_name", "submitter", "gbrs_paired_asm",
+          "paired_asm_comp", "ftp_path", "excluded_from_refseq", "relation_to_type_material"]      
+        '''
+
         refseq_table.columns = header
         refseq_table = refseq_table.astype({"taxid": str})
     except Exception as e:
