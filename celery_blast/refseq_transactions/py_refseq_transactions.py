@@ -151,7 +151,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
             else:
                 return ftp_path
         except:
-            raise Exception("[-] Problem during parsing the ftp_path")
+            raise Exception("[-] Problem during parsing the ftp_path column in the refseq assembly summary file")
 
     #TODO Documentation
     #init parsing refseq table with pandas
