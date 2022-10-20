@@ -2,7 +2,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, get_list_of_species_taxids_by_list_of_scientific_names
+from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
+    get_list_of_species_taxids_by_list_of_scientific_names, check_if_protein_identifier_correspond_to_backward_taxid
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
 
 ''' CreateTaxonomicFileForm
@@ -170,6 +171,7 @@ class ProjectCreationForm(forms.Form):
                                'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
                                    taxonomic_nodes, backward_db.database_name))
 
+
             query_file = cleaned_data['query_sequence_file']
 
             #check for fasta files
@@ -187,19 +189,32 @@ class ProjectCreationForm(forms.Form):
                                 header.append(acc)
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
-                    #maximum number of query sequences = 300
-                    if len(header) > 300:
-                        self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
-                                                             ' this is not allowed, consider to separate the query sequences.')
-                    #checks if query sequences reside in the backward database
-                    else:
-                        valid = check_if_sequences_are_in_database(backward_db.id, header)
-                        if valid != True:
-                            self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+                #maximum number of query sequences = 300
+                if len(header) > 300:
+                    self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
+                                                         ' this is not allowed, consider to separate the query sequences.')
+                #checks if query sequences reside in the backward database
+                else:
+                    #valid = check_if_sequences_are_in_database(backward_db.id, header)
+                    valid=True
+                    if valid != True:
+                        self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
 
-                    #check for duplicate entries in the query file
-                    if len(header) != len(set(header)):
-                        self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+                #check for duplicate entries in the query file
+                if len(header) != len(set(header)):
+                    self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+
+                #check if provided taxid corresponds to query sequence origin
+                try:
+                    retcode=check_if_protein_identifier_correspond_to_backward_taxid(header,taxonomic_nodes[0],user_email)
+                    if retcode != 0:
+                        raise Exception
+                except Exception:
+                    #TODO add taxid for query sequences
+                    self.add_error('species_name_for_backward_blast',
+                                   'specified taxonomic node: {} does not match with query sequences'.format(
+                                       taxonomic_nodes[0]))
+
         except Exception as e:
             raise ValidationError(
                 "validation error in project creation, due to this exception: {}".format(

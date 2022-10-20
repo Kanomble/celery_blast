@@ -239,6 +239,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
             log.write("INFO:starting statistical inference for {}\n".format(taxonomic_unit))
             if len(tax_counts) > 0:
 
+                #counting the number of {taxonomic_unit} database entries
                 percentage = db_df[taxonomic_unit].value_counts()
                 percentage = percentage.rename('Database')
                 tax_counts.append(percentage)
@@ -251,6 +252,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
                 df.to_csv(df_path)
                 log.write("INFO:produced {} table\n".format(df_path))
 
+                #normalization based on number of entries in the database
                 log.write("INFO:trying to normalize values\n")
                 f = lambda x, y: (100 / y) * x
                 normalizing_results = tax_counts
@@ -258,7 +260,6 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
                 normalized_df = pd.DataFrame(normalizing_results)
                 normalized_df = normalized_df.transpose().fillna(0)
                 normalized_table = []
-
                 for query in normalized_df.columns:
                     if query != 'Database':
                         temp_res = f(normalized_df[query], percentage)
@@ -976,8 +977,17 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame,database:pd
             data_all['marker'] = data_all['qseqid'].apply(create_marker_scheme)
 
             # selection subset for initial plot data
-            data_selection = data_all[
-                (data_all[taxonomic_unit] == unique_tax[0]) | (data_all[taxonomic_unit] == unique_tax[1])]
+            if len(unique_tax) > 1:
+
+                data_selection = data_all[
+                    (data_all[taxonomic_unit] == unique_tax[0]) | (data_all[taxonomic_unit] == unique_tax[1])]
+                menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
+                                   title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
+
+            else:
+                data_selection = data_all[data_all[taxonomic_unit] == unique_tax[0]]
+                menu = MultiSelect(options=unique_tax, value=[unique_tax[0]],
+                                   title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
 
             # prepare table dataframe
             taxcount_df = pd.DataFrame(data_selection.staxids.value_counts())
@@ -1107,8 +1117,6 @@ def create_unlinked_bokeh_plot(logfile:str,result_data: pd.DataFrame,database:pd
                 ("scomname", "@scomnames"),
             ]
 
-            menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
-                               title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
 
             p = figure(x_axis_label='bitscore', y_axis_label='pident',
                        plot_height=700, plot_width=700,

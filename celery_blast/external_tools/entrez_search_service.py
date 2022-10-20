@@ -15,8 +15,13 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         xtract_format['pubmed'] = 'Id PubDate Source Author Title ELocationID'
         xtract_format['protein'] = 'Id Caption Title Organism'
 
-        cmd = 'esearch -db {} -query "{}" | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -element {} > {}'.format(
-            database, entrez_query, xtract_format[database], output_filepath)
+        #if the search command is based on the protein database just output refseq entries
+        if database == 'protein':
+            cmd = 'esearch -db {} -query "{}" | efilter -source refseq | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -element {} > {}'.format(
+                database, entrez_query, xtract_format[database], output_filepath)
+        else:
+            cmd = 'esearch -db {} -query "{}" | efilter -source refseq | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -element {} > {}'.format(
+                database, entrez_query, xtract_format[database], output_filepath)
 
         process = subprocess.Popen(cmd, shell=True)
         returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)

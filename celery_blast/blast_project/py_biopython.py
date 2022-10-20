@@ -7,7 +7,7 @@ from Bio import Entrez
 from .py_django_db_services import get_project_by_id
 ''' get_species_taxid_by_name 
 
-utilization in the clean_species_name form field of CreateTaxonomicFileForm
+    Utilization in the clean_species_name form field of CreateTaxonomicFileForm.
 
     :param user_email
         :type str
@@ -23,10 +23,55 @@ def get_species_taxid_by_name(user_email:str,scientific_name:str)->list:
         Entrez.email = user_email
         search = Entrez.esearch(term=scientific_name, db="taxonomy", retmode="xml")
         record = Entrez.read(search)
+        search.close()
         taxids = record['IdList']
         return taxids
     except Exception as e:
         raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+
+'''check_if_protein_identifier_correspond_to_backward_taxid
+    
+    Used in the ProjectCreationForm form validation. Checks if the provided query sequences match to the specified backward organism.
+    
+    :param protein_identifier
+        :type list
+    :param taxonomic_identifier
+        :type str
+    :param user_email
+        :type str
+'''
+def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:list,taxonomic_identifier:str,user_email:str)->int:
+    try:
+        Entrez.email = user_email
+        search = Entrez.elink(dbfrom='protein',id=protein_identifier,linkname="protein_taxonomy")
+        record = Entrez.read(search)
+        search.close()
+        taxonomic_ids = []
+        for rec in record:
+            taxid = rec['LinkSetDb'][0]['Link'][0]['Id']
+            print(taxid)
+            if int(taxid) != taxonomic_identifier:
+                if taxid not in taxonomic_ids:
+                    taxonomic_ids.append(taxid)
+
+        if len(taxonomic_ids) != 0:
+            search = Entrez.efetch(id=taxonomic_ids,db='taxonomy',retmode='xml')
+            record = Entrez.read(search)
+            search.close()
+
+            for rec in record:
+                taxid_to_check = rec['TaxId']
+                for lineage in rec['LineageEx']:
+                    if lineage['Rank'] == 'genus':
+                        species_level_tax_id = lineage['TaxId']
+                        if int(species_level_tax_id) == taxonomic_identifier:
+                            taxonomic_ids.remove(taxid_to_check)
+
+            if len(taxonomic_ids) != 0:
+                return 1
+        return 0
+    except Exception as e:
+        raise Exception("[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(e))
 
 '''get_list_of_species_taxid_by_name
 sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)

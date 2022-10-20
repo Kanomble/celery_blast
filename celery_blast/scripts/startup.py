@@ -1,6 +1,6 @@
 from refseq_transactions.models import AssemblyLevels
-from os.path import isfile
-from os import remove, getcwd
+from os.path import isfile, isdir
+from os import remove, getcwd, mkdir
 import subprocess
 import psutil
 
@@ -15,8 +15,10 @@ def run():
         chromosome.save()
         complete.save()
         scaffold.save()
+
     if isfile('media/databases/taxdb.btd') and isfile('media/databases/taxdb.bti'):
         print("INFO:TAXONOMY DATABASE IS LOADED")
+
     else:
         print("INFO:NO TAXONOMY DATABASE")
         if isfile("media/databases/taxdb.tar.gz"):
@@ -42,6 +44,7 @@ def run():
             if returncode != 0:
                 raise subprocess.SubprocessError
             print("INFO:DONE DOWNLOADING TAXONOMY DATABASE")
+
         except subprocess.TimeoutExpired as e:
             print("ERROR:TIMEOUT EXPIRED DURING DOWNLOAD OF TAXONOMY DATABASE: {}".format(e))
             print(
@@ -65,4 +68,8 @@ def run():
             for child in parent.children(recursive=True):
                 child.kill()
             parent.kill()
+
+    if isdir("media/databases/CDD/") == False:
+        print("INFO:CDD directory does not exist, running mkdir ...")
+        mkdir("media/databases/CDD/")
 

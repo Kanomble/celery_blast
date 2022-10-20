@@ -10,7 +10,6 @@ Produces blast results in html file.
 
 from Bio import Entrez
 import pandas as pd
-import altair as alt
 import sys
 import seaborn as sns
 #output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
@@ -23,198 +22,216 @@ from bokeh.plotting import figure
 from bokeh.models import CustomJS, Button
 #This is for creating layout
 from bokeh.layouts import column, gridplot
+from os.path import isdir
 
 def create_unlinked_bokeh_plot(logfile: str,path_to_bokeh_plot:str,path_to_static:str, result_data: pd.DataFrame, taxonomic_unit: str) -> int:
     try:
-        # log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
+        logfile.write("\tINFO:checking if static dir: {} exists\n".format(path_to_static))
+        if isdir("/".join(path_to_static.split("/")[0:-1])):
+            logfile.write("\tINFO:starting bokeh procedure ...\n")
+            data_all = result_data.loc[:,
+                       [taxonomic_unit, 'bitscore', 'pident', 'stitle', 'scomnames', 'staxids', 'qseqid',
+                        'sacc']]
+            data_all = data_all.sort_values(by=taxonomic_unit)
+            num_colors = len(data_all[taxonomic_unit].unique())
+            clrs = sns.color_palette('pastel', n_colors=num_colors)
+            clrs = clrs.as_hex()
+            color_dict = dict(zip(data_all[taxonomic_unit].unique(), clrs))
+            create_color_scheme = lambda value: color_dict[value]
 
-        data_all = result_data.loc[:,
-                   [taxonomic_unit, 'bitscore', 'pident', 'stitle', 'scomnames', 'staxids', 'qseqid',
-                    'sacc']]
-        data_all = data_all.sort_values(by=taxonomic_unit)
-        num_colors = len(data_all[taxonomic_unit].unique())
-        clrs = sns.color_palette('pastel', n_colors=num_colors)
-        clrs = clrs.as_hex()
-        color_dict = dict(zip(data_all[taxonomic_unit].unique(), clrs))
-        create_color_scheme = lambda value: color_dict[value]
+            # plot and the menu is linked with each other by this callback function
+            unique_tax = list(data_all[taxonomic_unit].unique())
+            unique_qseqids = list(data_all['qseqid'].unique())
 
-        # plot and the menu is linked with each other by this callback function
-        unique_tax = list(data_all[taxonomic_unit].unique())
-        unique_qseqids = list(data_all['qseqid'].unique())
+            data_all['color'] = data_all[taxonomic_unit].apply(create_color_scheme)
 
-        data_all['color'] = data_all[taxonomic_unit].apply(create_color_scheme)
-        data_selection = data_all[
-            (data_all[taxonomic_unit] == unique_tax[0]) | (data_all[taxonomic_unit] == unique_tax[1])]
+            logfile.write("\tINFO:number of different entries for {}: {}\n".format(taxonomic_unit,len(unique_tax)))
+            logfile.write("\tINFO:number of different query sequences {}\n".format(len(unique_qseqids)))
+            logfile.write("\tINFO:setting up bokeh classes\n")
+            if len(unique_tax) > 1:
 
-        Overall = ColumnDataSource(data=data_all)
-        Curr = ColumnDataSource(data=data_selection)
-        # dbData=ColumnDataSource(data=dbData)
+                data_selection = data_all[
+                    (data_all[taxonomic_unit] == unique_tax[0]) | (data_all[taxonomic_unit] == unique_tax[1])]
+                tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
+                                       title='Select: ' + taxonomic_unit.capitalize())
 
-        TOOLTIPS = [
-            ("stitle", "@stitle"),
-            ("bitscore,pident", "@bitscore, @pident"),
-            ("sacc RBH to qseqid", "@sacc RBH to @qseqid "),
-            ("scomname", "@scomnames"),
-        ]
+            else:
+                data_selection = data_all[data_all[taxonomic_unit] == unique_tax[0]]
+                tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0]],
+                                       title='Select: ' + taxonomic_unit.capitalize())
 
-        tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
-                               title='Select: ' + taxonomic_unit.capitalize())
-        qseqid_menu = MultiSelect(options=unique_qseqids, value=unique_qseqids,
-                                  title="Select target query sequences")
+            Overall = ColumnDataSource(data=data_all)
+            Curr = ColumnDataSource(data=data_selection)
 
-        tax_menu_callback = CustomJS(args=dict(source=Overall,
-                                               sc=Curr,
-                                               color_code=color_dict,
-                                               tax_unit=taxonomic_unit,
-                                               menu_qseqids=qseqid_menu), code="""
-                    var call_back_object = cb_obj.value
-                    sc.data['bitscore']=[]
-                    sc.data['pident']=[]
-                    sc.data['color']=[]
-                    sc.data[tax_unit]=[]
-                    sc.data['index']=[]
-                    sc.data['stitle']=[]
-                    sc.data['scomnames']=[]
-                    sc.data['staxids']=[]
-                    sc.data['qseqid']=[]
-                    sc.data['sacc']=[]
+            TOOLTIPS = [
+                ("stitle", "@stitle"),
+                ("bitscore,pident", "@bitscore, @pident"),
+                ("sacc RBH to qseqid", "@sacc RBH to @qseqid "),
+                ("scomname", "@scomnames"),
+            ]
 
-                    for(var i = 0; i < source.get_length(); i++){
-                        for(var j = 0; j < call_back_object.length; j++){
-                            for(var k = 0; k < menu_qseqids.value.length; k++){
-                                if(source.data[tax_unit][i] == call_back_object[j]){
-                                    if(source.data['qseqid'][i] == menu_qseqids.value[k]){
-                                        sc.data['bitscore'].push(source.data['bitscore'][i])
-                                        sc.data['pident'].push(source.data['pident'][i])
-                                        sc.data['color'].push(source.data['color'][i])
-                                        sc.data[tax_unit].push(source.data[tax_unit][i])
-                                        sc.data['index'].push(source.data['index'][i])
-                                        sc.data['stitle'].push(source.data['stitle'][i])
-                                        sc.data['scomnames'].push(source.data['scomnames'][i])
-                                        sc.data['staxids'].push(source.data['staxids'][i])
-                                        sc.data['qseqid'].push(source.data['qseqid'][i])
-                                        sc.data['sacc'].push(source.data['sacc'][i])                                        
-                                    }
-                                }                                
-                            }        
+
+            qseqid_menu = MultiSelect(options=unique_qseqids, value=unique_qseqids,
+                                      title="Select target query sequences")
+
+            tax_menu_callback = CustomJS(args=dict(source=Overall,
+                                                   sc=Curr,
+                                                   color_code=color_dict,
+                                                   tax_unit=taxonomic_unit,
+                                                   menu_qseqids=qseqid_menu), code="""
+                        var call_back_object = cb_obj.value
+                        sc.data['bitscore']=[]
+                        sc.data['pident']=[]
+                        sc.data['color']=[]
+                        sc.data[tax_unit]=[]
+                        sc.data['index']=[]
+                        sc.data['stitle']=[]
+                        sc.data['scomnames']=[]
+                        sc.data['staxids']=[]
+                        sc.data['qseqid']=[]
+                        sc.data['sacc']=[]
+    
+                        for(var i = 0; i < source.get_length(); i++){
+                            for(var j = 0; j < call_back_object.length; j++){
+                                for(var k = 0; k < menu_qseqids.value.length; k++){
+                                    if(source.data[tax_unit][i] == call_back_object[j]){
+                                        if(source.data['qseqid'][i] == menu_qseqids.value[k]){
+                                            sc.data['bitscore'].push(source.data['bitscore'][i])
+                                            sc.data['pident'].push(source.data['pident'][i])
+                                            sc.data['color'].push(source.data['color'][i])
+                                            sc.data[tax_unit].push(source.data[tax_unit][i])
+                                            sc.data['index'].push(source.data['index'][i])
+                                            sc.data['stitle'].push(source.data['stitle'][i])
+                                            sc.data['scomnames'].push(source.data['scomnames'][i])
+                                            sc.data['staxids'].push(source.data['staxids'][i])
+                                            sc.data['qseqid'].push(source.data['qseqid'][i])
+                                            sc.data['sacc'].push(source.data['sacc'][i])                                        
+                                        }
+                                    }                                
+                                }        
+                            }
                         }
-                    }
-
-
-                    sc.change.emit();
-                    """)
-        qseqid_menu_callback = CustomJS(args=dict(source=Overall,
-                                                  sc=Curr,
-                                                  color_code=color_dict,
-                                                  tax_unit=taxonomic_unit,
-                                                  tax_selection=tax_menu), code="""
-                    var call_back_object = cb_obj.value
-                    sc.data['bitscore']=[]
-                    sc.data['pident']=[]
-                    sc.data['color']=[]
-                    sc.data[tax_unit]=[]
-                    sc.data['index']=[]
-                    sc.data['stitle']=[]
-                    sc.data['scomnames']=[]
-                    sc.data['staxids']=[]
-                    sc.data['qseqid']=[]
-                    sc.data['sacc']=[]
-
-                    for(var i = 0; i < source.get_length(); i++){
-                        for(var j = 0; j < call_back_object.length; j++){
-                            for(var k = 0; k < tax_selection.value.length; k++){
-                                if(source.data[tax_unit][i] == tax_selection.value[k]){
-                                    if(source.data['qseqid'][i] == call_back_object[j]){
-                                        sc.data['bitscore'].push(source.data['bitscore'][i])
-                                        sc.data['pident'].push(source.data['pident'][i])
-                                        sc.data['color'].push(source.data['color'][i])
-                                        sc.data[tax_unit].push(source.data[tax_unit][i])
-                                        sc.data['index'].push(source.data['index'][i])
-                                        sc.data['stitle'].push(source.data['stitle'][i])
-                                        sc.data['scomnames'].push(source.data['scomnames'][i])
-                                        sc.data['staxids'].push(source.data['staxids'][i])
-                                        sc.data['qseqid'].push(source.data['qseqid'][i])
-                                        sc.data['sacc'].push(source.data['sacc'][i])                                        
-                                    }
-                                }                                
-                            }        
+    
+    
+                        sc.change.emit();
+                        """)
+            qseqid_menu_callback = CustomJS(args=dict(source=Overall,
+                                                      sc=Curr,
+                                                      color_code=color_dict,
+                                                      tax_unit=taxonomic_unit,
+                                                      tax_selection=tax_menu), code="""
+                        var call_back_object = cb_obj.value
+                        sc.data['bitscore']=[]
+                        sc.data['pident']=[]
+                        sc.data['color']=[]
+                        sc.data[tax_unit]=[]
+                        sc.data['index']=[]
+                        sc.data['stitle']=[]
+                        sc.data['scomnames']=[]
+                        sc.data['staxids']=[]
+                        sc.data['qseqid']=[]
+                        sc.data['sacc']=[]
+    
+                        for(var i = 0; i < source.get_length(); i++){
+                            for(var j = 0; j < call_back_object.length; j++){
+                                for(var k = 0; k < tax_selection.value.length; k++){
+                                    if(source.data[tax_unit][i] == tax_selection.value[k]){
+                                        if(source.data['qseqid'][i] == call_back_object[j]){
+                                            sc.data['bitscore'].push(source.data['bitscore'][i])
+                                            sc.data['pident'].push(source.data['pident'][i])
+                                            sc.data['color'].push(source.data['color'][i])
+                                            sc.data[tax_unit].push(source.data[tax_unit][i])
+                                            sc.data['index'].push(source.data['index'][i])
+                                            sc.data['stitle'].push(source.data['stitle'][i])
+                                            sc.data['scomnames'].push(source.data['scomnames'][i])
+                                            sc.data['staxids'].push(source.data['staxids'][i])
+                                            sc.data['qseqid'].push(source.data['qseqid'][i])
+                                            sc.data['sacc'].push(source.data['sacc'][i])                                        
+                                        }
+                                    }                                
+                                }        
+                            }
                         }
-                    }
+    
+    
+                        sc.change.emit();
+                        """)
 
+            tax_menu.js_on_change('value', tax_menu_callback)  # calling the function on change of selection
+            qseqid_menu.js_on_change('value', qseqid_menu_callback)
 
-                    sc.change.emit();
-                    """)
+            p = figure(x_axis_label='bitscore', y_axis_label='pident',
+                       plot_height=700, plot_width=700,
+                       tooltips=TOOLTIPS,
+                       tools="box_select, reset, box_zoom, pan", title="Number of RBHs - pident vs bitscore",
+                       x_range=(0, result_data['bitscore'].max() + result_data['bitscore'].min())
+                       )  # ,tools="box_select, reset" creating figure object
+            circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black',
+                              source=Curr,
+                              legend_field=taxonomic_unit)  # plotting the data using glyph circle
 
-        tax_menu.js_on_change('value', tax_menu_callback)  # calling the function on change of selection
-        qseqid_menu.js_on_change('value', qseqid_menu_callback)
+            range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + result_data['bitscore'].min(),
+                                       value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
+                                       title="Bitscore Range Slider")
 
-        p = figure(x_axis_label='bitscore', y_axis_label='pident',
-                   plot_height=700, plot_width=700,
-                   tooltips=TOOLTIPS,
-                   tools="box_select, reset, box_zoom, pan", title="Number of RBHs - pident vs bitscore",
-                   x_range=(0, result_data['bitscore'].max() + result_data['bitscore'].min())
-                   )  # ,tools="box_select, reset" creating figure object
-        circle = p.circle(x='bitscore', y='pident', color='color', size=5, line_width=1, line_color='black',
-                          source=Curr,
-                          legend_field=taxonomic_unit)  # plotting the data using glyph circle
+            circle_size_spinner = Spinner(title="Circle size",
+                                          low=0, high=60, step=5,
+                                          value=circle.glyph.size,
+                                          width=200
+                                          )
 
-        range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + result_data['bitscore'].min(),
-                                   value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
-                                   title="Bitscore Range Slider")
+            line_size_spinner = Spinner(title="Circle line size",
+                                        low=0, high=20, step=1,
+                                        value=circle.glyph.line_width,
+                                        width=200
+                                        )
+            line_color_picker = ColorPicker(color='black', title="Line Color")
 
-        circle_size_spinner = Spinner(title="Circle size",
-                                      low=0, high=60, step=5,
-                                      value=circle.glyph.size,
-                                      width=200
-                                      )
+            range_slider.js_link("value", p.x_range, "start", attr_selector=0)
+            range_slider.js_link("value", p.x_range, "end", attr_selector=1)
 
-        line_size_spinner = Spinner(title="Circle line size",
-                                    low=0, high=20, step=1,
-                                    value=circle.glyph.line_width,
-                                    width=200
-                                    )
-        line_color_picker = ColorPicker(color='black', title="Line Color")
+            line_size_spinner.js_link("value", circle.glyph, "line_width")
+            circle_size_spinner.js_link("value", circle.glyph, "size")
+            line_color_picker.js_link('color', circle.glyph, 'line_color')
 
-        range_slider.js_link("value", p.x_range, "start", attr_selector=0)
-        range_slider.js_link("value", p.x_range, "end", attr_selector=1)
+            download_selection_callback = CustomJS(args=dict(sc=Curr), code="""
+                var downloadable_items = []
+                for(var i = 0; i < sc.selected.indices.length; i++){
+                    downloadable_items.push(sc.data['sacc'][sc.selected.indices[i]])
+                }
+    
+                var json = JSON.stringify(downloadable_items);
+                var blob = new Blob([json],{type: "octet/stream"});
+                var url = window.URL.createObjectURL(blob);
+                window.location.assign(url);
+            """)
 
-        line_size_spinner.js_link("value", circle.glyph, "line_width")
-        circle_size_spinner.js_link("value", circle.glyph, "size")
-        line_color_picker.js_link('color', circle.glyph, 'line_color')
+            download_selection_button = Button(label="Download Selection")
+            download_selection_button.js_on_click(download_selection_callback)
+            logfile.write("\tINFO:producing grid\n")
 
-        download_selection_callback = CustomJS(args=dict(sc=Curr), code="""
-            var downloadable_items = []
-            for(var i = 0; i < sc.selected.indices.length; i++){
-                downloadable_items.push(sc.data['sacc'][sc.selected.indices[i]])
-            }
+            grid = gridplot(
+                [[column(p),
+                  column(tax_menu, qseqid_menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider,
+                         download_selection_button)]],
+                toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
+            logfile.write("\tINFO:saving bokeh plots ...\n")
 
-            var json = JSON.stringify(downloadable_items);
-            var blob = new Blob([json],{type: "octet/stream"});
-            var url = window.URL.createObjectURL(blob);
-            window.location.assign(url);
-        """)
+            output_file(filename=path_to_bokeh_plot,
+                        title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(
+                            taxonomic_unit))
+            save(grid)
 
-        download_selection_button = Button(label="Download Selection")
-        download_selection_button.js_on_click(download_selection_callback)
+            output_file(filename=path_to_static,
+                        title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(
+                            taxonomic_unit))
 
-        grid = gridplot(
-            [[column(p),
-              column(tax_menu, qseqid_menu, circle_size_spinner, line_size_spinner, line_color_picker, range_slider,
-                     download_selection_button)]],
-            toolbar_location='right', sizing_mode="stretch_both", merge_tools=True)
+            save(grid)
+            logfile.write("\tDONE\n")
 
-        output_file(filename=path_to_bokeh_plot,
-                    title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(
-                        taxonomic_unit))
-        save(grid)
-
-        output_file(filename=path_to_static,
-                    title="Interactive Graph Percent Identity vs. Bitscore linked to {} database entries".format(
-                        taxonomic_unit))
-
-        save(grid)
-
-        return 0
+            return 0
+        else:
+            return 1
     except Exception as e:
         raise Exception("ERROR in producing bokeh plots for database statistics with exception: {}".format(e))
 
@@ -327,8 +344,8 @@ RETURNCODE=4
 try:
     with open(snakemake.log['log'],'w') as logfile:
         logfile.write("INFO:starting to fetch taxonomic information...\n")
-        #Entrez.email = snakemake.params['user_email']
 
+        #TODO obsolete?
         queries = {}
         queryfile = open(snakemake.input['query_file'], "r")
         for line in queryfile.readlines():
@@ -359,6 +376,11 @@ try:
                                                     snakemake.output['genus_bars'],
                                                     snakemake.params['genus_bars_static'],
                                                     result_df,'family')
+
+        if bokeh_function != 0:
+            raise Exception("[-] Project directory or static directory does not exist!")
+
+        logfile.write("INFO:finished bokeh procedure\n")
 
         pd.set_option('colheader_justify', 'left')
         html_string = '''
