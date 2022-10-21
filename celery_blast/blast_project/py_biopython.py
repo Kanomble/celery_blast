@@ -49,8 +49,7 @@ def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:
         taxonomic_ids = []
         for rec in record:
             taxid = rec['LinkSetDb'][0]['Link'][0]['Id']
-            print(taxid)
-            if int(taxid) != taxonomic_identifier:
+            if int(taxid) != int(taxonomic_identifier):
                 if taxid not in taxonomic_ids:
                     taxonomic_ids.append(taxid)
 
@@ -64,11 +63,12 @@ def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:
                 for lineage in rec['LineageEx']:
                     if lineage['Rank'] == 'genus':
                         species_level_tax_id = lineage['TaxId']
-                        if int(species_level_tax_id) == taxonomic_identifier:
+                        if int(species_level_tax_id) == int(taxonomic_identifier):
                             taxonomic_ids.remove(taxid_to_check)
 
             if len(taxonomic_ids) != 0:
                 return 1
+
         return 0
     except Exception as e:
         raise Exception("[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(e))

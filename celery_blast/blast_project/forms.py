@@ -195,8 +195,7 @@ class ProjectCreationForm(forms.Form):
                                                          ' this is not allowed, consider to separate the query sequences.')
                 #checks if query sequences reside in the backward database
                 else:
-                    #valid = check_if_sequences_are_in_database(backward_db.id, header)
-                    valid=True
+                    valid = check_if_sequences_are_in_database(backward_db.id, header)
                     if valid != True:
                         self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
 
