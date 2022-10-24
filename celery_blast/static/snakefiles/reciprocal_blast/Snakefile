@@ -23,6 +23,7 @@ rule all:
 		 "query_sequence_information.html",
 		"query_sequence_information.csv",
 		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
+		"query_domains.tsf","query_domains.html"
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -271,3 +272,19 @@ rule ete3_tree_to_png:
 	log: log="log/{qseqid}/ete3_tree_to_png.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/ete3_tree_to_png.py"
+
+#RULE 16
+rule cdd_domain_rpsblast:
+	input: queries=config['query_sequence']
+	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
+	output: domain_df="query_domains.tsf"
+	log: log="log/cdd_domain_rpsblast.log"
+	shell:
+		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt \"6 qseqid qlen sacc slen qstart qend sstart send qseq sseq bitscore evalue pident stitle\" -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
+
+rule query_domains_to_html_table:
+	input: query_domains="query_domains.tsf"
+	output: domain_html_table="query_domains.html"
+	log: log="log/query_domains_to_html_table"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"
