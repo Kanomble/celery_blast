@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %} CDD Domain Search Dashboard {% endblock %}
+
+{% block page_title %} {% endblock %}
+
+{% block infoheader %} CDD Domain Search Dashboard {% endblock %}
+
+{% block page_description %}
+{% endblock %}
+
+{% block page_header %}
+<div style="overflow-x: hidden; text-align: center;">
+    CDD Domain Search Dashboard
+    <br>
+    <p style="text-align: center;font-size: small"> Monitor your CDD Domain searches, {{ request.user }}!</p>
+
+</div>
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard_project_list_col">
+        {% for query in queries %}
+            <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">{{ query }}</a>
+            <p> </p>
+        {% endfor %}
+    </div>
+    <br>
+    <div class="dashboard_project_list_col" style="height: 500px">
+        <h3 class="col_header"> Query Sequence Domain Table </h3>
+        {{html_results|safe}}
+    </div>
+
+{% endblock %}
+{% block scripts %}
+{% endblock %}

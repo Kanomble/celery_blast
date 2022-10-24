@@ -25,7 +25,20 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt extract query sequence ids from associated project with exception : {}".format(e))
 
-    def update_query_sequences_msa_task(self, query_sequence_id, msa_task_id):
+    #TODO documentation
+    def update_query_sequences_cdd_search_task(self, query_sequence_id:str, cdd_search_task:int):
+        try:
+            if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
+                query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
+                taskresult = TaskResult.objects.get(task_id=cdd_search_task)
+                query_sequence.cdd_domain_search_task = taskresult
+                query_sequence.save()
+            else:
+                raise Exception("[-] couldnt update query sequence with multiple sequence alignment taskresult object")
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
+
+    def update_query_sequences_msa_task(self, query_sequence_id:str, msa_task_id:int):
         try:
             if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
                 query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
@@ -67,6 +80,7 @@ class ExternalTools(models.Model):
             raise Exception(
                 "[-] couldnt update query sequences with taskresult object by performing msa for all queries with exception : {}".format(
                     e))
+
 
     #TODO refactoring!
     def check_if_msa_task_is_completed(self,query_sequence_id):
@@ -117,6 +131,7 @@ class QuerySequences(models.Model):
         related_name="tree_task",
         unique=False
     )
+
     #many to one relationship
     external_tool_for_query_sequence = models.ForeignKey(
         ExternalTools,
@@ -125,7 +140,27 @@ class QuerySequences(models.Model):
         on_delete=models.CASCADE
     )
 
+    cdd_domain_search_task = models.ForeignKey(
+        TaskResult,
+        on_delete=models.CASCADE,
+        blank=True, null=True,
+        verbose_name="celery task for cdd domain search with rpsblast",
+        related_name="cdd_search",
+        unique=False
+    )
+
     objects = QuerySequenceManager()
+
+    # TODO documentation
+    def update_cdd_domain_search_task(self, cdd_search_task_id: int):
+        try:
+            taskresult = TaskResult.objects.get(task_id=cdd_search_task_id)
+            self.cdd_domain_search_task = taskresult
+            self.save()
+        except Exception as e:
+            raise Exception(
+                "[-] couldnt update query sequence with taskresult object for cdd search task with exception: {}".format(
+                    e))
 
     def update_multiple_sequence_alignment_task(self, msa_task_id):
         try:

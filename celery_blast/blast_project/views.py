@@ -476,3 +476,5 @@ def delete_database_statistics(request, project_id):
         return redirect('database_statistics',project_id=project_id)
     except Exception as e:
         return failure_view(request,e)
+
+

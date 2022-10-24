@@ -1,12 +1,92 @@
 import os
-import pandas as pd
 from .models import BlastProject, BlastSettings
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
-from external_tools.models import ExternalTools
+from external_tools.models import ExternalTools, QuerySequences
 from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv, Series
+
+'''update_external_tool_with_cdd_search
+
+    This script uses model based functions of the ExternalTools model to update the QuerySequence model with 
+    the associated celery cdd search TaskResult model. This can then be used to track the status of the cdd search.
+    
+    :param project_id
+        :type int
+    :param query_sequence
+        :type str
+    :param task_id
+        :type int
+
+'''
+def update_external_tool_with_cdd_search(project_id:int,query_sequence:str,task_id:int):
+    try:
+        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tool.update_query_sequences_cdd_search_task(query_sequence,task_id)
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt update query sequence model with cdd search task with exception: {}".format(e))
+
+
+'''get_query_sequence_of_external_tools
+    
+    This function returns the query_sequence_model of the specified query_sequence. 
+    The query_sequence is the identifier of a protein used in the blast projects.
+    
+    :param project_id
+        :type int
+    :param query_sequence
+        :type str
+    
+    :return query_sequence_model
+        :type django model
+'''
+def get_query_sequence_of_external_tools(project_id:int,query_sequence:str):
+    try:
+        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        query_sequence_model = QuerySequences.objects.filter(external_tool_for_query_sequence=external_tool,
+                                      query_accession_id=query_sequence)
+        return query_sequence_model
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt get query sequence model instance from external tools model with exception: {}".format(e))
+
+'''get_reciprocal_result_target_fasta_files
+
+    This function returns a list of filepaths to the fasta files of RBHs.
+    
+    :param project_id
+        :type int
+    
+    :return target_fasta_files
+        :type list[str]
+    :return target_queries
+        :type list[str]
+'''
+def get_reciprocal_result_target_fasta_files_and_queries(project_id: int):
+    try:
+
+        blast_project = get_project_by_id(project_id)
+        project_dir = blast_project.get_project_dir()
+        project_dir += '/'
+        queries = blast_project.get_list_of_query_sequences()
+
+
+        target_fasta_files = []
+        target_queries = []
+        if os.path.isdir(project_dir):
+            for query in queries:
+                if os.path.isdir(project_dir + query):
+                    if os.path.isfile(project_dir + query + '/target_sequences.faa'):
+                        target_fasta_files.append(project_dir + query + '/target_sequences.faa')
+                        target_queries.append(query)
+                else:
+                    raise NotADirectoryError("{} is not a directory".format(project_dir + query))
+        else:
+            raise NotADirectoryError("{} is not a directory".format(project_dir))
+
+        return target_fasta_files, target_queries
+    except Exception as e:
+        raise Exception("[-] ERROR during get_reciprocal_result_target_fasta_files with exception: {}".format(e))
 
 '''py_django_db_services
 
@@ -143,7 +223,6 @@ def update_blast_project_with_database_statistics_task_result_model(project_id:i
         blast_project.save()
     except Exception as e:
         raise IntegrityError('problem during updating of blastproject model with task result instance exception : {}'.format(e))
-
 
 '''update_blast_database_with_task_result_model
 

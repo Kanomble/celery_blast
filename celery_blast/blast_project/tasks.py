@@ -326,8 +326,11 @@ def calculate_database_statistics_task(self, project_id:int, user_email:str, tax
         if os.path.isdir('media/blast_projects/'+str(project_id)+'/log'):
             logger.info("INFO:Starting database statistics task")
             calculate_database_statistics(project_id,logfile=logfile, user_email=user_email,taxonomic_units=taxonomic_units)
+
         else:
             logger.warning("WARNING: cant write {}".format(logfile))
+
+        progress_recorder.set_progress(100, 100, "SUCCESS")
         logger.info("DONE:calculating database statistics for project: {}".format(project_id))
 
     except SoftTimeLimitExceeded as e:

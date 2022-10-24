@@ -2,15 +2,16 @@ from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
 from blast_project.py_services import get_html_results
+from blast_project.py_django_db_services import get_reciprocal_result_target_fasta_files_and_queries
+
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
-    entrez_search_task, download_entrez_search_associated_protein_sequences
+    entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
 from .models import ExternalTools, EntrezSearch, QuerySequences
 from .forms import EntrezSearchForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
 from django.http import JsonResponse
-from django.utils.html import format_html
 from time import sleep
 
 @login_required(login_url='login')
@@ -224,3 +225,27 @@ def phylogenetic_information(request, project_id, query_sequence_id):
         return render(request,"external_tools/phylogenetic_dashboard.html",context)
     except Exception as e:
         return failure_view(request,e)
+
+
+@login_required(login_url='login')
+def cdd_domain_search_dashboard(request, project_id):
+    try:
+
+        fasta_files, queries = get_reciprocal_result_target_fasta_files_and_queries(project_id)
+        context = {"queries":queries,"project_id":project_id}
+        context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html'))
+
+        return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
+    except Exception as e:
+        return failure_view(request,e)
+
+
+@login_required(login_url='login')
+def execute_cdd_domain_search_for_target_query(request, query_id:str, project_id:int):
+    try:
+        cdd_domain_search_with_rbhs_task.delay(project_id, query_id)
+        return redirect('cdd_domain_search_dashboard',project_id=project_id)
+    except Exception as e:
+        return failure_view(request, e)
+
+

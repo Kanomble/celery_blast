@@ -2,10 +2,13 @@
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
-
+import psutil
+from blast_project.py_django_db_services import update_external_tool_with_cdd_search
 from .models import ExternalTools
 from celery_progress.backend import ProgressRecorder
-from subprocess import Popen
+from subprocess import Popen, SubprocessError, TimeoutExpired
+from celery.exceptions import SoftTimeLimitExceeded
+from django.conf import settings
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
 from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model, download_esearch_protein_fasta_files, \
     update_entrezsearch_with_download_task_result
@@ -262,3 +265,79 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
                 raise FileNotFoundError("msa file does not exist!")
     except Exception as e:
         raise Exception("[-] couldnt perform fasttree task for all query sequences with exception: {}".format(e))
+
+
+'''cdd_domain_search_with_rbhs_task
+
+'''
+@shared_task(bind=True)
+def cdd_domain_search_with_rbhs_task(self, project_id:int, target_query:str):
+    try:
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "STARTED")
+        logger.info("INFO:started domain search in the cdd database for project: {}".format(project_id))
+        try:
+
+            #project_id: int, query_sequence: str, task_id: int
+            update_external_tool_with_cdd_search(project_id,target_query,self.request.id)
+            progress_recorder.set_progress(25, 100, "PROGRESS")
+
+        except Exception as e:
+            logger.warning("ERROR: couldnt update blast project with exception: {}".format(e))
+            raise Exception("ERROR: couldnt update blast project with exception: {}".format(e))
+
+        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
+        path_to_cdd_db = 'media/databases/CDD/Cdd'
+        path_to_query_file = path_to_project + target_query + '/target_sequences.faa'
+        path_to_cdd_domain_search_output = path_to_project + target_query + '/cdd_domains.tsf'
+
+        logger.info("INFO:preparing POPEN cmd for cdd search")
+        proc = Popen(['rpsblast','-query',path_to_query_file,
+                      '-db',path_to_cdd_db,
+                      "-outfmt","6 qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident",
+                      "-out",path_to_cdd_domain_search_output,
+                      '-evalue','0.001','-num_threads','2'], shell=False)
+        progress_recorder.set_progress(30, 100, "PROGRESS")
+        logger.info("INFO:watining for POPEN process with id: {} to finish".format(proc.pid))
+
+        returncode = proc.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
+        progress_recorder.set_progress(90, 100, "PROGRESS")
+
+        if returncode != 0:
+            raise SubprocessError
+        logger.info("INFO:DONE")
+        return returncode
+
+    except SoftTimeLimitExceeded as e:
+        logger.info("ERROR:CDD search reached Task Time Limit")
+        if 'proc' in locals():
+            pid = proc.pid
+            #TODO check if process with pid exists
+            parent = psutil.Process(pid)
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()
+        raise Exception("ERROR CDD search reached Task Time Limit")
+
+    except TimeoutExpired as e:
+        logger.warning("ERROR:TIMEOUT EXPIRED DURING CDD SEARCH: {}".format(e))
+        if 'proc' in locals():
+            pid = proc.pid
+            parent = psutil.Process(pid)
+
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()
+
+    except SubprocessError as e:
+        logger.warning("ERROR: POPEN CALL for cdd domain search resulted in exception: {}".format(e))
+        if 'proc' in locals():
+
+            pid = proc.pid
+            parent = psutil.Process(pid)
+
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()
+    except Exception as e:
+        raise Exception("ERROR: unknown exception occurred during cdd_domain_search_with_rbhs_task with exception: {}".format(e))

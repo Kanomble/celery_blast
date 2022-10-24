@@ -37,4 +37,10 @@ urlpatterns = [
          name="ajax_call_progress_msa_task"),
     path('<int:project_id>/<str:query_sequence_id>/phylogenetic_information',
          views.phylogenetic_information, name='phylogenetic_information'),
+
+    path('<int:project_id>/project_details/cdd_domain_search_dashboard', views.cdd_domain_search_dashboard,
+         name='cdd_domain_search_dashboard'),
+    path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:query_id>/cdd_search_task', views.execute_cdd_domain_search_for_target_query,
+         name='execute_cdd_domain_search')
+
 ]

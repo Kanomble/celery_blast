@@ -125,6 +125,19 @@ class BlastProject(models.Model):
             self.timestamp, self.project_user.username,
             self.project_forward_database.database_name)
 
+
+    '''get_list_of_query_sequences
+        
+        Returns a list of query sequences without the additional .version of the query.
+        
+        :param self
+            :type int
+        :param filepath
+            :type str
+        
+        :returns qseqids
+            :type list[str]
+    '''
     def get_list_of_query_sequences(self, filepath='media/blast_projects/'):
         try:
             query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
@@ -159,7 +172,6 @@ class BlastProject(models.Model):
         # not executed
         else:
             return None
-
 
     ''' initialize_project_directory
     
