@@ -1,5 +1,4 @@
 import os
-from .phy2html import create_html_tree
 
 def create_html_output_for_newicktree(path_to_fasttree_output, project_id, query_accession):
     try:
@@ -11,8 +10,6 @@ def create_html_output_for_newicktree(path_to_fasttree_output, project_id, query
                 os.mkdir('static/images/result_images/' + str(project_id) + '/'+query_accession)
                 path_to_static_html_phylogeny = 'static/images/result_images/' + str(project_id) + '/'+query_accession+'/target_sequences.html'
 
-            html_table_list = create_html_tree(path_to_fasttree_output,path_to_html_phylogeny)
-            html_table_list = create_html_tree(path_to_fasttree_output, path_to_static_html_phylogeny)
             return 0
         else:
             return 1

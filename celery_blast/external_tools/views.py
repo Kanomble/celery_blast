@@ -92,14 +92,11 @@ def entrez_dashboard_view(request):
                 database = entrez_search_form.cleaned_data['database']
                 entrez_query = entrez_search_form.cleaned_data['entrez_query']
                 entrez_search_task.delay(database,entrez_query, request.user.id)
-
                 entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
                     request.user.id)
                 context['EntrezSearches'] = entrez_searches
                 context['EntrezSearchForm'] = entrez_search_form
-
                 return redirect('entrez_dashboard')
-
         else:
             sleep(0.5)
             entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
@@ -220,7 +217,6 @@ def phylogenetic_information(request, project_id, query_sequence_id):
         context['qseqids'] = qseqids
         context['query_sequence_id']= query_sequence_id
         context['project_id'] = project_id
-
         context['html_results'] = ''.join(get_html_results(project_id,str(query_sequence_id)+'/results_rbhs.html'))
         return render(request,"external_tools/phylogenetic_dashboard.html",context)
     except Exception as e:
@@ -231,8 +227,8 @@ def phylogenetic_information(request, project_id, query_sequence_id):
 def cdd_domain_search_dashboard(request, project_id):
     try:
 
-        fasta_files, queries = get_reciprocal_result_target_fasta_files_and_queries(project_id)
-        context = {"queries":queries,"project_id":project_id}
+        query_sequence_cdd_search_dict = ExternalTools.check_cdd_domain_search_task_status(project_id=project_id)
+        context = {"query_task_dict":query_sequence_cdd_search_dict,"project_id":project_id}
         context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html'))
 
         return render(request, "external_tools/cdd_domain_search_dashboard.html", context)

@@ -1,6 +1,7 @@
 from django.db import models, IntegrityError
 from blast_project.models import BlastProject
 from django_celery_results.models import TaskResult
+from external_tools import models as mdl
 import os
 import pandas as pd
 
@@ -28,8 +29,16 @@ class ExternalToolsManager(models.Manager):
                 return self.get(associated_project_id=project_id)
         except Exception as e:
             raise IntegrityError(
-                "[-] there is no external tools object with your specified project id : {}".format(project_id))
+                "[-] there is no external tools object with your specified project id : {} with exception: {}".format(project_id,e))
 
+    def get_all_associated_query_sequences(self, project_id):
+        try:
+            external_tools = self.get_external_tools_based_on_project_id(project_id)
+            query_sequence_set = mdl.QuerySequences.objects.filter(external_tool_for_query_sequence=external_tools)
+            return query_sequence_set
+        except Exception as e:
+            raise IntegrityError(
+                "[-] ERROR fetching associated query sequences for external tools with project id: {} and exception: {}".format(project_id,e))
 
 class QuerySequenceManager(models.Manager):
     def create_query_sequence(self,query_sequence_id,external_tools):

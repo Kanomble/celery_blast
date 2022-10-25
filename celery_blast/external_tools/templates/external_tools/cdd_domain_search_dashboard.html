@@ -20,9 +20,15 @@
 
 {% block content %}
     <div class="dashboard_project_list_col">
-        {% for query in queries %}
-            <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">{{ query }}</a>
-            <p> </p>
+        {% for query in query_task_dict.keys() %}
+            {% if query_task_dict[query] != 'SUCCESS' %}
+                <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">CDD Search for: {{ query }}</a>
+                <p> </p>
+            {% elif query_task_dict[query] == 'SUCCESS' %}
+                <a class="btn btn-dark" href="">View Results</a>
+            {% elif query_task_dict[query] == 'PROGRESS' %}
+                <p> Task is in progress!</p>
+            {% endif %}
         {% endfor %}
     </div>
     <br>
