@@ -62,28 +62,7 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
 
-    '''check_cdd_domain_search_tasks
 
-        This function checks the CDD domain search task status of the associated query sequence models.
-
-        :param project_id
-            :type int
-
-        :returns query_sequence_cdd_tasks
-            :type dict{str:int}
-    '''
-    def check_cdd_domain_search_task_status(self, project_id: int)->dict:
-        try:
-            query_sequence_cdd_tasks = {}
-            # query sequence set
-            query_sequences = self.objects.get_all_associated_query_sequences(project_id)
-            for query_sequence in query_sequences:
-                query_sequence_cdd_tasks[query_sequence.query_accession_id] = query_sequence.check_if_cdd_search_is_complete()
-            return query_sequence_cdd_tasks
-        except Exception as e:
-            raise Exception(
-                "[-] ERROR fetching CDD domain search task status for project: {} with exception: {}".format(project_id,
-                                                                                                             e))
     def update_for_all_query_sequences_msa_task(self, msa_task_id:int):
         try:
             query_sequences = self.query_sequences.get_queryset()

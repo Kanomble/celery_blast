@@ -227,7 +227,7 @@ def phylogenetic_information(request, project_id, query_sequence_id):
 def cdd_domain_search_dashboard(request, project_id):
     try:
 
-        query_sequence_cdd_search_dict = ExternalTools.check_cdd_domain_search_task_status(project_id=project_id)
+        query_sequence_cdd_search_dict = ExternalTools.objects.check_cdd_domain_search_task_status(project_id=project_id)
         context = {"query_task_dict":query_sequence_cdd_search_dict,"project_id":project_id}
         context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html'))
 

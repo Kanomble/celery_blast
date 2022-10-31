@@ -40,6 +40,28 @@ class ExternalToolsManager(models.Manager):
             raise IntegrityError(
                 "[-] ERROR fetching associated query sequences for external tools with project id: {} and exception: {}".format(project_id,e))
 
+    '''check_cdd_domain_search_tasks
+
+        This function checks the CDD domain search task status of the associated query sequence models.
+
+        :param project_id
+            :type int
+
+        :returns query_sequence_cdd_tasks
+            :type dict{str:int}
+    '''
+    def check_cdd_domain_search_task_status(self, project_id: int)->dict:
+        try:
+            query_sequence_cdd_tasks = {}
+            # query sequence set
+            query_sequences = self.get_all_associated_query_sequences(project_id)
+            for query_sequence in query_sequences:
+                query_sequence_cdd_tasks[query_sequence.query_accession_id] = query_sequence.check_if_cdd_search_is_complete()
+            return query_sequence_cdd_tasks
+        except Exception as e:
+            raise Exception(
+                "[-] ERROR fetching CDD domain search task status for project: {} with exception: {}".format(project_id,
+                                                                                                             e))
 class QuerySequenceManager(models.Manager):
     def create_query_sequence(self,query_sequence_id,external_tools):
         try:

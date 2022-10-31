@@ -20,13 +20,13 @@
 
 {% block content %}
     <div class="dashboard_project_list_col">
-        {% for query in query_task_dict.keys() %}
-            {% if query_task_dict[query] != 'SUCCESS' %}
+        {% for query,status in query_task_dict.items %}
+            {% if status == 'NOTEXEC' %}
                 <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">CDD Search for: {{ query }}</a>
                 <p> </p>
-            {% elif query_task_dict[query] == 'SUCCESS' %}
+            {% elif status == 'SUCCESS' %}
                 <a class="btn btn-dark" href="">View Results</a>
-            {% elif query_task_dict[query] == 'PROGRESS' %}
+            {% elif status == 'PROGRESS' %}
                 <p> Task is in progress!</p>
             {% endif %}
         {% endfor %}
