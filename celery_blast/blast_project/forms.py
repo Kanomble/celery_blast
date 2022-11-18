@@ -207,7 +207,9 @@ class ProjectCreationForm(forms.Form):
                 try:
                     retcode=check_if_protein_identifier_correspond_to_backward_taxid(header,taxonomic_nodes[0],user_email)
                     if retcode != 0:
-                        raise Exception
+                        self.add_error('species_name_for_backward_blast',
+                                       'specified taxonomic node: {} does not match with query sequences, following nodes have been translated from the protein queries: {}'.format(
+                                           taxonomic_nodes[0],' '.join(retcode)))
                 except Exception:
                     #TODO add taxid for query sequences
                     self.add_error('species_name_for_backward_blast',

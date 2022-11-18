@@ -78,7 +78,7 @@ with open(snakemake.log['log'],'w') as logfile:
 
             resulst_rbhs_html_filepath = query + '/' + "results_rbhs.html"
             with open(resulst_rbhs_html_filepath, 'w') as f:
-                f.write(html_string.format(table=target_df[['sacc_transformed','scomnames','staxids','pident','bitscore','evalue','stitle']].to_html(classes='mystyle')))
+                f.write(html_string.format(table=target_df[['sacc_transformed','scomnames','staxids','pident','bitscore','evalue',"slen",'stitle']].to_html(classes='mystyle')))
 
 
             logfile.write("\tINFO:producing statistic plot for query sequence results\n")

@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
 from blast_project.py_services import get_html_results
-from blast_project.py_django_db_services import get_reciprocal_result_target_fasta_files_and_queries
 
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\

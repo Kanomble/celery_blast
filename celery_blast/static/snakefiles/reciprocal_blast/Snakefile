@@ -33,7 +33,7 @@ rule forward_blast:
 	params: word_size=config['fw_word_size'], e_value=config['fw_e_value'], num_alignments=config['fw_num_alignments'], num_threads=config['fw_num_threads'], database=config['blastdb']
 	log:log="log/forward_blast.log"
 	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries} 2> {log}"
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries} 2> {log}"
 
 #RULE 2
 #collects the subject id's of the forward BLAST and writes those id's into a file that is used by the bw_query_preparation rule (RULE 3)
@@ -107,7 +107,7 @@ rule backward_blast:
 				#backward blast procedure
 				inter_blast_out = open("blast.table",'w')
 				for file in filenames:
-					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file} 2> {log}")
+					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file} 2> {log}")
 					with open(params.intermediate_filename,'r') as interfilename:
 						for line in interfilename.readlines():
 							inter_blast_out.write(line)

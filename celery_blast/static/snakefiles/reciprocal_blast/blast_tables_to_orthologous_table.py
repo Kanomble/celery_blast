@@ -13,7 +13,7 @@ with open(snakemake.log['log'], 'w') as logfile:
         fw_res = pd.read_table(snakemake.input['fw_res'], header=None)
         fw_res.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids",
                           "sscinames", "scomnames",
-                          "stitle"]
+                          "stitle","slen"]
 
         fw_res['qseqid'] = fw_res['qseqid'].map(lambda line: line.split('.')[0])
         fw_res['sacc_transformed'] = fw_res['sacc'].map(lambda line: line.split('.')[0])

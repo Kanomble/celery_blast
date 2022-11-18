@@ -40,15 +40,19 @@ def get_species_taxid_by_name(user_email:str,scientific_name:str)->list:
     :param user_email
         :type str
 '''
-def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:list,taxonomic_identifier:str,user_email:str)->int:
+
+
+def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier: list, taxonomic_identifier: str,
+                                                             user_email: str) -> int:
     try:
         Entrez.email = user_email
 
-        #get genus taxid for specified organism -> this is important for multispecies proteins
+        # get genus taxid for specified organism -> this is important for multispecies proteins
         fetch = Entrez.efetch(id=int(taxonomic_identifier), db='taxonomy', retmode="xml")
         record = Entrez.read(fetch)
         fetch.close()
-        identifier_to_compare=[]
+
+        identifier_to_compare = []
         identifier_to_compare.append(taxonomic_identifier)
         for rec in record:
             for lineage in rec['LineageEx']:
@@ -56,36 +60,30 @@ def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:
                     species_to_level_tax_id = lineage['TaxId']
                     identifier_to_compare.append(species_to_level_tax_id)
 
-        search = Entrez.elink(dbfrom='protein',id=protein_identifier,linkname="protein_taxonomy")
+        search = Entrez.elink(dbfrom='protein', id=protein_identifier, linkname="protein_taxonomy")
         record = Entrez.read(search)
         search.close()
+
         taxonomic_ids = []
 
         for rec in record:
-            taxid = rec['LinkSetDb'][0]['Link'][0]['Id']
-            if int(taxid) != int(taxonomic_identifier):
-                if taxid not in taxonomic_ids:
-                    taxonomic_ids.append(taxid)
+            if len(rec['LinkSetDb']) != 0:
+                taxid = rec['LinkSetDb'][0]['Link'][0]['Id']
+                taxonomic_ids.append(taxid)
 
-        if len(taxonomic_ids) != 0:
-            search = Entrez.efetch(id=taxonomic_ids,db='taxonomy',retmode='xml')
-            record = Entrez.read(search)
-            search.close()
+        errors = []
+        for prot_id, protein_taxonomy in enumerate(taxonomic_ids):
+            if protein_taxonomy not in identifier_to_compare:
+                errors.append(protein_identifier[prot_id], protein_taxonomy)
 
-            for rec in record:
-                taxid_to_check = rec['TaxId']
-                for lineage in rec['LineageEx']:
-                    if lineage['Rank'] == 'genus':
-                        species_level_tax_id = lineage['TaxId']
-                        if str(species_level_tax_id) in identifier_to_compare:
-                            taxonomic_ids.remove(taxid_to_check)
-
-            if len(taxonomic_ids) != 0:
-                return 1
+        if len(errors) != 0:
+            return errors
 
         return 0
     except Exception as e:
-        raise Exception("[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(e))
+        raise Exception(
+            "[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(
+                e))
 
 '''get_list_of_species_taxid_by_name
 sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)

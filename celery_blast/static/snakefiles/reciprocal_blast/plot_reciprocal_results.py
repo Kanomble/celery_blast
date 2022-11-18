@@ -17,7 +17,7 @@ with open(snakemake.log[0],'w') as logfile:
         logfile.write("INFO:loading forward BLAST results dataframe into pandas\n")
         fw_res=pd.read_table(snakemake.input['fw_res'],header=None)
         fw_res.columns=["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
-                          "stitle"]
+                          "stitle", "slen"]
 
         fw_res['qseqid'] = fw_res['qseqid'].map(lambda line: line.split('.')[0])
         fw_res['sacc'] = fw_res['sacc'].map(lambda line: line.split('.')[0])
