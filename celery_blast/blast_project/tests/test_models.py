@@ -1,6 +1,7 @@
 from django.test import TestCase
 #this is the correct import
-from blast_project.models import BlastProject, BlastDatabase, BlastSettings, AssemblyLevels
+from blast_project.models import BlastProject, BlastSettings
+from refseq_transactions.models import AssemblyLevels, BlastDatabase
 from django.contrib.auth.models import User
 from django.utils import timezone
 import os
@@ -112,5 +113,4 @@ class BlastProjectTestCase(TestCase):
             for line in lines:
                 line = line.split(":")
                 config_dict[line[0]] = line[1]
-
-        self.assertEqual(len(config_dict.keys()),17)
+        self.assertEqual(len(config_dict.keys()),18)

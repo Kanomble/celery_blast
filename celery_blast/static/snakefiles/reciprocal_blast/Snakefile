@@ -206,24 +206,29 @@ rule query_sequences_to_html_table:
 		"../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"
 
 #RULE 12
+#this rule shouldnt throw exceptions, if an error occurs an empty file is created
 rule conduct_multiple_sequence_alignment_mafft:
 	input: "{qseqid}/target_sequences.faa"
 	output: "{qseqid}/target_sequences.msa"
 	log: log="log/{qseqid}/msa.log"
 	run:
 		execute_mafft=True
+		#check if target sequence file is empty (or just contains the query sequence)
+		#if this is the case, there is no need for producing a msa
 		with open(input[0],'r') as infile:
 			if len(infile.readlines()) <= 1:
 				execute_mafft=False
 		try:
 			if execute_mafft==True:
+				#mafft execution
 				mafft=shell("mafft --auto {input} > {output} 2> {log}")
 				if mafft != 0:
 					raise Exception("mafft returncode is != 0\n")
 			else:
 				with open(log['log'],'w') as lfile:
 					lfile.write("WARNING: producing empty alignment file with touch\n")
-				shell("touch {output} 2> {log.log}")
+				#produce empty file for snakemake
+				shell("touch {output}")
 		except Exception as e:
 			with open(log['log'],'w') as lfile:
 				lfile.write("WARNING: producing empty alignment file with touch\n")
@@ -231,16 +236,21 @@ rule conduct_multiple_sequence_alignment_mafft:
 				shell("touch {output}")
 
 #RULE 13
+#this rule shouldnt throw exceptions, if an error occurs an empty file is created
 rule conduct_phylogeny_fast_tree:
 	input: "{qseqid}/target_sequences.msa"
 	output: "{qseqid}/target_sequences.tree"
 	log: log="log/{qseqid}/phylogeny.log"
 	run:
+		#check if multiple sequence alignment has entries
 		execute_fasttree=True
 		with open(input[0],"r") as infile:
 			if len(infile.readlines()) <= 1:
+				#if there are no entries in the multiple sequence alignment there is no need for
+				# conducting fasttree
 				execute_fasttree == False
 		try:
+			#fasttree execution
 			if execute_fasttree == True:
 				fasttree = shell("fasttree {input} > {output} 2> {log}")
 				if fasttree != 0:
@@ -248,7 +258,8 @@ rule conduct_phylogeny_fast_tree:
 			else:
 				with open(log['log'],'w') as lfile:
 					lfile.write("WARNING: producing empty tree file with touch\n")
-				shell("touch {output} 2> {log.log}")
+				#produce empty file for snakemake
+				shell("touch {output}")
 		except Exception as e:
 			with open(log['log'],'w') as lfile:
 				lfile.write("WARNING: producing empty tree file with touch\n")

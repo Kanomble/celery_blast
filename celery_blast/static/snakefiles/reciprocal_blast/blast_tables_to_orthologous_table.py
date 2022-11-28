@@ -1,5 +1,9 @@
-#this script is part of the snakemake worklfow it produces a csv file with all reciprocal hits.
-#the script blast_tables_to_html.py has the same starting code due to clarity this script has its own snakemake rule
+'''blast_tables_to_orthologous_table.py
+This script extracts information for the RBHs from the forward BLAST result table.
+Taxonomy information are added by querying the taxonomy databsae with the provided taxonomic identifier.
+
+
+'''
 import pandas as pd
 import sys
 from Bio import Entrez
@@ -31,19 +35,7 @@ with open(snakemake.log['log'], 'w') as logfile:
         # Adds taxonomic information to pandas dataframe.
         # In order to retrieve the taxonomic information biopython calls are conducted with the query accession ids in the pandas dataframe.
         # The query file gets processed for extracting the fasta header line, this information is then loaded into a specific dataframe column.
-        def add_taxonomic_information_to_result_dataframe(taxids, query_file):
-            def read_query_file(query_file):
-                queries = {}
-                queryfile = open(query_file, "r")
-                for line in queryfile.readlines():
-                    if ">" in line:
-                        prot_id = line.split(">")[1].split(' ')[0].split('.')[0]
-                        line = ' '.join(line.split(">")[1].split(' ')[1:]).rstrip()
-                        queries[prot_id] = line
-                queryfile.close()
-                return queries
-
-            #queries = read_query_file(query_file)
+        def add_taxonomic_information_to_result_dataframe(taxids):
 
             logfile.write("INFO:working on {} taxids\n".format(len(taxids)))
 
@@ -155,7 +147,7 @@ with open(snakemake.log['log'], 'w') as logfile:
         taxids_from_df = result_data['staxids'].unique()
         logfile.write("INFO:constructing result dataframe\n")
         result_data.to_csv(snakemake.output['result_csv'], header=list(result_data.columns))
-        taxonomy_dataframe = add_taxonomic_information_to_result_dataframe(taxids_from_df, snakemake.input['query_file'])
+        taxonomy_dataframe = add_taxonomic_information_to_result_dataframe(taxids_from_df)
         taxonomy_dataframe['staxids'] = taxonomy_dataframe['staxids'].astype('int64')
         result_data = result_data.merge(taxonomy_dataframe, on='staxids')
         result_data['query_info'] = result_data['stitle']

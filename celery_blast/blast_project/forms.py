@@ -162,6 +162,7 @@ class ProjectCreationForm(forms.Form):
                     self.add_error('species_name_for_backward_blast',
                                    'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
                                        taxonomic_nodes, backward_db.database_name))
+
                 if booleanbw == True:
                     #taking the first taxonomic node in the provided list
                     cleaned_data['species_name_for_backward_blast'] = (species_name, taxonomic_nodes[0])
@@ -186,6 +187,8 @@ class ProjectCreationForm(forms.Form):
                         if line.startswith('>'):
                             try:
                                 acc = line.split(" ")[0].split('>')[-1].split(".")[0]
+                                if "|" in acc or " " in acc:
+                                    raise Exception("{} is no valid protein identifier - Format: e.g. WP_8765432".format(acc))
                                 header.append(acc)
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
@@ -193,28 +196,29 @@ class ProjectCreationForm(forms.Form):
                 if len(header) > 300:
                     self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
                                                          ' this is not allowed, consider to separate the query sequences.')
+
                 #checks if query sequences reside in the backward database
                 else:
                     valid = check_if_sequences_are_in_database(backward_db.id, header)
                     if valid != True:
                         self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
-
                 #check for duplicate entries in the query file
                 if len(header) != len(set(header)):
                     self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
 
                 #check if provided taxid corresponds to query sequence origin
-                try:
-                    retcode=check_if_protein_identifier_correspond_to_backward_taxid(header,taxonomic_nodes[0],user_email)
-                    if retcode != 0:
-                        self.add_error('species_name_for_backward_blast',
-                                       'specified taxonomic node: {} does not match with query sequences, following nodes have been translated from the protein queries: {}'.format(
-                                           taxonomic_nodes[0],' '.join(retcode)))
-                except Exception:
-                    #TODO add taxid for query sequences
-                    self.add_error('species_name_for_backward_blast',
-                                   'specified taxonomic node: {} does not match with query sequences'.format(
-                                       taxonomic_nodes[0]))
+                #what if the user provides custom query sequence ids?
+                #try:
+                #    retcode=check_if_protein_identifier_correspond_to_backward_taxid(header,taxonomic_nodes[0],user_email)
+                #    if retcode != 0:
+                #        self.add_error('species_name_for_backward_blast',
+                #                       'specified taxonomic node: {} does not match with query sequences, following nodes have been translated from the protein queries: {}'.format(
+                #                           taxonomic_nodes[0],' '.join(retcode)))
+                #except Exception:
+                #    #TODO add taxid for query sequences
+                #    self.add_error('species_name_for_backward_blast',
+                #                   'specified taxonomic node: {} does not match with query sequences'.format(
+                #                       taxonomic_nodes[0]))
 
         except Exception as e:
             raise ValidationError(

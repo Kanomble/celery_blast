@@ -411,18 +411,41 @@ def create_database_directory_and_upload_files(blast_database,genome_file,taxmap
     except Exception as e:
         raise IntegrityError('couldnt upload genome or taxmap file into database directory with exception : {}'.format(e))
 
-#TODO documentation
+'''check_if_taxid_is_in_databaase
+    
+    Is used during ProjectCreationForm validation. Checks if the selected database
+    contains entries for the specified taxonomic node. Usually there is just one
+    taxonomic node but some species do possess more than one node (e.g. Bacillus subtilis). Therefore
+    the function returns true if just one taxonomic node is in the backward database. 
+    
+    :param database_id
+        :type int
+    :param taxonomic_nodes - derived by get_species_taxid_by_name from .py_biopython
+        :type list[int]
+    
+    :returns True OR not_in_database
+        :type boolean OR list[int]
+'''
 def check_if_taxid_is_in_database(database_id:int, taxonomic_nodes:list):
-    path_to_database = 'media/databases/' + str(database_id) + '/'
+    #path_to_database = 'media/databases/' + str(database_id) + '/'
     database = get_database_by_id(database_id)
+    #path now available for testing
+    path_to_database = database.path_to_database_file + '/'
     pandas_table_file = path_to_database + database.get_pandas_table_name()
     df = read_csv(pandas_table_file, header=0, index_col=0)
     not_in_database=[]
+    #sometimes there is more than one taxonomic node for an organism
+    #the counter resembles the number of corresponding organisms, therefor
+    #at the end of validation the counter must be one int smaller than the length
+    #of taxonomic_nodes
+    counter = len(taxonomic_nodes)
     for node in taxonomic_nodes:
-        if int(node) in list(df['taxid']) == False:
+        if int(node) not in list(df['taxid']):
             not_in_database.append(node)
-    if len(not_in_database) != 0:
-        return not_in_database
+        else:
+            counter -= 1
+    if counter == len(taxonomic_nodes):
+        return False
     else:
         return True
 
@@ -440,7 +463,10 @@ def check_if_taxid_is_in_database(database_id:int, taxonomic_nodes:list):
         :type boolean OR list
 '''
 def check_if_sequences_are_in_database(database_id:int, sequences:list):
-    path_to_database = 'media/databases/' + str(database_id) + '/'
+    #path_to_database = 'media/databases/' + str(database_id) + '/'
+    #correct path for testing
+    database = get_database_by_id(database_id)
+    path_to_database = database.path_to_database_file + '/'
 
     taxmap_files = os.listdir(path_to_database)
     taxmap_files = [file for file in taxmap_files if file.endswith('.table')]
