@@ -89,16 +89,18 @@ def delete_project_and_associated_directories_by_id(project_id):
     :param database_id
         :type int
 '''
-def create_blastdatabase_directory(database_id):
+def create_blastdatabase_directory(database_id,database_filepath='media/databases/'):
     try:
-        mkdir('media/databases/' + str(database_id))
-        return 'media/databases/' + str(database_id)
+        mkdir(database_filepath + str(database_id))
+        return database_filepath + str(database_id)
     except Exception as e:
         raise IntegrityError(
             'something went wrong during database directory creation: {}'.format(e))
 
-#TODO documentation
-def upload_file(project_file, destination):
+'''upload_file
+    simple function for uploading a file to a specific server side location, defined by destination
+'''
+def upload_file(project_file, destination:str):
     try:
         with open(destination, 'wb+') as dest:
             for chunk in project_file.chunks():
@@ -108,60 +110,37 @@ def upload_file(project_file, destination):
             'exception during file upload of : {} : exception : {}'.format(project_file.name,e))
 
 
-#TODO documentation
+'''get_html_results
+    This function is used in blast_project.views.load_reciprocal_result_html_table_view, it returns
+    the plain HTML as a string. 
+    
+    :param project_id
+        :type int
+    :param filename - html result filename
+        :type str
+    :param html_result_path
+        :type str
+    
+    :returns data - string representation of a pandas html table
+        :type list[str]
+'''
 #loads the reciprocal results table that is written with one of the last rules in the snakefiles
-def get_html_results(project_id,filename):
+def get_html_results(project_id:int,filename:str,html_result_path="media/blast_projects/")->list:
     try:
-        with open("media/blast_projects/"+str(project_id)+"/"+filename) as res:
+        with open(html_result_path+str(project_id)+"/"+filename) as res:
             data = res.readlines()
         return data
     except Exception as e:
         raise FileNotFoundError("[-] ERROR: Couldn't read file {} with Exception: {}".format(filename,e))
 
-#TODO documentation
-def html_table_exists(project_id,filename):
-    if(isfile("media/blast_projects/"+str(project_id)+"/"+filename)):
+'''html_table_exists
+    Checks if the html table exists.
+'''
+def html_table_exists(project_id,filename,html_result_path="media/blast_projects/"):
+    if(isfile(html_result_path+str(project_id)+"/"+filename)):
         return True
     else:
         return False
-
-#TODO documentation
-def write_pandas_table_for_one_genome_file(blast_database,organism_name,assembly_level,taxonomic_node,assembly_accession):
-    try:
-
-        path_to_database = 'media/databases/' + str(blast_database.id) + '/'
-
-        if assembly_accession == None:
-            assembly_accession = 'not provided'
-        if organism_name == None:
-            organism_name = 'not provided'
-
-        pandas_table_file = open(path_to_database + blast_database.get_pandas_table_name(), 'w')
-        pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
-        pandas_table_file.write('0,{},{},{},{},{},{}\n'.format(
-            assembly_accession,organism_name,taxonomic_node,taxonomic_node,assembly_level,'uploaded genome'
-        ))
-        pandas_table_file.close()
-    except Exception as e:
-        raise IntegrityError("[-] ERROR: Couldnt write pandas dataframe for your uploaded genome file, with exception : {}".format(e))
-
-
-#TODO documentation
-def write_pandas_table_for_multiple_uploaded_files(blast_database, genomes_to_organism_and_taxid_dict):
-    try:
-        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
-        with open(path_to_database + blast_database.get_pandas_table_name(), 'w') as  pandas_table_file:
-            pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
-            for line_index, key in enumerate(list(genomes_to_organism_and_taxid_dict.keys())):
-                pandas_table_file.write(str(line_index) + ',')
-                pandas_table_file.write(key + ',')
-                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][0] + ',')
-                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][1] + ',' + genomes_to_organism_and_taxid_dict[key][1] + ',')
-                pandas_table_file.write("Chromosome"+ ',uploaded genome\n')
-        return 0
-    except Exception as e:
-        raise IntegrityError('couldnt write database table : {}'.format(e))
-
 
 #TODO documentation
 def concatenate_genome_fasta_files_in_db_dir(path_to_database,database_title,genome_files):
@@ -174,89 +153,3 @@ def concatenate_genome_fasta_files_in_db_dir(path_to_database,database_title,gen
                         dbfile.write(line)
     except Exception as e:
         raise IntegrityError('couldnt concatenate database files : {}'.format(e))
-
-
-
-#TODO documentation
-def write_pandas_table_for_uploaded_genomes(blast_database,
-                                            assembly_accessions_file,
-                                            assembly_levels_file,
-                                            organisms_file,
-                                            user_email):
-    try:
-        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
-
-        taxonomic_nodes,organisms = get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email)
-
-        assembly_accessions = []
-        assembly_levels = []
-
-        if assembly_accessions_file != None:
-            for line in assembly_accessions_file:
-                line = line.decode().rstrip()
-                if line != '' and line != '\r':
-                    assembly_accessions.append(line)
-
-            if assembly_levels_file != None:
-                for line in assembly_levels_file:
-                    line = line.decode().rstrip()
-                    if line != '' and line != '\r':
-                        assembly_levels.append(line)
-            else:
-                for line in range(len(taxonomic_nodes)):
-                    assembly_levels.append('not provided')
-
-        elif assembly_accessions_file == None:
-            for line in range(len(taxonomic_nodes)):
-                assembly_accessions.append('not provided')
-            if assembly_levels_file != None:
-                for line in assembly_levels_file:
-                    line = line.decode().rstrip()
-                    if line != '' and line != '\r':
-                        assembly_levels.append(line)
-            else:
-                for line in range(len(taxonomic_nodes)):
-                    assembly_levels.append('not provided')
-
-        pandas_table_file = open(path_to_database+blast_database.get_pandas_table_name(),'w')
-        pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
-        for line_index in range(len(taxonomic_nodes)):
-            pandas_table_file.write(str(line_index)+',')
-            pandas_table_file.write(assembly_accessions[line_index]+',')
-            pandas_table_file.write(organisms[line_index]+',')
-            pandas_table_file.write(taxonomic_nodes[line_index]+','+taxonomic_nodes[line_index]+',')
-            pandas_table_file.write(assembly_levels[line_index]+',uploaded genome\n')
-        pandas_table_file.close()
-
-    except Exception as e:
-        raise IntegrityError('couldnt write database table : {}'.format(e))
-
-#TODO documentation
-def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email):
-    try:
-        taxids = []
-        organisms = []
-        for line in organisms_file:
-            line = line.decode().rstrip()
-
-            if line != '':
-                taxid = pyb.get_species_taxid_by_name(user_email,line)
-                taxids.append(taxid)
-                organisms.append(line)
-        return taxids, organisms
-    except Exception as e:
-        raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))
-
-
-'''get_taxonomic_files_tuple
-
-    This function is used in the RefseqDatabaseForm for displaying available 
-    taxonomic files. It returns a tuple with taxonomic_file_names.
-
-    :returns form_choice_field_input
-        :type tuple[list:str, list:str]
-'''
-def get_taxonomic_files_tuple():
-    taxid_files_list = list_taxonomic_files()[0]
-    form_choice_field_input = tuple(zip(taxid_files_list, taxid_files_list))
-    return form_choice_field_input

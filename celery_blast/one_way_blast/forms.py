@@ -1,7 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from blast_project.py_django_db_services import get_all_succeeded_databases
-from blast_project.py_services import get_taxonomic_files_tuple, list_taxonomic_files
 
 #TODO documentation
 class OneWayProjectCreationForm(forms.Form):

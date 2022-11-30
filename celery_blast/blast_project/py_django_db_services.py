@@ -2,7 +2,8 @@ import os
 from .models import BlastProject, BlastSettings
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from external_tools.models import ExternalTools, QuerySequences
-from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
+#TODO fix circular imports
+from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, pyb
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv, Series
@@ -68,8 +69,8 @@ def get_reciprocal_result_target_fasta_files_and_queries(project_id: int):
         blast_project = get_project_by_id(project_id)
         project_dir = blast_project.get_project_dir()
         project_dir += '/'
-        queries = blast_project.get_list_of_query_sequences()
 
+        queries = blast_project.get_list_of_query_sequences()
 
         target_fasta_files = []
         target_queries = []
@@ -489,3 +490,115 @@ def check_if_sequences_are_in_database(database_id:int, sequences:list):
 
     elif len(to_compare) == 0:
         return True
+
+
+'''write_pandas_table_for_one_genome_file
+
+    This function is used in blast_project.py_django_db_services.save_uploaded_genomes_into_database.
+'''
+def write_pandas_table_for_one_genome_file(blast_database, organism_name, assembly_level, taxonomic_node,
+                                           assembly_accession):
+    try:
+        # 'media/databases/' + str(blast_database.id) +
+        path_to_database = str(blast_database.path_to_database_file) + '/'
+
+        if assembly_accession == None:
+            assembly_accession = 'not provided'
+        if organism_name == None:
+            organism_name = 'not provided'
+
+        with open(path_to_database + blast_database.get_pandas_table_name(), 'w') as pandas_table_file:
+            pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+            pandas_table_file.write('0,{},{},{},{},{},{}\n'.format(
+                assembly_accession, organism_name, taxonomic_node, taxonomic_node, assembly_level, 'uploaded genome'
+            ))
+
+    except Exception as e:
+        raise IntegrityError(
+            "[-] ERROR: Couldnt write pandas dataframe for your uploaded genome file, with exception : {}".format(e))
+
+#TODO documentation
+def write_pandas_table_for_multiple_uploaded_files(blast_database, genomes_to_organism_and_taxid_dict):
+    try:
+        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
+        with open(path_to_database + blast_database.get_pandas_table_name(), 'w') as  pandas_table_file:
+            pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+            for line_index, key in enumerate(list(genomes_to_organism_and_taxid_dict.keys())):
+                pandas_table_file.write(str(line_index) + ',')
+                pandas_table_file.write(key + ',')
+                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][0] + ',')
+                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][1] + ',' + genomes_to_organism_and_taxid_dict[key][1] + ',')
+                pandas_table_file.write("Chromosome"+ ',uploaded genome\n')
+        return 0
+    except Exception as e:
+        raise IntegrityError('couldnt write database table : {}'.format(e))
+
+#TODO documentation
+def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email):
+    try:
+        taxids = []
+        organisms = []
+        for line in organisms_file:
+            line = line.decode().rstrip()
+
+            if line != '':
+                taxid = pyb.get_species_taxid_by_name(user_email,line)
+                taxids.append(taxid)
+                organisms.append(line)
+        return taxids, organisms
+    except Exception as e:
+        raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))
+
+#TODO documentation
+def write_pandas_table_for_uploaded_genomes(blast_database,
+                                            assembly_accessions_file,
+                                            assembly_levels_file,
+                                            organisms_file,
+                                            user_email):
+    try:
+        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
+
+        taxonomic_nodes,organisms = get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email)
+
+        assembly_accessions = []
+        assembly_levels = []
+
+        if assembly_accessions_file != None:
+            for line in assembly_accessions_file:
+                line = line.decode().rstrip()
+                if line != '' and line != '\r':
+                    assembly_accessions.append(line)
+
+            if assembly_levels_file != None:
+                for line in assembly_levels_file:
+                    line = line.decode().rstrip()
+                    if line != '' and line != '\r':
+                        assembly_levels.append(line)
+            else:
+                for line in range(len(taxonomic_nodes)):
+                    assembly_levels.append('not provided')
+
+        elif assembly_accessions_file == None:
+            for line in range(len(taxonomic_nodes)):
+                assembly_accessions.append('not provided')
+            if assembly_levels_file != None:
+                for line in assembly_levels_file:
+                    line = line.decode().rstrip()
+                    if line != '' and line != '\r':
+                        assembly_levels.append(line)
+            else:
+                for line in range(len(taxonomic_nodes)):
+                    assembly_levels.append('not provided')
+
+        pandas_table_file = open(path_to_database+blast_database.get_pandas_table_name(),'w')
+        pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+        for line_index in range(len(taxonomic_nodes)):
+            pandas_table_file.write(str(line_index)+',')
+            pandas_table_file.write(assembly_accessions[line_index]+',')
+            pandas_table_file.write(organisms[line_index]+',')
+            pandas_table_file.write(taxonomic_nodes[line_index]+','+taxonomic_nodes[line_index]+',')
+            pandas_table_file.write(assembly_levels[line_index]+',uploaded genome\n')
+        pandas_table_file.close()
+
+    except Exception as e:
+        raise IntegrityError('couldnt write database table : {}'.format(e))
