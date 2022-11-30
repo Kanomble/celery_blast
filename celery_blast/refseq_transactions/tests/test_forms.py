@@ -27,8 +27,26 @@ class RefseqDatabaseFormTest(TestCase):
                      "database_name":"test database curvibacter 1",
                      "database_description":"database for testing purposes",
                      }
-        file_dict = {'query_sequence_file': SimpleUploadedFile(upload_file.name, upload_file.read())}
+        file_dict = {'taxid_file': SimpleUploadedFile(upload_file.name, upload_file.read())}
 
         form = RefseqDatabaseForm(data=post_dict,files=file_dict)
         upload_file.close()
         self.assertTrue(form.is_valid())
+
+    def test_refseqdatabaseform_is_not_valid_wrong_assembly_levels(self):
+        post_dict = {'assembly_levels':["U","Chromosome"],
+                     "database_name":"test database curvibacter 1",
+                     "database_description":"database for testing purposes",
+                     }
+
+        form = RefseqDatabaseForm(data=post_dict)
+        self.assertFalse(form.is_valid())
+
+    def test_refseqdatabaseform_is_not_valid_no_database_name(self):
+        post_dict = {'assembly_levels':["Complete Genome","Chromosome"],
+                     "database_name":"",
+                     "database_description":"database for testing purposes",
+                     }
+
+        form = RefseqDatabaseForm(data=post_dict)
+        self.assertFalse(form.is_valid())

@@ -2,16 +2,57 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django.utils import timezone
 from blast_project.forms import CreateTaxonomicFileForMultipleScientificNames, \
-    ProjectCreationForm
+    ProjectCreationForm, UploadGenomeForm, UploadMultipleFilesGenomeForm
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from blast_project.py_biopython import get_species_taxid_by_name
 from blast_project.py_django_db_services import check_if_taxid_is_in_database, \
     check_if_sequences_are_in_database, get_all_succeeded_databases
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django_celery_results.models import TaskResult
+
+class UploadMultipleFilesGenomeFormTestCase(TestCase):
+    def setUp(self) -> None:
+        User.objects.create_user(
+            'testuser',
+            'test_email@email.com',
+            password='test',
+            last_login=timezone.now()
+        )
+
+    def test_uploadmultiplefilesgenomeform_is_valid(self):
+        upload_file = open('testfiles/testsequences/lps_transport.faa', 'rb')
+        file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read())}
+
+        data_dict={
+            "database_title":"Test Database Upload Multiple Files",
+            "database_description":"Curvibacter Test Upload Multiple Files Database",
+            "organism_name_0":"Curvibacter sp. AEP1-3",
+            "extra_field_count":0,
+            "user_email":"lukas.becker@hhu.de"
+        }
+        user = User.objects.get(username="testuser")
+        form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
+        self.assertTrue(form.is_valid())
+
+    def test_uploadmultiplefilesgenomeform_is_not_valid(self):
+        upload_file = open('testfiles/testsequences/lps_transport.faa', 'rb')
+        file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read())}
+
+        data_dict={
+            "database_title":"Test Database Upload Multiple Files",
+            "database_description":"Curvibacter Test Upload Multiple Files Database",
+            "organism_name_0":"XYZ",
+            "extra_field_count":0,
+            "user_email":"lukas.becker@hhu.de"
+        }
+        user = User.objects.get(username="testuser")
+        form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
+        self.assertFalse(form.is_valid())
+
+
 class CreateTaxonomicFileForMultipleScientificNamesTestCase(TestCase):
     def setUp(self):
-        user = User.objects.create_user(
+        User.objects.create_user(
             'testuser',
             'test_email@email.com',
             password='test',

@@ -386,6 +386,7 @@ class UploadGenomeForm(forms.Form):
                     amount_of_levels += chunk.decode().count('\n')
                 if amount_of_levels != organisms:
                     self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
+        return cleaned_data
 
 class UploadMultipleFilesGenomeForm(forms.Form):
     database_title = forms.CharField(max_length=200, required=True)
@@ -425,7 +426,8 @@ class UploadMultipleFilesGenomeForm(forms.Form):
                 if file == None:
                     self.add_error(field,'You have to provide a genome file')
 
-                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
+                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:
+                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
 
             elif "organism" in field:
                 if cleaned_data.get(field) == '':
@@ -435,10 +437,12 @@ class UploadMultipleFilesGenomeForm(forms.Form):
                 else:
                     try:
                         taxids = get_species_taxid_by_name(user_email,cleaned_data.get(field))
-                        if taxids != True:
+                        if len(taxids) == 0:
                             raise Exception
                     except Exception as e:
                         self.add_error(field,"{} : {} is no valid name!".format(e,cleaned_data.get(field)))
+
+        return cleaned_data
 
 
 
