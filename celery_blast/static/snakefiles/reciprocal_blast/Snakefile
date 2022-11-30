@@ -2,6 +2,8 @@ configfile: "./snakefile_config"
 import pandas as pd
 import math
 
+#TODO fix file paths - use file to define correct paths?
+
 #PIPELINE PREPARATION
 #filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
 QSEQIDS = []

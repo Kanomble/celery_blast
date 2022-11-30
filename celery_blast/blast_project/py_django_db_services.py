@@ -113,7 +113,7 @@ def create_external_tools_after_snakemake_workflow_finishes(project_id:int)->Ext
         :type int
     :returns django.db.models.query.QuerySet of BlastProjects
 '''
-def get_users_blast_projects(userid):
+def get_users_blast_projects(userid:int):
     return BlastProject.objects.get_blast_projects_by_userid(userid)
 
 ''' get_all_blast_databases

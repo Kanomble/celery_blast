@@ -49,6 +49,20 @@ class UploadMultipleFilesGenomeFormTestCase(TestCase):
         form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
         self.assertFalse(form.is_valid())
 
+    def test_uploadmultiplefilesgenomeform_is_not_valid_wrong_filename(self):
+        upload_file = open('testfiles/taxonomic_nodes/curvibacter_hydra_test.taxids', 'rb')
+        file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read())}
+
+        data_dict={
+            "database_title":"Test Database Upload Multiple Files",
+            "database_description":"Curvibacter Test Upload Multiple Files Database",
+            "organism_name_0":"XYZ",
+            "extra_field_count":0,
+            "user_email":"lukas.becker@hhu.de"
+        }
+        user = User.objects.get(username="testuser")
+        form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
+        self.assertFalse(form.is_valid())
 
 class CreateTaxonomicFileForMultipleScientificNamesTestCase(TestCase):
     def setUp(self):

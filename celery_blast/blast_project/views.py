@@ -49,7 +49,6 @@ def dashboard_view(request):
             context['ActiveBlastDatabases'] = available_blast_databases
             context['OneWayBlastProjects'] = one_way_blast_projects
             context['OneWayRemoteBlastProjects'] = one_way_remote_blast_projects
-
         return render(request,'blast_project/blast_project_dashboard.html',context)
     except Exception as e:
         return failure_view(request,e)
@@ -87,6 +86,7 @@ def project_creation_view(request):
                 if check_if_taxdb_exists():
                     taxdb=True
                 else:
+                    #what happens if task runs into any error?
                     taxdb=False
                     task = download_and_format_taxdb.delay()
 
@@ -107,6 +107,7 @@ def project_creation_view(request):
                            'taxdb':True}
 
             else:
+                # what happens if task runs into any error?
                 context = {'taxdb':False}
                 task = download_and_format_taxdb.delay()
 
@@ -114,15 +115,24 @@ def project_creation_view(request):
     except Exception as e:
         return failure_view(request,e)
 
-#TODO documentation
+'''project_details_view
+
+    View for project details. All result graphs and additional tasks, that can 
+    be performed with the results (RBHs) are accessible via this page.
+    
+    :GET
+    Loads the BlastProject model object associated to the given project_id.
+    Returns the project_details_dashboard.html page, which renders the results according
+    to the current status of the associated snakemake task. For more details consider
+    to take a look at the respective template.
+    
+'''
 @login_required(login_url='login')
-def project_details_view(request, project_id):
+def project_details_view(request, project_id:int):
     try:
         blast_project = get_project_by_id(project_id)
-        #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'BlastProject':blast_project,
-                   'Database':blast_project.project_forward_database, }
-                   #'ProtPfam':prot_to_pfam}
+                   'Database':blast_project.project_forward_database}
         return render(request,'blast_project/project_details_dashboard.html',context)
     except Exception as e:
         return failure_view(request,e)
