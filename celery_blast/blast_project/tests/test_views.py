@@ -7,6 +7,7 @@ from refseq_transactions.models import AssemblyLevels, BlastDatabase
 from django.utils import timezone
 from django_celery_results.models import TaskResult
 
+
 class BlastProjectViewsTestCase(TestCase):
     c = Client()
     def setUp(self) -> None:
@@ -126,3 +127,4 @@ class BlastProjectViewsTestCase(TestCase):
         response = self.c.get('/blast_project/'+str(project.id)+'/project_details')
         self.assertEqual(200,response.status_code)
         self.assertEqual(response.context['BlastProject'],project)
+

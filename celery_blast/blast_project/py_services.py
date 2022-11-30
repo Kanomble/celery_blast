@@ -4,7 +4,6 @@ from os.path import isdir, isfile
 from os import mkdir, listdir
 from shutil import rmtree
 from django.db import IntegrityError, transaction
-from blast_project import py_biopython as pyb
 
 '''check_if_taxdb_exists
     

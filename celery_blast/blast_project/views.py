@@ -26,14 +26,14 @@ from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 
 ''' dashboard
 
-view for the first dashboard page, this page enables monitoring of blast_projects,
-created by the currently logged in user.
-
-:GET
-    Uses the get_users_blast_projects utility function which returns a BlastProject Query-Set.
-    The Query-Set inherits all projects from the currently logged in user.
-    Uses the get_all_blast_databases utility functions to load all BlastDatabase db entries.
-    display blast_projects and links to other view functions
+    View for the first dashboard page, this page enables monitoring of blast_projects,
+    created by the currently logged in user. All context functions do return QuerySets.
+    
+    :GET
+        Uses the get_users_blast_projects utility function which returns a BlastProject Query-Set.
+        The Query-Set inherits all projects from the currently logged in user.
+        Uses the get_all_blast_databases utility functions to load all BlastDatabase db entries.
+        display blast_projects and links to other view functions
 
 '''
 @login_required(login_url='login')
@@ -53,7 +53,25 @@ def dashboard_view(request):
     except Exception as e:
         return failure_view(request,e)
 
-#TODO documentation
+'''project_creation_view
+
+    This view receives user provided form data and creates a BlastProject model object.
+    During BlastProject creation a project specific sub-directory in media/blast_projects/ 
+    and in static/images/result_images/ is created. The view accepts POST requests.
+    It does also check if the taxonomy database is loaded, if not the download_and_format_taxdb is triggered
+    (check_if_taxdb_exists, download_and_format_taxdb).
+    
+    
+    :POST
+        :FORMS - based on form field data that can be found in blast_project/forms.py
+            :ProjectCreationForm
+            :BlastSettingsFormForward
+            :BlastSettingsFormBackward
+    
+    If the POST data is valid the project gets created and the function redirects to the
+    associated project_details page. If the POST data is not valid, the function returns the 
+    /blast_project/project_creation_dashboard template with validation errors.
+'''
 @login_required(login_url='login')
 def project_creation_view(request):
     try:

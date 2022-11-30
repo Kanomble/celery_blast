@@ -3,7 +3,8 @@ from .models import BlastProject, BlastSettings
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from external_tools.models import ExternalTools, QuerySequences
 #TODO fix circular imports
-from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, pyb
+from blast_project import py_biopython as pyb
+from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv, Series
