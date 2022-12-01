@@ -258,6 +258,7 @@ class BlastSettingsFormBackward(forms.Form):
         label='BW max hsps', initial=500
     )
 
+#TODO documentation
 class UploadGenomeForm(forms.Form):
     genome_fasta_file = forms.FileField(
         error_messages={
@@ -315,11 +316,9 @@ class UploadGenomeForm(forms.Form):
         else:
             return genome_fasta_file
 
-    #TODO add controll
     def clean(self):
         cleaned_data = super().clean()
         genome_fasta_file = cleaned_data['genome_fasta_file']
-        print(genome_fasta_file.name)
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
         organism_file = cleaned_data['organism_name_file']

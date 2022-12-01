@@ -121,8 +121,12 @@ def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scient
     except Exception as e:
         raise Exception("[-] ERROR: {}".format(e))
 
-#TODO documentation
-def check_given_taxonomic_node(user_email, taxid):
+'''check_give_taxonomic_node
+
+    
+
+'''
+def check_given_taxonomic_node(user_email:str, taxid:int)->list:
     try:
         Entrez.email = user_email
         handle = Entrez.efetch(db="taxonomy", id=taxid, retmode="xml")
@@ -135,7 +139,6 @@ def check_given_taxonomic_node(user_email, taxid):
     except Exception as e:
         raise Exception("exception occured during validation of taxonomic node : {}".format(e))
 
-#TODO documentation
 ''' calculate_pfam_and_protein_links_from_queries
 
 This function returns a dictionary 'prot_to_pfam', that contains several keys addressing relevant data for query sequences that reside in the coressponding file.

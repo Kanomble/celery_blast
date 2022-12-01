@@ -11,6 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from blast_project.py_services import check_if_taxdb_exists
 from shutil import rmtree
 from os.path import isdir
+from time import sleep
 
 class BlastProjectViewsTestCase(TestCase):
     c = Client()
@@ -252,10 +253,12 @@ class BlastProjectViewsTestCase(TestCase):
         response = self.c.get('/blast_project/upload_genomes/')
         self.assertEqual(200, response.status_code)
 
-    @tag('long','view','upload_genomes')
+    #TODO fix celery database handling for tests ...
+    @tag('upload_genomes','special')
     def test_uploadgenome_view_post(self):
         self.c.login(username='testuser', password='test')
-        genome_file = open('testfiles/upload_genomes/concatenated_genome_files/other_symbionts.faa', 'rb')
+        genome_file = open(
+            'testfiles/upload_genomes/concatenated_genome_files/other_symbionts.faa', 'rb')
         organism_names = open(
             'testfiles/upload_genomes/concatenated_genome_files/organisms.txt', 'rb')
         assembly_accessions = open(
@@ -264,7 +267,12 @@ class BlastProjectViewsTestCase(TestCase):
             'testfiles/upload_genomes/concatenated_genome_files/levels.txt', 'rb')
         taxmap_file = open(
             'testfiles/upload_genomes/concatenated_genome_files/acc_map.tab', 'rb')
-        file_data={'genome_fasta_file':
+
+        post_dict={'database_title':"All Hydra Symbionts Test",
+                   'database_description':"Collection Of Symbiont Genomes",
+                   'assembly_entries':5,
+                   'user_email':'lukas.becker@hhu.de',
+                   'genome_fasta_file':
                        SimpleUploadedFile(genome_file.name, genome_file.read()),
                    'organism_name_file':
                        SimpleUploadedFile(organism_names.name, organism_names.read()),
@@ -273,10 +281,12 @@ class BlastProjectViewsTestCase(TestCase):
                    'assembly_level_file':
                        SimpleUploadedFile(assembly_levels.name, assembly_levels.read()),
                    'taxmap_file':
-                       SimpleUploadedFile(taxmap_file.name, taxmap_file.read())}
-        post_data={'database_title':"All Hydra Symbionts Test",
-                   'database_description':"Collection Of Symbiont Genomes",
-                   'assembly_entries':5,
-                   'user_email':'lukas.becker@hhu.de'}
-        response = self.c.post('/blast_project/upload_genomes/',data=post_data,files=file_data)
+                       SimpleUploadedFile(taxmap_file.name, taxmap_file.read())
+                   }
+        response = self.c.post('/blast_project/upload_genomes/',data=post_dict)
+
+        print("[+] ... Starting to sleep for 20 seconds to wait for makeblastdb ...")
+        #sleep(20)
+
         self.assertTrue(200,response.status_code)
+        self.assertTemplateUsed(response,'blast_project/success.html')

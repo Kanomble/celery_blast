@@ -10,6 +10,7 @@ from blast_project.py_django_db_services import check_if_taxid_is_in_database, \
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django_celery_results.models import TaskResult
 
+@tag('upload_multiple_file_genome_form')
 class UploadMultipleFilesGenomeFormTestCase(TestCase):
     def setUp(self) -> None:
         User.objects.create_user(
@@ -35,6 +36,7 @@ class UploadMultipleFilesGenomeFormTestCase(TestCase):
         form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
         self.assertTrue(form.is_valid())
 
+    @tag('fast','form')
     def test_uploadmultiplefilesgenomeform_is_not_valid(self):
         upload_file = open('testfiles/testsequences/lps_transport.faa', 'rb')
         file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read())}
@@ -50,6 +52,7 @@ class UploadMultipleFilesGenomeFormTestCase(TestCase):
         form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
         self.assertFalse(form.is_valid())
 
+    @tag('fast','form')
     def test_uploadmultiplefilesgenomeform_is_not_valid_wrong_filename(self):
         upload_file = open('testfiles/taxonomic_nodes/curvibacter_hydra_test.taxids', 'rb')
         file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read())}
@@ -65,6 +68,7 @@ class UploadMultipleFilesGenomeFormTestCase(TestCase):
         form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
         self.assertFalse(form.is_valid())
 
+@tag('taxonomic_file_form')
 class CreateTaxonomicFileForMultipleScientificNamesTestCase(TestCase):
     def setUp(self):
         User.objects.create_user(
@@ -74,6 +78,7 @@ class CreateTaxonomicFileForMultipleScientificNamesTestCase(TestCase):
             last_login=timezone.now()
         )
 
+    @tag('fast','form')
     def test_form_is_valid(self):
         form = CreateTaxonomicFileForMultipleScientificNames(
             user=User.objects.get(username="testuser"),
@@ -81,6 +86,7 @@ class CreateTaxonomicFileForMultipleScientificNamesTestCase(TestCase):
                   "species_names":"Curvibacter sp. AEP1-3","user_email":"test_email@email.com"})
         self.assertTrue(form.is_valid())
 
+@tag('project_creation_form')
 class ProjectCreationFormTestCase(TestCase):
     def setUp(self) -> None:
         user = User.objects.create_user(
@@ -122,10 +128,12 @@ class ProjectCreationFormTestCase(TestCase):
 
         blast_database.save()
 
+    @tag('fast','form')
     def test_get_species_taxid_by_name(self):
         taxonomic_nodes = get_species_taxid_by_name("lukas.becker@hhu.de", "Curvibacter sp. AEP1-3")
         self.assertEqual(taxonomic_nodes,['1844971', '1531298'])
 
+    @tag('fast','form')
     def test_true_check_if_taxid_is_in_database(self):
         taxonomic_nodes = get_species_taxid_by_name("lukas.becker@hhu.de", "Curvibacter sp. AEP1-3")
         blast_database = BlastDatabase.objects.get(
@@ -133,6 +141,7 @@ class ProjectCreationFormTestCase(TestCase):
         val_check = check_if_taxid_is_in_database(blast_database.id,taxonomic_nodes)
         self.assertEqual(True,val_check)
 
+    @tag('fast','form')
     def test_false_check_if_taxid_is_in_database(self):
         taxonomic_nodes = get_species_taxid_by_name("lukas.becker@hhu.de", "Curvibacter delicatus")
         blast_database = BlastDatabase.objects.get(
@@ -141,6 +150,7 @@ class ProjectCreationFormTestCase(TestCase):
         #['80879'] not in db
         self.assertEqual(False,val_check)
 
+    @tag('fast','form')
     def test_true_check_if_sequences_are_in_database(self):
         #lps transporter
         protein_identifier = ['WP_087495344',
@@ -156,6 +166,7 @@ class ProjectCreationFormTestCase(TestCase):
         val_check = check_if_sequences_are_in_database(blast_database.id,protein_identifier)
         self.assertEqual(True,val_check)
 
+    @tag('fast','form')
     def test_false_check_if_sequences_are_in_database(self):
         #lps transporter
         protein_identifier = ['WP_087495344',
@@ -171,7 +182,7 @@ class ProjectCreationFormTestCase(TestCase):
         val_check = check_if_sequences_are_in_database(blast_database.id,protein_identifier)
         self.assertEqual(['QPASDKJ'],val_check)
 
-
+    @tag('fast','form')
     def test_project_form_is_valid(self):
         #primary key of the referencing modelchoicefield object
         blast_database = get_all_succeeded_databases()[0]
@@ -188,6 +199,7 @@ class ProjectCreationFormTestCase(TestCase):
         self.assertTrue(form.is_valid())
         self.assertEqual(2,len(form.cleaned_data['species_name_for_backward_blast']))
 
+    @tag('fast','form')
     def test_project_form_is_not_valid_wrong_species_name(self):
         #primary key of the referencing modelchoicefield object
         blast_database = get_all_succeeded_databases()[0]
@@ -206,7 +218,7 @@ class ProjectCreationFormTestCase(TestCase):
         self.assertEqual(form.errors['species_name_for_backward_blast'],
         ["specified taxonomic node: ['80879'] does not reside in the selected BACKWARD database: Curvibacter sp. aep1-3 database"])
 
-
+    @tag('fast','form')
     def test_project_form_is_not_valid_sequence_identifier_not_in_backward_db(self):
         #primary key of the referencing modelchoicefield object
         blast_database = get_all_succeeded_databases()[0]
@@ -225,7 +237,49 @@ class ProjectCreationFormTestCase(TestCase):
         self.assertEqual(form.errors['query_sequence_file'],
                          ["following sequences do not reside in your backward database: ['PXYR_6321']"])
 
-    @tag('fast','form','database')
+@tag('upload_genomes_form')
+class UploadGenomesTestCase(TestCase):
+    def setUp(self) -> None:
+        user = User.objects.create_user(
+            'testuser',
+            'test_email@email.com',
+            password='test',
+            last_login=timezone.now()
+        )
+
+        celery_task = TaskResult.objects.create(
+            status="SUCCESS"
+        )
+
+        AssemblyLevels.objects.create(
+            assembly_level='Complete Genome'
+        )
+        AssemblyLevels.objects.create(
+            assembly_level='Chromosome'
+        )
+        AssemblyLevels.objects.create(
+            assembly_level='Contig'
+        )
+        AssemblyLevels.objects.create(
+            assembly_level='Scaffold'
+        )
+
+        blast_database = BlastDatabase.objects.create(
+            database_name='Curvibacter sp. aep1-3 database',
+            database_description='Full Assembly Content',
+            assembly_entries=1,
+            path_to_database_file="testfiles/databases/curvibacter_test_db",
+            database_download_and_format_task=celery_task
+        )
+
+        assembly_level = ['Complete Genome', 'Chromosome', 'Contig', 'Scaffold']
+        assembly_levels = AssemblyLevels.objects.filter(assembly_level__in=assembly_level)
+        for assembly_lvl in assembly_levels:
+            blast_database.assembly_levels.add(assembly_lvl)
+
+        blast_database.save()
+
+    @tag('fast','form')
     def test_uploadgenomeform_is_valid(self):
         user = User.objects.get(username="testuser")
         genome_file = open(
