@@ -534,9 +534,24 @@ def write_pandas_table_for_multiple_uploaded_files(blast_database, genomes_to_or
     except Exception as e:
         raise IntegrityError('couldnt write database table : {}'.format(e))
 
-#TODO documentation
-def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email):
+'''get_list_of_taxonomic_nodes_based_on_organism_file
+    
+    This function is executed in the write_pandas_table_for_uploaded_genomes. It converts the 
+    provided organism names to taxonomic ids by taking the first taxid occurence of the biopython call.
+    If no taxid is found a integrity error is raised. This should not happend due to Form validation.
+    
+    :param organisms_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param user_email
+        :type str
+    
+    :returns taxids, organisms
+        :type list[int], list[str]
+        
+'''
+def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email:str):
     try:
+        print(type(organisms_file))
         taxids = []
         organisms = []
         for line in organisms_file:
@@ -544,18 +559,38 @@ def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_emai
 
             if line != '':
                 taxid = pyb.get_species_taxid_by_name(user_email,line)
-                taxids.append(taxid)
+                taxids.append(taxid[0])
                 organisms.append(line)
         return taxids, organisms
     except Exception as e:
         raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))
 
-#TODO documentation
-def write_pandas_table_for_uploaded_genomes(blast_database,
+'''write_pandas_table_for_uploaded_genomes
+    
+    This function writes the pandas table for the BlastDatabase instance.
+    The table is written into media/databases/BlastDatabase.id. Provided organism names
+    are translated to taxonomic identifier. Assembly levels and assembly accessions are optional
+    and if not provided the table entries are filled with the note: "not provided".
+    The columns of the resulting pandas table are: index,assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path.
+    The ftp_path column is filled with the string: "uploaded genome".
+    If an exception occurs the function raises an integrity error.
+    
+    :param blast_database
+        :type refseq_transactions.models.BlastDatabase
+    :param assembly_accessions_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param assembly_levels_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param organisms_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param user_email
+        :type str
+'''
+def write_pandas_table_for_uploaded_genomes(blast_database:BlastDatabase,
                                             assembly_accessions_file,
                                             assembly_levels_file,
                                             organisms_file,
-                                            user_email):
+                                            user_email:str):
     try:
         path_to_database = 'media/databases/' + str(blast_database.id)+'/'
 

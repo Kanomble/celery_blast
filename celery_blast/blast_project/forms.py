@@ -267,16 +267,19 @@ class UploadGenomeForm(forms.Form):
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
     assembly_entries = forms.IntegerField(min_value=1,required=True)
-    assembly_accession = forms.CharField(max_length=200,required=False)
 
+    #obsolete due to multiple genome form for just one genome file
+    #TODO remove fields and fix associated view/form functions
+    ###### OBSOLETE ######
+    assembly_accession = forms.CharField(max_length=200,required=False)
     assembly_level = forms.ChoiceField(
         choices=(("Chromosome","Chromosome"),("Complete Genome","Complete Genome"),("Scaffold","Scaffold"),("Contig","Contig")),
-        required=True)
+        required=False)
 
     organism_name = forms.CharField(
         label="Organism Name", required=False
     )
-
+    ###### OBSOLETE ######
 
     taxonomic_node = forms.IntegerField(
         min_value=2,
@@ -316,6 +319,7 @@ class UploadGenomeForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         genome_fasta_file = cleaned_data['genome_fasta_file']
+        print(genome_fasta_file.name)
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
         organism_file = cleaned_data['organism_name_file']
@@ -353,12 +357,14 @@ class UploadGenomeForm(forms.Form):
             #check if taxonomic_nodes_exists
             organisms = 0
             for chunk in organism_file.chunks():
+
                 lines = chunk.decode().split("\n")
                 for line in lines:
                     if line != '':
                         try:
+                            #check if there are taxids available (for provided organism names)
                             taxids = get_species_taxid_by_name(user_email,line)
-                            if taxids != True:
+                            if len(taxids) == 0:
                                 raise Exception
                         except:
                             self.add_error('organism_name_file','there is no taxonomic node available for : {}'.format(line))
@@ -372,7 +378,6 @@ class UploadGenomeForm(forms.Form):
                 amount_of_assemblies = 0
                 for chunk in assembly_accessions_file.chunks():
                     lines = chunk.decode().split('\n')
-                    #print(lines)
                     for line in lines:
                         if line == '\r':
                             self.add_error('assembly_accessions_file','there are lines without any informations in your assembly accessions file')

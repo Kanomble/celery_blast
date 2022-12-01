@@ -1,3 +1,5 @@
+import os
+from shutil import rmtree
 import pandas as pd
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
@@ -19,7 +21,7 @@ from .py_database_statistics import get_database_statistics_task_status, delete_
 from django.db import IntegrityError, transaction
 
 from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
-    save_uploaded_multiple_file_genomes_into_database
+    save_uploaded_multiple_file_genomes_into_database, get_all_blast_databases
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
@@ -57,7 +59,8 @@ def dashboard_view(request):
 
     This view receives user provided form data and creates a BlastProject model object.
     During BlastProject creation a project specific sub-directory in media/blast_projects/ 
-    and in static/images/result_images/ is created. The view accepts POST requests.
+    and in static/images/result_images/ is created. If those sub-directories exists,
+    they wont get touched by project creation. The view accepts POST requests.
     It does also check if the taxonomy database is loaded, if not the download_and_format_taxdb is triggered
     (check_if_taxdb_exists, download_and_format_taxdb).
     
@@ -80,6 +83,7 @@ def project_creation_view(request):
             blast_settings_forward_form = BlastSettingsFormForward(request.POST)
             blast_settings_backward_form = BlastSettingsFormBackward(request.POST)
 
+            # RETURN PROJECT DETAILS VIEW
             if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() and blast_settings_backward_form.is_valid():
                 query_sequences = request.FILES['query_sequence_file']
                 try:
@@ -99,7 +103,7 @@ def project_creation_view(request):
 
                 return redirect('project_details',project_id=blast_project.id)
 
-            else:
+            else: #RETURN PROJECT CREATION VIEW WITH VALIDATION ERRORS
                 #TODO what happens if taxdb is not there - downloading database
                 if check_if_taxdb_exists():
                     taxdb=True
@@ -144,6 +148,8 @@ def project_creation_view(request):
     to the current status of the associated snakemake task. For more details consider
     to take a look at the respective template.
     
+    :param project_id
+        :type int 
 '''
 @login_required(login_url='login')
 def project_details_view(request, project_id:int):
@@ -155,12 +161,28 @@ def project_details_view(request, project_id:int):
     except Exception as e:
         return failure_view(request,e)
 
-#TODO documentation
+'''project_delete_view
+
+    This view deletes the associated BlastProject model and its files 
+    in media/blast_projects/BlastProject.id and static/images/result_images/BlastProject.id.
+    
+    :DELETE
+    Deletes the associated BlastProject and all files.
+    
+    :GET
+    Returns to project_details_view.
+    
+    :param project_id
+        :type int
+'''
 @login_required(login_url='login')
-def project_delete_view(request, project_id):
+def project_delete_view(request, project_id:int):
     try:
-        delete_project_and_associated_directories_by_id(project_id)
-        return success_view(request)
+        if request.method == "DELETE":
+            delete_project_and_associated_directories_by_id(project_id)
+            return success_view(request)
+        else:
+            return project_details_view(request,project_id)
     except Exception as e:
         return failure_view(request,e)
 
@@ -248,6 +270,8 @@ def create_taxonomic_file_view(request):
 def upload_genome_view(request):
     try:
         if request.method == "POST":
+            #the UploadMultipleFilesGenomeForm instance has to reside here because both post requests
+            #belong to one template, the upload_genome_files_dashboard.html
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
             upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
             if upload_genome_form.is_valid():
@@ -280,7 +304,7 @@ def upload_genome_view(request):
                             new_db.path_to_database_file + '/' + genome_file_name,
                             taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
                     else:
-                        raise Exception('couldnt trigger makeblastdb execution ...')
+                        raise IntegrityError('couldnt trigger makeblastdb execution ...')
                     return success_view(request)
             else:
                 context = {'UploadGenomeForm': upload_genome_form,
@@ -294,6 +318,20 @@ def upload_genome_view(request):
         #files = request.FILES.getlist('genome_fasta_files')
         return render(request,'blast_project/upload_genome_files_dashboard.html',context)
     except Exception as e:
+        try:
+            #check if there are database directories that do not reside in the postgres database
+            databases = get_all_blast_databases()
+            ids = [int(database.id) for database in databases]
+            for database_id in os.listdir('media/databases'):
+                try:
+                    identifier = int(database_id)
+                    if identifier not in ids:
+                        if os.path.isdir('media/databases/'+str(identifier)):
+                            rmtree('media/databases/'+str(identifier)+'/')
+                except:
+                    continue
+        except:
+            pass
         return failure_view(request,e)
 
 #TODO implement view for disentangling big genome upload view ...
@@ -301,6 +339,8 @@ def upload_genome_view(request):
 def upload_multiple_genomes_view(request):
     try:
         if request.method == 'POST':
+            #the UploadGenomeForm instance has to reside here because both post requests
+            #belong to one template, the upload_genome_files_dashboard.html
             upload_genome_form = UploadGenomeForm(request.user)
             extra_field_count = request.POST.get('extra_field_count')
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user, request.POST, request.FILES,

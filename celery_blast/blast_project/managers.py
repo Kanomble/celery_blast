@@ -2,7 +2,7 @@ from django.db import models
 
 # allows customization of queries for the database
 ''' BlastProjectManager
-    
+    The create_blast_project function is used in py_django_db_services.create_project_from_form.
 '''
 class BlastProjectManager(models.Manager):
     # functions

@@ -175,16 +175,21 @@ class BlastProject(models.Model):
 
     ''' initialize_project_directory
     
-        invokation is done with BlastProject.objects.initialize_project_directory() or 
+        Invocation is done with BlastProject.objects.initialize_project_directory() or 
         within the BlastProjectManager with blast_project.iniialize_project_directory()
         
-        this function is executed within the create_blast_project function of the manager, 
+        Throws an exception if the specified filepath does not exists or if the 
+        filepath + project_id directory exists.
+        This function is executed within the create_blast_project function of the manager class, 
         it directly creates a directory for the project and a directory for result images in the static folder
+            
     '''
     def initialize_project_directory(self,filepath='media/blast_projects/'):
         # check if blast_project was previously created / check if media/blast_project directory exists
-        if (isdir(filepath + str(self.id)) or isdir(filepath) == False):
+        if (isdir(filepath + str(self.id)) == True):
             raise IntegrityError("project directory exists")
+        elif isdir(filepath) == False:
+            raise IntegrityError("{} is not a directory".format(filepath))
         else:
             try:
                 mkdir(filepath + str(self.id))
@@ -197,24 +202,22 @@ class BlastProject(models.Model):
     #TODO documentation
     def write_snakemake_configuration_file(self, filepath='media/blast_projects/'):
         try:
-            snk_config_file = open(filepath + str(self.id)+'/snakefile_config','w')
-            #database path from media/blast_projects/project_id as working directory for snakemake
-            snk_config_file.write('project_id: '+str(self.id)+"\n")
-            snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
-            snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_backward_database.get_pandas_table_name() + ".database\"\n")
-            snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
-            snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
-            snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
-            bw_dict=self.project_backward_settings.values_as_fw_or_bw_dict('bw')
-            fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
+            with open(filepath + str(self.id)+'/snakefile_config','w') as snk_config_file:
+                #database path from media/blast_projects/project_id as working directory for snakemake
+                snk_config_file.write('project_id: '+str(self.id)+"\n")
+                snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
+                snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_backward_database.get_pandas_table_name() + ".database\"\n")
+                snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
+                snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
+                snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
+                bw_dict=self.project_backward_settings.values_as_fw_or_bw_dict('bw')
+                fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
 
-            for key_bw in bw_dict.keys():
-                snk_config_file.write(key_bw+': '+bw_dict[key_bw]+"\n")
+                for key_bw in bw_dict.keys():
+                    snk_config_file.write(key_bw+': '+bw_dict[key_bw]+"\n")
 
-            for key_fw in fw_dict.keys():
-                snk_config_file.write(key_fw+': '+fw_dict[key_fw]+"\n")
-
-            snk_config_file.close()
+                for key_fw in fw_dict.keys():
+                    snk_config_file.write(key_fw+': '+fw_dict[key_fw]+"\n")
 
         except Exception as e:
             raise IntegrityError("couldnt write snakemake configuration file in directory with exception : {}".format(e))

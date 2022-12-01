@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.contrib.auth.models import User
 from django.utils import timezone
 from blast_project.forms import CreateTaxonomicFileForMultipleScientificNames, \
@@ -19,6 +19,7 @@ class UploadMultipleFilesGenomeFormTestCase(TestCase):
             last_login=timezone.now()
         )
 
+    @tag('fast','form')
     def test_uploadmultiplefilesgenomeform_is_valid(self):
         upload_file = open('testfiles/testsequences/lps_transport.faa', 'rb')
         file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read())}
@@ -209,7 +210,7 @@ class ProjectCreationFormTestCase(TestCase):
     def test_project_form_is_not_valid_sequence_identifier_not_in_backward_db(self):
         #primary key of the referencing modelchoicefield object
         blast_database = get_all_succeeded_databases()[0]
-        user = User.objects.get(username="testuser")
+        user = User.objects.get(username="testuser",password="test")
         upload_file = open('testfiles/testsequences/lps_transporter_corrupted.faa', 'rb')
         #species curvibacter delicatus does not reside in backward database
         post_dict = {'project_title': 'Test Project Title',
@@ -224,3 +225,33 @@ class ProjectCreationFormTestCase(TestCase):
         self.assertEqual(form.errors['query_sequence_file'],
                          ["following sequences do not reside in your backward database: ['PXYR_6321']"])
 
+    @tag('fast','form','database')
+    def test_uploadgenomeform_is_valid(self):
+        user = User.objects.get(username="testuser")
+        genome_file = open(
+            'testfiles/upload_genomes/concatenated_genome_files/other_symbionts.faa', 'rb')
+        organism_names = open(
+            'testfiles/upload_genomes/concatenated_genome_files/organisms.txt', 'rb')
+        assembly_accessions = open(
+            'testfiles/upload_genomes/concatenated_genome_files/accessions.txt', 'rb')
+        assembly_levels = open(
+            'testfiles/upload_genomes/concatenated_genome_files/levels.txt', 'rb')
+        taxmap_file = open(
+            'testfiles/upload_genomes/concatenated_genome_files/acc_map.tab', 'rb')
+
+        file_dict={'genome_fasta_file':
+                       SimpleUploadedFile(genome_file.name, genome_file.read()),
+                   'organism_name_file':
+                       SimpleUploadedFile(organism_names.name, organism_names.read()),
+                   'assembly_accessions_file':
+                       SimpleUploadedFile(assembly_accessions.name, assembly_accessions.read()),
+                   'assembly_level_file':
+                       SimpleUploadedFile(assembly_levels.name, assembly_levels.read()),
+                   'taxmap_file':
+                       SimpleUploadedFile(taxmap_file.name, taxmap_file.read())}
+        post_dict={'database_title':"All Hydra Symbionts Test",
+                   'database_description':"Collection Of Symbiont Genomes",
+                   'assembly_entries':5,
+                   'user_email':'lukas.becker@hhu.de'}
+        form = UploadGenomeForm(user=user, data=post_dict, files=file_dict)
+        self.assertTrue(form.is_valid())

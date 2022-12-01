@@ -67,8 +67,17 @@ def delete_blastdb_and_associated_directories_by_id(database_id):
     except Exception as e:
         raise IntegrityError("couldnt delete blast database entry : {}".format(e))
 
-#TODO documentation
-def delete_project_and_associated_directories_by_id(project_id):
+'''delete_project_and_associated_directories_by_id
+
+    This function deletes the BlastProject with id project_id from the database.
+    It also removes all associated directories with the rmtree shutils function.
+    It is used in the delete_project_view in blast_project.views.py.
+    
+    :param porject_id
+        :type int
+    
+'''
+def delete_project_and_associated_directories_by_id(project_id:int)->None:
     try:
         with transaction.atomic():
             project = BlastProject.objects.get(id=project_id)

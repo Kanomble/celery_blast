@@ -93,7 +93,7 @@
                         <td>
                             <form class="col"
                                    action="{% url 'project_deletion' project_id=BlastProject.id%}"
-                                   method="GET">
+                                   method="DELETE">
                                 {% csrf_token %}
                                 <input type="submit" value="Delete Blast Project" class="btn btn-danger">
                             </form>

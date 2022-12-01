@@ -1,7 +1,4 @@
 from django.test import TestCase
-from django.utils import timezone
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django_celery_results.models import TaskResult
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 
 class AssemblyLevelsTest(TestCase):
