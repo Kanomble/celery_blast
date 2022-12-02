@@ -1,14 +1,15 @@
 import os
-from shutil import rmtree
 import pandas as pd
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
-from django.contrib.auth.models import User
-from .view_access_decorators import unauthenticated_user
-from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError, transaction
+from shutil import rmtree
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from .view_access_decorators import unauthenticated_user
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, CreateTaxonomicFileForMultipleScientificNames
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
@@ -18,15 +19,13 @@ from .py_services import list_taxonomic_files, upload_file, check_if_file_exists
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output,\
     transform_normalized_database_table_to_json
-from django.db import IntegrityError, transaction
-
 from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
     save_uploaded_multiple_file_genomes_into_database, get_all_blast_databases
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 
-''' dashboard
+'''dashboard_view
 
     View for the first dashboard page, this page enables monitoring of blast_projects,
     created by the currently logged in user. All context functions do return QuerySets.
@@ -218,13 +217,13 @@ def load_reciprocal_result_html_table_view(request, project_id):
 
 ''' create_taxonomic_file_view
 
-view for creation of taxonomic files, produced by the get_species_taxids.sh script.
-
-:GET
-    display available taxonomic files
-:POST
-    create taxonomic files
-    synchronous call of write_species_taxids_into_file
+    view for creation of taxonomic files, produced by the get_species_taxids.sh script.
+    
+    :GET
+        display available taxonomic files
+    :POST
+        create taxonomic files
+        synchronous call of write_species_taxids_into_file
 '''
 @login_required(login_url='login')
 def create_taxonomic_file_view_old(request):
@@ -293,19 +292,21 @@ def upload_genome_view(request):
                     )
 
                     genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ','_').upper()+'.database'
-                    if upload_genome_form.cleaned_data['taxmap_file'] != None:
-                        execute_makeblastdb_with_uploaded_genomes.delay(
-                            new_db.id,
-                            new_db.path_to_database_file + '/' + genome_file_name,
-                            taxmap_file=True)
-                    elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
-                        execute_makeblastdb_with_uploaded_genomes.delay(
-                            new_db.id,
-                            new_db.path_to_database_file + '/' + genome_file_name,
-                            taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
-                    else:
-                        raise IntegrityError('couldnt trigger makeblastdb execution ...')
-                    return success_view(request)
+                #outside transaction atomic blog
+                if upload_genome_form.cleaned_data['taxmap_file'] != None:
+                    execute_makeblastdb_with_uploaded_genomes.delay(
+                        new_db.id,
+                        new_db.path_to_database_file + '/' + genome_file_name,
+                        taxmap_file=True)
+                elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
+                    execute_makeblastdb_with_uploaded_genomes.delay(
+                        new_db.id,
+                        new_db.path_to_database_file + '/' + genome_file_name,
+                        taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
+                else:
+                    #TODO refactor dont trigger integrity error but delete database!
+                    raise IntegrityError('couldnt trigger makeblastdb execution ...')
+                return success_view(request)
             else:
                 context = {'UploadGenomeForm': upload_genome_form,
                            'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
@@ -371,8 +372,9 @@ def upload_multiple_genomes_view(request):
         return failure_view(request,e)
 
 ''' registration, login and logout views
-register an account with email and password, email can be used inside biopython functions
-user needs to authenticate otherwise they will get redirected to this login page
+
+    register an account with email and password, email can be used inside biopython functions
+    user needs to authenticate otherwise they will get redirected to this login page
 
 '''
 #login user
@@ -439,7 +441,7 @@ def success_view(request):
 '''database_statistics
     
     Function triggers execution of the database statistics optional postprocessing.
-    Executes the task function that includes py_database_statistic function database_statistics.
+
     Status not executed: NOTEXEC
     Status ongoing: PROGRESS
     Status finished: SUCCESS
@@ -544,5 +546,3 @@ def delete_database_statistics(request, project_id):
         return redirect('database_statistics',project_id=project_id)
     except Exception as e:
         return failure_view(request,e)
-
-
