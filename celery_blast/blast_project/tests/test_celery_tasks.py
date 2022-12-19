@@ -10,23 +10,25 @@ from celery_blast.celery import app
 from time import sleep
 
 @tag('special')
-class GenomeUploadViewsSimpleTestCase(TransactionTestCase):
+class GenomeUploadViewsTestCase(TransactionTestCase):
     c = Client()
 
     @classmethod
     def setUpClass(cls):
+        print("[+] Starting celery worker process")
         super().setUpClass()
         cls.celery_worker = start_worker(app,perform_ping_check=False)
         cls.celery_worker.__enter__()
 
     @classmethod
     def tearDownClass(cls):
+        print("[+] Tear down genomeuploadview celery test data")
         super().tearDownClass()
         cls.celery_worker.__exit__(None,None,None)
 
     def setUp(self) -> None:
         super().setUp()
-
+        print("[+] Setting up genomeuploadview celery test data")
         user = User.objects.create_user(
             'testuser',
             'test_email@email.com',
@@ -101,10 +103,9 @@ class GenomeUploadViewsSimpleTestCase(TransactionTestCase):
         response = self.c.get('/blast_project/upload_genomes/')
         self.assertEqual(200, response.status_code)
 
-    #TODO fix celery database handling for tests ...
-    #makeblastdb won't function due to updating blastdatabase instance with celeries taskresult instance
     @tag('upload_genomes','special')
     def test_uploadgenome_view_post(self):
+        print("[+] Setting up test for the uploadgenome view")
         self.c.login(username='testuser', password='test')
         genome_file = open(
             'testfiles/upload_genomes/concatenated_genome_files/other_symbionts.faa', 'rb')
@@ -132,11 +133,15 @@ class GenomeUploadViewsSimpleTestCase(TransactionTestCase):
                    'taxmap_file':
                        SimpleUploadedFile(taxmap_file.name, taxmap_file.read())
                    }
+        print("[+] Sending POST request to server ...")
         response = self.c.post('/blast_project/upload_genomes/',data=post_dict)
-        sleep(1)
+        print("[+] response: {}".format(response.status_code))
+        sleep(5)
+        print("[+] Loading new database object from database")
         database = BlastDatabase.objects.get(database_name='All Hydra Symbionts Test')
         print("[+] Celery Task For Database Formatting: ", database.database_download_and_format_task.status)
         sleep(10)
+        print("[+] Reloading object ...")
         database = BlastDatabase.objects.get(database_name='All Hydra Symbionts Test')
         print("[+] Celery Task For Database Formatting: ", database.database_download_and_format_task.status)
         self.assertTrue(200,response.status_code)

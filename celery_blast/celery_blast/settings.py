@@ -158,3 +158,6 @@ CACHES = {
 '''
 
 PANOPTES_IP = 'http://panoptes:5000'
+STATIC_RESULT_IMAGES = STATIC_URL + 'images/result_images/'
+BLAST_PROJECT_DIR = 'media/blast_projects/tests/'
+BLAST_DATABASE_DIR = 'media/databases/tests/'

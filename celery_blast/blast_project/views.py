@@ -24,6 +24,9 @@ from .py_django_db_services import get_users_blast_projects, get_project_by_id, 
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
+#BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
+#BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
 '''dashboard_view
 
@@ -93,8 +96,8 @@ def project_creation_view(request):
                             query_file_name=query_sequences.name,
                             project_form=project_creation_form,
                             fw_settings_form=blast_settings_forward_form,
-                            bw_settings_form=blast_settings_backward_form)
-                        path_to_query_file = 'media/blast_projects/' + str(
+                            bw_settings_form=blast_settings_backward_form,filepath=BLAST_PROJECT_DIR)
+                        path_to_query_file = BLAST_PROJECT_DIR + str(
                             blast_project.id) + '/' + query_sequences.name
                         upload_file(query_sequences, path_to_query_file)
                 except IntegrityError as e:
@@ -290,22 +293,22 @@ def upload_genome_view(request):
                         assembly_accession_file=upload_genome_form.cleaned_data['assembly_accessions_file'],
                         assembly_level_file=upload_genome_form.cleaned_data['assembly_level_file']
                     )
-
                     genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ','_').upper()+'.database'
-                #outside transaction atomic blog
-                if upload_genome_form.cleaned_data['taxmap_file'] != None:
-                    execute_makeblastdb_with_uploaded_genomes.delay(
-                        new_db.id,
-                        new_db.path_to_database_file + '/' + genome_file_name,
-                        taxmap_file=True)
-                elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
-                    execute_makeblastdb_with_uploaded_genomes.delay(
-                        new_db.id,
-                        new_db.path_to_database_file + '/' + genome_file_name,
-                        taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
-                else:
-                    #TODO refactor dont trigger integrity error but delete database!
-                    raise IntegrityError('couldnt trigger makeblastdb execution ...')
+                    print("[+] path: {}".format(new_db.path_to_database_file))
+                    #inside transaction atomic blog
+                    if upload_genome_form.cleaned_data['taxmap_file'] != None:
+                        execute_makeblastdb_with_uploaded_genomes.delay(
+                            new_db.id,
+                            new_db.path_to_database_file + '/' + genome_file_name,
+                            taxmap_file=True)
+                    elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
+                        execute_makeblastdb_with_uploaded_genomes.delay(
+                            new_db.id,
+                            new_db.path_to_database_file + '/' + genome_file_name,
+                            taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
+                    else:
+                        #TODO refactor dont trigger integrity error but delete database!
+                        raise IntegrityError('couldnt trigger makeblastdb execution ...')
                 return success_view(request)
             else:
                 context = {'UploadGenomeForm': upload_genome_form,
@@ -319,16 +322,17 @@ def upload_genome_view(request):
         #files = request.FILES.getlist('genome_fasta_files')
         return render(request,'blast_project/upload_genome_files_dashboard.html',context)
     except Exception as e:
+        print("[-] ERROR: {}".format(e))
         try:
             #check if there are database directories that do not reside in the postgres database
             databases = get_all_blast_databases()
             ids = [int(database.id) for database in databases]
-            for database_id in os.listdir('media/databases'):
+            for database_id in os.listdir(BLAST_DATABASE_DIR):
                 try:
                     identifier = int(database_id)
                     if identifier not in ids:
-                        if os.path.isdir('media/databases/'+str(identifier)):
-                            rmtree('media/databases/'+str(identifier)+'/')
+                        if os.path.isdir(BLAST_DATABASE_DIR+str(identifier)):
+                            rmtree(BLAST_DATABASE_DIR+str(identifier)+'/')
                 except:
                     continue
         except:
@@ -458,7 +462,7 @@ def database_statistics_dashboard(request, project_id):
         if task_status == 'SUCCESS':
             taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
             for unit in taxonomic_units:
-                project_path = "media/blast_projects/" + str(project_id) + "/" + unit + "_database_statistics_normalized.csv"
+                project_path = BLAST_PROJECT_DIR + str(project_id) + "/" + unit + "_database_statistics_normalized.csv"
                 if check_if_file_exists(project_path):
                     table = pd.read_csv(project_path,index_col=0,header=0)
                     number = len(table.columns)
@@ -541,7 +545,7 @@ def execute_database_statistics_task(request, project_id):
 @login_required(login_url='login')
 def delete_database_statistics(request, project_id):
     try:
-        logfile='media/blast_projects/'+str(project_id)+'/log/delete_database_statistics_task_and_output.log'
+        logfile=BLAST_PROJECT_DIR+str(project_id)+'/log/delete_database_statistics_task_and_output.log'
         delete_database_statistics_task_and_output(project_id,logfile=logfile)
         return redirect('database_statistics',project_id=project_id)
     except Exception as e:

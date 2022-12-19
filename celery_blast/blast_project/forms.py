@@ -363,6 +363,7 @@ class UploadGenomeForm(forms.Form):
                         try:
                             #check if there are taxids available (for provided organism names)
                             taxids = get_species_taxid_by_name(user_email,line)
+                            #multiple taxids are valid
                             if len(taxids) == 0:
                                 raise Exception
                         except:
@@ -411,7 +412,6 @@ class UploadMultipleFilesGenomeForm(forms.Form):
         self.fields['extra_field_count'].initial = extra_fields
         extra_fields = int(extra_fields)
 
-
         if extra_fields > 0:
             extra_fields += 1
         for index in range(extra_fields):
@@ -423,7 +423,6 @@ class UploadMultipleFilesGenomeForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         user_email = cleaned_data['user_email']
-
         for field in self.fields:
             if "genome_file" in field:
                 file = cleaned_data.get(field)
@@ -441,6 +440,7 @@ class UploadMultipleFilesGenomeForm(forms.Form):
                 else:
                     try:
                         taxids = get_species_taxid_by_name(user_email,cleaned_data.get(field))
+                        #multiple taxids are valid
                         if len(taxids) == 0:
                             raise Exception
                     except Exception as e:

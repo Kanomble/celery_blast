@@ -8,7 +8,7 @@ from .py_services import create_blastdatabase_directory,concatenate_genome_fasta
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv, Series
-
+from celery_blast.settings import BLAST_DATABASE_DIR
 '''update_external_tool_with_cdd_search
 
     This script uses model based functions of the ExternalTools model to update the QuerySequence model with 
@@ -147,7 +147,7 @@ the postgresql database. The input for this function is maintained by the py_pro
     :return blast_project
         :type django model (BlastProject)
 '''
-def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,query_sequence_filename):
+def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,query_sequence_filename,filepath='media/blast_projects/'):
     try:
         blast_project = BlastProject.objects.create_blast_project(
             project_title=valid_project_form.cleaned_data['project_title'],
@@ -158,7 +158,8 @@ def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,que
             project_backward_settings=bw_settings,
             project_forward_database=valid_project_form.cleaned_data['project_forward_database'],
             project_backward_database=valid_project_form.cleaned_data['project_backward_database'],
-            species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast']
+            species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast'],
+            filepath=filepath
         )
         return blast_project
     except Exception as e:
@@ -338,7 +339,7 @@ def save_uploaded_genomes_into_database(database_title,database_description,geno
                                                    taxonomic_node,
                                                    assembly_accession)
 
-        blast_database.path_to_database_file = "media/databases/"+str(blast_database.id)
+        blast_database.path_to_database_file = BLAST_DATABASE_DIR+str(blast_database.id)
         blast_database.save()
         return blast_database
     except Exception as e:
@@ -366,8 +367,8 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
             blast_database.assembly_levels.add(assembly_lvl)
 
         #creation of database directory:
-        create_blastdatabase_directory(database_id=blast_database.id)
-        path_to_database = 'media/databases/' + str(blast_database.id) + '/'
+        create_blastdatabase_directory(database_id=blast_database.id, database_filepath=BLAST_DATABASE_DIR)
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id) + '/'
 
         genomes_to_organism_and_taxid_dict = {}
         with open(path_to_database+'acc_taxmap.table','w') as taxmap_file:
@@ -376,7 +377,8 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
                 organism = 'organism_name_{}'.format(index)
 
                 organism = cleaned_data_multiple_files[organism]
-                taxid = pyb.get_species_taxid_by_name(user_email,organism)
+                #take the first taxid
+                taxid = pyb.get_species_taxid_by_name(user_email,organism)[0]
                 file = cleaned_data_multiple_files[file]
 
                 upload_file(file,path_to_database + file.name)
@@ -391,7 +393,7 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
 
         write_pandas_table_for_multiple_uploaded_files(blast_database,genomes_to_organism_and_taxid_dict)
 
-        blast_database.path_to_database_file = "media/databases/"+str(blast_database.id)
+        blast_database.path_to_database_file = BLAST_DATABASE_DIR+str(blast_database.id)
 
         genome_files = list(genomes_to_organism_and_taxid_dict.keys())
         concatenate_genome_fasta_files_in_db_dir(path_to_database, database_title, genome_files)
@@ -404,9 +406,8 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
 def create_database_directory_and_upload_files(blast_database,genome_file,taxmap_file=None):
     try:
 
-        path_to_database = 'media/databases/' + str(blast_database.id) + '/'
-
-        create_blastdatabase_directory(database_id=blast_database.id)
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id) + '/'
+        create_blastdatabase_directory(database_id=blast_database.id,database_filepath=BLAST_DATABASE_DIR)
 
         if taxmap_file != None:
             upload_file(taxmap_file, path_to_database+'acc_taxmap.table')
@@ -522,7 +523,7 @@ def write_pandas_table_for_one_genome_file(blast_database, organism_name, assemb
 #TODO documentation
 def write_pandas_table_for_multiple_uploaded_files(blast_database, genomes_to_organism_and_taxid_dict):
     try:
-        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id)+'/'
         with open(path_to_database + blast_database.get_pandas_table_name(), 'w') as  pandas_table_file:
             pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
             for line_index, key in enumerate(list(genomes_to_organism_and_taxid_dict.keys())):
@@ -593,7 +594,7 @@ def write_pandas_table_for_uploaded_genomes(blast_database:BlastDatabase,
                                             organisms_file,
                                             user_email:str):
     try:
-        path_to_database = 'media/databases/' + str(blast_database.id)+'/'
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id)+'/'
 
         taxonomic_nodes,organisms = get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email)
 

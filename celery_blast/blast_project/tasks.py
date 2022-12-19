@@ -12,12 +12,15 @@ from celery.exceptions import SoftTimeLimitExceeded
 from .py_django_db_services import update_blast_project_with_task_result_model, update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
     update_blast_project_with_database_statistics_task_result_model, get_all_blast_databases
 from .py_database_statistics import calculate_database_statistics
+from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR
 #logger for celery worker instances
 logger = get_task_logger(__name__)
 
 '''download_and_format_taxdb
 
     This task downloads the taxonomy database from the NCBI FTP site.
+    WARNING: This function uses the default BLAST_DATABASE_DIR filepath, overwriting BLAST_DATABASE_DIR does not
+    affect the function.
     
     :param self
         :type TaskResult object?
@@ -37,7 +40,7 @@ def download_and_format_taxdb(self):
     try:
         taxdb_ftp_path = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
         current_working_directory = os.getcwd()  # /blast/reciprocal_blast
-        path_to_taxdb_location = current_working_directory + '/media/databases/'
+        path_to_taxdb_location = current_working_directory + '/' + BLAST_DATABASE_DIR
         path_to_taxdb_location = path_to_taxdb_location + 'taxdb.tar.gz'
 
         proc = Popen(["wget",taxdb_ftp_path,"-q","-O",path_to_taxdb_location], shell=False)
@@ -131,8 +134,8 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
 @shared_task(bind=True)
 def execute_reciprocal_blast_project(self,project_id):
     try:
-        snakemake_working_dir = 'media/blast_projects/' + str(project_id) + '/'
-        snakemake_config_file = 'media/blast_projects/' + str(project_id) + '/snakefile_config'
+        snakemake_working_dir = BLAST_PROJECT_DIR + str(project_id) + '/'
+        snakemake_config_file = BLAST_PROJECT_DIR + str(project_id) + '/snakefile_config'
         snakefile_dir = 'static/snakefiles/reciprocal_blast/Snakefile'
 
         progress_recorder = ProgressRecorder(self)
@@ -242,7 +245,7 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
                     ['makeblastdb',
                      '-in',path_to_database,
                      '-out',path_to_database,
-                     '-taxid_map','media/databases/'+str(database_id)+'/acc_taxmap.table',
+                     '-taxid_map',BLAST_DATABASE_DIR+str(database_id)+'/acc_taxmap.table',
                      '-dbtype','prot',
                      '-input_type','fasta',
                      '-parse_seqids'
@@ -322,8 +325,8 @@ def calculate_database_statistics_task(self, project_id:int, user_email:str, tax
             logger.warning('ERROR:couldnt update blast project with exception : {}'.format(e))
             raise Exception('ERROR:couldnt update blast project with exception : {}'.format(e))
 
-        logfile='media/blast_projects/'+str(project_id)+'/log/calculate_database_statistics.log'
-        if os.path.isdir('media/blast_projects/'+str(project_id)+'/log'):
+        logfile=BLAST_PROJECT_DIR+str(project_id)+'/log/calculate_database_statistics.log'
+        if os.path.isdir(BLAST_PROJECT_DIR+str(project_id)+'/log'):
             logger.info("INFO:Starting database statistics task")
             calculate_database_statistics(project_id,logfile=logfile, user_email=user_email,taxonomic_units=taxonomic_units)
 

@@ -9,6 +9,9 @@ from django.db import IntegrityError
 from .managers import BlastProjectManager
 from refseq_transactions.models import BlastDatabase
 import pandas as pd
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+#TODO USE THOSE paths for setting up the project directory and snakemake config file
+#from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR
 
 class BlastSettings(models.Model):
     e_value = models.DecimalField(
@@ -138,7 +141,7 @@ class BlastProject(models.Model):
         :returns qseqids
             :type list[str]
     '''
-    def get_list_of_query_sequences(self, filepath='media/blast_projects/'):
+    def get_list_of_query_sequences(self, filepath=BLAST_PROJECT_DIR):
         try:
             query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
             query_file = open(query_sequence_file_path, 'r')
@@ -160,9 +163,9 @@ class BlastProject(models.Model):
         return self.project_user.email
 
     def get_project_dir(self):
-        return 'media/blast_projects/' + str(self.id)
+        return BLAST_PROJECT_DIR + str(self.id)
 
-    def get_project_query_sequence_filepath(self, filepath='media/blast_projects/'):
+    def get_project_query_sequence_filepath(self, filepath=BLAST_PROJECT_DIR):
         return filepath + str(self.id) + '/' + self.project_query_sequences
 
     def if_executed_return_associated_taskresult_model(self):
@@ -184,7 +187,7 @@ class BlastProject(models.Model):
         it directly creates a directory for the project and a directory for result images in the static folder
             
     '''
-    def initialize_project_directory(self,filepath='media/blast_projects/'):
+    def initialize_project_directory(self,filepath=BLAST_PROJECT_DIR):
         # check if blast_project was previously created / check if media/blast_project directory exists
         if (isdir(filepath + str(self.id)) == True):
             raise IntegrityError("project directory exists")
@@ -200,7 +203,7 @@ class BlastProject(models.Model):
 
 
     #TODO documentation
-    def write_snakemake_configuration_file(self, filepath='media/blast_projects/'):
+    def write_snakemake_configuration_file(self, filepath=BLAST_PROJECT_DIR):
         try:
             with open(filepath + str(self.id)+'/snakefile_config','w') as snk_config_file:
                 #database path from media/blast_projects/project_id as working directory for snakemake
@@ -227,7 +230,7 @@ class BlastProject(models.Model):
         This function is getting executed within the project_details_dashboard.html website.
         
     '''
-    def read_query_information_table(self, filepath='media/blast_projects/'):
+    def read_query_information_table(self, filepath=BLAST_PROJECT_DIR):
         def clean_feature_column(features):
             new_feature_column = []
             try:

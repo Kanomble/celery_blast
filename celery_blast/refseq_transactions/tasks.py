@@ -12,6 +12,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
+from celery_blast.settings import BLAST_DATABASE_DIR
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -21,7 +22,9 @@ logger = get_task_logger(__name__)
     This function downloads the current assembly_summary_refseq.txt file into 
     the media directory /databases/refseq_summary_file/ if this directory does not exists the function
     creates the directory.
-
+    WARNING: This function uses the default BLAST_DATABASE_DIR filepath, overwriting BLAST_DATABASE_DIR does not
+    affect the function.
+    
     it uses subprocess.Popen to invoke wget, stdout (e.g. percentage is printed out inside celery worker console)
 
     :returns returncode of Popen
@@ -397,7 +400,7 @@ def download_wget_ftp_paths(path_to_database:str,dictionary_ftp_paths_taxids:dic
         :type int -  
     
     summary of important functions and variables inside this task:
-        db_path = media/databases/2/
+        db_path = BLAST_DATABASE_DIR + 2/
         progress_recorder = CeleryProgressBar Class
         dict = get_ftp_paths_and_taxids_from_summary_file(database_id)
         dict = download_blast_databases_based_on_summary_file(db_path,dict,progress_recorder)
@@ -413,7 +416,7 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         logger.info('starting downloading task')
         working_dir = getcwd()
         logger.info('working dir : {}'.format(working_dir))
-        path_to_database = 'media/databases/' + str(database_id) + '/'
+        path_to_database = BLAST_DATABASE_DIR + str(database_id) + '/'
 
         progress_recorder.set_progress(0,100,"started downloading")
 
@@ -437,7 +440,7 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         #database_files = format_available_databases(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
         progress_recorder.set_progress(99, 100, "writing alias file")
         database_pandas_table_name = get_bdb_summary_table_name(database_id)
-        alias_filename = 'media/databases/' + str(database_id) + '/' + database_pandas_table_name+'.database.pal'
+        alias_filename = BLAST_DATABASE_DIR + str(database_id) + '/' + database_pandas_table_name+'.database.pal'
 
         logger.info('starting to write database alias file : {}'.format(alias_filename))
 

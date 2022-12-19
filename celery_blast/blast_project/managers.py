@@ -1,4 +1,5 @@
 from django.db import models
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
 # allows customization of queries for the database
 ''' BlastProjectManager
@@ -14,7 +15,7 @@ class BlastProjectManager(models.Manager):
             project_forward_settings, project_backward_settings,
             project_forward_database, project_backward_database,
             species_name_for_backward_blast,
-            filepath='media/blast_projects/'):
+            filepath=BLAST_PROJECT_DIR):
         # calling the create method (objects.create) ..
         blast_project = self.create(
             project_title=project_title, search_strategy=search_strategy,

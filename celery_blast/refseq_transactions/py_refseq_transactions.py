@@ -163,7 +163,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
 
         refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None,
                                      dtype={20:str, #20 excluded from refseq
-                                            5:str,                #5 taxid
+                                            5:str, #5 taxid
                                             6:str, #6 species taxid
                                             'ftp_path':str})
 

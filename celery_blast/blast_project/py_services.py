@@ -4,6 +4,7 @@ from os.path import isdir, isfile
 from os import mkdir, listdir
 from shutil import rmtree
 from django.db import IntegrityError, transaction
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
 '''check_if_taxdb_exists
     
@@ -61,8 +62,8 @@ def delete_blastdb_and_associated_directories_by_id(database_id):
     try:
         with transaction.atomic():
             blastdatabase = BlastDatabase.objects.get(id=database_id)
-            if isdir('media/databases/' + str(database_id)):
-                rmtree('media/databases/' + str(database_id))
+            if isdir(BLAST_DATABASE_DIR + str(database_id)):
+                rmtree(BLAST_DATABASE_DIR + str(database_id))
             blastdatabase.delete()
     except Exception as e:
         raise IntegrityError("couldnt delete blast database entry : {}".format(e))
@@ -81,8 +82,8 @@ def delete_project_and_associated_directories_by_id(project_id:int)->None:
     try:
         with transaction.atomic():
             project = BlastProject.objects.get(id=project_id)
-            if isdir('media/blast_projects/' + str(project_id)):
-                rmtree('media/blast_projects/' + str(project_id))
+            if isdir(BLAST_PROJECT_DIR + str(project_id)):
+                rmtree(BLAST_PROJECT_DIR + str(project_id))
             if isdir('static/images/result_images/'+str(project_id)):
                 rmtree('static/images/result_images/'+str(project_id))
             project.delete()
@@ -97,7 +98,7 @@ def delete_project_and_associated_directories_by_id(project_id:int)->None:
     :param database_id
         :type int
 '''
-def create_blastdatabase_directory(database_id,database_filepath='media/databases/'):
+def create_blastdatabase_directory(database_id,database_filepath=BLAST_DATABASE_DIR):
     try:
         mkdir(database_filepath + str(database_id))
         return database_filepath + str(database_id)
@@ -133,7 +134,7 @@ def upload_file(project_file, destination:str):
         :type list[str]
 '''
 #loads the reciprocal results table that is written with one of the last rules in the snakefiles
-def get_html_results(project_id:int,filename:str,html_result_path="media/blast_projects/")->list:
+def get_html_results(project_id:int,filename:str,html_result_path=BLAST_PROJECT_DIR)->list:
     try:
         with open(html_result_path+str(project_id)+"/"+filename) as res:
             data = res.readlines()
@@ -144,7 +145,7 @@ def get_html_results(project_id:int,filename:str,html_result_path="media/blast_p
 '''html_table_exists
     Checks if the html table exists.
 '''
-def html_table_exists(project_id,filename,html_result_path="media/blast_projects/"):
+def html_table_exists(project_id,filename,html_result_path=BLAST_PROJECT_DIR):
     if(isfile(html_result_path+str(project_id)+"/"+filename)):
         return True
     else:
