@@ -3,6 +3,7 @@ import psutil
 import subprocess
 import string
 import random
+import shutil
 from django.db import transaction, IntegrityError
 from .models import EntrezSearch
 from django.contrib.auth.models import User
@@ -11,6 +12,8 @@ from django.conf import settings
 from Bio import Entrez
 
 def execute_entrez_search(database: str, entrez_query: str, output_filepath: str, entrez_search: EntrezSearch) -> int:
+    #starts an Esearch which downloads the requested search with the selected database and saves it in a file
+    # for adding  more databases, the columns need to be added here, in the models.py get_pandas_table function and in forms.py to the EntrezSearchForm class
     try:
         xtract_format = {}
         xtract_format['pubmed'] = 'Id PubDate Source Author Title ELocationID'
@@ -41,7 +44,8 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
     except Exception:
         return 1
 
-def download_by_organism(search_id: int, organism_download: str, email: str):
+def download_by_organism(search_id: int, organism_download: str, email: str) -> int:
+    #uses biopython entrez tool to download fasta files of a selected organism in an entrezsearch paper and saves it in a file
     try:
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
 
@@ -89,7 +93,8 @@ def download_by_organism(search_id: int, organism_download: str, email: str):
 
 
 #TODO implementation
-def download_esearch_protein_fasta_files(search_id:int):
+def download_esearch_protein_fasta_files(search_id:int) -> int:
+    #downloads a fasta file of the associated protein sequences of an enztezsearch if the entrez database is protein or pubmed
     try:
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
 
@@ -217,6 +222,7 @@ def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_f
 
 
 def create_random_filename() -> str:
+    #creates a rondom file name and returns it
     randomly_generated_filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     esearch_output_filepath = 'media/esearch_output/result_dataframe_' + randomly_generated_filename
     while os.path.isfile(esearch_output_filepath) == True:
@@ -226,6 +232,7 @@ def create_random_filename() -> str:
     return randomly_generated_filename
 
 def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
+    #gets an entrez search database row based on a search_id and returns it
     try:
         entrez_search = EntrezSearch.objects.get(id=search_id)
         return entrez_search
@@ -234,6 +241,8 @@ def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
 
 
 def delete_esearch_by_id(search_id: int):
+    #deletes en entrazsearch assoiciated files and taskresult entry based on a search_id
+    #returns 0 if it worked or 1 if it did not
     try:
         with transaction.atomic():
 
@@ -241,6 +250,10 @@ def delete_esearch_by_id(search_id: int):
             task_db_id = EntrezSearch.objects.values('search_task_result_id').filter(id=search_id)
             task_db_id = task_db_id[0]['search_task_result_id']
             task_db = TaskResult.objects.get(id=task_db_id)
+            organism_db_file_name = "media/esearch_output/"+str(search_id)
+
+            if os.path.isdir(organism_db_file_name):
+                shutil.rmtree(organism_db_file_name)
 
             if entrez_search != None:
                 if os.path.isfile(entrez_search.file_name):
@@ -258,6 +271,8 @@ def delete_esearch_by_id(search_id: int):
         raise IntegrityError("ERROR during deletion of entrez_search with id : {} with exception: {}".format(search_id,e))
 
 def save_entrez_search_model(database:str,entrez_query:str,file_name:str, task_result_id:int, user_id:int) -> EntrezSearch:
+    #saves users entrezsearch input into a datbase with extra information
+    #returns the database row
     try:
         with transaction.atomic():
             user = User.objects.get(id=user_id)

@@ -26,6 +26,19 @@
     <ul>
         <li> Search pubmed articles </li>
     </ul>
+    <h4> Asssembly </h4>
+    <ul>
+        <li> Search within NCBIs Assembly databases to get info on assembled genomes </li>
+    </ul>
+    <h4> CDD </h4>
+    <ul>
+        <li> Search within NCBIs Conserved Domain Database (CDD) databases  </li>
+    </ul>
+    <h4> Protfam </h4>
+    <ul>
+        <li> Search within NCBIs Protein Family Models databases to find homologous gene groups</li>
+    </ul>
+
 {% endblock %}
 
 {% block content %}
@@ -44,7 +57,7 @@
             </div>
 
             <div class="form-group col-sm-4" style="margin: 20px">
-                <label for="database">Select a BLAST Database </label>
+                <label for="database">Select a NCBI Database </label>
                 <select class="form-control" id="database" name="database">
                     {% for database in EntrezSearchForm.database %}
                         {{database}}

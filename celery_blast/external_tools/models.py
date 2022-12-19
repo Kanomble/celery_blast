@@ -4,6 +4,7 @@ from django_celery_results.models import TaskResult
 import pandas as pd
 from .managers import ExternalToolsManager, QuerySequenceManager, EntrezSearchManager
 from django.contrib.auth.models import User
+import matplotlib.pyplot as plt
 
 #TODO documentation - explain why ExternalTools model is usefull (ManyToOne Relationship)
 class ExternalTools(models.Model):
@@ -201,6 +202,7 @@ class EntrezSearch(models.Model):
     edirect_objects = EntrezSearchManager()
 
     def get_pandas_table(self):
+        # for adding  more databases, the columns need to be added here, in forms.py to the EntrezSearchForm class and in entrez_search_service.py to the execute_entrez_search function
         pandas_header = {}
         pandas_header['pubmed'] = ['Id', 'PubDate', 'Source', 'Title', 'ElocationID']
         pandas_header['protein'] = ['Id','Caption','Title','Organism']
@@ -208,9 +210,21 @@ class EntrezSearch(models.Model):
         pandas_header['cdd'] = ["Id", "Title: Subtitle", "Abstract"]
         pandas_header['protfam'] = ["Id", "DispMethod", "DispReviewLevel", "string"]
 
-        paper = pd.read_table(self.file_name, header=None)
-        paper.columns = pandas_header[self.database]
+        paper = pd.read_table(self.file_name, names=pandas_header[self.database])
+        if self.database =="assembly":
+            self.get_plot(paper)
         return paper
+    def get_plot(self,paper):
+        try:
+            paper["AssemblyStatus"].value_counts().plot.bar()
+            plt.xticks(rotation=0)
+            plt.ylabel("Result entrys")
+            plt.xlabel("Assembly level")
+            plt.savefig('static/images/edirect_dashboard/hist.png')
+            return 0
+        except Exception as e:
+            print('No Hist createable with error: {}'.format(e))
+            return 1
 
     def get_paper_content(self):
         paper = self.get_pandas_table()
@@ -224,7 +238,16 @@ class EntrezSearch(models.Model):
         paper = paper.render(render_links=True ,uuid="searchResultTable")
         return paper
 
-
+    def get_stat_columns_length(self):
+        paper = pd.read_table(self.file_name, header=None)
+        stat_col_lst = ["Slen"]
+        if paper.columns.isin(stat_col_lst).any() == True:
+            cols = paper.columns.isin(cols)
+            stat_cols = 0
+            for i in cols:
+                if i == True:
+                    stat_cols += 1
+        return stat_cols
 
     def get_paper_number(self):
         return len(pd.read_table(self.file_name, header=None))
