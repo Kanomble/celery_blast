@@ -624,7 +624,7 @@ def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: 
                                     var unique_organisms = []
 
 
-                                    for(var i = 0; i sc.get_length();i++){
+                                    for(var i = 0; i<sc.get_length();i++){
                                         if(unique_organisms.includes(sc.data[color_menu.value][i]) == false){
                                             unique_organisms.push(sc.data[color_menu.value][i])
                                         }
@@ -648,7 +648,7 @@ def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: 
         """)
         return c_palette_callback
     except Exception as e:
-        raise Exception("[-] ERROR couldnt create color palette selection callback")
+        raise Exception("[-] ERROR couldnt create color palette selection callback with exception: {}".format(e))
 
 
 '''create_color_palette_selection
