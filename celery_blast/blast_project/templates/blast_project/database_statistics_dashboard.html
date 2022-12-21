@@ -79,49 +79,12 @@
     </div>
 
     <hr>
-    <div class="dashboard_project_list_col">
 
-        <div style="text-align: center">
-            <h3 class="col_header"> Taxonomic based database statistics</h3>
-            <p style="font-size: medium"> Press on a button to view database statistics for the chosen taxonomic unit </p>
-            <hr>
-        </div>
-
-        <div class="row" style="text-align:center;justify-content: center;">
-            <div class="col-sm">
-                <a  href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='genus' %}">
-                    <button class="btn btn-dark"> Genus </button>
-                </a>
-            </div>
-            <div class="col-sm">
-                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='family' %}">
-                    <button class="btn btn-dark"> Family </button>
-                </a>
-            </div>
-            <div class="col-sm">
-                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='order' %}">
-                    <button class="btn btn-dark"> Order </button>
-                </a>
-            </div>
-            <div class="col-sm">
-                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='class' %}">
-                    <button class="btn btn-dark"> Class </button>
-                </a>
-            </div>
-            <div class="col-sm">
-                <a href="{% url 'database_statistics_details' project_id=project_id taxonomic_unit='phylum' %}">
-                    <button class="btn btn-dark"> Phylum </button>
-                </a>
-            </div>
-        </div>
-        <hr>
+    <div class="dashboard_project_list_col" style="justify-content: center;align-content: center;text-align: center">
+        {% include DatabaseStatisticsBokehPlot %}
     </div>
-    <div class="dashboard_project_list_col">
-        <div style="text-align: center">
-            <h3 class="col_header"> Class based database statistics</h3>
-             <p style="font-size: medium"> Relative number of RBHs across class taxonomic clades </p>
-        </div>
 
+    <div class="dashboard_project_list_col">
         <hr>
         <table id="class_table" class="table table-responsive table-hover"> </table>
     </div>

@@ -168,7 +168,7 @@ def project_details_view(request, project_id:int):
     This view deletes the associated BlastProject model and its files 
     in media/blast_projects/BlastProject.id and static/images/result_images/BlastProject.id.
     
-    :DELETE
+    :POST
     Deletes the associated BlastProject and all files.
     
     :GET
@@ -180,7 +180,7 @@ def project_details_view(request, project_id:int):
 @login_required(login_url='login')
 def project_delete_view(request, project_id:int):
     try:
-        if request.method == "DELETE":
+        if request.method == "POST":
             delete_project_and_associated_directories_by_id(project_id)
             return success_view(request)
         else:
@@ -474,6 +474,7 @@ def database_statistics_dashboard(request, project_id):
                     table = table.transpose()[(table == 0.0).sum() != number_queries]
                     number = len(table.transpose().columns)
                     context[key_norm] = number
+                    context['DatabaseStatisticsBokehPlot'] = str(project_id) + "/" + "interactive_bokeh_plot.html"
                 else:
                     key = unit + "_number"
                     error_phrase = "table does not exist, please recompute the database statistics by pressing the button"

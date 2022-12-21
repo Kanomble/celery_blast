@@ -204,7 +204,7 @@ class BlastProjectViewsTestCase(TestCase):
     def test_delete_project_view_get(self):
         project = BlastProject.objects.get(project_title='test project 1')
         self.c.login(username='testuser', password='test')
-        response = self.c.delete('/blast_project/'+str(project.id)+'/project_deletion')
+        response = self.c.post('/blast_project/'+str(project.id)+'/project_deletion')
         self.assertEqual(200,response.status_code)
         self.assertTemplateUsed(response,'blast_project/success.html')
 
@@ -248,7 +248,7 @@ class BlastProjectViewsTestCase(TestCase):
                 project_title='Test Project Title 2')
 
             number_project_before_deletion = len(BlastProject.objects.all())
-            response_delete = self.c.delete(
+            response_delete = self.c.post(
                 '/blast_project/'+str(new_project.id)+'/project_deletion',
                 {'project_id':new_project.id})
             number_project_after_deletion = len(BlastProject.objects.all())

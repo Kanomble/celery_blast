@@ -124,7 +124,17 @@ def get_users_blast_projects(userid:int):
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
 
-#TODO documentation
+
+'''get_project_by_id
+
+    Returns the associated BlastProject model instance.
+
+    :param project_id
+        :type int
+        
+    :returns BlastProject
+        :type blast_project.models.BlastProject
+'''
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)
 
