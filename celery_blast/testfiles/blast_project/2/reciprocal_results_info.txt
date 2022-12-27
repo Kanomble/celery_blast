@@ -1,0 +1,3 @@
+	INFO:qseqid: WP_010874243 hits: 236
+	INFO:qseqid: WP_010874242 hits: 373
+	INFO:qseqid: WP_010874241 hits: 215

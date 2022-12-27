@@ -20,7 +20,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
             cmd = 'esearch -db {} -query "{}" | efilter -source refseq | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -element {} > {}'.format(
                 database, entrez_query, xtract_format[database], output_filepath)
         else:
-            cmd = 'esearch -db {} -query "{}" | efilter -source refseq | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -element {} > {}'.format(
+            cmd = 'esearch -db {} -query "{}" || efilter -source refseq | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -element {} > {}'.format(
                 database, entrez_query, xtract_format[database], output_filepath)
 
         process = subprocess.Popen(cmd, shell=True)
@@ -92,6 +92,7 @@ def download_esearch_protein_fasta_files(search_id:int):
     #catch either subprocess
     except subprocess.TimeoutExpired:
     # delete all child processes
+    # and if 'target_fasta_file_path' in locals()
         if 'process' in locals():
             pid = process.pid
             parent = psutil.Process(pid)

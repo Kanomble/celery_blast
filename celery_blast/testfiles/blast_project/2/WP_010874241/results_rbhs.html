@@ -1,0 +1,2212 @@
+
+            <html>
+              <head>
+                <title>BLAST Result Table</title>
+                <!-- DataTables stylesheets-->
+                <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css" crossorigin="anonymous">
+                <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.2/css/select.dataTables.min.css" crossorigin="anonymous">
+                <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
+              </head>
+
+              <body>
+                <div id="blast_results_table" style="display:none">
+                    <table border="1" class="dataframe mystyle">
+  <thead>
+    <tr style="text-align: left;">
+      <th></th>
+      <th>sacc_transformed</th>
+      <th>scomnames</th>
+      <th>staxids</th>
+      <th>pident</th>
+      <th>bitscore</th>
+      <th>evalue</th>
+      <th>stitle</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>609</th>
+      <td>WP_010874241</td>
+      <td>Synechocystis sp. IPPAS B-1465</td>
+      <td>2116702</td>
+      <td>100.000</td>
+      <td>608.0</td>
+      <td>0.000000e+00</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechocystis]</td>
+    </tr>
+    <tr>
+      <th>610</th>
+      <td>WP_010874241</td>
+      <td>Synechocystis sp. PCC 6803 substr. PCC-P</td>
+      <td>1080230</td>
+      <td>100.000</td>
+      <td>608.0</td>
+      <td>0.000000e+00</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechocystis]</td>
+    </tr>
+    <tr>
+      <th>611</th>
+      <td>WP_010874241</td>
+      <td>Synechocystis sp. PCC 6803 substr. PCC-N</td>
+      <td>1080229</td>
+      <td>100.000</td>
+      <td>608.0</td>
+      <td>0.000000e+00</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechocystis]</td>
+    </tr>
+    <tr>
+      <th>612</th>
+      <td>WP_010874241</td>
+      <td>Synechocystis sp. PCC 6803 substr. GT-I</td>
+      <td>1080228</td>
+      <td>100.000</td>
+      <td>608.0</td>
+      <td>0.000000e+00</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechocystis]</td>
+    </tr>
+    <tr>
+      <th>613</th>
+      <td>WP_010874241</td>
+      <td>Synechocystis sp. PCC 6803</td>
+      <td>1148</td>
+      <td>100.000</td>
+      <td>608.0</td>
+      <td>0.000000e+00</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechocystis]</td>
+    </tr>
+    <tr>
+      <th>614</th>
+      <td>WP_162329390</td>
+      <td>Synechocystis sp. CACIAM 05</td>
+      <td>1933929</td>
+      <td>99.666</td>
+      <td>607.0</td>
+      <td>0.000000e+00</td>
+      <td>circadian clock protein KaiA [Synechocystis sp. CACIAM 05]</td>
+    </tr>
+    <tr>
+      <th>615</th>
+      <td>WP_212720941</td>
+      <td>Synechocystis sp. PCC 7338</td>
+      <td>2732530</td>
+      <td>96.656</td>
+      <td>590.0</td>
+      <td>0.000000e+00</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechocystis]</td>
+    </tr>
+    <tr>
+      <th>616</th>
+      <td>WP_028947079</td>
+      <td>Synechocystis sp. PCC 6714</td>
+      <td>1147</td>
+      <td>93.645</td>
+      <td>573.0</td>
+      <td>0.000000e+00</td>
+      <td>circadian clock protein KaiA [Synechocystis sp. PCC 6714]</td>
+    </tr>
+    <tr>
+      <th>617</th>
+      <td>WP_009546512</td>
+      <td>Crocosphaera subtropica ATCC 51142</td>
+      <td>43989</td>
+      <td>56.333</td>
+      <td>336.0</td>
+      <td>9.740000e-115</td>
+      <td>circadian clock protein KaiA [Crocosphaera subtropica]</td>
+    </tr>
+    <tr>
+      <th>618</th>
+      <td>WP_015957322</td>
+      <td>Rippkaea orientalis PCC 8801</td>
+      <td>41431</td>
+      <td>53.420</td>
+      <td>325.0</td>
+      <td>2.470000e-110</td>
+      <td>circadian clock protein KaiA [Rippkaea orientalis]</td>
+    </tr>
+    <tr>
+      <th>619</th>
+      <td>WP_015145809</td>
+      <td>Pleurocapsa sp. PCC 7327</td>
+      <td>118163</td>
+      <td>53.333</td>
+      <td>325.0</td>
+      <td>2.900000e-110</td>
+      <td>circadian clock protein KaiA [Pleurocapsa sp. PCC 7327]</td>
+    </tr>
+    <tr>
+      <th>620</th>
+      <td>WP_041922980</td>
+      <td>Cyanobacterium aponinum PCC 10605</td>
+      <td>755178</td>
+      <td>50.318</td>
+      <td>318.0</td>
+      <td>1.550000e-107</td>
+      <td>circadian clock protein KaiA [Cyanobacterium aponinum]</td>
+    </tr>
+    <tr>
+      <th>621</th>
+      <td>WP_013321815</td>
+      <td>Gloeothece verrucosa PCC 7822</td>
+      <td>497965</td>
+      <td>50.938</td>
+      <td>318.0</td>
+      <td>3.690000e-107</td>
+      <td>circadian clock protein KaiA [Gloeothece verrucosa]</td>
+    </tr>
+    <tr>
+      <th>622</th>
+      <td>WP_239005429</td>
+      <td>Gloeothece citriformis PCC 7424</td>
+      <td>65393</td>
+      <td>50.161</td>
+      <td>312.0</td>
+      <td>2.890000e-105</td>
+      <td>circadian clock protein KaiA [Gloeothece citriformis]</td>
+    </tr>
+    <tr>
+      <th>623</th>
+      <td>WP_041804118</td>
+      <td>Microcystis viridis NIES-102</td>
+      <td>213615</td>
+      <td>52.595</td>
+      <td>311.0</td>
+      <td>5.730000e-105</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Microcystis]</td>
+    </tr>
+    <tr>
+      <th>624</th>
+      <td>WP_041804118</td>
+      <td>Microcystis aeruginosa NIES-843</td>
+      <td>449447</td>
+      <td>52.595</td>
+      <td>311.0</td>
+      <td>5.730000e-105</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Microcystis]</td>
+    </tr>
+    <tr>
+      <th>625</th>
+      <td>WP_158201533</td>
+      <td>Microcystis aeruginosa FD4</td>
+      <td>2686288</td>
+      <td>52.508</td>
+      <td>309.0</td>
+      <td>5.240000e-104</td>
+      <td>circadian clock protein KaiA [Microcystis aeruginosa]</td>
+    </tr>
+    <tr>
+      <th>626</th>
+      <td>WP_106908241</td>
+      <td>Microcystis sp. MC19</td>
+      <td>1967666</td>
+      <td>51.515</td>
+      <td>308.0</td>
+      <td>8.380000e-104</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Microcystis]</td>
+    </tr>
+    <tr>
+      <th>627</th>
+      <td>WP_103112530</td>
+      <td>Microcystis aeruginosa NIES-298</td>
+      <td>449468</td>
+      <td>51.515</td>
+      <td>306.0</td>
+      <td>4.540000e-103</td>
+      <td>circadian clock protein KaiA [Microcystis aeruginosa]</td>
+    </tr>
+    <tr>
+      <th>628</th>
+      <td>WP_002750903</td>
+      <td>Microcystis aeruginosa FACHB-905</td>
+      <td>267865</td>
+      <td>51.515</td>
+      <td>306.0</td>
+      <td>4.900000e-103</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Microcystis]</td>
+    </tr>
+    <tr>
+      <th>629</th>
+      <td>WP_002750903</td>
+      <td>Microcystis aeruginosa PCC 7806SL</td>
+      <td>1903187</td>
+      <td>51.515</td>
+      <td>306.0</td>
+      <td>4.900000e-103</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Microcystis]</td>
+    </tr>
+    <tr>
+      <th>630</th>
+      <td>WP_046662387</td>
+      <td>Microcystis aeruginosa NIES-2481</td>
+      <td>1698524</td>
+      <td>51.211</td>
+      <td>303.0</td>
+      <td>9.620000e-102</td>
+      <td>circadian clock protein KaiA [Microcystis aeruginosa]</td>
+    </tr>
+    <tr>
+      <th>631</th>
+      <td>WP_046662387</td>
+      <td>Microcystis aeruginosa NIES-2549</td>
+      <td>1641812</td>
+      <td>51.211</td>
+      <td>303.0</td>
+      <td>9.620000e-102</td>
+      <td>circadian clock protein KaiA [Microcystis aeruginosa]</td>
+    </tr>
+    <tr>
+      <th>632</th>
+      <td>WP_066118607</td>
+      <td>Geminocystis sp. NIES-3709</td>
+      <td>1617448</td>
+      <td>47.678</td>
+      <td>303.0</td>
+      <td>1.310000e-101</td>
+      <td>circadian clock protein KaiA [Geminocystis sp. NIES-3709]</td>
+    </tr>
+    <tr>
+      <th>633</th>
+      <td>WP_061432112</td>
+      <td>Microcystis aeruginosa</td>
+      <td>1126</td>
+      <td>51.712</td>
+      <td>301.0</td>
+      <td>8.150000e-101</td>
+      <td>circadian clock protein KaiA [Microcystis aeruginosa]</td>
+    </tr>
+    <tr>
+      <th>634</th>
+      <td>WP_096385120</td>
+      <td>Stanieria sp. NIES-3757</td>
+      <td>1807358</td>
+      <td>49.511</td>
+      <td>301.0</td>
+      <td>1.280000e-100</td>
+      <td>circadian clock protein KaiA [Stanieria sp. NIES-3757]</td>
+    </tr>
+    <tr>
+      <th>635</th>
+      <td>WP_015191646</td>
+      <td>Stanieria cyanosphaera PCC 7437</td>
+      <td>111780</td>
+      <td>50.000</td>
+      <td>300.0</td>
+      <td>3.370000e-100</td>
+      <td>circadian clock protein KaiA [Stanieria cyanosphaera]</td>
+    </tr>
+    <tr>
+      <th>636</th>
+      <td>WP_026101981</td>
+      <td>Geminocystis herdmanii PCC 6308</td>
+      <td>113355</td>
+      <td>47.368</td>
+      <td>299.0</td>
+      <td>8.790000e-100</td>
+      <td>circadian clock protein KaiA [Geminocystis herdmanii]</td>
+    </tr>
+    <tr>
+      <th>637</th>
+      <td>WP_119259530</td>
+      <td>cyanobacterium endosymbiont of Rhopalodia gibberula</td>
+      <td>1763363</td>
+      <td>49.660</td>
+      <td>294.0</td>
+      <td>3.370000e-98</td>
+      <td>circadian clock protein KaiA [cyanobacterium endosymbiont of Rhopalodia gibberula]</td>
+    </tr>
+    <tr>
+      <th>638</th>
+      <td>WP_066343578</td>
+      <td>Geminocystis sp. NIES-3708</td>
+      <td>1615909</td>
+      <td>46.933</td>
+      <td>293.0</td>
+      <td>1.710000e-97</td>
+      <td>circadian clock protein KaiA [Geminocystis sp. NIES-3708]</td>
+    </tr>
+    <tr>
+      <th>639</th>
+      <td>WP_065715809</td>
+      <td>Synechococcus sp. PCC 8807</td>
+      <td>195248</td>
+      <td>50.000</td>
+      <td>286.0</td>
+      <td>6.220000e-95</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>640</th>
+      <td>WP_065715809</td>
+      <td>Synechococcus sp. PCC 11901</td>
+      <td>2579791</td>
+      <td>50.000</td>
+      <td>286.0</td>
+      <td>6.220000e-95</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>641</th>
+      <td>WP_065709963</td>
+      <td>Synechococcus sp. PCC 7117</td>
+      <td>195498</td>
+      <td>50.000</td>
+      <td>285.0</td>
+      <td>7.090000e-95</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PCC 7117]</td>
+    </tr>
+    <tr>
+      <th>642</th>
+      <td>WP_065713015</td>
+      <td>Synechococcus sp. PCC 7003</td>
+      <td>374981</td>
+      <td>49.333</td>
+      <td>285.0</td>
+      <td>9.520000e-95</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PCC 7003]</td>
+    </tr>
+    <tr>
+      <th>643</th>
+      <td>WP_062431932</td>
+      <td>Synechococcus sp. PCC 73109</td>
+      <td>374982</td>
+      <td>49.667</td>
+      <td>283.0</td>
+      <td>4.980000e-94</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PCC 73109]</td>
+    </tr>
+    <tr>
+      <th>644</th>
+      <td>WP_012305923</td>
+      <td>Synechococcus sp. PCC 7002</td>
+      <td>32049</td>
+      <td>49.667</td>
+      <td>281.0</td>
+      <td>4.040000e-93</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>645</th>
+      <td>WP_096418958</td>
+      <td>Synechococcus sp. NIES-970</td>
+      <td>1827144</td>
+      <td>48.485</td>
+      <td>276.0</td>
+      <td>4.090000e-91</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. NIES-970]</td>
+    </tr>
+    <tr>
+      <th>646</th>
+      <td>WP_168568046</td>
+      <td>Oxynema sp. AP17</td>
+      <td>2064643</td>
+      <td>44.516</td>
+      <td>271.0</td>
+      <td>3.720000e-89</td>
+      <td>circadian clock protein KaiA [Oxynema aestuarii]</td>
+    </tr>
+    <tr>
+      <th>647</th>
+      <td>WP_232509840</td>
+      <td>cyanobacterium endosymbiont of Epithemia turgida isolate EtSB Lake Yunoko</td>
+      <td>1228987</td>
+      <td>46.043</td>
+      <td>261.0</td>
+      <td>1.460000e-85</td>
+      <td>circadian clock protein KaiA [cyanobacterium endosymbiont of Epithemia turgida]</td>
+    </tr>
+    <tr>
+      <th>648</th>
+      <td>WP_015180366</td>
+      <td>Microcoleus sp. PCC 7113</td>
+      <td>1173027</td>
+      <td>45.603</td>
+      <td>261.0</td>
+      <td>4.650000e-85</td>
+      <td>circadian clock protein KaiA [Allocoleopsis franciscana]</td>
+    </tr>
+    <tr>
+      <th>649</th>
+      <td>WP_063822949</td>
+      <td>Oscillatoria acuminata PCC 6304</td>
+      <td>56110</td>
+      <td>42.765</td>
+      <td>258.0</td>
+      <td>5.630000e-84</td>
+      <td>circadian clock protein KaiA [Oscillatoria acuminata]</td>
+    </tr>
+    <tr>
+      <th>650</th>
+      <td>WP_084762172</td>
+      <td>Leptolyngbya sp. NIES-3755</td>
+      <td>1752064</td>
+      <td>50.936</td>
+      <td>254.0</td>
+      <td>4.390000e-83</td>
+      <td>circadian clock protein KaiA [Leptolyngbya sp. NIES-3755]</td>
+    </tr>
+    <tr>
+      <th>651</th>
+      <td>WP_224341586</td>
+      <td>cf. Leptolyngbya sp. CCNUW1</td>
+      <td>2653194</td>
+      <td>44.147</td>
+      <td>254.0</td>
+      <td>1.730000e-82</td>
+      <td>circadian clock protein KaiA [Kovacikia minuta]</td>
+    </tr>
+    <tr>
+      <th>652</th>
+      <td>WP_017289885</td>
+      <td>Leptolyngbya boryana NIES-2135</td>
+      <td>1973484</td>
+      <td>47.909</td>
+      <td>249.0</td>
+      <td>9.150000e-81</td>
+      <td>circadian clock protein KaiA [Leptolyngbya boryana]</td>
+    </tr>
+    <tr>
+      <th>653</th>
+      <td>WP_199323814</td>
+      <td>Leptolyngbya boryana IU 594</td>
+      <td>462680</td>
+      <td>47.909</td>
+      <td>249.0</td>
+      <td>1.070000e-80</td>
+      <td>circadian clock protein KaiA [Leptolyngbya boryana]</td>
+    </tr>
+    <tr>
+      <th>654</th>
+      <td>WP_199323814</td>
+      <td>Leptolyngbya boryana dg5</td>
+      <td>1260963</td>
+      <td>47.909</td>
+      <td>249.0</td>
+      <td>1.070000e-80</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Leptolyngbya]</td>
+    </tr>
+    <tr>
+      <th>655</th>
+      <td>WP_199323814</td>
+      <td>Leptolyngbya boryana IAM M-101</td>
+      <td>411966</td>
+      <td>47.909</td>
+      <td>249.0</td>
+      <td>1.070000e-80</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Leptolyngbya]</td>
+    </tr>
+    <tr>
+      <th>656</th>
+      <td>WP_146295555</td>
+      <td>Euhalothece natronophila Z-M001</td>
+      <td>522448</td>
+      <td>43.902</td>
+      <td>246.0</td>
+      <td>1.440000e-79</td>
+      <td>circadian clock protein KaiA [Euhalothece natronophila]</td>
+    </tr>
+    <tr>
+      <th>657</th>
+      <td>WP_096717849</td>
+      <td>Chondrocystis sp. NIES-4102</td>
+      <td>2005460</td>
+      <td>43.522</td>
+      <td>246.0</td>
+      <td>2.090000e-79</td>
+      <td>circadian clock protein KaiA [Chondrocystis sp. NIES-4102]</td>
+    </tr>
+    <tr>
+      <th>658</th>
+      <td>WP_015179605</td>
+      <td>Oscillatoria nigro-viridis PCC 7112</td>
+      <td>179408</td>
+      <td>43.234</td>
+      <td>243.0</td>
+      <td>5.620000e-78</td>
+      <td>circadian clock protein KaiA [Oscillatoria nigro-viridis]</td>
+    </tr>
+    <tr>
+      <th>659</th>
+      <td>WP_015202682</td>
+      <td>Crinalium epipsammum PCC 9333</td>
+      <td>1173022</td>
+      <td>42.763</td>
+      <td>241.0</td>
+      <td>1.430000e-77</td>
+      <td>circadian clock protein KaiA [Crinalium epipsammum]</td>
+    </tr>
+    <tr>
+      <th>660</th>
+      <td>WP_225938191</td>
+      <td>Leptolyngbya sp. PKUAC-SCTE412</td>
+      <td>2016068</td>
+      <td>47.876</td>
+      <td>241.0</td>
+      <td>2.110000e-77</td>
+      <td>circadian clock protein KaiA [Leptothermofonsia sichuanensis]</td>
+    </tr>
+    <tr>
+      <th>661</th>
+      <td>WP_216655257</td>
+      <td>Thermoleptolyngbya sp. PKUAC-SCTA183</td>
+      <td>2737172</td>
+      <td>45.985</td>
+      <td>239.0</td>
+      <td>7.010000e-77</td>
+      <td>circadian clock protein KaiA [Thermoleptolyngbya sichuanensis]</td>
+    </tr>
+    <tr>
+      <th>662</th>
+      <td>WP_205370202</td>
+      <td>Thermoleptolyngbya sp. PKUAC-SCTB121</td>
+      <td>2811482</td>
+      <td>45.985</td>
+      <td>239.0</td>
+      <td>8.970000e-77</td>
+      <td>circadian clock protein KaiA [Thermoleptolyngbya sp. PKUAC-SCTB121]</td>
+    </tr>
+    <tr>
+      <th>663</th>
+      <td>WP_242723081</td>
+      <td>Microcoleus vaginatus HSN003</td>
+      <td>2303329</td>
+      <td>42.997</td>
+      <td>239.0</td>
+      <td>1.060000e-76</td>
+      <td>circadian clock protein KaiA [Microcoleus vaginatus]</td>
+    </tr>
+    <tr>
+      <th>664</th>
+      <td>WP_006632118</td>
+      <td>Microcoleus vaginatus PCC 9802</td>
+      <td>669365</td>
+      <td>42.671</td>
+      <td>239.0</td>
+      <td>2.150000e-76</td>
+      <td>circadian clock protein KaiA [Microcoleus vaginatus]</td>
+    </tr>
+    <tr>
+      <th>665</th>
+      <td>WP_083374018</td>
+      <td>Moorea producens JHB</td>
+      <td>1454205</td>
+      <td>43.750</td>
+      <td>236.0</td>
+      <td>1.620000e-75</td>
+      <td>circadian clock protein KaiA [Moorea producens]</td>
+    </tr>
+    <tr>
+      <th>666</th>
+      <td>WP_225901175</td>
+      <td>Leptolyngbya sp. PCC 7376</td>
+      <td>111781</td>
+      <td>51.172</td>
+      <td>236.0</td>
+      <td>1.800000e-75</td>
+      <td>circadian clock protein KaiA [Leptolyngbya sp. PCC 7376]</td>
+    </tr>
+    <tr>
+      <th>667</th>
+      <td>WP_083305479</td>
+      <td>Moorea producens PAL-8-15-08-1</td>
+      <td>1458985</td>
+      <td>42.763</td>
+      <td>236.0</td>
+      <td>2.010000e-75</td>
+      <td>circadian clock protein KaiA [Moorea producens]</td>
+    </tr>
+    <tr>
+      <th>668</th>
+      <td>WP_211619802</td>
+      <td>Leptolyngbya sp. 7M</td>
+      <td>2812896</td>
+      <td>44.118</td>
+      <td>233.0</td>
+      <td>2.330000e-74</td>
+      <td>circadian clock protein KaiA [Leptolyngbya sp. 7M]</td>
+    </tr>
+    <tr>
+      <th>669</th>
+      <td>WP_015225153</td>
+      <td>Halothece sp. PCC 7418</td>
+      <td>65093</td>
+      <td>43.403</td>
+      <td>232.0</td>
+      <td>2.660000e-74</td>
+      <td>circadian clock protein KaiA [Halothece sp. PCC 7418]</td>
+    </tr>
+    <tr>
+      <th>670</th>
+      <td>WP_245824137</td>
+      <td>Planktothrix pseudagardhii</td>
+      <td>132604</td>
+      <td>40.559</td>
+      <td>232.0</td>
+      <td>6.790000e-74</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Planktothrix]</td>
+    </tr>
+    <tr>
+      <th>671</th>
+      <td>WP_245824137</td>
+      <td>Planktothrix tepida</td>
+      <td>1678309</td>
+      <td>40.559</td>
+      <td>232.0</td>
+      <td>6.790000e-74</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Planktothrix]</td>
+    </tr>
+    <tr>
+      <th>672</th>
+      <td>WP_042153460</td>
+      <td>Planktothrix agardhii</td>
+      <td>1160</td>
+      <td>41.115</td>
+      <td>230.0</td>
+      <td>2.360000e-73</td>
+      <td>circadian clock protein KaiA [Planktothrix agardhii]</td>
+    </tr>
+    <tr>
+      <th>673</th>
+      <td>WP_081846456</td>
+      <td>Planktothrix agardhii</td>
+      <td>1160</td>
+      <td>41.637</td>
+      <td>229.0</td>
+      <td>5.710000e-73</td>
+      <td>circadian clock protein KaiA [Planktothrix agardhii]</td>
+    </tr>
+    <tr>
+      <th>674</th>
+      <td>WP_081846456</td>
+      <td>Planktothrix agardhii NIVA-CYA 126/8</td>
+      <td>388467</td>
+      <td>41.637</td>
+      <td>229.0</td>
+      <td>5.710000e-73</td>
+      <td>circadian clock protein KaiA [Planktothrix agardhii]</td>
+    </tr>
+    <tr>
+      <th>675</th>
+      <td>WP_081694495</td>
+      <td>Planktothrix rubescens NIVA-CYA 18</td>
+      <td>329571</td>
+      <td>40.925</td>
+      <td>227.0</td>
+      <td>2.610000e-72</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Planktothrix]</td>
+    </tr>
+    <tr>
+      <th>676</th>
+      <td>WP_015230936</td>
+      <td>Dactylococcopsis salina PCC 8305</td>
+      <td>13035</td>
+      <td>43.554</td>
+      <td>226.0</td>
+      <td>7.440000e-72</td>
+      <td>circadian clock protein KaiA [Dactylococcopsis salina]</td>
+    </tr>
+    <tr>
+      <th>677</th>
+      <td>WP_081692453</td>
+      <td>Planktothrix agardhii</td>
+      <td>1160</td>
+      <td>40.569</td>
+      <td>224.0</td>
+      <td>3.090000e-71</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Planktothrix]</td>
+    </tr>
+    <tr>
+      <th>678</th>
+      <td>WP_199248351</td>
+      <td>[Phormidium] sp. ETS-05</td>
+      <td>222819</td>
+      <td>41.853</td>
+      <td>224.0</td>
+      <td>1.300000e-70</td>
+      <td>circadian clock protein KaiA [[Phormidium] sp. ETS-05]</td>
+    </tr>
+    <tr>
+      <th>679</th>
+      <td>WP_012161597</td>
+      <td>Acaryochloris marina MBIC11017</td>
+      <td>329726</td>
+      <td>45.105</td>
+      <td>223.0</td>
+      <td>1.740000e-70</td>
+      <td>circadian clock protein KaiA [Acaryochloris marina]</td>
+    </tr>
+    <tr>
+      <th>680</th>
+      <td>WP_208673134</td>
+      <td>Synechococcus elongatus PCC 11802</td>
+      <td>2283154</td>
+      <td>43.448</td>
+      <td>222.0</td>
+      <td>4.670000e-70</td>
+      <td>circadian clock protein KaiA [Synechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>681</th>
+      <td>WP_208673134</td>
+      <td>Synechococcus elongatus PCC 11801</td>
+      <td>2219813</td>
+      <td>43.448</td>
+      <td>222.0</td>
+      <td>4.670000e-70</td>
+      <td>circadian clock protein KaiA [Synechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>682</th>
+      <td>WP_015158121</td>
+      <td>Chamaesiphon minutus PCC 6605</td>
+      <td>1173020</td>
+      <td>44.803</td>
+      <td>221.0</td>
+      <td>8.210000e-70</td>
+      <td>circadian clock protein KaiA [Chamaesiphon minutus]</td>
+    </tr>
+    <tr>
+      <th>683</th>
+      <td>WP_015173270</td>
+      <td>Geitlerinema sp. PCC 7407</td>
+      <td>1173025</td>
+      <td>42.667</td>
+      <td>221.0</td>
+      <td>2.160000e-69</td>
+      <td>circadian clock protein KaiA [Geitlerinema sp. PCC 7407]</td>
+    </tr>
+    <tr>
+      <th>684</th>
+      <td>WP_149818896</td>
+      <td>Thermosynechococcus sp. CL-1</td>
+      <td>2583530</td>
+      <td>42.708</td>
+      <td>219.0</td>
+      <td>4.860000e-69</td>
+      <td>circadian clock protein KaiA [Thermosynechococcus sp. CL-1]</td>
+    </tr>
+    <tr>
+      <th>685</th>
+      <td>WP_212662280</td>
+      <td>NaN</td>
+      <td>2740837</td>
+      <td>43.273</td>
+      <td>219.0</td>
+      <td>9.480000e-69</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Acaryochloris]</td>
+    </tr>
+    <tr>
+      <th>686</th>
+      <td>WP_212662280</td>
+      <td>Acaryochloris marina S15</td>
+      <td>2762553</td>
+      <td>43.273</td>
+      <td>219.0</td>
+      <td>9.480000e-69</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Acaryochloris]</td>
+    </tr>
+    <tr>
+      <th>687</th>
+      <td>WP_011056332</td>
+      <td>Thermosynechococcus elongatus BP-1</td>
+      <td>197221</td>
+      <td>42.708</td>
+      <td>218.0</td>
+      <td>1.510000e-68</td>
+      <td>circadian clock protein KaiA [Thermosynechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>688</th>
+      <td>WP_206199961</td>
+      <td>Thermosynechococcus sp. TA-1</td>
+      <td>2813673</td>
+      <td>42.361</td>
+      <td>216.0</td>
+      <td>6.060000e-68</td>
+      <td>circadian clock protein KaiA [Thermosynechococcus sp. TA-1]</td>
+    </tr>
+    <tr>
+      <th>689</th>
+      <td>WP_181494619</td>
+      <td>Thermosynechococcus elongatus PKUAC-SCTE542</td>
+      <td>2016101</td>
+      <td>41.667</td>
+      <td>216.0</td>
+      <td>1.170000e-67</td>
+      <td>circadian clock protein KaiA [Thermosynechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>690</th>
+      <td>WP_260378682</td>
+      <td>Arthrospira platensis C1</td>
+      <td>459495</td>
+      <td>41.961</td>
+      <td>214.0</td>
+      <td>2.110000e-67</td>
+      <td>circadian clock protein KaiA [Arthrospira platensis]</td>
+    </tr>
+    <tr>
+      <th>691</th>
+      <td>WP_006623298</td>
+      <td>Limnospira fusiformis KN</td>
+      <td>2759955</td>
+      <td>41.961</td>
+      <td>214.0</td>
+      <td>2.970000e-67</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Limnospira]</td>
+    </tr>
+    <tr>
+      <th>692</th>
+      <td>WP_006623298</td>
+      <td>Limnospira indica PCC 8005</td>
+      <td>376219</td>
+      <td>41.961</td>
+      <td>214.0</td>
+      <td>2.970000e-67</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Limnospira]</td>
+    </tr>
+    <tr>
+      <th>693</th>
+      <td>WP_099797679</td>
+      <td>Synechococcus lividus PCC 6715</td>
+      <td>1917166</td>
+      <td>41.319</td>
+      <td>214.0</td>
+      <td>5.890000e-67</td>
+      <td>circadian clock protein KaiA [Thermostichus lividus]</td>
+    </tr>
+    <tr>
+      <th>694</th>
+      <td>WP_126389897</td>
+      <td>Pseudanabaena sp. ABRG5-3</td>
+      <td>685565</td>
+      <td>42.105</td>
+      <td>212.0</td>
+      <td>3.050000e-66</td>
+      <td>circadian clock protein KaiA [Pseudanabaena sp. ABRG5-3]</td>
+    </tr>
+    <tr>
+      <th>695</th>
+      <td>WP_225889197</td>
+      <td>Halomicronema hongdechloris C2206</td>
+      <td>1641165</td>
+      <td>45.421</td>
+      <td>212.0</td>
+      <td>4.810000e-66</td>
+      <td>circadian clock protein KaiA [Halomicronema hongdechloris]</td>
+    </tr>
+    <tr>
+      <th>696</th>
+      <td>WP_011377921</td>
+      <td>Synechococcus elongatus UTEX 3055</td>
+      <td>2479200</td>
+      <td>40.816</td>
+      <td>211.0</td>
+      <td>5.410000e-66</td>
+      <td>circadian clock protein KaiA [Synechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>697</th>
+      <td>WP_011377921</td>
+      <td>Synechococcus sp. UTEX 2973</td>
+      <td>1350461</td>
+      <td>40.816</td>
+      <td>211.0</td>
+      <td>5.410000e-66</td>
+      <td>circadian clock protein KaiA [Synechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>698</th>
+      <td>WP_011377921</td>
+      <td>Synechococcus elongatus PCC 6301</td>
+      <td>269084</td>
+      <td>40.816</td>
+      <td>211.0</td>
+      <td>5.410000e-66</td>
+      <td>circadian clock protein KaiA [Synechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>699</th>
+      <td>WP_011242646</td>
+      <td>Synechococcus elongatus PCC 6301</td>
+      <td>269084</td>
+      <td>40.476</td>
+      <td>209.0</td>
+      <td>3.090000e-65</td>
+      <td>circadian clock protein KaiA [Synechococcus elongatus]</td>
+    </tr>
+    <tr>
+      <th>700</th>
+      <td>WP_015123056</td>
+      <td>Synechococcus sp. PCC 6312</td>
+      <td>195253</td>
+      <td>43.969</td>
+      <td>209.0</td>
+      <td>4.550000e-65</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PCC 6312]</td>
+    </tr>
+    <tr>
+      <th>701</th>
+      <td>WP_015167869</td>
+      <td>Synechococcus sp. PCC 7502</td>
+      <td>1173263</td>
+      <td>38.614</td>
+      <td>207.0</td>
+      <td>5.440000e-64</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PCC 7502]</td>
+    </tr>
+    <tr>
+      <th>702</th>
+      <td>WP_198804677</td>
+      <td>Leptolyngbya sp. BL0902</td>
+      <td>1115757</td>
+      <td>44.697</td>
+      <td>206.0</td>
+      <td>8.120000e-64</td>
+      <td>circadian clock protein KaiA [Leptolyngbya sp. BL0902]</td>
+    </tr>
+    <tr>
+      <th>703</th>
+      <td>WP_071590719</td>
+      <td>Synechococcus sp. PCC 7336</td>
+      <td>195250</td>
+      <td>40.940</td>
+      <td>198.0</td>
+      <td>1.040000e-60</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PCC 7336]</td>
+    </tr>
+    <tr>
+      <th>704</th>
+      <td>WP_011432143</td>
+      <td>Synechococcus sp. JA-2-3B'a(2-13)</td>
+      <td>321332</td>
+      <td>40.667</td>
+      <td>194.0</td>
+      <td>9.420000e-59</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. JA-2-3B'a(2-13)]</td>
+    </tr>
+    <tr>
+      <th>705</th>
+      <td>WP_015163973</td>
+      <td>Pseudanabaena sp. PCC 7367</td>
+      <td>82654</td>
+      <td>40.625</td>
+      <td>192.0</td>
+      <td>1.970000e-58</td>
+      <td>circadian clock protein KaiA [Pseudanabaena sp. PCC 7367]</td>
+    </tr>
+    <tr>
+      <th>706</th>
+      <td>WP_099835839</td>
+      <td>Synechococcus sp. JA-3-3Ab</td>
+      <td>321327</td>
+      <td>39.414</td>
+      <td>192.0</td>
+      <td>4.260000e-58</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>707</th>
+      <td>WP_010310803</td>
+      <td>Synechococcus sp. CB0101</td>
+      <td>232348</td>
+      <td>35.274</td>
+      <td>180.0</td>
+      <td>8.980000e-54</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CB0101]</td>
+    </tr>
+    <tr>
+      <th>708</th>
+      <td>WP_214339789</td>
+      <td>Synechococcus sp. LA31</td>
+      <td>2741953</td>
+      <td>35.616</td>
+      <td>179.0</td>
+      <td>2.690000e-53</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. LA31]</td>
+    </tr>
+    <tr>
+      <th>709</th>
+      <td>WP_150884652</td>
+      <td>Synechococcus sp. RSCCF101</td>
+      <td>2511069</td>
+      <td>38.956</td>
+      <td>178.0</td>
+      <td>5.180000e-53</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. RSCCF101]</td>
+    </tr>
+    <tr>
+      <th>710</th>
+      <td>WP_197212914</td>
+      <td>Synechococcus sp. CBW1004</td>
+      <td>1353136</td>
+      <td>39.464</td>
+      <td>175.0</td>
+      <td>1.590000e-51</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CBW1004]</td>
+    </tr>
+    <tr>
+      <th>711</th>
+      <td>WP_185187137</td>
+      <td>Synechococcus sp. LTW-R</td>
+      <td>2751170</td>
+      <td>36.842</td>
+      <td>174.0</td>
+      <td>2.200000e-51</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. LTW-R]</td>
+    </tr>
+    <tr>
+      <th>712</th>
+      <td>WP_130129833</td>
+      <td>Synechococcus sp. WH 8101</td>
+      <td>59932</td>
+      <td>39.841</td>
+      <td>173.0</td>
+      <td>6.560000e-51</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. WH 8101]</td>
+    </tr>
+    <tr>
+      <th>713</th>
+      <td>WP_071801163</td>
+      <td>Synechococcus sp. SynAce01</td>
+      <td>1916956</td>
+      <td>37.643</td>
+      <td>172.0</td>
+      <td>1.450000e-50</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>714</th>
+      <td>WP_087068719</td>
+      <td>Cyanobium sp. NIES-981</td>
+      <td>1851505</td>
+      <td>37.091</td>
+      <td>172.0</td>
+      <td>1.570000e-50</td>
+      <td>circadian clock protein KaiA [Cyanobium sp. NIES-981]</td>
+    </tr>
+    <tr>
+      <th>715</th>
+      <td>WP_186589081</td>
+      <td>Synechococcus sp. MVIR-18-1</td>
+      <td>1386941</td>
+      <td>39.300</td>
+      <td>171.0</td>
+      <td>2.820000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. MVIR-18-1]</td>
+    </tr>
+    <tr>
+      <th>716</th>
+      <td>WP_048348289</td>
+      <td>Synechococcus sp. WH 8020</td>
+      <td>32052</td>
+      <td>37.647</td>
+      <td>171.0</td>
+      <td>2.910000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. WH 8020]</td>
+    </tr>
+    <tr>
+      <th>717</th>
+      <td>WP_197151362</td>
+      <td>Synechococcus sp. CBW1108</td>
+      <td>1353147</td>
+      <td>39.163</td>
+      <td>170.0</td>
+      <td>5.030000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CBW1108]</td>
+    </tr>
+    <tr>
+      <th>718</th>
+      <td>WP_186516145</td>
+      <td>Synechococcus sp. PROS-9-1</td>
+      <td>1968775</td>
+      <td>38.521</td>
+      <td>171.0</td>
+      <td>6.290000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PROS-9-1]</td>
+    </tr>
+    <tr>
+      <th>719</th>
+      <td>WP_186583251</td>
+      <td>Synechococcus sp. MEDNS5</td>
+      <td>1442554</td>
+      <td>48.187</td>
+      <td>170.0</td>
+      <td>6.490000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. MEDNS5]</td>
+    </tr>
+    <tr>
+      <th>720</th>
+      <td>WP_186484055</td>
+      <td>Synechococcus sp. A15-127</td>
+      <td>1050624</td>
+      <td>39.216</td>
+      <td>170.0</td>
+      <td>7.380000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. A15-127]</td>
+    </tr>
+    <tr>
+      <th>721</th>
+      <td>WP_041427084</td>
+      <td>Synechococcus sp. CC9311</td>
+      <td>64471</td>
+      <td>38.039</td>
+      <td>170.0</td>
+      <td>7.550000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CC9311]</td>
+    </tr>
+    <tr>
+      <th>722</th>
+      <td>WP_197170571</td>
+      <td>Synechococcus sp. CBW1002</td>
+      <td>1353134</td>
+      <td>35.000</td>
+      <td>170.0</td>
+      <td>9.920000e-50</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CBW1002]</td>
+    </tr>
+    <tr>
+      <th>723</th>
+      <td>WP_186479710</td>
+      <td>Synechococcus sp. NOUM97013</td>
+      <td>1442555</td>
+      <td>37.452</td>
+      <td>170.0</td>
+      <td>1.040000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. NOUM97013]</td>
+    </tr>
+    <tr>
+      <th>724</th>
+      <td>WP_186595003</td>
+      <td>Synechococcus sp. PROS-7-1</td>
+      <td>1442556</td>
+      <td>42.534</td>
+      <td>169.0</td>
+      <td>1.670000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PROS-7-1]</td>
+    </tr>
+    <tr>
+      <th>725</th>
+      <td>WP_197162750</td>
+      <td>Synechococcus sp. CBW1107</td>
+      <td>2789857</td>
+      <td>39.921</td>
+      <td>169.0</td>
+      <td>1.680000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CBW1107]</td>
+    </tr>
+    <tr>
+      <th>726</th>
+      <td>WP_197156755</td>
+      <td>Synechococcus sp. CBW1006</td>
+      <td>1353138</td>
+      <td>35.000</td>
+      <td>169.0</td>
+      <td>2.410000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CBW1006]</td>
+    </tr>
+    <tr>
+      <th>727</th>
+      <td>WP_043692577</td>
+      <td>Synechococcus sp. KORDI-49</td>
+      <td>585423</td>
+      <td>38.824</td>
+      <td>168.0</td>
+      <td>3.170000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. KORDI-49]</td>
+    </tr>
+    <tr>
+      <th>728</th>
+      <td>WP_186523745</td>
+      <td>Synechococcus sp. SYN20</td>
+      <td>1050714</td>
+      <td>38.911</td>
+      <td>169.0</td>
+      <td>3.350000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. SYN20]</td>
+    </tr>
+    <tr>
+      <th>729</th>
+      <td>WP_186544199</td>
+      <td>Synechococcus sp. ROS8604</td>
+      <td>1442557</td>
+      <td>38.039</td>
+      <td>169.0</td>
+      <td>3.380000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. ROS8604]</td>
+    </tr>
+    <tr>
+      <th>730</th>
+      <td>WP_011127417</td>
+      <td>Synechococcus sp. WH 8102</td>
+      <td>84588</td>
+      <td>38.431</td>
+      <td>168.0</td>
+      <td>4.520000e-49</td>
+      <td>circadian clock protein KaiA [Parasynechococcus marenigrum]</td>
+    </tr>
+    <tr>
+      <th>731</th>
+      <td>WP_131454692</td>
+      <td>Synechococcus sp. HK01-R</td>
+      <td>2751171</td>
+      <td>38.039</td>
+      <td>168.0</td>
+      <td>4.540000e-49</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>732</th>
+      <td>WP_186470360</td>
+      <td>Synechococcus sp. A15-60</td>
+      <td>1050655</td>
+      <td>37.247</td>
+      <td>168.0</td>
+      <td>5.190000e-49</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>733</th>
+      <td>WP_186470360</td>
+      <td>Synechococcus sp. A18-25c</td>
+      <td>1866938</td>
+      <td>37.247</td>
+      <td>168.0</td>
+      <td>5.190000e-49</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>734</th>
+      <td>WP_007101688</td>
+      <td>Synechococcus sp. RS9909</td>
+      <td>221352</td>
+      <td>39.044</td>
+      <td>168.0</td>
+      <td>6.850000e-49</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>735</th>
+      <td>WP_186471857</td>
+      <td>Synechococcus sp. BMK-MC-1</td>
+      <td>1442551</td>
+      <td>47.368</td>
+      <td>168.0</td>
+      <td>6.860000e-49</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. BMK-MC-1]</td>
+    </tr>
+    <tr>
+      <th>736</th>
+      <td>WP_186490205</td>
+      <td>Synechococcus sp. BIOS-U3-1</td>
+      <td>1400865</td>
+      <td>43.684</td>
+      <td>167.0</td>
+      <td>1.880000e-48</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. BIOS-U3-1]</td>
+    </tr>
+    <tr>
+      <th>737</th>
+      <td>WP_015110637</td>
+      <td>Cyanobium gracile PCC 6307</td>
+      <td>292564</td>
+      <td>34.965</td>
+      <td>166.0</td>
+      <td>2.220000e-48</td>
+      <td>circadian clock protein KaiA [Cyanobium gracile]</td>
+    </tr>
+    <tr>
+      <th>738</th>
+      <td>WP_186538482</td>
+      <td>Synechococcus sp. BIOS-E4-1</td>
+      <td>1400864</td>
+      <td>44.503</td>
+      <td>166.0</td>
+      <td>3.310000e-48</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. BIOS-E4-1]</td>
+    </tr>
+    <tr>
+      <th>739</th>
+      <td>WP_186548101</td>
+      <td>Synechococcus sp. Minos11</td>
+      <td>221341</td>
+      <td>39.516</td>
+      <td>166.0</td>
+      <td>3.400000e-48</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. Minos11]</td>
+    </tr>
+    <tr>
+      <th>740</th>
+      <td>WP_011359362</td>
+      <td>Synechococcus sp. CC9902</td>
+      <td>316279</td>
+      <td>42.584</td>
+      <td>166.0</td>
+      <td>3.970000e-48</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CC9902]</td>
+    </tr>
+    <tr>
+      <th>741</th>
+      <td>WP_186698915</td>
+      <td>Cyanobium sp. NS01</td>
+      <td>261284</td>
+      <td>36.014</td>
+      <td>165.0</td>
+      <td>9.490000e-48</td>
+      <td>circadian clock protein KaiA [Cyanobium sp. NS01]</td>
+    </tr>
+    <tr>
+      <th>742</th>
+      <td>WP_186989137</td>
+      <td>Synechococcus sp. MIT S9220</td>
+      <td>166309</td>
+      <td>43.158</td>
+      <td>165.0</td>
+      <td>1.010000e-47</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. MIT S9220]</td>
+    </tr>
+    <tr>
+      <th>743</th>
+      <td>WP_038546347</td>
+      <td>Synechococcus sp. KORDI-100</td>
+      <td>1280380</td>
+      <td>38.247</td>
+      <td>161.0</td>
+      <td>1.520000e-46</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. KORDI-100]</td>
+    </tr>
+    <tr>
+      <th>744</th>
+      <td>WP_038553310</td>
+      <td>Synechococcus sp. KORDI-52</td>
+      <td>585425</td>
+      <td>35.094</td>
+      <td>161.0</td>
+      <td>2.290000e-46</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. KORDI-52]</td>
+    </tr>
+    <tr>
+      <th>745</th>
+      <td>WP_115161641</td>
+      <td>Synechococcus sp. M16.1</td>
+      <td>1442553</td>
+      <td>43.367</td>
+      <td>161.0</td>
+      <td>2.360000e-46</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Synechococcus]</td>
+    </tr>
+    <tr>
+      <th>746</th>
+      <td>WP_186570542</td>
+      <td>Synechococcus sp. PROS-U-1</td>
+      <td>1400866</td>
+      <td>37.548</td>
+      <td>160.0</td>
+      <td>4.930000e-46</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. PROS-U-1]</td>
+    </tr>
+    <tr>
+      <th>747</th>
+      <td>WP_186493795</td>
+      <td>Synechococcus sp. A15-62</td>
+      <td>1050657</td>
+      <td>39.044</td>
+      <td>160.0</td>
+      <td>5.320000e-46</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. A15-62]</td>
+    </tr>
+    <tr>
+      <th>748</th>
+      <td>WP_186513825</td>
+      <td>Synechococcus sp. A15-44</td>
+      <td>1050646</td>
+      <td>36.576</td>
+      <td>160.0</td>
+      <td>6.040000e-46</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. A15-44]</td>
+    </tr>
+    <tr>
+      <th>749</th>
+      <td>WP_011365072</td>
+      <td>Synechococcus sp. CC9605</td>
+      <td>110662</td>
+      <td>42.714</td>
+      <td>157.0</td>
+      <td>5.750000e-45</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. CC9605]</td>
+    </tr>
+    <tr>
+      <th>750</th>
+      <td>WP_188021021</td>
+      <td>Synechococcus sp. RS9907</td>
+      <td>221350</td>
+      <td>42.347</td>
+      <td>157.0</td>
+      <td>6.750000e-45</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. RS9907]</td>
+    </tr>
+    <tr>
+      <th>751</th>
+      <td>WP_186509992</td>
+      <td>Synechococcus sp. RS9902</td>
+      <td>221345</td>
+      <td>43.367</td>
+      <td>156.0</td>
+      <td>2.400000e-44</td>
+      <td>circadian clock protein KaiA [Synechococcus sp. RS9902]</td>
+    </tr>
+    <tr>
+      <th>752</th>
+      <td>WP_255325240</td>
+      <td>Thermosynechococcus sp. NK55a</td>
+      <td>1394889</td>
+      <td>62.745</td>
+      <td>141.0</td>
+      <td>3.570000e-41</td>
+      <td>circadian clock protein KaiA [Thermosynechococcus sp. NK55a]</td>
+    </tr>
+    <tr>
+      <th>753</th>
+      <td>WP_071846782</td>
+      <td>Fischerella sp. NIES-3754</td>
+      <td>1752063</td>
+      <td>54.286</td>
+      <td>129.0</td>
+      <td>2.320000e-36</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Fischerella]</td>
+    </tr>
+    <tr>
+      <th>754</th>
+      <td>WP_220610387</td>
+      <td>Sphaerospermopsis torques-reginae ITEP-024</td>
+      <td>984208</td>
+      <td>48.092</td>
+      <td>131.0</td>
+      <td>4.820000e-36</td>
+      <td>circadian clock protein KaiA [Sphaerospermopsis torques-reginae]</td>
+    </tr>
+    <tr>
+      <th>755</th>
+      <td>WP_100901654</td>
+      <td>Nostoc flagelliforme CCNUN1</td>
+      <td>2038116</td>
+      <td>34.419</td>
+      <td>130.0</td>
+      <td>1.770000e-35</td>
+      <td>KaiA family protein [Nostoc flagelliforme]</td>
+    </tr>
+    <tr>
+      <th>756</th>
+      <td>WP_015208714</td>
+      <td>Cylindrospermum stagnale PCC 7417</td>
+      <td>56107</td>
+      <td>46.774</td>
+      <td>129.0</td>
+      <td>3.650000e-35</td>
+      <td>KaiA domain protein [Cylindrospermum stagnale]</td>
+    </tr>
+    <tr>
+      <th>757</th>
+      <td>WP_251957494</td>
+      <td>Nostoc cf. commune SO-36</td>
+      <td>449208</td>
+      <td>34.579</td>
+      <td>129.0</td>
+      <td>4.020000e-35</td>
+      <td>circadian clock protein KaiA [Nostoc commune]</td>
+    </tr>
+    <tr>
+      <th>758</th>
+      <td>WP_118162034</td>
+      <td>Nostoc sphaeroides</td>
+      <td>446679</td>
+      <td>37.569</td>
+      <td>127.0</td>
+      <td>2.590000e-34</td>
+      <td>KaiA family protein [Nostoc sphaeroides]</td>
+    </tr>
+    <tr>
+      <th>759</th>
+      <td>WP_096571704</td>
+      <td>Sphaerospermopsis kisseleviana NIES-73</td>
+      <td>1973480</td>
+      <td>51.327</td>
+      <td>127.0</td>
+      <td>2.700000e-34</td>
+      <td>MULTISPECIES: KaiA family protein [Sphaerospermopsis]</td>
+    </tr>
+    <tr>
+      <th>760</th>
+      <td>WP_152588545</td>
+      <td>Nostoc sphaeroides CCNUC1</td>
+      <td>2653204</td>
+      <td>37.569</td>
+      <td>127.0</td>
+      <td>2.790000e-34</td>
+      <td>KaiA family protein [Nostoc sphaeroides]</td>
+    </tr>
+    <tr>
+      <th>761</th>
+      <td>WP_256388815</td>
+      <td>Calothrix sp. 336/3</td>
+      <td>1337936</td>
+      <td>49.550</td>
+      <td>124.0</td>
+      <td>4.060000e-34</td>
+      <td>circadian clock protein KaiA [Calothrix sp. 336/3]</td>
+    </tr>
+    <tr>
+      <th>762</th>
+      <td>WP_223978872</td>
+      <td>Calothrix sp. PCC 7716</td>
+      <td>2853227</td>
+      <td>59.794</td>
+      <td>123.0</td>
+      <td>9.460000e-34</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Nostocales]</td>
+    </tr>
+    <tr>
+      <th>763</th>
+      <td>WP_231939927</td>
+      <td>Dolichospermum compactum NIES-806</td>
+      <td>1973481</td>
+      <td>45.161</td>
+      <td>122.0</td>
+      <td>2.720000e-33</td>
+      <td>circadian clock protein KaiA [Dolichospermum compactum]</td>
+    </tr>
+    <tr>
+      <th>764</th>
+      <td>WP_096584139</td>
+      <td>Tolypothrix tenuis PCC 7101</td>
+      <td>231146</td>
+      <td>48.305</td>
+      <td>122.0</td>
+      <td>3.980000e-33</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Nostocales]</td>
+    </tr>
+    <tr>
+      <th>765</th>
+      <td>WP_114082479</td>
+      <td>Nostoc sp. ATCC 53789</td>
+      <td>76335</td>
+      <td>33.953</td>
+      <td>123.0</td>
+      <td>7.630000e-33</td>
+      <td>KaiA family protein [Nostoc sp. ATCC 53789]</td>
+    </tr>
+    <tr>
+      <th>766</th>
+      <td>WP_179074907</td>
+      <td>Nostoc sp. C057</td>
+      <td>2576903</td>
+      <td>45.385</td>
+      <td>123.0</td>
+      <td>8.310000e-33</td>
+      <td>KaiA family protein [Nostoc sp. C057]</td>
+    </tr>
+    <tr>
+      <th>767</th>
+      <td>WP_073634260</td>
+      <td>Scytonema sp. NIES-4073</td>
+      <td>2005464</td>
+      <td>46.212</td>
+      <td>121.0</td>
+      <td>8.540000e-33</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Scytonema]</td>
+    </tr>
+    <tr>
+      <th>768</th>
+      <td>WP_073634260</td>
+      <td>Scytonema sp. HK-05</td>
+      <td>1137095</td>
+      <td>46.212</td>
+      <td>121.0</td>
+      <td>8.540000e-33</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Scytonema]</td>
+    </tr>
+    <tr>
+      <th>769</th>
+      <td>WP_015081528</td>
+      <td>Anabaena sp. 90</td>
+      <td>46234</td>
+      <td>49.194</td>
+      <td>122.0</td>
+      <td>1.970000e-32</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Nostocales]</td>
+    </tr>
+    <tr>
+      <th>770</th>
+      <td>WP_096675812</td>
+      <td>Fischerella sp. NIES-4106</td>
+      <td>2005456</td>
+      <td>51.485</td>
+      <td>119.0</td>
+      <td>2.040000e-32</td>
+      <td>circadian clock protein KaiA [Fischerella sp. NIES-4106]</td>
+    </tr>
+    <tr>
+      <th>771</th>
+      <td>WP_096540970</td>
+      <td>Nostoc linckia NIES-25</td>
+      <td>1091006</td>
+      <td>40.625</td>
+      <td>122.0</td>
+      <td>2.210000e-32</td>
+      <td>KaiA family protein [Nostoc linckia]</td>
+    </tr>
+    <tr>
+      <th>772</th>
+      <td>WP_168696562</td>
+      <td>Dolichospermum flos-aquae CCAP 1403/13F</td>
+      <td>315271</td>
+      <td>47.200</td>
+      <td>122.0</td>
+      <td>2.390000e-32</td>
+      <td>KaiA family protein [Dolichospermum flos-aquae]</td>
+    </tr>
+    <tr>
+      <th>773</th>
+      <td>WP_257121056</td>
+      <td>Dolichospermum heterosporum TAC447</td>
+      <td>747523</td>
+      <td>33.636</td>
+      <td>122.0</td>
+      <td>2.500000e-32</td>
+      <td>circadian clock protein KaiA [Dolichospermum heterosporum]</td>
+    </tr>
+    <tr>
+      <th>774</th>
+      <td>WP_148765322</td>
+      <td>Dolichospermum sp. UHCC 0315A</td>
+      <td>1914871</td>
+      <td>49.194</td>
+      <td>121.0</td>
+      <td>3.460000e-32</td>
+      <td>KaiA family protein [Dolichospermum sp. UHCC 0315A]</td>
+    </tr>
+    <tr>
+      <th>775</th>
+      <td>WP_013193179</td>
+      <td>'Nostoc azollae' 0708</td>
+      <td>551115</td>
+      <td>51.818</td>
+      <td>121.0</td>
+      <td>4.430000e-32</td>
+      <td>KaiA family protein [Trichormus azollae]</td>
+    </tr>
+    <tr>
+      <th>776</th>
+      <td>WP_190604344</td>
+      <td>Richelia sinica FACHB-800</td>
+      <td>1357546</td>
+      <td>50.450</td>
+      <td>121.0</td>
+      <td>5.060000e-32</td>
+      <td>KaiA family protein [Richelia sinica]</td>
+    </tr>
+    <tr>
+      <th>777</th>
+      <td>WP_206264442</td>
+      <td>Nostoc sp. UHCC 0702</td>
+      <td>2814655</td>
+      <td>43.382</td>
+      <td>120.0</td>
+      <td>7.970000e-32</td>
+      <td>KaiA family protein [Nostoc sp. UHCC 0702]</td>
+    </tr>
+    <tr>
+      <th>778</th>
+      <td>WP_053538891</td>
+      <td>Anabaena sp. WA102</td>
+      <td>1647413</td>
+      <td>45.161</td>
+      <td>120.0</td>
+      <td>8.310000e-32</td>
+      <td>MULTISPECIES: KaiA family protein [Nostocales]</td>
+    </tr>
+    <tr>
+      <th>779</th>
+      <td>WP_096558642</td>
+      <td>Nostoc sp. NIES-4103</td>
+      <td>2005458</td>
+      <td>35.047</td>
+      <td>120.0</td>
+      <td>8.490000e-32</td>
+      <td>KaiA family protein [Nostoc sp. NIES-4103]</td>
+    </tr>
+    <tr>
+      <th>780</th>
+      <td>WP_096641766</td>
+      <td>Calothrix brevissima NIES-22</td>
+      <td>1973478</td>
+      <td>42.953</td>
+      <td>120.0</td>
+      <td>1.020000e-31</td>
+      <td>KaiA family protein [Calothrix brevissima]</td>
+    </tr>
+    <tr>
+      <th>781</th>
+      <td>WP_250123413</td>
+      <td>Chroococcidiopsis sp. CCMEE 29</td>
+      <td>155894</td>
+      <td>50.442</td>
+      <td>117.0</td>
+      <td>1.090000e-31</td>
+      <td>circadian clock protein KaiA [Chroococcidiopsis sp. CCMEE 29]</td>
+    </tr>
+    <tr>
+      <th>782</th>
+      <td>WP_015215371</td>
+      <td>Anabaena cylindrica PCC 7122</td>
+      <td>272123</td>
+      <td>50.943</td>
+      <td>120.0</td>
+      <td>1.170000e-31</td>
+      <td>KaiA family protein [Anabaena cylindrica]</td>
+    </tr>
+    <tr>
+      <th>783</th>
+      <td>WP_096608161</td>
+      <td>Calothrix sp. NIES-2100</td>
+      <td>1954172</td>
+      <td>47.826</td>
+      <td>117.0</td>
+      <td>1.560000e-31</td>
+      <td>circadian clock protein KaiA [Calothrix sp. NIES-2100]</td>
+    </tr>
+    <tr>
+      <th>784</th>
+      <td>WP_167723025</td>
+      <td>Tolypothrix sp. PCC 7910</td>
+      <td>2099387</td>
+      <td>50.000</td>
+      <td>119.0</td>
+      <td>2.240000e-31</td>
+      <td>KaiA family protein [Tolypothrix sp. PCC 7910]</td>
+    </tr>
+    <tr>
+      <th>785</th>
+      <td>WP_174711930</td>
+      <td>Nostoc sp. TCL240-02</td>
+      <td>2572090</td>
+      <td>34.112</td>
+      <td>119.0</td>
+      <td>2.900000e-31</td>
+      <td>KaiA family protein [Nostoc sp. TCL240-02]</td>
+    </tr>
+    <tr>
+      <th>786</th>
+      <td>WP_181929200</td>
+      <td>Nostoc edaphicum CCNP1411</td>
+      <td>1472755</td>
+      <td>49.091</td>
+      <td>118.0</td>
+      <td>6.710000e-31</td>
+      <td>KaiA family protein [Nostoc edaphicum]</td>
+    </tr>
+    <tr>
+      <th>787</th>
+      <td>WP_096693644</td>
+      <td>Calothrix sp. NIES-4071</td>
+      <td>2005469</td>
+      <td>48.598</td>
+      <td>115.0</td>
+      <td>7.640000e-31</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Calothrix]</td>
+    </tr>
+    <tr>
+      <th>788</th>
+      <td>WP_096693644</td>
+      <td>Calothrix sp. NIES-4105</td>
+      <td>2005463</td>
+      <td>48.598</td>
+      <td>115.0</td>
+      <td>7.640000e-31</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Calothrix]</td>
+    </tr>
+    <tr>
+      <th>789</th>
+      <td>WP_015140002</td>
+      <td>Nostoc sp. PCC 7524</td>
+      <td>28072</td>
+      <td>44.961</td>
+      <td>117.0</td>
+      <td>8.890000e-31</td>
+      <td>KaiA domain-containing protein [Nostoc sp. PCC 7524]</td>
+    </tr>
+    <tr>
+      <th>790</th>
+      <td>WP_179066878</td>
+      <td>Nostoc sp. C052</td>
+      <td>2576902</td>
+      <td>34.409</td>
+      <td>115.0</td>
+      <td>9.060000e-30</td>
+      <td>KaiA family protein [Nostoc sp. C052]</td>
+    </tr>
+    <tr>
+      <th>791</th>
+      <td>WP_012409412</td>
+      <td>Nostoc punctiforme PCC 73102</td>
+      <td>63737</td>
+      <td>33.178</td>
+      <td>115.0</td>
+      <td>1.190000e-29</td>
+      <td>KaiA family protein [Nostoc punctiforme]</td>
+    </tr>
+    <tr>
+      <th>792</th>
+      <td>WP_169266310</td>
+      <td>Brasilonema sennae CENA114</td>
+      <td>415709</td>
+      <td>54.082</td>
+      <td>111.0</td>
+      <td>2.310000e-29</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Brasilonema]</td>
+    </tr>
+    <tr>
+      <th>793</th>
+      <td>WP_179051734</td>
+      <td>Nostoc sp. TCL26-01</td>
+      <td>2576904</td>
+      <td>47.414</td>
+      <td>111.0</td>
+      <td>2.910000e-29</td>
+      <td>circadian clock protein KaiA [Nostoc sp. TCL26-01]</td>
+    </tr>
+    <tr>
+      <th>794</th>
+      <td>WP_071925444</td>
+      <td>Chroococcidiopsis thermalis PCC 7203</td>
+      <td>251229</td>
+      <td>56.383</td>
+      <td>111.0</td>
+      <td>2.970000e-29</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Chroococcidiopsis]</td>
+    </tr>
+    <tr>
+      <th>795</th>
+      <td>WP_250012688</td>
+      <td>Chroococcidiopsis sp. CCNUC1</td>
+      <td>2653189</td>
+      <td>56.383</td>
+      <td>111.0</td>
+      <td>3.070000e-29</td>
+      <td>circadian clock protein KaiA [Chroococcidiopsis sp. CCNUC1]</td>
+    </tr>
+    <tr>
+      <th>796</th>
+      <td>WP_200989559</td>
+      <td>Anabaenopsis elenkinii CCIBt3563</td>
+      <td>2779889</td>
+      <td>53.922</td>
+      <td>110.0</td>
+      <td>3.600000e-29</td>
+      <td>circadian clock protein KaiA [Anabaenopsis elenkinii]</td>
+    </tr>
+    <tr>
+      <th>797</th>
+      <td>WP_096585355</td>
+      <td>Anabaenopsis circularis NIES-21</td>
+      <td>1085406</td>
+      <td>53.261</td>
+      <td>111.0</td>
+      <td>3.820000e-29</td>
+      <td>circadian clock protein KaiA [Anabaenopsis circularis]</td>
+    </tr>
+    <tr>
+      <th>798</th>
+      <td>WP_083468760</td>
+      <td>Nostoc piscinale CENA21</td>
+      <td>224013</td>
+      <td>55.435</td>
+      <td>113.0</td>
+      <td>6.200000e-29</td>
+      <td>KaiA family protein [Nostoc piscinale]</td>
+    </tr>
+    <tr>
+      <th>799</th>
+      <td>WP_231943133</td>
+      <td>Calothrix sp. NIES-3974</td>
+      <td>2005462</td>
+      <td>49.505</td>
+      <td>109.0</td>
+      <td>1.260000e-28</td>
+      <td>circadian clock protein KaiA [Calothrix sp. NIES-3974]</td>
+    </tr>
+    <tr>
+      <th>800</th>
+      <td>WP_015112916</td>
+      <td>Nostoc sp. PCC 7107</td>
+      <td>317936</td>
+      <td>54.348</td>
+      <td>111.0</td>
+      <td>2.090000e-28</td>
+      <td>KaiA family protein [Nostoc sp. PCC 7107]</td>
+    </tr>
+    <tr>
+      <th>801</th>
+      <td>WP_153228496</td>
+      <td>Trichormus variabilis 0441</td>
+      <td>375899</td>
+      <td>52.632</td>
+      <td>108.0</td>
+      <td>2.250000e-28</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Nostocaceae]</td>
+    </tr>
+    <tr>
+      <th>802</th>
+      <td>WP_153228496</td>
+      <td>Anabaena sp. YBS01</td>
+      <td>2490939</td>
+      <td>52.632</td>
+      <td>108.0</td>
+      <td>2.250000e-28</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Nostocaceae]</td>
+    </tr>
+    <tr>
+      <th>803</th>
+      <td>WP_235528893</td>
+      <td>Cylindrospermopsis raciborskii N8</td>
+      <td>1524929</td>
+      <td>42.949</td>
+      <td>110.0</td>
+      <td>2.580000e-28</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Cylindrospermopsis]</td>
+    </tr>
+    <tr>
+      <th>804</th>
+      <td>WP_236107438</td>
+      <td>Cylindrospermopsis raciborskii Cr2010</td>
+      <td>2108055</td>
+      <td>42.949</td>
+      <td>110.0</td>
+      <td>2.690000e-28</td>
+      <td>circadian clock protein KaiA [Cylindrospermopsis raciborskii]</td>
+    </tr>
+    <tr>
+      <th>805</th>
+      <td>WP_010997035</td>
+      <td>Nostoc sp. PCC 7120 = FACHB-418</td>
+      <td>103690</td>
+      <td>52.632</td>
+      <td>108.0</td>
+      <td>3.190000e-28</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Nostocaceae]</td>
+    </tr>
+    <tr>
+      <th>806</th>
+      <td>WP_010997035</td>
+      <td>Trichormus variabilis NIES-23</td>
+      <td>1973479</td>
+      <td>52.632</td>
+      <td>108.0</td>
+      <td>3.190000e-28</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [Nostocaceae]</td>
+    </tr>
+    <tr>
+      <th>807</th>
+      <td>WP_015131315</td>
+      <td>Calothrix sp. PCC 7507</td>
+      <td>99598</td>
+      <td>41.732</td>
+      <td>110.0</td>
+      <td>4.850000e-28</td>
+      <td>KaiA family protein [Calothrix sp. PCC 7507]</td>
+    </tr>
+    <tr>
+      <th>808</th>
+      <td>WP_235678242</td>
+      <td>Cylindrospermopsis curvispora GIHE-G1</td>
+      <td>2666332</td>
+      <td>50.000</td>
+      <td>109.0</td>
+      <td>4.910000e-28</td>
+      <td>circadian clock protein KaiA [Cylindrospermopsis curvispora]</td>
+    </tr>
+    <tr>
+      <th>809</th>
+      <td>WP_103139269</td>
+      <td>Nostoc sp. CENA543</td>
+      <td>1869241</td>
+      <td>52.632</td>
+      <td>110.0</td>
+      <td>7.130000e-28</td>
+      <td>KaiA family protein [Nostoc sp. CENA543]</td>
+    </tr>
+    <tr>
+      <th>810</th>
+      <td>WP_067763284</td>
+      <td>Nostoc sp. NIES-3756</td>
+      <td>1751286</td>
+      <td>50.526</td>
+      <td>106.0</td>
+      <td>1.300000e-27</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Nostoc]</td>
+    </tr>
+    <tr>
+      <th>811</th>
+      <td>WP_067763284</td>
+      <td>Nostoc sp. NIES-2111</td>
+      <td>1973475</td>
+      <td>50.526</td>
+      <td>106.0</td>
+      <td>1.300000e-27</td>
+      <td>MULTISPECIES: circadian clock protein KaiA [unclassified Nostoc]</td>
+    </tr>
+    <tr>
+      <th>812</th>
+      <td>WP_006198955</td>
+      <td>Nodularia spumigena UHCC 0039</td>
+      <td>1914872</td>
+      <td>51.546</td>
+      <td>105.0</td>
+      <td>3.670000e-27</td>
+      <td>circadian clock protein KaiA [Nodularia spumigena]</td>
+    </tr>
+    <tr>
+      <th>813</th>
+      <td>WP_006198955</td>
+      <td>Nodularia spumigena CCY9414</td>
+      <td>313624</td>
+      <td>51.546</td>
+      <td>105.0</td>
+      <td>3.670000e-27</td>
+      <td>circadian clock protein KaiA [Nodularia spumigena]</td>
+    </tr>
+    <tr>
+      <th>814</th>
+      <td>WP_015119206</td>
+      <td>Rivularia sp. PCC 7116</td>
+      <td>373994</td>
+      <td>46.602</td>
+      <td>105.0</td>
+      <td>3.690000e-27</td>
+      <td>KaiA domain-containing protein [Rivularia sp. PCC 7116]</td>
+    </tr>
+    <tr>
+      <th>815</th>
+      <td>WP_236308321</td>
+      <td>Cylindrospermopsis raciborskii KLL07</td>
+      <td>683357</td>
+      <td>41.509</td>
+      <td>108.0</td>
+      <td>5.000000e-27</td>
+      <td>circadian clock protein KaiA [Cylindrospermopsis raciborskii]</td>
+    </tr>
+    <tr>
+      <th>816</th>
+      <td>WP_096656128</td>
+      <td>Calothrix parasitica NIES-267</td>
+      <td>1973488</td>
+      <td>46.154</td>
+      <td>102.0</td>
+      <td>5.770000e-26</td>
+      <td>KaiA domain-containing protein [Calothrix parasitica]</td>
+    </tr>
+    <tr>
+      <th>817</th>
+      <td>WP_015197564</td>
+      <td>Calothrix sp. PCC 6303</td>
+      <td>1170562</td>
+      <td>48.515</td>
+      <td>100.0</td>
+      <td>2.460000e-25</td>
+      <td>KaiA family protein [Calothrix sp. PCC 6303]</td>
+    </tr>
+    <tr>
+      <th>818</th>
+      <td>WP_104909079</td>
+      <td>Nostoc sp. 'Lobaria pulmonaria (5183) cyanobiont'</td>
+      <td>1618022</td>
+      <td>50.000</td>
+      <td>100.0</td>
+      <td>2.930000e-24</td>
+      <td>KaiA family protein [Nostoc sp. 'Lobaria pulmonaria (5183) cyanobiont']</td>
+    </tr>
+    <tr>
+      <th>819</th>
+      <td>WP_155823712</td>
+      <td>Gloeocapsa sp. PCC 7428</td>
+      <td>1173026</td>
+      <td>50.538</td>
+      <td>98.2</td>
+      <td>3.070000e-24</td>
+      <td>circadian clock protein KaiA [Gloeocapsa sp. PCC 7428]</td>
+    </tr>
+    <tr>
+      <th>820</th>
+      <td>WP_071455439</td>
+      <td>Gloeomargarita lithophora Alchichica-D10</td>
+      <td>1188229</td>
+      <td>45.872</td>
+      <td>94.7</td>
+      <td>1.290000e-22</td>
+      <td>hypothetical protein [Gloeomargarita lithophora]</td>
+    </tr>
+    <tr>
+      <th>821</th>
+      <td>WP_094328521</td>
+      <td>Nostoc sp. 'Peltigera membranacea cyanobiont' N6</td>
+      <td>1261031</td>
+      <td>33.953</td>
+      <td>93.6</td>
+      <td>1.590000e-21</td>
+      <td>MULTISPECIES: KaiA family protein [unclassified Nostoc]</td>
+    </tr>
+    <tr>
+      <th>822</th>
+      <td>WP_096592855</td>
+      <td>Calothrix sp. NIES-2098</td>
+      <td>1954171</td>
+      <td>45.378</td>
+      <td>93.6</td>
+      <td>1.590000e-21</td>
+      <td>KaiA family protein [Calothrix sp. NIES-2098]</td>
+    </tr>
+    <tr>
+      <th>823</th>
+      <td>WP_011317868</td>
+      <td>Trichormus variabilis ATCC 29413</td>
+      <td>240292</td>
+      <td>48.810</td>
+      <td>89.4</td>
+      <td>3.970000e-21</td>
+      <td>circadian clock protein KaiA [Trichormus variabilis]</td>
+    </tr>
+  </tbody>
+</table>
+                </div>
+              </body>
+
+                <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+                <!-- input scripts for DataTables: https://datatables.net/ -->
+                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.3.2/js/dataTables.select.min.js"></script>
+                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
+                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
+                <script>
+                $(document).ready(function(){
+                    var table = document.getElementsByTagName('table');
+                    table[0].id='myTable'
+                    $('#myTable').DataTable(
+                        {
+                            dom: 'Bfrtip',
+                            "lengthMenu": [ 100 ],
+                            buttons: [
+                                'copy',
+                                'csv',
+                                'selectAll',
+                                'selectNone',
+                                'selectRows'
+                            ],
+                            select: true
+                        }
+                    );
+                    var result_table = document.getElementById('blast_results_table');
+                    result_table.style.display = "block";
+                });
+                </script>
+
+            </html>
+            

@@ -59,6 +59,25 @@ class UploadMultipleFilesGenomeFormTestCase(TestCase):
         self.assertTrue(form.is_valid())
 
     @tag('fast','form')
+    def test_uploadmultiplefilesgenomeform_is_valid_with_two_files(self):
+        upload_file = open('testfiles/testsequences/lps_transport.faa', 'rb')
+        upload_file_1 = open('testfiles/testsequences/lps_transport.faa', 'rb')
+        file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read()),
+                     'genome_file_field_1': SimpleUploadedFile(upload_file_1.name, upload_file_1.read())}
+        data_dict={
+            "database_title":"Test Database Upload Multiple Files",
+            "database_description":"Test Upload Multiple Files Database",
+            "organism_name_0":"Curvibacter sp. AEP1-3",
+            "organism_name_1":"Methylobacter methylotrophus",
+            "extra_field_count":1,
+            "user_email":"lukas.becker@hhu.de"
+        }
+        user = User.objects.get(username="testuser")
+        form = UploadMultipleFilesGenomeForm(user=user,data=data_dict,files=file_dict)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(len(form.errors),0)
+
+    @tag('fast','form')
     def test_uploadmultiplefilesgenomeform_is_not_valid(self):
         upload_file = open('testfiles/testsequences/lps_transport.faa', 'rb')
         file_dict = {'genome_file_field_0': SimpleUploadedFile(upload_file.name, upload_file.read())}

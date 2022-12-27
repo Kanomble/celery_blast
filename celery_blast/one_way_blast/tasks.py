@@ -1,4 +1,3 @@
-import os
 from subprocess import Popen, SubprocessError, TimeoutExpired
 
 from celery import shared_task

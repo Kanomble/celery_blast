@@ -324,6 +324,7 @@ def upload_genome_view(request):
     except Exception as e:
         print("[-] ERROR: {}".format(e))
         try:
+            #TODO outource this code in an own function
             #check if there are database directories that do not reside in the postgres database
             databases = get_all_blast_databases()
             ids = [int(database.id) for database in databases]
