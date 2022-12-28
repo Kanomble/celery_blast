@@ -29,18 +29,18 @@
                     <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">CDD Search for: {{ query }}</a>
                 {% endif %}
             {% elif status.0 == 'SUCCESS' %}
-                <a class="btn btn-dark" href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results</a>
+                <a class="btn btn-info" href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results for: {{ query }}</a>
             {% elif status.0 == 'PROGRESS' %}
                 <p> Task is in progress!</p>
             {% elif status.0 == 'FAILURE' %}
-                <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> Delete CDD Search</a>
+                <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> Delete CDD Search for: {{ query }}</a>
             {% endif %}
         {% endfor %}
     </div>
     <br>
     <div class="dashboard_project_list_col" style="height: 500px">
         <h3 class="col_header"> Query Sequence Domain Table </h3>
-        {{html_results|safe}}
+            {{html_results|safe}}
     </div>
 
 {% endblock %}

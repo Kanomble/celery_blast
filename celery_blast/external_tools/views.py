@@ -255,6 +255,7 @@ def cdd_domain_search_details_view(request, query_id:str, project_id:int):
         #okeh_plot = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
         context = {}
         context['query_id'] = query_id
+        context['project_id'] = project_id
         context['CDDSearchPCABokehPlot'] = str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
         return render(request, "external_tools/cdd_domain_search_details.html", context)
     except Exception as e:

@@ -13,7 +13,9 @@
 <div style="overflow-x: hidden; text-align: center;">
     CDD Domain Search Details
     <br>
-    <p style="text-align: center;font-size: small"> Monitor your CDD Domain search results for {query_id}, {{ request.user }}!</p>
+    <p style="text-align: center;font-size: small"> Monitor your CDD Domain search results for {{query_id}}, {{ request.user }}!</p>
+
+    <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query_id %}"> Delete CDD Search for: {{ query_id }}</a>
 
 </div>
 {% endblock %}
@@ -21,7 +23,10 @@
 {% block content %}
     <div class="dashboard_project_list_col">
         {% include CDDSearchPCABokehPlot %}
+
+
     </div>
+
 {% endblock %}
 {% block scripts %}
 {% endblock %}

@@ -12,7 +12,7 @@ from bokeh.plotting import figure
 #To create intractive plot we need this to add callback method.
 from bokeh.models import CustomJS, Legend
 #This is for creating layout
-from bokeh.layouts import column,  row
+from bokeh.layouts import column, gridplot
 import random
 
 '''load_domain_query_data
@@ -483,7 +483,7 @@ def build_table_columns(cdd_dataframe: pd.DataFrame)->tuple:
 def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_unit: str, variances: list,
                      query_sequence: str):
     try:
-        # bokeh data
+        # bokeh data preparation
         bokeh_dataframe = bokeh_dataframe.rename(
             columns=dict(zip([val for val in domains], [val.replace(":", "_") for val in domains])))
         columns = ['PC0', 'PC1', 'sacc', 'color', 'pident', 'bitscore', 'evalue', 'genus', 'family', 'order', 'phylum',
@@ -509,17 +509,17 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
         # main figure properties
         p = figure(x_axis_label='PC1 with {}% captured variance'.format(variances[0]),
                    y_axis_label='PC2 with {}% captured variance'.format(variances[1]),
-                   plot_height=700, plot_width=700,
-                   tools="lasso_select, reset,save, box_zoom,undo,redo,wheel_zoom, pan",
-                   # plot_height=700, plot_width=700,
+                   plot_height=700, plot_width=900,
+                   tools="lasso_select, reset, save, box_zoom, undo, redo, wheel_zoom, pan",
                    tooltips=TOOLTIPS,
-                   title="Principal Component Analysis of the percent identitiy of inferred domains of {} reciprocal best hits".format(
+                   title="PCA on pidents of domains of {} RBHs".format(
                        query_sequence),
                    )
 
         p.add_layout(Legend(), 'left')
         p.legend.glyph_width = 40
         p.legend.glyph_height = 40
+
         # scatter plot
         circle = p.circle(x='PC0', y='PC1',
                           color='color', size=20, line_width=1, line_color='black',
@@ -542,6 +542,7 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
         family_menu = build_taxonomy_menu(bokeh_dataframe, 'family')
         genus_menu = build_taxonomy_menu(bokeh_dataframe, 'genus')
 
+        # defining callback functions for the taxonomy menus
         tax_selection_dict = {'class': class_menu, 'order': order_menu, 'family': family_menu, 'genus': genus_menu}
         phylum_menu_callback = build_json_callback_for_taxonomy(column_dat, static_data, table_dat, table_header,
                                                                 'phylum', tax_selection_dict)
@@ -566,7 +567,7 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
                                                                'genus', {})
         genus_menu.js_on_change('value', genus_menu_callback)
 
-        return row(p, column(table, phylum_menu, class_menu, order_menu, family_menu, genus_menu)), circle
+        return gridplot([[column(p), column(table), column(phylum_menu, class_menu, order_menu, family_menu, genus_menu)]], toolbar_location='right'), circle
     except Exception as e:
         raise Exception("[-] ERROR during creation of bokeh plots with exception: {}".format(e))
 
