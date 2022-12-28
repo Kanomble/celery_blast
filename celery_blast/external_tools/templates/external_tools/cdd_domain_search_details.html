@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %} CDD Domain Search Details {% endblock %}
+
+{% block page_title %} {% endblock %}
+
+{% block infoheader %} CDD Domain Search Details {% endblock %}
+
+{% block page_description %}
+{% endblock %}
+
+{% block page_header %}
+<div style="overflow-x: hidden; text-align: center;">
+    CDD Domain Search Details
+    <br>
+    <p style="text-align: center;font-size: small"> Monitor your CDD Domain search results for {query_id}, {{ request.user }}!</p>
+
+</div>
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard_project_list_col">
+        {% include CDDSearchPCABokehPlot %}
+    </div>
+{% endblock %}
+{% block scripts %}
+{% endblock %}

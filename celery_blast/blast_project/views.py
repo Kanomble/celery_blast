@@ -460,7 +460,9 @@ def database_statistics_dashboard(request, project_id):
     try:
         task_status=get_database_statistics_task_status(project_id)
         context={'project_id':project_id,'task_status':task_status}
+
         if task_status == 'SUCCESS':
+            context['DatabaseStatisticsBokehPlot'] = str(project_id) + "/" + "interactive_bokeh_plot.html"
             taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
             for unit in taxonomic_units:
                 project_path = BLAST_PROJECT_DIR + str(project_id) + "/" + unit + "_database_statistics_normalized.csv"
@@ -475,7 +477,6 @@ def database_statistics_dashboard(request, project_id):
                     table = table.transpose()[(table == 0.0).sum() != number_queries]
                     number = len(table.transpose().columns)
                     context[key_norm] = number
-                    context['DatabaseStatisticsBokehPlot'] = str(project_id) + "/" + "interactive_bokeh_plot.html"
                 else:
                     key = unit + "_number"
                     error_phrase = "table does not exist, please recompute the database statistics by pressing the button"

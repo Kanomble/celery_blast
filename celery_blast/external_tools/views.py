@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
 from blast_project.py_services import get_html_results
-
+from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed
+from django.conf import settings
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
@@ -227,7 +228,9 @@ def cdd_domain_search_dashboard(request, project_id):
     try:
 
         query_sequence_cdd_search_dict = ExternalTools.objects.check_cdd_domain_search_task_status(project_id=project_id)
-        context = {"query_task_dict":query_sequence_cdd_search_dict,"project_id":project_id}
+
+        context = {"query_task_dict":query_sequence_cdd_search_dict,
+                   "project_id":project_id}
         context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html'))
 
         return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
@@ -238,9 +241,37 @@ def cdd_domain_search_dashboard(request, project_id):
 @login_required(login_url='login')
 def execute_cdd_domain_search_for_target_query(request, query_id:str, project_id:int):
     try:
-        cdd_domain_search_with_rbhs_task.delay(project_id, query_id)
+        if check_if_cdd_search_can_get_executed(query_id, project_id) == 0:
+            cdd_domain_search_with_rbhs_task.delay(project_id, query_id)
         return redirect('cdd_domain_search_dashboard',project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
 
 
+@login_required(login_url='login')
+def cdd_domain_search_details_view(request, query_id:str, project_id:int):
+    try:
+        #query_sequence_model = QuerySequences.objects.get(query_accession_id=)
+        #okeh_plot = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        context = {}
+        context['query_id'] = query_id
+        context['CDDSearchPCABokehPlot'] = str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        return render(request, "external_tools/cdd_domain_search_details.html", context)
+    except Exception as e:
+        return failure_view(request, e)
+
+@login_required(login_url='login')
+def delete_cdd_domain_search_view(request, query_id:str, project_id:int):
+    try:
+        query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id)
+        #the query_sequence variable is a QuerySet but should just hold one query_sequence
+        if len(query_sequence) > 1:
+            raise Exception("[-] There are multiple query sequences with the name {} "
+                            "in the associated ExternalTools model object, this should not happen as project creation"
+                            "filters for duplicate entries ...".format(query_id))
+        else:
+            query_sequence[0].delete_cdd_search_task_result()
+            delete_cdd_search_output(query_id, project_id)
+            return redirect('cdd_domain_search_dashboard',project_id=project_id)
+    except Exception as e:
+        return failure_view(request, e)

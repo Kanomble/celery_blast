@@ -142,7 +142,7 @@ class QuerySequences(models.Model):
 
     cdd_domain_search_task = models.ForeignKey(
         TaskResult,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         blank=True, null=True,
         verbose_name="celery task for cdd domain search with rpsblast",
         related_name="cdd_search",
@@ -178,6 +178,7 @@ class QuerySequences(models.Model):
                 "[-] couldnt update query sequence with taskresult object for cdd search task with exception: {}".format(
                     e))
 
+
     def update_multiple_sequence_alignment_task(self, msa_task_id):
         try:
             task_result = TaskResult.objects.get(task_id=msa_task_id)
@@ -194,6 +195,19 @@ class QuerySequences(models.Model):
         except Exception as e:
             raise Exception(
                 "[-] couldnt update query sequences with taskresult object for msa with exception : {}".format(e))
+
+    def delete_cdd_search_task_result(self):
+        try:
+            if self.cdd_domain_search_task != None:
+                try:
+                    task_result = self.cdd_domain_search_task
+                    task_result.delete()
+                    return 0
+                except Exception as e:
+                    raise Exception("[-] couldnt fetch the cdd search task result model instance, with exception: {}".format(e))
+        except Exception as e:
+            raise Exception("[-] exception during deletion of cdd search task result and all associated "
+                            "output: {} for query sequence: {}".format(e, self.query_accession_id))
 
 class EntrezSearch(models.Model):
 

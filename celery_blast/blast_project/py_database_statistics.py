@@ -1,34 +1,33 @@
-from blast_project.models import BlastProject
-import pandas as pd
-import altair as alt
-from os.path import isfile, isdir
-from os import remove, listdir
-from django.db import IntegrityError
-from Bio import Entrez
 import json
-import seaborn as sns
-#output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
+from os import remove, listdir
+from os.path import isfile, isdir
+
+import altair as alt
+# output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
 import matplotlib.pyplot as plt
-from bokeh.models import CustomJS, Dropdown, Button
-from mpl_toolkits.mplot3d import Axes3D
+import pandas as pd
 import seaborn as sns
-#output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
-from bokeh.io import output_file, save
-#ColumnDataSource makes selection of the column easier and Select is used to create drop down
-from bokeh.models import ColumnDataSource, Select, Spinner, MultiSelect, ColorPicker, RangeSlider, DataTable, TableColumn, HTMLTemplateFormatter
-#Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
-from bokeh.plotting import figure
-#To create intractive plot we need this to add callback method.
-from bokeh.models import CustomJS, Legend
-#This is for creating layout
-from bokeh.layouts import column, gridplot, row
+from Bio import Entrez
+from blast_project.models import BlastProject
 from bokeh.core.enums import MarkerType
+# output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
+from bokeh.io import output_file, save
+# This is for creating layout
+from bokeh.layouts import column, gridplot, row
+# ColumnDataSource makes selection of the column easier and Select is used to create drop down
+from bokeh.models import ColumnDataSource, Select, Spinner, MultiSelect, ColorPicker, RangeSlider, DataTable, \
+    TableColumn
+# To create intractive plot we need this to add callback method.
+from bokeh.models import CustomJS, Legend, Button
+# Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
+from bokeh.plotting import figure
+from django.db import IntegrityError
+
 plt.rcParams['legend.fontsize'] = 10
-from bokeh.palettes import inferno, viridis, magma, Spectral
+from bokeh.palettes import Spectral #inferno, viridis, magma,
 # from matplotlib.ticker import MaxNLocator
-import math
 from random import shuffle
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR
 
 '''get_project_by_id
 
@@ -96,6 +95,7 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
                         record = Entrez.read(handle)
                         handle.close()
                     except Exception as e:
+                        log.write("\tWARNING:exception occured: {}\n".format(e))
                         if attempt == 9:
                             raise Exception
 
@@ -128,6 +128,7 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
                                     phylum.append(j['ScientificName'])
 
                             if (len(taxonomy) != len(genus)):
+                                log.write("\tINFO:appending unknown for object: {} of record: {}\n".format(i,round(steps/step,1)))
                                 genus.append('unknown')
                             if (len(taxonomy) != len(superfamily)):
                                 superfamily.append('unknown')
@@ -600,17 +601,47 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
         raise Exception("[-] ERROR in producing altair plots for database statistics with exception: {}".format(e))
 
 ################################## BOKEH INTERACTIVE RESULTS ###########################################################
-#TODO documentation
+
+'''create_bokeh_plots
+    
+    This function serves as hub for building the interactive bokeh result plot. It triggers the create_linked_bokeh_plot
+    function that produces the interactive bokeh result plot. A logfile of this procedure is written into the corresponding
+    log directory.
+    
+    :param result_df - the reciprocal_results_with_taxonomy.csv dataframe
+        :type pd.DataFrame
+    :param database - the database dataframe with taxonomic information
+        :type pd.DataFrame
+    :param taxonomic_unit - the taxonomic unit that is used for creating the first selection
+        :type str
+    :param project_id
+        :type int
+
+'''
 def create_bokeh_plots(result_df:pd.DataFrame,database:pd.DataFrame,taxonomic_unit: str, project_id: int):
         try:
             path_to_project = BLAST_PROJECT_DIR + str(project_id)
-            logfile_bokeh_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_bokeh_plots.log'
+            logfile_bokeh_plots = path_to_project + '/log/' + 'create_bokeh_plots.log'
             create_linked_bokeh_plot(logfile_bokeh_plots, result_df, database, taxonomic_unit, project_id)
         except Exception as e:
             raise Exception("[-] ERROR during creation of bokeh plots with exception : {}".format(e))
 
 '''create_color_palette_selection_callback
-
+    
+    This function is used for creating a custom javascript callback for the color palette menu.
+    The user can choose from a MultiSelect widget, which color palette should be used to render the circles. 
+    It overwrites the "color" column of the currently selected ColumnDataSource items.
+    
+    :param curr- the current selection
+        :type bokeh.models.ColumnDataSource
+    :param color_menu - the current color_menu based on taxonomy e.g. Phylum ...
+        :type bokeh.models.Select
+    :param taxonomy_table_callback_dict - unique taxonomic entries within the defined taxonomic units (e.g. Phylum ...)
+        :type dict['str'] = list[str, ...]
+        
+    :returns c_palette_callback
+        :type bokeh.models.CustomJS
+    
 '''
 def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: Select,
                                             taxonomy_table_callback_dict: dict) -> CustomJS:
@@ -652,9 +683,16 @@ def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: 
 
 
 '''create_color_palette_selection
-
+    
+    This function is used to pass the number of colored items to the custom javascript callback function for the
+    colorpalette. The options are hardcoded based on the "Spectral" color palette. Spectral3 will color the circles in
+    three different colors. The acutal coloring is done via changing the color column values in the curr ColumnDataSource via
+    the create_color_palette_selection_callback function.
+    
+    :returns color_palette_menu
+        :type bokeh.models.Select
 '''
-def create_color_palette_selection():
+def create_color_palette_selection()->Select:
     try:
 
         options = [(str(val), "Spectral" + str(val)) for val in range(3, 12)]
@@ -665,9 +703,70 @@ def create_color_palette_selection():
     except Exception as e:
         raise Exception("[-] ERROR couldnt create color palette selection with exception: {}".format(e))
 
+'''build_taxonomy_menu
+    
+    This function is used for creating the taxonomy MulitSelect menu for the different taxonomic units:
+    Phylum, Class, Order, Family and Genus. For each of those items a menu is created. In order to pass selected items
+    to callback functions, those menus are used as keys in a taxonomy menu dictionary. This allows accurate plot
+    updates on certain changes. The selection is based on unique taxonomic entries within the bokeh_dataframe variable,
+    which is an abstraction of the reciprocal_result_with_taxonomy.csv dataframe.    
+    
+    :param bokeh_dataframe
+        :type pd.DataFrame
+    :param taxonomic_unit
+        :type str
+    
+    :returns tax_menu
+        :type bokeh.models.MultiSelect
+'''
+def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str)->MultiSelect:
+    try:
+        unique_tax = list(bokeh_dataframe[taxonomic_unit].unique())
+        if len(unique_tax) > 1:
+            tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
+                                   title='Select: ' + taxonomic_unit.capitalize())
+        else:
+            tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0]],
+                                   title='Select: ' + taxonomic_unit.capitalize())
+
+        return tax_menu
+    except Exception as e:
+        raise Exception("[-] ERROR creating taxonomy menu for bokeh plot with exception: {}".format(e))
 
 '''build_json_callback_for_taxonomy
 
+    This function produces the custom javascript callback function for the taxonomy. It is similar to the 
+    build_json_callback_for_taxonomy function in external_tools.py_cdd_domain_search.py but slightly more complex
+    as there are more connected data sources.
+    Based on this callback function the parameters column_dat and table_dat are getting changed.
+    
+    :param column_dat - represents the selected data
+        :type bokeh.models.ColumnDataSource 
+    :param static_dat - represents the full data
+        :type bokeh.models.ColumnDataSource
+    :param table_dat - represents the data used within the Bokeh DataTable
+        :type bokeh.models.ColumnDataSource
+    :param domains - list of the CDD accession in the bokeh DataTable (cdd_dataframe)
+        :type list[str,...]
+    :param taxonomic_unit - taxonomic unit where this callback is attached to
+        :type str
+    :param tax_selection - current taxonomic selection of the user: 
+                           e.g. tax_selection_dict = {'class':class_menu,'order':order_menu,'family':family_menu,
+                           'genus':genus_menu}
+        :type dict[str] = bokeh.models.MultiSelect
+    :param menu_qseqid = current query sequence selection
+        :type bokeh.models.MultiSelect
+    :param xaxis_menu
+        :type bokeh.models.Select
+    :param yaxis_menu
+        :type bokeh.models.Select
+    :param color_menu
+        :type bokeh.models.Select
+    :param color_dict - this variable will hold the color value for the taxonomy key (e.g. cyanobacteria = blue)
+        :type dict
+    
+    :returns tax_menu_callback
+        :type bokeh.models.CustomJS
 '''
 def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: ColumnDataSource,
                                      table_dat: ColumnDataSource, taxonomic_unit: str, tax_selection: dict,
@@ -807,7 +906,8 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
 
 
 '''create_y_axis_menu
-
+    
+    
 '''
 def create_y_axis_menu(circle, axis, data_column):
     y_axis_menu = Select(options=['bitscore', 'pident', 'evalue', 'slen'],  # ,'slen'
@@ -843,25 +943,6 @@ def create_x_axis_menu(circle, axis, data_column):
 
     x_axis_menu.js_on_change('value', x_axis_menu_callback)
     return x_axis_menu
-
-
-'''build_taxonomy_menu
-
-'''
-def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str):
-    try:
-        unique_tax = list(bokeh_dataframe[taxonomic_unit].unique())
-        if len(unique_tax) > 1:
-            tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
-                                   title='Select: ' + taxonomic_unit.capitalize())
-        else:
-            tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0]],
-                                   title='Select: ' + taxonomic_unit.capitalize())
-
-        return tax_menu
-    except Exception as e:
-        raise Exception("[-] ERROR creating taxonomy menu for bokeh plot with exception: {}".format(e))
-
 
 '''create_color_and_marker_dictionaries_for_bokeh_dataframe
 
@@ -1106,12 +1187,12 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                                project_id: int) -> int:
     try:
         with open(logfile, 'w') as log:
+            #initializing output directories
             path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
             log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
+            #no static saving until now
             path_to_static_bokeh_plot = path_to_static_dir + "interactive_bokeh_plot.html"
             path_to_project_dir = BLAST_PROJECT_DIR + str(project_id) + '/' + "interactive_bokeh_plot.html"
-
-            ########
 
             # create bokeh dataframes for plots and tables
             data_all, color_dict = create_initial_bokeh_result_data(result_data, taxonomic_unit)
@@ -1129,7 +1210,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             db_df_family = create_initial_bokeh_database_data(database, data_selection, taxcount_df_family, 'family')
             data_selection_genus, taxcount_df_genus = create_initial_bokeh_data_selection(data_all, 'genus')
             db_df_genus = create_initial_bokeh_database_data(database, data_selection, taxcount_df_genus, 'genus')
-            ########
 
             # setup bokeh classes
             Overall = ColumnDataSource(data=data_all)
@@ -1144,7 +1224,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 'genus': ColumnDataSource(data=db_df_genus)
             }
 
-            # plot and the menu is linked with each other by this callback function
             unique_tax = list(data_all[taxonomic_unit].unique())
             unique_qseqids = list(data_all['qseqid'].unique())
 
@@ -1195,7 +1274,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                        plot_height=700, plot_width=900,
                        tooltips=TOOLTIPS,
                        tools="lasso_select, reset,save, box_zoom,undo,redo,wheel_zoom, pan",
-                       title="Number of RBHs - pident vs bitscore",
+                       title="Reciprocal Best Hits Result Data",
                        )  # ,tools="box_select, reset" creating figure object
 
             p.add_layout(Legend(), 'left')
@@ -1431,7 +1510,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                            taxonomic_unit))
             save(grid)
 
-        return grid
+        return 0
     except Exception as e:
         raise Exception("ERROR in producing bokeh plots for database statistics with exception: {}".format(e))
 

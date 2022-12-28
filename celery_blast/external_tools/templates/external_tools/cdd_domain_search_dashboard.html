@@ -20,14 +20,20 @@
 
 {% block content %}
     <div class="dashboard_project_list_col">
-        {% for query,status in query_task_dict.items %}
-            {% if status == 'NOTEXEC' %}
-                <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">CDD Search for: {{ query }}</a>
-                <p> </p>
-            {% elif status == 'SUCCESS' %}
-                <a class="btn btn-dark" href="">View Results</a>
-            {% elif status == 'PROGRESS' %}
+        {% for query, status in query_task_dict.items %}
+            <p></p>
+            {% if status.0 == 'NOTEXEC' %}
+                {% if status.1 == 'not valid' %}
+                    <a class="btn btn-dark disabled" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">{{ query }} <= 2 RBHs or <= 2 CDD hits</a>
+                {% else %}
+                    <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">CDD Search for: {{ query }}</a>
+                {% endif %}
+            {% elif status.0 == 'SUCCESS' %}
+                <a class="btn btn-dark" href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results</a>
+            {% elif status.0 == 'PROGRESS' %}
                 <p> Task is in progress!</p>
+            {% elif status.0 == 'FAILURE' %}
+                <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> Delete CDD Search</a>
             {% endif %}
         {% endfor %}
     </div>

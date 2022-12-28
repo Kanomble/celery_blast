@@ -1,7 +1,6 @@
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from celery.exceptions import SoftTimeLimitExceeded
 import psutil
 from blast_project.py_django_db_services import update_external_tool_with_cdd_search
 from .models import ExternalTools
@@ -12,6 +11,8 @@ from django.conf import settings
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
 from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model, download_esearch_protein_fasta_files, \
     update_entrezsearch_with_download_task_result
+from .py_cdd_domain_search import produce_bokeh_pca_plot
+
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -59,7 +60,7 @@ def entrez_search_task(self,database:str,entrez_query:str,user_id:int):
 
         randomly_generated_filename = create_random_filename() + '.tsf'
         logger.info("filename for search output: {}".format(randomly_generated_filename))
-        esearch_output_filepath = 'media/esearch_output/result_dataframe_' + randomly_generated_filename
+        esearch_output_filepath = settings.ESEARCH_OUTPUT + 'result_dataframe_' + randomly_generated_filename
 
         entrez_search = save_entrez_search_model(database=database,
                                  entrez_query=entrez_query,
@@ -97,7 +98,7 @@ def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
         external_tools.update_query_sequences_msa_task(query_sequence_id, str(self.request.id))
         logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
-        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
+        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
         path_to_query_file = path_to_project + query_sequence_id + '/target_sequences.faa'
 
         target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
@@ -136,7 +137,7 @@ def execute_phylogenetic_tree_building(self,project_id,query_sequence_id):
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
         logger.info("cheking if msa task succeeded for query sequence : {}".format(query_sequence_id))
 
-        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
+        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
         path_to_msa_file = path_to_project + query_sequence_id + '/target_sequences.msa'
         path_to_fasttree_output = path_to_project + query_sequence_id + '/target_sequences.nwk'
         msa_status = check_if_msa_file_is_available(path_to_msa_file)
@@ -180,7 +181,7 @@ def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id
 
         query_sequence_ids = [qseq.query_accession_id for qseq in external_tools.query_sequences.get_queryset()]
 
-        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
+        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
 
         progress = 80 / len(query_sequence_ids)
         counter = 1
@@ -225,7 +226,7 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
 
         external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
         logger.info("updated multiple query sequence models with taskresult instance : {}".format(str(self.request.id)))
-        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
+        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
 
         query_sequence_ids = []
         for qseq in external_tools.query_sequences.get_queryset():
@@ -268,7 +269,14 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
 
 
 '''cdd_domain_search_with_rbhs_task
-
+        
+    
+    :param self
+        :type TaskResult
+    :param project_id
+        :type int
+    :param target_query -> protein accession name
+        :type str
 '''
 @shared_task(bind=True)
 def cdd_domain_search_with_rbhs_task(self, project_id:int, target_query:str):
@@ -286,12 +294,13 @@ def cdd_domain_search_with_rbhs_task(self, project_id:int, target_query:str):
             logger.warning("ERROR: couldnt update blast project with exception: {}".format(e))
             raise Exception("ERROR: couldnt update blast project with exception: {}".format(e))
 
-        path_to_project = 'media/blast_projects/' + str(project_id) + '/'
-        path_to_cdd_db = 'media/databases/CDD/Cdd'
+        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        path_to_cdd_db = settings.CDD_DIR
         path_to_query_file = path_to_project + target_query + '/target_sequences.faa'
         path_to_cdd_domain_search_output = path_to_project + target_query + '/cdd_domains.tsf'
 
         logger.info("INFO:preparing POPEN cmd for cdd search")
+        #TODO setting up options for the domain search
         proc = Popen(['rpsblast','-query',path_to_query_file,
                       '-db',path_to_cdd_db,
                       "-outfmt","6 qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident",
@@ -302,6 +311,7 @@ def cdd_domain_search_with_rbhs_task(self, project_id:int, target_query:str):
 
         returncode = proc.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
         progress_recorder.set_progress(90, 100, "PROGRESS")
+        produce_bokeh_pca_plot(project_id, target_query,taxonomic_unit = 'class')
 
         if returncode != 0:
             raise SubprocessError
