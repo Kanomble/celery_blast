@@ -119,6 +119,33 @@ class ExternalToolsManager(models.Manager):
             raise Exception(
                 "[-] ERROR fetching CDD domain search task status for project: {} with exception: {}".format(project_id,
                                                                                                              e))
+    '''get_cdd_searchable_queries
+        
+        Returns a list with QuerySequence models for potential CDD serches.
+        
+        :param project_id
+            :type int
+        
+        :returns query_sequences_rdy_for_cdd
+            :type list[QuerySequence]
+    '''
+    def get_cdd_searchable_queries(self, project_id:int)->list:
+        try:
+            query_sequences_rdy_for_cdd = []
+            # query sequence set
+            query_sequences = self.get_all_associated_query_sequences(project_id)
+            for query_sequence in query_sequences:
+                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id,project_id)
+                if returncode == 0:
+                    if query_sequence.check_if_cdd_search_is_complete() == 'NOTEXEC':
+                        query_sequences_rdy_for_cdd.append(query_sequence)
+            return query_sequences_rdy_for_cdd
+        except Exception as e:
+            raise Exception(
+                "[-] ERROR during creation of query sequence list with "
+                "not executed cdd searches for project {} with exception: {}".format(project_id, e))
+
+
 class QuerySequenceManager(models.Manager):
     def create_query_sequence(self,query_sequence_id,external_tools):
         try:

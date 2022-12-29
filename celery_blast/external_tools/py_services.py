@@ -94,10 +94,13 @@ def delete_cdd_search_output(query_sequence:str, project_id:int)->int:
         path_to_project_dir = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
         cdd_table = path_to_project_dir + 'cdd_domains.tsf'
         bokeh_plot = path_to_project_dir + 'pca_bokeh_domain_plot.html'
-        if os.path.isfile(cdd_table):
-            os.remove(cdd_table)
-        if os.path.isfile(bokeh_plot):
-            os.remove(bokeh_plot)
+        domain_corrected_faa_file = path_to_project_dir + 'domain_corrected_target_sequences.faa'
+        msa_file = path_to_project_dir + 'domain_corrected_target_sequences.msa'
+        tree_file = path_to_project_dir + 'domain_corrected_domain_corrected_target_sequences.nwk'
+        filelist = [cdd_table,bokeh_plot,domain_corrected_faa_file,msa_file,tree_file]
+        for file in filelist:
+            if os.path.isfile(file):
+                os.remove(file)
         return 0
     except Exception as e:
         raise Exception("[-] error during deletion of cdd search output with exception: {}".format(e))

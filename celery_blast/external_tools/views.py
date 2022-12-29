@@ -8,7 +8,7 @@ from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tre
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
 from .models import ExternalTools, EntrezSearch, QuerySequences
-from .forms import EntrezSearchForm
+from .forms import EntrezSearchForm, RpsBLASTSettingsForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
 from django.http import JsonResponse
@@ -226,24 +226,37 @@ def phylogenetic_information(request, project_id, query_sequence_id):
 @login_required(login_url='login')
 def cdd_domain_search_dashboard(request, project_id):
     try:
+        if request.method == "GET":
+            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id)
 
-        query_sequence_cdd_search_dict = ExternalTools.objects.check_cdd_domain_search_task_status(project_id=project_id)
-
-        context = {"query_task_dict":query_sequence_cdd_search_dict,
-                   "project_id":project_id}
-        context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html'))
-
-        return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
+            rps_blast_settings_form = RpsBLASTSettingsForm(query_sequences_rdy_for_cdd)
+            query_sequence_cdd_search_dict = ExternalTools.objects.check_cdd_domain_search_task_status(project_id=project_id)
+            context = {"query_task_dict":query_sequence_cdd_search_dict,
+                       "project_id":project_id}
+            context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html'))
+            context['rpsblast_settingsform'] = rps_blast_settings_form
+            return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
+        else:
+            return failure_view(request, "There is no post method for this view.")
     except Exception as e:
         return failure_view(request,e)
 
 
 @login_required(login_url='login')
-def execute_cdd_domain_search_for_target_query(request, query_id:str, project_id:int):
+def execute_cdd_domain_search_for_target_query(request, project_id:int):
     try:
-        if check_if_cdd_search_can_get_executed(query_id, project_id) == 0:
-            cdd_domain_search_with_rbhs_task.delay(project_id, query_id)
-        return redirect('cdd_domain_search_dashboard',project_id=project_id)
+        if request.method == "POST":
+            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id)
+
+            rps_blast_form = RpsBLASTSettingsForm(query_sequences_rdy_for_cdd,request.POST)
+            if rps_blast_form.is_valid():
+                rps_blast_task_data = rps_blast_form.cleaned_data
+                query_sequence = rps_blast_task_data['query_sequence']
+                if check_if_cdd_search_can_get_executed(query_sequence, project_id) == 0:
+                    cdd_domain_search_with_rbhs_task.delay(project_id, rps_blast_task_data)
+            return redirect('cdd_domain_search_dashboard',project_id=project_id)
+        else:
+            return failure_view(request, "There is no other method than post for this view.")
     except Exception as e:
         return failure_view(request, e)
 

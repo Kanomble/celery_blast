@@ -20,13 +20,15 @@
 
 {% block content %}
     <div class="dashboard_project_list_col">
+
+
         {% for query, status in query_task_dict.items %}
             <p></p>
             {% if status.0 == 'NOTEXEC' %}
                 {% if status.1 == 'not valid' %}
-                    <a class="btn btn-dark disabled" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">{{ query }} <= 2 RBHs or <= 2 CDD hits</a>
+                    <a class="btn btn-dark disabled" href="{% url 'execute_cdd_domain_search' project_id=project_id %}">{{ query }} <= 2 RBHs or <= 2 CDD hits</a>
                 {% else %}
-                    <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id query_id=query %}">CDD Search for: {{ query }}</a>
+                    <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id %}">CDD Search for: {{ query }}</a>
                 {% endif %}
             {% elif status.0 == 'SUCCESS' %}
                 <a class="btn btn-info" href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results for: {{ query }}</a>
@@ -36,7 +38,19 @@
                 <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> Delete CDD Search for: {{ query }}</a>
             {% endif %}
         {% endfor %}
+
+
     </div>
+
+    <div class="dashboard_project_list_col">
+        <form method="post" action="{% url 'execute_cdd_domain_search' project_id=project_id %}">
+            {% csrf_token %}
+            {{ rpsblast_settingsform.as_table }}
+            <input type="submit" value="Submit" class="btn btn-dark">
+        </form>
+
+    </div>
+
     <br>
     <div class="dashboard_project_list_col" style="height: 500px">
         <h3 class="col_header"> Query Sequence Domain Table </h3>
