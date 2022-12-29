@@ -2,7 +2,8 @@ from django.urls import path, include
 from . import views
 
 cdd_search_urls = [
-    path('<int:project_id>/project_details/cdd_domain_search_dashboard', views.cdd_domain_search_dashboard,
+    path('<int:project_id>/project_details/cdd_domain_search_dashboard',
+         views.cdd_domain_search_dashboard,
          name='cdd_domain_search_dashboard'),
     path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:query_id>/cdd_search_task',
          views.execute_cdd_domain_search_for_target_query,
@@ -17,10 +18,13 @@ cdd_search_urls = [
 
 entrez_search_urls = [
     path('entrez_dashboard', views.entrez_dashboard_view, name="entrez_dashboard"),
-    path('<int:search_id>/search_details', views.search_detail_view, name='search_details'),
-    path('<int:search_id>/search_delete', views.delete_search_view, name='search_delete'),
+    path('<int:search_id>/search_details', views.search_detail_view,
+         name='search_details'),
+    path('<int:search_id>/search_delete', views.delete_search_view,
+         name='search_delete'),
     path('<int:search_id>/search_details/download_protein_accessions',
-         views.download_proteins_from_entrez_search, name='download_protein_accessions'),
+         views.download_proteins_from_entrez_search,
+         name='download_protein_accessions'),
     path('<int:search_id>/search_details/view_downloaded_sequences',
          views.view_downloaded_sequences, name='view_downloaded_sequences'),
 ]
@@ -61,6 +65,6 @@ urlpatterns = [
     path('', include(entrez_search_urls)),
     path('', include(ajax_calls)),
     path('', include(phylogenetic_analysis_urls)),
-    path('<int:project_id>/external_project_information', views.project_informations, name='external_project_informations'),
-
+    path('<int:project_id>/external_project_information', views.project_informations,
+         name='external_project_informations'),
 ]

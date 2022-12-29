@@ -11,7 +11,7 @@ from django.conf import settings
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
 from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model, download_esearch_protein_fasta_files, \
     update_entrezsearch_with_download_task_result
-from .py_cdd_domain_search import produce_bokeh_pca_plot
+from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
 
 
 #logger for celery worker instances
@@ -307,14 +307,18 @@ def cdd_domain_search_with_rbhs_task(self, project_id:int, target_query:str):
                       "-out",path_to_cdd_domain_search_output,
                       '-evalue','0.001','-num_threads','2'], shell=False)
         progress_recorder.set_progress(30, 100, "PROGRESS")
-        logger.info("INFO:watining for POPEN process with id: {} to finish".format(proc.pid))
+        logger.info("INFO:waiting for POPEN process with id: {} to finish".format(proc.pid))
 
         returncode = proc.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
-        progress_recorder.set_progress(90, 100, "PROGRESS")
-        produce_bokeh_pca_plot(project_id, target_query,taxonomic_unit = 'class')
 
         if returncode != 0:
             raise SubprocessError
+
+        progress_recorder.set_progress(90, 100, "PROGRESS")
+        logger.info("INFO:performing PCA analysis and build interactive visualization ...")
+        produce_bokeh_pca_plot(project_id, target_query,taxonomic_unit = 'class')
+        logger.info("INFO:starting to write domain corrected fasta file ...")
+        write_domain_corrected_fasta_file(project_id=project_id,query_sequence=target_query)
         logger.info("INFO:DONE")
         return returncode
 

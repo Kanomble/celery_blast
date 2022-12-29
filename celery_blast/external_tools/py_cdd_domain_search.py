@@ -3,6 +3,8 @@ import pandas as pd
 from django.conf import settings
 from sklearn.decomposition import PCA
 
+#module to parse fasta files
+from Bio import SeqIO
 #output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
 from bokeh.io import output_file, save
 #ColumnDataSource makes selection of the column easier and Select is used to create drop down
@@ -651,3 +653,114 @@ def produce_bokeh_pca_plot(project_id:int, qseqid: str,
 
     except Exception as e:
         raise Exception("[-] ERROR with exception : {}".format(e))
+
+########################################################################################################################
+
+# returns false if both values are not in range
+def check_range(x: int, y: int, boundary_x: int, boundary_y: int) -> bool:
+    return boundary_x <= x <= boundary_y and boundary_x <= y <= boundary_y
+
+
+# check current and potential new values for the the current boundaries and return updated values
+def check_range_and_return_new_values(x: int, y: int, boundary_x: int, boundary_y: int) -> tuple:
+    if boundary_x <= x <= boundary_y:
+        new_x = boundary_x
+        bool_x = False
+    else:
+        new_x = x
+        bool_x = True
+
+    if boundary_x <= y <= boundary_y:
+        new_y = boundary_y
+        bool_y = False
+    else:
+        bool_y = True
+        new_y = y
+    return (new_x, new_y), (bool_x, bool_y)
+
+
+'''get_sequence_segments
+
+    This function takes a pandas cdd dataframe for one protein sequence as input. It parses the qstart and qend
+    columns and extracts overlapping parts within the sequence. It saves those overlapping parts in a list of tuples
+    by the aid of check_range_and_return_new_values.
+
+    :param qseqid_df
+        :type pd.DataFrame
+
+'''
+def get_sequence_segments(qseqid_df: pd.DataFrame) -> list:
+    try:
+        segments = []
+        # iterate over a sorted qstart qend set of the query sequence
+        for i in sorted(set(zip(qseqid_df.qstart, qseqid_df.qend))):
+            if len(segments) == 0:
+                # print("[+] Adding first segment")
+                segments.append(list(i))
+            else:
+                curr_boundaries = segments[len(segments) - 1]
+                # print("pot. new values: ",i, " - boundaries: ",j)
+                # if one part of the segment is not within the current boundaries, update values or append a completly new segment
+                if check_range(i[0], i[1], curr_boundaries[0], curr_boundaries[1]) == False:
+                    values_new, bool_new = check_range_and_return_new_values(i[0], i[1], curr_boundaries[0],
+                                                                             curr_boundaries[1])
+                    if bool_new[0] == False:
+                        segments.remove(curr_boundaries)
+                        segments.append(list(values_new))
+                    elif bool_new[1] == False:
+                        segments.remove(curr_boundaries)
+                        segments.append(list(values_new))
+
+                    else:
+                        # print("adding new segment: ", i)
+                        segments.append(list(values_new))
+
+        # print(segments)
+        return segments
+    except Exception as e:
+        raise Exception(
+            "[-] ERROR creating segment list for query sequence {} with exception {}".format(qseqid_df.qseqid[0], e))
+
+
+'''write_domain_corrected_fasta_file
+
+    This function executes the get_sequence_segments function for each unique query sequence within the cdd dataframe.
+    It then parses the target_sequences.faa file within the query_sequence directory and writes a new fasta file based
+    on the overlapping sequence segments.
+
+    :param project_id
+        :type int
+    :param query_sequence
+        :type str
+
+    :returns returncode
+        :type int
+
+'''
+def write_domain_corrected_fasta_file(project_id: int, query_sequence: str) -> int:
+    try:
+        cdd_filepath = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/cdd_domains.tsf'
+        fasta_filepath = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/target_sequences.faa'
+        domain_fasta_filepath = settings.BLAST_PROJECT_DIR + str(
+            project_id) + '/' + query_sequence + '/domain_corrected_target_sequences.faa'
+        # read cdd dataframe
+        df = pd.read_table(cdd_filepath, header=None)
+        df.columns = "qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident".split(" ")
+        query_domains_range = {}
+        for qseqid in df.qseqid.unique():
+            query_domains_range[qseqid] = get_sequence_segments(df[df['qseqid'] == qseqid])
+        records = list(SeqIO.parse(fasta_filepath, "fasta"))
+        # write new fasta file with only overlapping domain entries
+        with open(domain_fasta_filepath, 'w') as domain_fasta:
+            for rec in records:
+                identifier = rec.id
+                # print(query_domains_range[identifier])
+                seq = ""
+                for rng in query_domains_range[identifier]:
+                    seq += str(rec.seq[rng[0]:rng[1]])
+
+                domain_fasta.write(">" + str(identifier) + "\n")
+                domain_fasta.write(seq + "\n")
+        return 0
+    except Exception as e:
+        raise Exception("[-] ERROR producing domain corrected fasta file, with exception: {}".format(e))
