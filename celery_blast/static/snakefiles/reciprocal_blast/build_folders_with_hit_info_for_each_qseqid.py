@@ -6,9 +6,10 @@ ERRORCODE=8
 with open(snakemake.log['log'],'w') as logfile:
     try:
         logfile.write("INFO:starting to write RBH summary file and directories for query sequences\n")
+        logfile.write("INFO:loading reciprocal result csv file as pandas dataframe\n")
         result_df = pd.read_csv(snakemake.input['result_csv'],header=0, index_col=0)
 
-        hit_info_file = open(snakemake.output['hit_information'],'w')
+
         queries = []
         logfile.write("INFO:extracting query sequence identifier based on query file\n")
         with open(snakemake.input['query_file'],'r') as fhandle:
@@ -20,7 +21,9 @@ with open(snakemake.log['log'],'w') as logfile:
                     logfile.write("\tINFO:extracted query: {}\n".format(query))
                     queries.append(query)
 
-        logfile.write("INFO:looping over query sequences to identify amount of RBHs and to build directories\n")
+        logfile.write("INFO:looping over query sequences to identify amount of RBHs and to build sub-directories\n")
+        hit_info_file = open(snakemake.output['hit_information'], 'w')
+        hit_info_file.write("qseqid\thits\n")
         for query in queries:
             logfile.write("\tINFO:working with:{}\n".format(query))
             target_df = result_df[result_df['qseqid'] == query]
@@ -94,8 +97,8 @@ with open(snakemake.log['log'],'w') as logfile:
             ax[1, 1].set_xticks(range(1, len(target_df.groupby('scomnames').size().index[0:12]) + 1))
             ax[1, 1].set_xticklabels(target_df.groupby('scomnames').size().index[0:12], rotation=90)
             plt.tight_layout()
-            logfile.write("\tINFO:saving plots to static and project directories\n")
 
+            logfile.write("\tINFO:saving plots to project directory\n")
             result_statistics=str(query)+ "/basic_statistics.png"
             result_statistics_static='../../../static/images/result_images/' + str(snakemake.params['project_id']) + "/" +str(query)+"_statistics.png"
             plt.savefig(result_statistics, dpi=400)
@@ -103,13 +106,12 @@ with open(snakemake.log['log'],'w') as logfile:
 
             logfile.write("\tINFO:writing target ids into textfile\n")
             output_file_path = query + '/' + 'target_sequence_ids.txt'
-            output = open(output_file_path,'w')
-            sacc_list = list(target_df['sacc'].unique())
-            for sacc in sacc_list:
-                output.write(sacc+'\n')
-            output.close()
+            with open(output_file_path,'w') as output:
+                sacc_list = list(target_df['sacc'].unique())
+                for sacc in sacc_list:
+                    output.write(sacc+'\n')
 
-            hit_info_file.write("\tINFO:qseqid: {} hits: {}\n".format(query, len(target_df)))
+            hit_info_file.write("{}\t{}\n".format(query, len(target_df)))
             plt.close('all')
         hit_info_file.close()
         logfile.write("DONE\n")

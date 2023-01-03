@@ -59,7 +59,7 @@ ROOT_URLCONF = 'celery_blast.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['celery_blast/templates','static/images/result_images','media/blast_projects'],
+        'DIRS': ['celery_blast/templates','static/images/result_images','media/blast_projects','media/one_way_blast','media/one_way_blast/remote_searches','media'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -161,5 +161,6 @@ PANOPTES_IP = 'http://panoptes:5000'
 STATIC_RESULT_IMAGES = STATIC_URL + 'images/result_images/'
 BLAST_PROJECT_DIR = 'media/blast_projects/'
 BLAST_DATABASE_DIR = 'media/databases/'
+ONE_WAY_BLAST_DIR = 'media/one_way_blast/'
 CDD_DIR = 'media/databases/CDD/Cdd'
 ESEARCH_OUTPUT = 'media/esearch_output/'

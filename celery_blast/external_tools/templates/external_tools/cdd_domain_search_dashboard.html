@@ -27,13 +27,15 @@
             {% if status.0 == 'NOTEXEC' %}
                 {% if status.1 == 'not valid' %}
                     <a class="btn btn-dark disabled" href="{% url 'execute_cdd_domain_search' project_id=project_id %}">{{ query }} <= 2 RBHs or <= 2 CDD hits</a>
-                {% else %}
-                    <a class="btn btn-dark" href="{% url 'execute_cdd_domain_search' project_id=project_id %}">CDD Search for: {{ query }}</a>
                 {% endif %}
             {% elif status.0 == 'SUCCESS' %}
                 <a class="btn btn-info" href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results for: {{ query }}</a>
             {% elif status.0 == 'PROGRESS' %}
-                <p> Task is in progress!</p>
+                <p> Progress for {{ query }} CDD search: </p>
+                <button class="btn btn-dark" disabled>
+                    <span class="spinner-grow spinner-grow-sm"></span>
+                        <p><span class="progress-{{query}}"></span></p>
+                </button>
             {% elif status.0 == 'FAILURE' %}
                 <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> Delete CDD Search for: {{ query }}</a>
             {% endif %}
@@ -59,4 +61,41 @@
 
 {% endblock %}
 {% block scripts %}
+<script>
+    {% for query, status in query_task_dict.items %}
+        {% if status.0 == 'PROGRESS' %}
+            (function() {
+                var status = $('.progress-{{query}}'),
+                poll = function() {
+                    jQuery.ajax({
+                        url: "{% url 'get_cdd_task_status_ajax_call' project_id=project_id query_id=query %}",
+                        dataType: 'json',
+                        type: 'get',
+                        success: function(data) { // check if available
+
+                            if ( data.data ) { // get and check data value
+                                status.text(data.data.current); // get and print data string
+                                if(data.data.current > 99){
+                                    status.text("DONE")
+                                    clearInterval(pollInterval); // optional: stop poll function
+                                } else if(data.data.description != "PROGRESS"){
+                                    status.text(data.data.description)
+                                    clearInterval(pollInterval);
+                                }
+
+                            }
+                         },
+                        error: function() { // error logging
+                            status.text("error polling progress data")
+                        }
+                    });
+                },
+                pollInterval = setInterval(function() { // run function every 5000 ms
+                    poll();
+                  }, 5000);
+                poll(); // also run function on init
+            })();
+        {% endif %}
+    {% endfor %}
+</script>
 {% endblock %}

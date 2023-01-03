@@ -1,5 +1,5 @@
 configfile: "./snakefile_config"
-
+ONE_WAY_BLAST_DIR = 'media/one_way_blast/'
 QSEQIDS = []
 with open(config['query_sequence'],'r') as qseqfile:
 	for line in qseqfile.readlines():
@@ -10,7 +10,7 @@ with open(config['query_sequence'],'r') as qseqfile:
 
 rule all:
 	input:
-		"genus_bars.html",
+		"bokeh_plot.html",
 		"query_sequence_information.html",
 		"query_sequence_information.csv",
 		'blast_results_with_tax.table',
@@ -27,8 +27,8 @@ rule blast:
 
 rule blast_results_to_plots_and_html_table:
 	input: blast_results="blast_results.table", query_file=config['query_sequence']
-	params: genus_bars_static="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + '/genus_bars.html',user_email=config['user_email']
-	output: genus_bars="genus_bars.html",html_table="blast_results.html", taxonomic_table='blast_results_with_tax.table'
+	params: user_email=config['user_email']
+	output: bokeh_plot="bokeh_plot.html",html_table="blast_results.html", taxonomic_table='blast_results_with_tax.table'
 	log:log="log/blast_results_to_plots_and_html_table.log"
 	script:
 		"../../../static/snakefiles/one_way_blast/blast_results_to_plots_and_html_table.py"

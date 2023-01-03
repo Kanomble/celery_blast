@@ -12,6 +12,7 @@ from .forms import EntrezSearchForm, RpsBLASTSettingsForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
 from django.http import JsonResponse
+from json import loads
 from time import sleep
 
 @login_required(login_url='login')
@@ -222,7 +223,15 @@ def phylogenetic_information(request, project_id, query_sequence_id):
     except Exception as e:
         return failure_view(request,e)
 
+'''cdd_domain_search_dashboard
+    
+    Dashboard page for the conserved domain search. It holds a form for rpsblast settings, the html table with 
+    domains of the query sequences and the buttons for the detail/result pages and form submit. 
+    
+    :param project_id
+        :type int
 
+'''
 @login_required(login_url='login')
 def cdd_domain_search_dashboard(request, project_id):
     try:
@@ -242,6 +251,19 @@ def cdd_domain_search_dashboard(request, project_id):
         return failure_view(request,e)
 
 
+'''execute_cdd_domain_search_for_target_query
+
+    This function executes the celery task for searching conserved domains within the CDD database. 
+    Before the rpsblast is executed, the function validates if it is "practical" to execute the search.
+    If the query sequence has just one domain or if there are only two reciprocal results the function is 
+    not executed. Settings for the rpsblast are saved within a django form object. 
+    The form is also validated. The query sequence identifier specified via a selection widget is then used
+    as input for the rpsblast. 
+    
+    :param project:id
+        :type int
+
+'''
 @login_required(login_url='login')
 def execute_cdd_domain_search_for_target_query(request, project_id:int):
     try:
@@ -261,6 +283,17 @@ def execute_cdd_domain_search_for_target_query(request, project_id:int):
         return failure_view(request, e)
 
 
+'''cdd_domain_search_details_view
+    
+    Function for loading the output of the cdd domain search task. Detail result page for each
+    query sequence and successfull domain search tasks.
+    
+    :param query_id
+        :type str
+    :param project_id
+        :type int
+
+'''
 @login_required(login_url='login')
 def cdd_domain_search_details_view(request, query_id:str, project_id:int):
     try:
@@ -274,6 +307,17 @@ def cdd_domain_search_details_view(request, query_id:str, project_id:int):
     except Exception as e:
         return failure_view(request, e)
 
+'''delete_cdd_domain_search_view
+
+    Function for deletion of the cdd_domain_search_task celery task result database object and all 
+    associated files. The files to delete are defined as strings in a list within the delete_cdd_search_output
+    function.
+    
+    :param query_id
+        :type str
+    :param project_id
+        :type int
+'''
 @login_required(login_url='login')
 def delete_cdd_domain_search_view(request, query_id:str, project_id:int):
     try:
@@ -289,3 +333,28 @@ def delete_cdd_domain_search_view(request, query_id:str, project_id:int):
             return redirect('cdd_domain_search_dashboard',project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
+
+'''get_cdd_task_status_ajax_call
+
+    This function returns a json object with the cdd_domain_search_task result column for the 
+    specified query sequence. The json object is used for displaying the progress of the task. 
+    E.g.: {"pending": false, "current": 30, "total": 100, "percent": 30.0, "description": "PROGRESS"}
+
+    :param query_id
+        :type str
+    :param project_id
+        :type int
+    
+    :returns JsonResponse
+
+'''
+@login_required(login_url='login')
+def get_cdd_task_status_ajax_call(request, query_id:str, project_id:int):
+    try:
+        if request.is_ajax and request.method == "GET":
+            query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id)[0]
+            data = query_sequence.cdd_domain_search_task.result
+            return JsonResponse({"data":loads(data)}, status=200)
+        return JsonResponse({"ERROR":"NOT OK"},status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)

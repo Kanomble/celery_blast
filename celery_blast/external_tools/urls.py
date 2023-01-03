@@ -40,6 +40,9 @@ ajax_calls = [
     path('<int:query_sequence_id>/ajax_call_progress_msa_task',
          views.ajax_call_progress_msa_task,
          name="ajax_call_progress_msa_task"),
+    path('<int:project_id>/<str:query_id>/cdd_domain_search_task_status',
+         views.get_cdd_task_status_ajax_call,
+         name="get_cdd_task_status_ajax_call")
 ]
 
 phylogenetic_analysis_urls = [

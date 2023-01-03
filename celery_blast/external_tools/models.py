@@ -103,11 +103,11 @@ class ExternalTools(models.Model):
 
 #TODO documentation
 '''
-Query sequences of reciprocal BLAST projects. 
-This model combines the results of the RecBLAST for each query sequence to
-multiple sequence alignments and phylogenetic tree task result objects. 
+    Query sequences of reciprocal BLAST projects. 
+    This model combines the results of the RecBLAST for each query sequence to
+    multiple sequence alignments, phylogenetic tree and CDD search task result objects. 
 
-It can be used as a hub for new tasks.
+    It can be used as a hub for new tasks.
 '''
 class QuerySequences(models.Model):
     query_accession_id = models.CharField(
