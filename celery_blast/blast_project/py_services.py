@@ -6,6 +6,33 @@ from shutil import rmtree
 from django.db import IntegrityError, transaction
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
+'''return_list_of_all_logfiles
+    
+    Returns a list with all filepaths to logfiles of the snakemake run. 
+    If there is no "log" directory, in the BLAST_PROJECT_DIR the function returns an empty list.
+    
+    :param project_id
+        :type int
+    :returns filelist
+        :type list
+'''
+def return_list_of_all_logfiles(project_id:int)->list:
+    try:
+        path_to_project_dir = BLAST_PROJECT_DIR + str(project_id) + "/log"
+        if isdir(path_to_project_dir) == False:
+            return []
+        else:
+            filelist = listdir(path_to_project_dir)
+            for file in filelist:
+                #check if "file" is a query sequence sub-directory
+                if isdir(path_to_project_dir + '/' + file):
+                    filelist.remove(file)
+                    for query_log in listdir(path_to_project_dir + '/' + file):
+                        filelist.append(file+'/log/'+query_log)
+            return filelist
+    except Exception as e:
+        raise Exception("[-] ERROR creating list of all logfiles for project: {} with exception: {}".format(project_id, e))
+
 '''check_if_taxdb_exists
     
     This function is used before project creation to check if the taxonomy database exists in the database directory.
