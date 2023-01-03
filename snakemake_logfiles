@@ -6,7 +6,7 @@ backward_blast.log
 reciprocal_best_hits.log - 5
 blast_tables_to_csv.log - 6
 build_folders_with_hit_info_for_each_qseqid.log - 8
-extract_subject_sequences_from_database.log
+{qseqid}/extract_subject_sequences_from_database.log
 check_if_query_sequence_is_in_target_sequences_faa.log - 16
 blast_tables_to_plots.log - 10
 query_sequences_to_html_table.log - 11
