@@ -520,7 +520,7 @@ def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxono
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
-'''database_statistics
+'''execute_database_statistics_task
 
     Function triggers execution of the database statistics optional postprocessing.
     Executes the task function that includes py_database_statistic function database_statistics.
@@ -529,7 +529,7 @@ def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxono
         :type int
 '''
 @login_required(login_url='login')
-def execute_database_statistics_task(request, project_id):
+def execute_database_statistics_task(request, project_id:int):
     try:
         taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
         calculate_database_statistics_task.delay(project_id,request.user.email,taxonomic_units)

@@ -302,6 +302,11 @@ def execute_makeblastdb_with_uploaded_genomes(self,database_id,path_to_database,
 
 '''calculate_database_statistics_task
     
+    This function calculates the database statistics based on the reciprocal_results_with_taxonomy.csv
+    and the database csv files. It produces several output files. 
+    The {database_name}_with_taxonomic_information.csv file for the underlying forward database, 
+    {taxonomic_unit}_database_statistics_normalized.csv, {taxonomic_unit}_database_statistics.csv, 
+    
     :param self
         :type TaskResult object
     :param project_id

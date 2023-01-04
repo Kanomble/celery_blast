@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import matplotlib._color_data as mcd
-# from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import math
 import random

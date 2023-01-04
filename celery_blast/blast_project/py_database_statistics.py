@@ -1076,10 +1076,10 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
 
 
 '''create_initial_bokeh_database_data
-
+    
 '''
 def create_initial_bokeh_database_data(database: pd.DataFrame, data_selection: pd.DataFrame, taxcount_df: pd.DataFrame,
-                                       taxonomic_unit: str):
+                                       taxonomic_unit: str)->pd.DataFrame:
     try:
         # unique database entries
         db_df = pd.DataFrame(database[taxonomic_unit].value_counts())
@@ -1224,17 +1224,11 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 'genus': ColumnDataSource(data=db_df_genus)
             }
 
-            unique_tax = list(data_all[taxonomic_unit].unique())
+            # unique_tax = list(data_all[taxonomic_unit].unique())
             unique_qseqids = list(data_all['qseqid'].unique())
 
             # selection subset for initial plot data
-            if len(unique_tax) > 1:
-                tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0], unique_tax[1]],
-                                       title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
 
-            else:
-                tax_menu = MultiSelect(options=unique_tax, value=[unique_tax[0]],
-                                       title='Select: ' + taxonomic_unit.capitalize())  # drop down menu
 
             table = DataTable(source=DbData, width=390, height=275,
                               sizing_mode="scale_both", reorderable=True, sortable=True, fit_columns=True,
@@ -1433,7 +1427,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             line_color_picker.js_link('color', circle.glyph, 'line_color')
 
             selection_callback = CustomJS(
-                args=dict(sc=Curr, source=Overall, table_data=DbData, menu=tax_menu,
+                args=dict(sc=Curr, source=Overall, table_data=DbData,
                           qseqids=menu_qseqids, color_menu=color_menu), code="""
                 var call_back_object = cb_obj.indices
                 var tax_unit = color_menu.value

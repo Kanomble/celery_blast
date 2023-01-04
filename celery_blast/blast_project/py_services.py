@@ -28,7 +28,7 @@ def return_list_of_all_logfiles(project_id:int)->list:
                 if isdir(path_to_project_dir + '/' + file):
                     filelist.remove(file)
                     for query_log in listdir(path_to_project_dir + '/' + file):
-                        filelist.append(file+'/log/'+query_log)
+                        filelist.append(file+'/'+query_log)
             return filelist
     except Exception as e:
         raise Exception("[-] ERROR creating list of all logfiles for project: {} with exception: {}".format(project_id, e))
