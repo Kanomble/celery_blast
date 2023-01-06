@@ -37,13 +37,17 @@ class OneWayProjectCreationForm(forms.Form):
         if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
             raise ValidationError("please upload only fasta files!")
 
-        for character in query_file.name:
-            if character in punctuation:
-                if character != '_' and character != '-':
-                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
-            if character not in ascii_letters:
-                if character != '_' and character != '-':
-                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
+        if len(query_file.name.split(".")) != 2:
+            raise ValidationError("there are no dots allowed except the filetype delimiter")
+        else:
+            filename = query_file.name.split(".")[0]
+            for character in filename:
+                if character in punctuation:
+                    if character != '_' and character != '-':
+                        raise ValidationError("bad character: \"{}\" in query file name".format(character))
+                if character not in ascii_letters:
+                    if character != '_' and character != '-':
+                        raise ValidationError("bad character: \"{}\" in query file name".format(character))
 
         header = []
         for chunk in query_file.chunks():
@@ -136,13 +140,17 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
             raise ValidationError("please upload only fasta files!")
 
-        for character in query_file.name:
-            if character in punctuation:
-                if character != '_' and character != '-':
-                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
-            if character not in ascii_letters:
-                if character != '_' and character != '-':
-                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
+        if len(query_file.name.split(".")) != 2:
+            raise ValidationError("there are no dots allowed except the filetype delimiter")
+        else:
+            filename = query_file.name.split(".")[0]
+            for character in filename:
+                if character in punctuation:
+                    if character != '_' and character != '-':
+                        raise ValidationError("bad character: \"{}\" in query file name".format(character))
+                if character not in ascii_letters:
+                    if character != '_' and character != '-':
+                        raise ValidationError("bad character: \"{}\" in query file name".format(character))
 
         header = []
         for chunk in query_file.chunks():

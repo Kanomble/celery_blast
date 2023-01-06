@@ -68,7 +68,7 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
         # RBH result dataframe
         result_data = result_data.loc[:,
                       ['order', 'class', 'phylum', 'genus', 'family', 'bitscore', 'pident', 'stitle', 'scomnames',
-                       'staxids', 'qseqid']]  # ,'slen'
+                       'staxids', 'qseqid', 'sacc']]  # ,'slen'
         result_data = result_data.sort_values(by=taxonomic_unit)
 
         color_dict, marker_dict = create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data)

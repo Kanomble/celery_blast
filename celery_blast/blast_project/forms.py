@@ -181,13 +181,17 @@ class ProjectCreationForm(forms.Form):
                 self.add_error("query_sequence_file","please upload only fasta files!")
 
             else:
-                for character in query_file.name:
-                    if character in punctuation:
-                        if character != '_' and character != '-':
-                            self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
-                    if character not in ascii_letters:
-                        if character != '_' and character != '-':
-                            self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+                if len(query_file.name.split(".")) != 2:
+                    self.add_error("query_sequence_file","there are no dots allowed except the filetype delimiter")
+                else:
+                    filename = query_file.name.split(".")[0]
+                    for character in filename:
+                        if character in punctuation:
+                            if character != '_' and character != '-':
+                                self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+                        if character not in ascii_letters:
+                            if character != '_' and character != '-':
+                                self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
 
                 header = []
                 #checks accession identifier of query sequences

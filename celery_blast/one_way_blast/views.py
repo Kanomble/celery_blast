@@ -70,7 +70,6 @@ def one_way_project_details_view(request, project_id:int):
     #try:
     blast_project = get_one_way_project_by_id(project_id)
     bokeh_plot_template = "one_way_blast/"+str(project_id)+'/bokeh_plot.html'
-    print(bokeh_plot_template)
     context = {'OneWayBlastProject':blast_project,
                 'Database':blast_project.project_database,
                'BokehPlot':bokeh_plot_template,
@@ -84,10 +83,10 @@ def one_way_remote_project_details_view(request, project_id):
     try:
 
         blast_project = get_one_way_remote_project_by_id(project_id)
-        genus_plot_template = "one_way_blast/remote_searches/"+str(blast_project.id)+'/genus_bars.html'
+        bokeh_plot_template = "one_way_blast/remote_searches/"+str(project_id)+'/bokeh_plot.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'OneWayRemoteBlastProject':blast_project,
-                   'GenusPlotTemplate':genus_plot_template}
+                   'BokehPlot':bokeh_plot_template}
                    #'ProtPfam':prot_to_pfam}
         return render(request,'one_way_blast/one_way_remote_blast_details.html',context)
     except Exception as e:

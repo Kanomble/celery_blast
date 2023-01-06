@@ -12,7 +12,7 @@ rule all:
 	input:
 		"blast_results.table",
 		"blast_results.html",
-		"genus_bars.html",
+		"bokeh_plot.html",
 		"query_sequence_information.html",
 		"query_sequence_information.csv",
 		expand("{qseqid}/target_sequences.svg",qseqid=QSEQIDS)
@@ -24,6 +24,9 @@ rule blast:
 	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb'], entrez_query=config['entrez_query'], search_strategy=config['search_strategy']
 	run:
 		if(params.entrez_query != ""):
+			entrez_query = params.entrez_query
+			if "orgn" not in entrez_query:
+				entrez_query = entrez_query + "[ORGN]"
 			cmd_string = params.search_strategy + " -db "+params.database+\
 			" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
@@ -32,7 +35,7 @@ rule blast:
 			" -num_alignments "+str(params.num_alignments)+\
 			" -query "+input.queries+\
 			" -remote"+\
-			" -entrez_query \""+params.entrez_query+"\""
+			" -entrez_query \""+entrez_query+"\""
 			shell(cmd_string)
 		else:
 			cmd_string = params.search_strategy + " -db "+params.database+\
