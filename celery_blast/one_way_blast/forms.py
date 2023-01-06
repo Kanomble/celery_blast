@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from blast_project.py_django_db_services import get_all_succeeded_databases
+from string import punctuation, ascii_letters
 
 #TODO documentation
 class OneWayProjectCreationForm(forms.Form):
@@ -35,6 +36,15 @@ class OneWayProjectCreationForm(forms.Form):
         query_file = self.cleaned_data['query_sequence_file']
         if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
             raise ValidationError("please upload only fasta files!")
+
+        for character in query_file.name:
+            if character in punctuation:
+                if character != '_' and character != '-':
+                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
+            if character not in ascii_letters:
+                if character != '_' and character != '-':
+                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
+
         header = []
         for chunk in query_file.chunks():
             lines = chunk.decode().split("\n")
@@ -125,6 +135,15 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         query_file = self.cleaned_data['r_query_sequence_file']
         if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
             raise ValidationError("please upload only fasta files!")
+
+        for character in query_file.name:
+            if character in punctuation:
+                if character != '_' and character != '-':
+                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
+            if character not in ascii_letters:
+                if character != '_' and character != '-':
+                    raise ValidationError("bad character: \"{}\" in query file name".format(character))
+
         header = []
         for chunk in query_file.chunks():
             lines = chunk.decode().split("\n")

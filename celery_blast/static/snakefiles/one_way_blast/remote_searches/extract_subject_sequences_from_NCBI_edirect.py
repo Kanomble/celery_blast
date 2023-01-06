@@ -1,7 +1,6 @@
 import pandas as pd
 from Bio import Entrez
 
-
 try:
     col = ["searches"]
     target_df = pd.read_csv(snakemake.input['ids'], header=None, names=col)

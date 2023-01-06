@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
     get_list_of_species_taxids_by_list_of_scientific_names, check_if_protein_identifier_correspond_to_backward_taxid
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
+from string import punctuation, ascii_letters
 
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
@@ -178,7 +179,16 @@ class ProjectCreationForm(forms.Form):
             #check for fasta files
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
                 self.add_error("query_sequence_file","please upload only fasta files!")
+
             else:
+                for character in query_file.name:
+                    if character in punctuation:
+                        if character != '_' and character != '-':
+                            self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+                    if character not in ascii_letters:
+                        if character != '_' and character != '-':
+                            self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+
                 header = []
                 #checks accession identifier of query sequences
                 for chunk in query_file.chunks():
