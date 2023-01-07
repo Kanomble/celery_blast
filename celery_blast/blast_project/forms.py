@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
-    get_list_of_species_taxids_by_list_of_scientific_names, check_if_protein_identifier_correspond_to_backward_taxid
+    get_list_of_species_taxids_by_list_of_scientific_names, fetch_protein_records
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
 from string import punctuation, ascii_letters
 

@@ -212,3 +212,39 @@ def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
         return prot_to_pfam
     except Exception as e:
         raise Exception("couldn't parse entrez.efetch with query ids with exception : {}".format(e))
+
+''' fetch_protein_records
+    Function wrapper for Entrez.efetch function. 
+    Takes as input a list with maximal 500 protein accession ids and an email
+    address for the current user.
+    
+    Returns the Entrez.Parser.ListElement (from Bio import Entrez) that can be used by the
+    parse_entrez_xml function. Failures contains a list with unfetchable protein identifiers.
+    
+    :param proteins
+        :type list
+    :param email
+        :type str
+    
+    :returns records, failures
+        :type tuple(Entrez.Parser.ListElement,list)
+'''
+def fetch_protein_records(proteins: list, email: str):
+    try:
+        Entrez.email = email
+        handle = Entrez.efetch(db="protein", id=proteins, retmode="xml")
+        records = Entrez.read(handle)
+        handle.close()
+        failures = []
+        fetched_protein_ids_with_version = []
+        fetched_protein_ids_without_version = []
+        for rec in records:
+            fetched_protein_ids_with_version.append(rec['GBSeq_accession-version'])
+            fetched_protein_ids_without_version.append(rec['GBSeq_locus'])
+        for protein in proteins:
+            if protein not in fetched_protein_ids_with_version and protein not in fetched_protein_ids_without_version:
+                failures.append(protein)
+
+        return records, failures
+    except Exception as e:
+        raise Exception("[-] ERROR fetching protein xml data from Biopython with exception: {}".format(e))
