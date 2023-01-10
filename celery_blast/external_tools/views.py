@@ -1,24 +1,24 @@
-from django.shortcuts import render, redirect, HttpResponse
-from django.core.handlers.wsgi import WSGIRequest
-from django.contrib.auth.decorators import login_required
-from blast_project.views import failure_view, success_view
-from blast_project.py_services import get_html_results
-from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed
-from django.conf import settings
-from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
-    execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
-    entrez_search_task, download_entrez_search_associated_protein_sequences, download_organism_protein_sequences_task
-    entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
-from .models import ExternalTools, EntrezSearch, QuerySequences
-from django_celery_results.models import TaskResult
-from .forms import EntrezSearchForm
-from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id, download_by_organism
-from .forms import EntrezSearchForm, RpsBLASTSettingsForm
-from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
-from django.http import JsonResponse
 from json import loads
 from time import sleep
+
+from blast_project.py_services import get_html_results
+from blast_project.views import failure_view
+from django.contrib.auth.decorators import login_required
+from django.core.handlers.wsgi import WSGIRequest
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, HttpResponse
+from django_celery_results.models import TaskResult
+
+from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
+from .forms import EntrezSearchForm, RpsBLASTSettingsForm
+from .models import ExternalTools, EntrezSearch, QuerySequences
+from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed
+from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building, \
+    execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
+    download_organism_protein_sequences_task, \
+    entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
+
 
 @login_required(login_url='login')
 def view_downloaded_sequences(request: WSGIRequest, search_id: int):

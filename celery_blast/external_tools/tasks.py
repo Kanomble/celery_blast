@@ -10,9 +10,8 @@ from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, create_html_output_for_newicktree
 from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model, download_esearch_protein_fasta_files, \
-    update_entrezsearch_with_download_task_result
-from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file, \
     update_entrezsearch_with_download_task_result, download_by_organism
+from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
 
 #logger for celery worker instances
 logger = get_task_logger(__name__)
