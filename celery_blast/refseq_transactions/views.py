@@ -74,7 +74,7 @@ def download_refseq_assembly_summary_view(request):
     if the form is valid the user gets redirected to the refseq_transactions_dashboard
     if not the form validation errors are rendered and parsed into the refseq_transactions_dashboard.html template
     
-    url: download_refseq_assemblies
+    url: create_refseq_database_metadata
     redirect: refseq_transactions_dashboard.html
     template: refseq_transactions_dashboard.html
     method: POST
@@ -87,7 +87,7 @@ def create_blast_database_model_and_directory(request):
             refseq_database_form = RefseqDatabaseForm(request.POST,request.FILES)
             #validate form
             if refseq_database_form.is_valid():
-                #do something here if validation succeeds
+
                 create_blastdatabase_table_and_directory(refseq_database_form)
                 return redirect('refseq_transactions_dashboard')
 
@@ -110,7 +110,7 @@ def create_blast_database_model_and_directory(request):
             return render(request,'refseq_transactions/refseq_transactions_dashboard.html',context)
         # should never been executed
         else:
-            return redirect('refseq_transactions_dashboard')
+            return failure_view(request, "error creating blast database model and directory")
     except Exception as e:
         return failure_view(request,e)
 
@@ -130,7 +130,7 @@ def delete_blast_database_model_and_directory(request,database_id):
             return redirect('refseq_transactions_dashboard')
         # should never been executed
         else:
-            return redirect('refseq_transactions_dashboard')
+            return failure_view(request,"error deleting this database, request method is not a POST method.")
     except Exception as e:
         return failure_view(request,e)
 
@@ -196,8 +196,12 @@ def ajax_call_for_database_download_progress(request, database_id):
     try:
         if request.is_ajax and request.method == "GET":
             #progress = read_database_download_and_format_logfile(database_id)
-            progress = get_database_download_and_formatting_task_result_progress(database_id)
-            return JsonResponse({"progress":progress},status=200)
+            database = get_database_by_id(database_id)
+            if database.database_download_and_format_task.status == 'SUCCESS':
+                return JsonResponse({"progress":100},status=200)
+            else:
+                progress = get_database_download_and_formatting_task_result_progress(database_id)
+                return JsonResponse({"progress":progress},status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 

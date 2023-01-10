@@ -2,8 +2,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, get_list_of_species_taxids_by_list_of_scientific_names
+from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
+    get_list_of_species_taxids_by_list_of_scientific_names, fetch_protein_records
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
+from string import punctuation, ascii_letters
 
 ''' CreateTaxonomicFileForm
 post form for the create_taxonomic_file.html template
@@ -161,6 +163,7 @@ class ProjectCreationForm(forms.Form):
                     self.add_error('species_name_for_backward_blast',
                                    'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
                                        taxonomic_nodes, backward_db.database_name))
+
                 if booleanbw == True:
                     #taking the first taxonomic node in the provided list
                     cleaned_data['species_name_for_backward_blast'] = (species_name, taxonomic_nodes[0])
@@ -170,12 +173,26 @@ class ProjectCreationForm(forms.Form):
                                'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
                                    taxonomic_nodes, backward_db.database_name))
 
+
             query_file = cleaned_data['query_sequence_file']
 
             #check for fasta files
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
                 self.add_error("query_sequence_file","please upload only fasta files!")
+
             else:
+                if len(query_file.name.split(".")) != 2:
+                    self.add_error("query_sequence_file","there are no dots allowed except the filetype delimiter")
+                else:
+                    filename = query_file.name.split(".")[0]
+                    for character in filename:
+                        if character in punctuation:
+                            if character != '_' and character != '-':
+                                self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+                        if character not in ascii_letters:
+                            if character != '_' and character != '-':
+                                self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+
                 header = []
                 #checks accession identifier of query sequences
                 for chunk in query_file.chunks():
@@ -184,22 +201,39 @@ class ProjectCreationForm(forms.Form):
                         if line.startswith('>'):
                             try:
                                 acc = line.split(" ")[0].split('>')[-1].split(".")[0]
+                                if "|" in acc or " " in acc:
+                                    raise Exception("{} is no valid protein identifier - Format: e.g. WP_8765432".format(acc))
                                 header.append(acc)
                             except Exception as e:
                                 self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
-                    #maximum number of query sequences = 300
-                    if len(header) > 300:
-                        self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
-                                                             ' this is not allowed, consider to separate the query sequences.')
-                    #checks if query sequences reside in the backward database
-                    else:
-                        valid = check_if_sequences_are_in_database(backward_db.id, header)
-                        if valid != True:
-                            self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+                #maximum number of query sequences = 300
+                if len(header) > 300:
+                    self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
+                                                         ' this is not allowed, consider to separate the query sequences.')
 
-                    #check for duplicate entries in the query file
-                    if len(header) != len(set(header)):
-                        self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+                #checks if query sequences reside in the backward database
+                else:
+                    valid = check_if_sequences_are_in_database(backward_db.id, header)
+                    if valid != True:
+                        self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+                #check for duplicate entries in the query file
+                if len(header) != len(set(header)):
+                    self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+
+                #check if provided taxid corresponds to query sequence origin
+                #what if the user provides custom query sequence ids?
+                #try:
+                #    retcode=check_if_protein_identifier_correspond_to_backward_taxid(header,taxonomic_nodes[0],user_email)
+                #    if retcode != 0:
+                #        self.add_error('species_name_for_backward_blast',
+                #                       'specified taxonomic node: {} does not match with query sequences, following nodes have been translated from the protein queries: {}'.format(
+                #                           taxonomic_nodes[0],' '.join(retcode)))
+                #except Exception:
+                #    #TODO add taxid for query sequences
+                #    self.add_error('species_name_for_backward_blast',
+                #                   'specified taxonomic node: {} does not match with query sequences'.format(
+                #                       taxonomic_nodes[0]))
+
         except Exception as e:
             raise ValidationError(
                 "validation error in project creation, due to this exception: {}".format(
@@ -238,6 +272,7 @@ class BlastSettingsFormBackward(forms.Form):
         label='BW max hsps', initial=500
     )
 
+#TODO documentation
 class UploadGenomeForm(forms.Form):
     genome_fasta_file = forms.FileField(
         error_messages={
@@ -247,16 +282,19 @@ class UploadGenomeForm(forms.Form):
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
     assembly_entries = forms.IntegerField(min_value=1,required=True)
-    assembly_accession = forms.CharField(max_length=200,required=False)
 
+    #obsolete due to multiple genome form for just one genome file
+    #TODO remove fields and fix associated view/form functions
+    ###### OBSOLETE ######
+    assembly_accession = forms.CharField(max_length=200,required=False)
     assembly_level = forms.ChoiceField(
         choices=(("Chromosome","Chromosome"),("Complete Genome","Complete Genome"),("Scaffold","Scaffold"),("Contig","Contig")),
-        required=True)
+        required=False)
 
     organism_name = forms.CharField(
         label="Organism Name", required=False
     )
-
+    ###### OBSOLETE ######
 
     taxonomic_node = forms.IntegerField(
         min_value=2,
@@ -292,7 +330,6 @@ class UploadGenomeForm(forms.Form):
         else:
             return genome_fasta_file
 
-    #TODO add controll
     def clean(self):
         cleaned_data = super().clean()
         genome_fasta_file = cleaned_data['genome_fasta_file']
@@ -333,12 +370,15 @@ class UploadGenomeForm(forms.Form):
             #check if taxonomic_nodes_exists
             organisms = 0
             for chunk in organism_file.chunks():
+
                 lines = chunk.decode().split("\n")
                 for line in lines:
                     if line != '':
                         try:
+                            #check if there are taxids available (for provided organism names)
                             taxids = get_species_taxid_by_name(user_email,line)
-                            if taxids != True:
+                            #multiple taxids are valid
+                            if len(taxids) == 0:
                                 raise Exception
                         except:
                             self.add_error('organism_name_file','there is no taxonomic node available for : {}'.format(line))
@@ -352,7 +392,6 @@ class UploadGenomeForm(forms.Form):
                 amount_of_assemblies = 0
                 for chunk in assembly_accessions_file.chunks():
                     lines = chunk.decode().split('\n')
-                    #print(lines)
                     for line in lines:
                         if line == '\r':
                             self.add_error('assembly_accessions_file','there are lines without any informations in your assembly accessions file')
@@ -366,6 +405,7 @@ class UploadGenomeForm(forms.Form):
                     amount_of_levels += chunk.decode().count('\n')
                 if amount_of_levels != organisms:
                     self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
+        return cleaned_data
 
 class UploadMultipleFilesGenomeForm(forms.Form):
     database_title = forms.CharField(max_length=200, required=True)
@@ -386,7 +426,6 @@ class UploadMultipleFilesGenomeForm(forms.Form):
         self.fields['extra_field_count'].initial = extra_fields
         extra_fields = int(extra_fields)
 
-
         if extra_fields > 0:
             extra_fields += 1
         for index in range(extra_fields):
@@ -398,14 +437,14 @@ class UploadMultipleFilesGenomeForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         user_email = cleaned_data['user_email']
-
         for field in self.fields:
             if "genome_file" in field:
                 file = cleaned_data.get(field)
                 if file == None:
                     self.add_error(field,'You have to provide a genome file')
 
-                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
+                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:
+                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
 
             elif "organism" in field:
                 if cleaned_data.get(field) == '':
@@ -415,10 +454,13 @@ class UploadMultipleFilesGenomeForm(forms.Form):
                 else:
                     try:
                         taxids = get_species_taxid_by_name(user_email,cleaned_data.get(field))
-                        if taxids != True:
+                        #multiple taxids are valid
+                        if len(taxids) == 0:
                             raise Exception
                     except Exception as e:
                         self.add_error(field,"{} : {} is no valid name!".format(e,cleaned_data.get(field)))
+
+        return cleaned_data
 
 
 

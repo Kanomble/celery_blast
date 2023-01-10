@@ -11,4 +11,6 @@ celery-progress==0.1.0
 altair==4.1.0
 pandas==1.2.4
 turtle==0.0.1
+seaborn==0.12.0
+bokeh==2.4.3
 

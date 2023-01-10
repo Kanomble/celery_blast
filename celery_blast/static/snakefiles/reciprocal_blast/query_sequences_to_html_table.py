@@ -3,9 +3,15 @@ import pandas as pd
 from sys import exit
 ERRORCODE=11
 ''' get_target_header
-
+    
+    Parse fasta file and extract fasta headers, return just the sequence identifier.
+    
+    :param target_file
+        :type str
+    :returns header
+        :type list
 '''
-def get_target_header(target_file):
+def get_target_header(target_file:str)->list:
     try:
         with open(target_file,'r') as proteins:
             header = []
@@ -20,14 +26,22 @@ def get_target_header(target_file):
         raise FileNotFoundError("[-] There is no target fasta file for: {}".format(target_file))
 
 ''' fetch_protein_records
-Function wrapper for Entrez.efetch function. 
-Takes as input a list with maximal 500 protein accession ids and an email
-address for the current user.
 
-Returns the Entrez.Parser.ListElement (from Bio import Entrez) that can be used by the
-parse_entrez_xml function.
+    Function wrapper for Entrez.efetch function. 
+    Takes as input a list with maximal 500 protein accession ids and an email
+    address for the current user.
+    
+    Returns the Entrez.Parser.ListElement (from Bio import Entrez) that can be used by the
+    parse_entrez_xml function.
+
+    :param proteins
+        :type list
+    :param email
+        :type str
+    :returns records
+        :type list
 '''
-def fetch_protein_records(proteins:list,email:str):
+def fetch_protein_records(proteins:list,email:str)->list:
     try:
         Entrez.email = email
         handle = Entrez.efetch(db="protein", id=proteins, retmode="xml")
@@ -113,11 +127,20 @@ def parse_entrez_xml(records) -> dict:
 
 
 ''' create_pandas_df_and_html_table
-Function that takes as input the protein_informations dictionary from parse_entrez_xml and
-outputs an html and tsf table with all informations for the provided query sequences.
+    Function that takes as input the protein_informations dictionary from parse_entrez_xml and
+    outputs an html and tsf table with all informations for the provided query sequences.
 
-Returns an integer:
-    0 : Function returns successfully
+    :param proteins
+        :type list[str]
+    :param protein_informations
+        :type dict
+    :param path_to_html_output
+        :type str
+    :param path_to_csv_output
+        :type str
+    
+    :returns returncode -> 0 function returns successfully 
+        :type int 
 '''
 def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, path_to_html_output: str, path_to_csv_output:str) -> int:
     try:
@@ -163,6 +186,7 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
             df = df.append(row_to_add, ignore_index=True)
 
 
+        #weired addition of datatable html to pandas file ... --> see {datatables}
         pd.set_option('colheader_justify', 'left')
         html_string = '''
         <html>
@@ -250,6 +274,9 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
         return 0
     except Exception as e:
         raise Exception("[-] ERROR during creation of pandas html tables with exception: {}".format(e))
+
+
+###### MAIN SCRIPT #######
 
 with open(snakemake.log['log'],'w') as logfile:
     try:

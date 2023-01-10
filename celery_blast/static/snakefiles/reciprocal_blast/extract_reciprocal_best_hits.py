@@ -13,7 +13,7 @@ try:
         forward_df = pd.read_table(snakemake.input['fw_res'],header=None)
         forward_df[7] = forward_df[7].map(lambda line : line.split('.')[0])
         forward_df = pd.DataFrame([forward_df[0][:],forward_df[7][:], forward_df[8][:]]).transpose()
-
+        logfile.write("INFO:starting to extract reciprocal best hits (RBHs) from blast output tables\n")
         logfile.write("INFO:loaded forward dataframe into pandas with length {}\n".format(len(forward_df)))
         backward_df = pd.read_table(snakemake.input['bw_res'],header=None)
         backward_df[7] = backward_df[7].map(lambda line : line.split('.')[0])
@@ -40,7 +40,7 @@ try:
         if len(result_df['targetid']) == 0:
             logfile.write("ERROR:there are no reciprocal best hits for the provided query sequences\n")
             sys.exit(ERRORCODE)
-
+        logfile.write("INFO:starting to produce RBH output file\n")
         with open(snakemake.output['rec_best_hits'],'w') as recfile:
             recfile.write("forward_genome_id\tbackward_genome_id\tstaxids\n")
             for targetid, qseqid,taxid in zip(result_df['targetid'],result_df['qseqid'],result_df['taxid_y']):

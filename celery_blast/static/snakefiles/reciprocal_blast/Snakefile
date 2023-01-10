@@ -1,6 +1,8 @@
 configfile: "./snakefile_config"
 import pandas as pd
-import math
+from math import ceil
+
+#TODO fix file paths - use file to define correct paths?
 
 #PIPELINE PREPARATION
 #filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
@@ -23,6 +25,7 @@ rule all:
 		 "query_sequence_information.html",
 		"query_sequence_information.csv",
 		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
+		"query_domains.tsf","query_domains.html"
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -32,7 +35,7 @@ rule forward_blast:
 	params: word_size=config['fw_word_size'], e_value=config['fw_e_value'], num_alignments=config['fw_num_alignments'], num_threads=config['fw_num_threads'], database=config['blastdb']
 	log:log="log/forward_blast.log"
 	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries} 2> {log}"
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.fw_queries} 2> {log}"
 
 #RULE 2
 #collects the subject id's of the forward BLAST and writes those id's into a file that is used by the bw_query_preparation rule (RULE 3)
@@ -48,7 +51,7 @@ rule fw_result_processing:
 				with open(output[0],"w+") as out:
 					for gi in fw_results[7][:].unique():
 						out.write(gi+"\n")
-				logfile.write(('INFO:done writing {} target sequences into output file'.format(len(fw_results[7][:].unique()))))
+				logfile.write(('INFO:done writing {} target sequences into output file\n'.format(len(fw_results[7][:].unique()))))
 				logfile.write("DONE\n")
 			except Exception as e:
 				logfile.write("ERROR:{}\n".format(e))
@@ -88,7 +91,7 @@ rule backward_blast:
 							sequence_dict[header] += line
 
 				#preparation of transient input files for the backward blast. maximal 100 query sequences will reside in the input fasta files
-				filenames = ["bw_queries_" + str(i) + ".faa" for i in range(math.ceil(len(sequence_dict.keys()) / float(step)))]
+				filenames = ["bw_queries_" + str(i) + ".faa" for i in range(ceil(len(sequence_dict.keys()) / float(step)))]
 				logfile.write("INFO:working with: {} input fasta files\n".format(len(filenames)))
 				keys = list(sequence_dict.keys())
 				start = 0
@@ -105,17 +108,20 @@ rule backward_blast:
 
 				#backward blast procedure
 				inter_blast_out = open("blast.table",'w')
-				for file in filenames:
-					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file} 2> {log}")
+				for index, file in enumerate(filenames):
+					logfile.write("INFO:working with input sequence file {}\n".format(index))
+					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file} 2> {log}")
 					with open(params.intermediate_filename,'r') as interfilename:
 						for line in interfilename.readlines():
 							inter_blast_out.write(line)
 				inter_blast_out.close()
+				logfile.write("INFO:done with blastp on all input files, removing intermediate query files ...\n")
 				#removing intermediate query files
 				for file in filenames:
 					shell("rm {file}")
 				#removing intermediate blast table (table of the last backward blast run)
 				shell("rm inter_blast.table")
+				logfile.write("INFO:renaming blast.table to snakemake output: blastp_bw_out.table\n")
 				#changing output filename to snakemake output name
 				shell("mv blast.table {output}")
 				logfile.write("DONE\n")
@@ -152,14 +158,14 @@ rule blast_tables_to_html:
 
 #RULE 8
 #outputs a summary for the RBH inference and constructs directories for each query sequence
-rule reciprocal_results_to_query_result_tables:
+rule build_folders_with_hit_info_for_each_qseqid:
 	input: result_csv="reciprocal_results.csv", query_file=config['query_sequence']
 	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
 		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
 		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
-	params:	result_statistics_static=expand("../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_statistics.png",qseqid=QSEQIDS),
-			project_id=config['project_id']
-	log: log="log/reciprocal_results_to_query_result_tables.log"
+	params:	project_id=config['project_id'],
+			result_statistics_static=expand("../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_statistics.png",qseqid=QSEQIDS)
+	log: log="log/build_folders_with_hit_info_for_each_qseqid.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
 
@@ -169,8 +175,9 @@ rule extract_subject_sequences_from_database:
 	input: "{qseqid}/target_sequence_ids.txt"
 	output: "{qseqid}/target_sequences_raw.faa"
 	params: database=config["blastdb"]
+	log: log="log/{qseqid}/extract_subject_sequences_from_database.log"
 	shell:
-		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output}"
+		 "blastdbcmd -db {params.database} -entry_batch {input} -out {output} 2> {log.log}"
 
 #RULE 16
 #checks if the query sequence resides in the target_sequences.faa file
@@ -178,7 +185,7 @@ rule check_if_query_sequence_is_in_target_sequences_faa:
 	input: target_file=expand("{qseqid}/target_sequences_raw.faa",qseqid=QSEQIDS), query_file=config['query_sequence']
 	output: expand("{qseqid}/target_sequences.faa",qseqid=QSEQIDS)
 	params: qseqs=QSEQIDS
-	log: log="log/check_target_fasta.log"
+	log: log="log/check_if_query_sequence_is_in_target_sequences_faa.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/check_if_query_sequence_is_in_target_sequences_faa.py"
 
@@ -204,30 +211,74 @@ rule query_sequences_to_html_table:
 	script:
 		"../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"
 
-#Conni BA
 #RULE 12
+#this rule shouldn't throw exceptions, if an error occurs an empty file is created
 rule conduct_multiple_sequence_alignment_mafft:
 	input: "{qseqid}/target_sequences.faa"
 	output: "{qseqid}/target_sequences.msa"
 	log: log="log/{qseqid}/msa.log"
 	run:
+		execute_mafft=True
+		#check if target sequence file is empty (or just contains the query sequence)
+		#if this is the case, there is no need for producing a msa
 		with open(input[0],'r') as infile:
-			if len(infile.readlines()) > 1:
-				shell("mafft --auto {input} > {output} 2> {log}")
+			if len(infile.readlines()) <= 1:
+				execute_mafft=False
+		try:
+			if execute_mafft==True:
+				#mafft execution
+				mafft=shell("mafft --auto {input} > {output} 2> {log}")
+				with open(log['log'],'a') as lfile:
+					lfile.write("INFO:ending mafft multiple sequence alignment\n")
+					if mafft != 0:
+						lfile.write("ERROR:mafft returncode is != 0\n")
+						raise Exception("mafft returncode is != 0\n")
+					lfile.write("DONE")
 			else:
-				shell("touch {output} 2> {log.log}")
+				with open(log['log'],'w') as lfile:
+					lfile.write("WARNING: producing empty alignment file with touch\n")
+					lfile.write("DONE\n")
+				#produce empty file for snakemake
+				shell("touch {output}")
+		except Exception as e:
+			with open(log['log'],'w') as lfile:
+				lfile.write("ERROR: in mafft with exception: {}\n".format(e))
+				shell("touch {output}")
 
 #RULE 13
+#this rule shouldnt throw exceptions, if an error occurs an empty file is created
 rule conduct_phylogeny_fast_tree:
 	input: "{qseqid}/target_sequences.msa"
 	output: "{qseqid}/target_sequences.tree"
 	log: log="log/{qseqid}/phylogeny.log"
 	run:
+		#check if multiple sequence alignment has entries
+		execute_fasttree=True
 		with open(input[0],"r") as infile:
-			if len(infile.readlines()) > 1:
-				shell("fasttree {input} > {output} 2> {log}")
+			if len(infile.readlines()) <= 1:
+				#if there are no entries in the multiple sequence alignment there is no need for
+				# conducting fasttree
+				execute_fasttree == False
+		try:
+			#fasttree execution
+			if execute_fasttree == True:
+				fasttree = shell("fasttree {input} > {output} 2> {log}")
+				with open(log['log'],'a') as lfile:
+					lfile.write("INFO:ending fasttree phylogeny construction\n")
+					if fasttree != 0:
+						lfile.write("ERROR:fasttree returncode is != 0\n")
+						raise Exception("fasttree returncode is != 0\n")
+					lfile.write("DONE\n")
 			else:
-				shell("touch {output} 2> {log}")
+				with open(log['log'],'w') as lfile:
+					lfile.write("WARNING: producing empty tree file with touch\n")
+					lfile.write("DONE\n")
+				#produce empty file for snakemake
+				shell("touch {output}")
+		except Exception as e:
+			with open(log['log'],'w') as lfile:
+				lfile.write("ERROR: in fasttree with exception: {}\n".format(e))
+				shell("touch {output}")
 
 #RULE 14
 rule update_tree_with_taxid:
@@ -239,7 +290,7 @@ rule update_tree_with_taxid:
 
 #RULE 15
 rule ete3_tree_to_png:
-	input: tree="{qseqid}/transformed_treefile.nwk"
+	input: tree="{qseqid}/transformed_treefile.nwk", nw="{qseqid}/target_sequences.tree"
 	params: static_pic="../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
 	output: pic="{qseqid}/target_sequences.svg"
 	log: log="log/{qseqid}/ete3_tree_to_png.log"
@@ -247,4 +298,18 @@ rule ete3_tree_to_png:
 		"../../../static/snakefiles/reciprocal_blast/ete3_tree_to_png.py"
 
 #RULE 16
-#searching for protein domains in the CDD database
+rule cdd_domain_rpsblast:
+	input: queries=config['query_sequence']
+	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
+	output: domain_df="query_domains.tsf"
+	log: log="log/cdd_domain_rpsblast.log"
+	shell:
+		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt \"6 qseqid qlen sacc slen qstart qend sstart send qseq sseq bitscore evalue pident stitle\" -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
+
+#RULE 17
+rule query_domains_to_html_table:
+	input: query_domains="query_domains.tsf"
+	output: domain_html_table="query_domains.html"
+	log: log="log/query_domains_to_html_table.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"

@@ -20,18 +20,37 @@ cd ../edirect && sh ./setup.sh
 #answer with y
 ````
 
-
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] fix plotting: /blast/reciprocal_blast/media/blast_projects/2/.snakemake/scripts/tmp0ybykovj.build_folders_with_hit_info_for_each_qseqid.py:89: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
+  fig, ax = plt.subplots(2, 2)
+- [ ] refactor one way blast rules
+  - [ ] blast_results_to_plots_and_html_table
+  - [ ] change altair to bokeh plots
+- [ ] refactor correct deletion of static files - if database gets deleted, also delete project dirs associated to this database
+- [ ] refactor html result tables
+  - [x] reciprocal results -> index column
+  - [ ] database statistics -> decimal place
+- [ ] refactor one-way remote BLAST pipeline
+- [ ] refactor logging in exceptions
+- [ ] table column names in entrez esearch dashboard
+- [ ] exception is thrown if there is no result in the esearch output
+- [ ] refactor blast_tables_to_orthologous_table.py with new entrez function of the database statistics ncbi_transaction script
+- [ ] refactor query_sequences_to_html_table.py - what happens if there are no information on NCBI available?
+  - [ ] test with uploaded genomes and sequences
+- [X] fix javascript download button for the protein database in the entrez search
+- [ ] add taxonomic information processing to database creation or database statistics calculation
+- [ ] failure BLAST database task
+- [ ] delete .gitkeep in postgres folder and fix wait-for script line ending
+  - [ ] wait-for script checking - LF / CLRF
 - [ ] allow stopping database downloading and formatting tasks, allow deletion of paused/stopped database download/format procedures
 - [ ] include taxonomic information in BLAST database tables
 - [ ] adjust text size of titles in reciprocal blast result dashboard plots
 - [ ] esearch output into subfolders for each user
-- [ ] refactor query_sequences_to_html_table.py - what happens if there are no informations on NCBI available?
-- [ ] refactor the external project information dashboard
-  - [ ] replace MSA and Phylogeny buttons with the number of RBH's
-- [ ] fill the other 2 boxes in connies phylogeny dashboard
+- [X] refactor the external project information dashboard
+  - [X] replace MSA and Phylogeny buttons with the number of RBH's
+- [X] fill the other 2 boxes in connies phylogeny dashboard
 - [ ] there are some bugs in the EntrezSearch - e.g. if you search for rhino in pubmed
 - [X] pipeline log files
   - [ ] view logfile content on pipeline dashboard
@@ -45,14 +64,13 @@ The web container will automatically try to restart if the startup fails, unless
 - [X] define global timeout variable --> use celery timeouts --> soft and hard timeouts
 - [ ] one_way_blast_results - if there is an error in the biopython request for building genus graphs display at least the hit table
 - [ ] correct ajax requests if it results into an error
-- [ ] wait-for script checking - LF / CLRF
 - [ ] add genbank database option
 - [ ] if no reciprocal hits are available for at least one gene the snakmake workflow will result into an error - rule extract_sequences
 - [ ] upload genome: if \n is in any uploaded txt file it will count as a value for insertion
 - [X] implement custom snakemake logfile that lists all of the executed functions
 - [ ] display warning if backward organism not in the forward database as there is no controlling step - cause hits against the identical protein are not considered
 - [ ] reciprocal_result.csv should also contain assembly accession for each hit and genus, family .. informations
-  - [X] genus, family and other taxonomic informations are integrated
+  - [X] genus, family and other taxonomic information are integrated
   - [ ] assembly accession id
 - [ ] uploaded databases might have problems with taxonomic nodes - especially if the user selects different databases for the forward and backward blast
   - [ ] if there is no taxonomic node available (which can be the case for some organisms) it is not possible to upload a taxmap file ...
@@ -67,8 +85,8 @@ The web container will automatically try to restart if the startup fails, unless
     - [ ] integrate the possible execution of blastn also in snakemake
 - [x] download taxdb during build process of the docker image
   - [ ] update taxdb option!
-- [ ] is the uneven species distribution harmful for identifying orthologs? - add warning if e.coli sequences are uploaded
 - [ ] input fasta query file headers have to be separated by a space, not by a pipe symbol (|) or others
+  - [ ] reformat input sequences during upload
 - [ ] clinker like synteny plots (basic plot with x axis scaling depending on biggest genome size ..) just for filtered organisms
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [ ] write documentation for added functions
@@ -77,10 +95,10 @@ The web container will automatically try to restart if the startup fails, unless
     - [x] integrate docker container for mafft and fasttree 
     - [x] perform msa with orthologous subject sequences
     - [x] build ml or neighbour joining trees from all msa's
-- [ ] blastn one way searches can't display query sequence informations (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
+- [ ] blastn one way searches can't display query sequence information (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
 - [x] check if backward organism is in database
   - [X] check if query sequences are in backward database
-- [ ] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
+- [X] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
 - [ ] add more options to BlastSettings - Alter BlastSettings model and forms
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [X] think about multiple species_name inputs ... --> not possible
@@ -120,10 +138,7 @@ The web container will automatically try to restart if the startup fails, unless
     - [X] UploadedGenomes
     - [X] ExternalTools --> Connected to BlastProjects
     - [X] QuerySequences --> Connected to ExternalTools
-
-
-
-
+    
 ## BLAST Databases
 ### BLAST database preparation
 Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command.
@@ -133,7 +148,7 @@ The application loads this summary file into a pandas dataframe,
 that gets processed. As a first step of BLAST database creation, 
 the user has to define the level of assembly completeness
 (e.g. 'Complete Genome', 'Chromosome', 'Contig' and 'Scaffold'),
-secondly the user can filter the summary file with taxonomic informations.
+furthermore users can filter the summary file with taxonomic informations.
 For example, the user could specify the assembly levels 
 of the new database as `Complete Genome` and `Chromosome` and the `apes.taxids`
 file as basis for taxonomic limitation. 

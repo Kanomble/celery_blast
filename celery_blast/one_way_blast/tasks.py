@@ -1,4 +1,3 @@
-import os
 from subprocess import Popen, SubprocessError, TimeoutExpired
 
 from celery import shared_task
@@ -16,8 +15,8 @@ logger = get_task_logger(__name__)
 def execute_one_way_blast_project(self,project_id):
     logger.info('snakemake one way blast workflow execution')
     logger.info('setting panoptes ip to: {}'.format(settings.PANOPTES_IP))
-    snakemake_working_dir = 'media/one_way_blast/' + str(project_id) + '/'
-    snakemake_config_file = 'media/one_way_blast/' + str(project_id) + '/snakefile_config'
+    snakemake_working_dir = settings.ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/'
+    snakemake_config_file = settings.ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/snakefile_config'
     snakefile_dir = 'static/snakefiles/one_way_blast/Snakefile'
 
     progress_recorder = ProgressRecorder(self)
@@ -67,8 +66,8 @@ def execute_one_way_blast_project(self,project_id):
 def execute_one_way_remote_blast_project(self,project_id):
     logger.info('snakemake one way remote blast workflow execution')
     logger.info('setting panoptes ip to: {}'.format(settings.PANOPTES_IP))
-    snakemake_working_dir = 'media/one_way_blast/remote_searches/' + str(project_id) + '/'
-    snakemake_config_file = 'media/one_way_blast/remote_searches/' + str(project_id) + '/snakefile_config'
+    snakemake_working_dir = settings.ONE_WAY_BLAST_PROJECT_DIR+'/remote_searches/' + str(project_id) + '/'
+    snakemake_config_file = settings.ONE_WAY_BLAST_PROJECT_DIR+'/remote_searches/' + str(project_id) + '/snakefile_config'
     snakefile_dir = 'static/snakefiles/one_way_blast/remote_searches/Snakefile'
 
     progress_recorder = ProgressRecorder(self)

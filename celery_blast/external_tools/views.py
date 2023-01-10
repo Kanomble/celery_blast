@@ -3,16 +3,21 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.decorators import login_required
 from blast_project.views import failure_view, success_view
 from blast_project.py_services import get_html_results
+from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed
+from django.conf import settings
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building,\
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences,\
     entrez_search_task, download_entrez_search_associated_protein_sequences, download_organism_protein_sequences_task
+    entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
 from .models import ExternalTools, EntrezSearch, QuerySequences
 from django_celery_results.models import TaskResult
 from .forms import EntrezSearchForm
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id, download_by_organism
+from .forms import EntrezSearchForm, RpsBLASTSettingsForm
+from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 import os
 from django.http import JsonResponse
-from django.utils.html import format_html
+from json import loads
 from time import sleep
 
 @login_required(login_url='login')
@@ -274,8 +279,143 @@ def phylogenetic_information(request, project_id, query_sequence_id):
         context['qseqids'] = qseqids
         context['query_sequence_id']= query_sequence_id
         context['project_id'] = project_id
-
         context['html_results'] = ''.join(get_html_results(project_id,str(query_sequence_id)+'/results_rbhs.html'))
         return render(request,"external_tools/phylogenetic_dashboard.html",context)
     except Exception as e:
         return failure_view(request,e)
+
+'''cdd_domain_search_dashboard
+    
+    Dashboard page for the conserved domain search. It holds a form for rpsblast settings, the html table with 
+    domains of the query sequences and the buttons for the detail/result pages and form submit. 
+    
+    :param project_id
+        :type int
+
+'''
+@login_required(login_url='login')
+def cdd_domain_search_dashboard(request, project_id):
+    try:
+        if request.method == "GET":
+            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id)
+
+            rps_blast_settings_form = RpsBLASTSettingsForm(query_sequences_rdy_for_cdd)
+            query_sequence_cdd_search_dict = ExternalTools.objects.check_cdd_domain_search_task_status(project_id=project_id)
+            context = {"query_task_dict":query_sequence_cdd_search_dict,
+                       "project_id":project_id}
+            context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html'))
+            context['rpsblast_settingsform'] = rps_blast_settings_form
+            return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
+        else:
+            return failure_view(request, "There is no post method for this view.")
+    except Exception as e:
+        return failure_view(request,e)
+
+
+'''execute_cdd_domain_search_for_target_query
+
+    This function executes the celery task for searching conserved domains within the CDD database. 
+    Before the rpsblast is executed, the function validates if it is "practical" to execute the search.
+    If the query sequence has just one domain or if there are only two reciprocal results the function is 
+    not executed. Settings for the rpsblast are saved within a django form object. 
+    The form is also validated. The query sequence identifier specified via a selection widget is then used
+    as input for the rpsblast. 
+    
+    :param project:id
+        :type int
+
+'''
+@login_required(login_url='login')
+def execute_cdd_domain_search_for_target_query(request, project_id:int):
+    try:
+        if request.method == "POST":
+            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id)
+
+            rps_blast_form = RpsBLASTSettingsForm(query_sequences_rdy_for_cdd,request.POST)
+            if rps_blast_form.is_valid():
+                rps_blast_task_data = rps_blast_form.cleaned_data
+                query_sequence = rps_blast_task_data['query_sequence']
+                if check_if_cdd_search_can_get_executed(query_sequence, project_id) == 0:
+                    cdd_domain_search_with_rbhs_task.delay(project_id, rps_blast_task_data)
+            return redirect('cdd_domain_search_dashboard',project_id=project_id)
+        else:
+            return failure_view(request, "There is no other method than post for this view.")
+    except Exception as e:
+        return failure_view(request, e)
+
+
+'''cdd_domain_search_details_view
+    
+    Function for loading the output of the cdd domain search task. Detail result page for each
+    query sequence and successfull domain search tasks.
+    
+    :param query_id
+        :type str
+    :param project_id
+        :type int
+
+'''
+@login_required(login_url='login')
+def cdd_domain_search_details_view(request, query_id:str, project_id:int):
+    try:
+        #query_sequence_model = QuerySequences.objects.get(query_accession_id=)
+        #okeh_plot = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        context = {}
+        context['query_id'] = query_id
+        context['project_id'] = project_id
+        context['CDDSearchPCABokehPlot'] = str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        return render(request, "external_tools/cdd_domain_search_details.html", context)
+    except Exception as e:
+        return failure_view(request, e)
+
+'''delete_cdd_domain_search_view
+
+    Function for deletion of the cdd_domain_search_task celery task result database object and all 
+    associated files. The files to delete are defined as strings in a list within the delete_cdd_search_output
+    function.
+    
+    :param query_id
+        :type str
+    :param project_id
+        :type int
+'''
+@login_required(login_url='login')
+def delete_cdd_domain_search_view(request, query_id:str, project_id:int):
+    try:
+        query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id)
+        #the query_sequence variable is a QuerySet but should just hold one query_sequence
+        if len(query_sequence) > 1:
+            raise Exception("[-] There are multiple query sequences with the name {} "
+                            "in the associated ExternalTools model object, this should not happen as project creation"
+                            "filters for duplicate entries ...".format(query_id))
+        else:
+            query_sequence[0].delete_cdd_search_task_result()
+            delete_cdd_search_output(query_id, project_id)
+            return redirect('cdd_domain_search_dashboard',project_id=project_id)
+    except Exception as e:
+        return failure_view(request, e)
+
+'''get_cdd_task_status_ajax_call
+
+    This function returns a json object with the cdd_domain_search_task result column for the 
+    specified query sequence. The json object is used for displaying the progress of the task. 
+    E.g.: {"pending": false, "current": 30, "total": 100, "percent": 30.0, "description": "PROGRESS"}
+
+    :param query_id
+        :type str
+    :param project_id
+        :type int
+    
+    :returns JsonResponse
+
+'''
+@login_required(login_url='login')
+def get_cdd_task_status_ajax_call(request, query_id:str, project_id:int):
+    try:
+        if request.is_ajax and request.method == "GET":
+            query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id)[0]
+            data = query_sequence.cdd_domain_search_task.result
+            return JsonResponse({"data":loads(data)}, status=200)
+        return JsonResponse({"ERROR":"NOT OK"},status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)

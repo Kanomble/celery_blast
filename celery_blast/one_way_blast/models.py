@@ -4,10 +4,11 @@ from os import mkdir
 from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
-from blast_project.models import BlastSettings, BlastDatabase
+from blast_project.models import BlastSettings
+from refseq_transactions.models import BlastDatabase
 from .managers import OneWayBlastProjectManager, OneWayRemoteBlastProjectManager
 from django.db import IntegrityError
-# Create your models here.
+from ast import literal_eval
 
 #TODO documentation
 class OneWayBlastProject(models.Model):
@@ -99,18 +100,40 @@ class OneWayBlastProject(models.Model):
             raise IntegrityError(
                 "couldnt write snakemake configuration file in directory with exception : {}".format(e))
 
+    '''read_query_information_table
+
+        This function is getting executed within the project_details_dashboard.html website.
+
+    '''
     def read_query_information_table(self, filepath='media/one_way_blast/'):
+        def clean_feature_column(features):
+            new_feature_column = []
+            try:
+                result_string = ''
+                for idx, feature in enumerate(literal_eval(features)):
+                    if idx % 2 == 0:
+                        result_string += feature + " "
+                    # TODO add functional linebreak
+                    elif idx % 2 == 1:
+                        result_string += feature + "     "
+                new_feature_column.append(result_string)
+                return pd.Series(new_feature_column)
+            except Exception as e:
+                raise Exception("ERROR:exception: {}".format(e))
+
         try:
-            path_to_information_table = filepath+str(self.id)+"/"+"query_sequence_information.csv"
+            path_to_information_table = filepath + str(self.id) + '/query_sequence_information.csv'
             if isfile(path_to_information_table):
-                table = pd.read_table(path_to_information_table,header=0,sep="\t",index_col=0)
+                table = pd.read_table(path_to_information_table, header=0, sep="\t", index_col=0)
+                table.Features = table.Features.apply(clean_feature_column)
                 table = table.fillna(value='')
                 table = table.to_html(classes='my_class" id="myTable')
                 return table
             else:
                 return "there is no query_sequence_information.csv in the project directory"
         except Exception as e:
-            raise Exception("[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
+            raise Exception(
+                "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
 
 #TODO documentation - on_delete=models.CASCADE!?
 class OneWayRemoteBlastProject(models.Model):
@@ -218,16 +241,38 @@ class OneWayRemoteBlastProject(models.Model):
             raise IntegrityError(
                 "couldnt write snakemake configuration file in directory with exception : {}".format(e))
 
+    '''read_query_information_table
+
+        This function is getting executed within the project_details_dashboard.html website.
+
+    '''
+
     def read_query_information_table(self, filepath='media/one_way_blast/remote_searches/'):
+        def clean_feature_column(features):
+            new_feature_column = []
+            try:
+                result_string = ''
+                for idx, feature in enumerate(literal_eval(features)):
+                    if idx % 2 == 0:
+                        result_string += feature + " "
+                    # TODO add functional linebreak
+                    elif idx % 2 == 1:
+                        result_string += feature + "     "
+                new_feature_column.append(result_string)
+                return pd.Series(new_feature_column)
+            except Exception as e:
+                raise Exception("ERROR:exception: {}".format(e))
+
         try:
-            path_to_information_table = filepath+str(self.id)+"/"+"query_sequence_information.csv"
-            print("[*] {}".format(path_to_information_table))
+            path_to_information_table = filepath + str(self.id) + '/query_sequence_information.csv'
             if isfile(path_to_information_table):
-                table = pd.read_table(path_to_information_table,header=0,sep="\t",index_col=0)
+                table = pd.read_table(path_to_information_table, header=0, sep="\t", index_col=0)
+                table.Features = table.Features.apply(clean_feature_column)
                 table = table.fillna(value='')
                 table = table.to_html(classes='my_class" id="myTable')
                 return table
             else:
                 return "there is no query_sequence_information.csv in the project directory"
         except Exception as e:
-            raise Exception("[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
+            raise Exception(
+                "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))

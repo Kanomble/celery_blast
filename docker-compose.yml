@@ -27,7 +27,12 @@ services:
       - "5432:5432"
 
   web:
-    image: kanomble/rec_blast_base_image:1.7
+    image: kanomble/rec_blast_base_image:1.9 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
+    deploy:
+      resources:
+        limits:
+          memory: 42G
+
     command:  sh -c "./wait-for rabbitmq:5672 && ./wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
@@ -46,7 +51,7 @@ services:
       - "8080:8080"
 
   celery_worker:
-    image: kanomble/rec_blast_base_image:1.7
+    image: kanomble/rec_blast_base_image:1.9
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery worker -A celery_blast -l INFO"
     depends_on:
       - web
@@ -61,7 +66,7 @@ services:
     restart: unless-stopped
 
   flower:
-    image: kanomble/rec_blast_base_image:1.7
+    image: kanomble/rec_blast_base_image:1.9
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- flower -A celery_blast --port=5555"
     networks:
       - main
@@ -80,7 +85,7 @@ services:
     restart: unless-stopped
 
   panoptes:
-    image: kanomble/rec_blast_base_image:1.7
+    image: kanomble/rec_blast_base_image:1.9
     command: sh -c "./wait-for web:8080 -- panoptes"
     depends_on:
       - web

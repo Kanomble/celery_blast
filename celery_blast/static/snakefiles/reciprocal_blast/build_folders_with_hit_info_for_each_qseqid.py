@@ -6,9 +6,10 @@ ERRORCODE=8
 with open(snakemake.log['log'],'w') as logfile:
     try:
         logfile.write("INFO:starting to write RBH summary file and directories for query sequences\n")
+        logfile.write("INFO:loading reciprocal result csv file as pandas dataframe\n")
         result_df = pd.read_csv(snakemake.input['result_csv'],header=0, index_col=0)
 
-        hit_info_file = open(snakemake.output['hit_information'],'w')
+
         queries = []
         logfile.write("INFO:extracting query sequence identifier based on query file\n")
         with open(snakemake.input['query_file'],'r') as fhandle:
@@ -17,10 +18,12 @@ with open(snakemake.log['log'],'w') as logfile:
                     query = line.split('>')[1].split(' ')[0]
                     if '.' in query:
                         query = query.split('.')[0]
-                    logfile.write("\textracted query: {}\n".format(query))
+                    logfile.write("\tINFO:extracted query: {}\n".format(query))
                     queries.append(query)
 
-        logfile.write("INFO:looping over query sequences to identify amount of RBHs and to build directories\n")
+        logfile.write("INFO:looping over query sequences to identify amount of RBHs and to build sub-directories\n")
+        hit_info_file = open(snakemake.output['hit_information'], 'w')
+        hit_info_file.write("qseqid\thits\n")
         for query in queries:
             logfile.write("\tINFO:working with:{}\n".format(query))
             target_df = result_df[result_df['qseqid'] == query]
@@ -78,7 +81,7 @@ with open(snakemake.log['log'],'w') as logfile:
 
             resulst_rbhs_html_filepath = query + '/' + "results_rbhs.html"
             with open(resulst_rbhs_html_filepath, 'w') as f:
-                f.write(html_string.format(table=target_df[['sacc_transformed','scomnames','staxids','pident','bitscore','evalue','stitle']].to_html(classes='mystyle')))
+                f.write(html_string.format(table=target_df[['sacc_transformed','scomnames','staxids','pident','bitscore','evalue',"slen",'stitle']].to_html(classes='mystyle')))
 
 
             logfile.write("\tINFO:producing statistic plot for query sequence results\n")
@@ -89,13 +92,13 @@ with open(snakemake.log['log'],'w') as logfile:
             ax[0, 1].set_title("bitscore")
             ax[1, 0].scatter(y=target_df['evalue'], x=range(len(target_df['evalue'])), edgecolor="black", color='red')
             ax[1, 0].set_title("evalue")
-            ax[1, 1].bar(height=target_df.groupby('staxids').size().sort_values(ascending=False)[0:12],
-                         x=range(1, len(target_df.groupby('staxids').size().index[0:12]) + 1))
-            ax[1, 1].set_xticks(range(1, len(target_df.groupby('staxids').size().index[0:12]) + 1))
-            ax[1, 1].set_xticklabels(target_df.groupby('staxids').size().index[0:12], rotation=90)
+            ax[1, 1].bar(height=target_df.groupby('scomnames').size().sort_values(ascending=False)[0:12],
+                         x=range(1, len(target_df.groupby('scomnames').size().index[0:12]) + 1))
+            ax[1, 1].set_xticks(range(1, len(target_df.groupby('scomnames').size().index[0:12]) + 1))
+            ax[1, 1].set_xticklabels(target_df.groupby('scomnames').size().index[0:12], rotation=90)
             plt.tight_layout()
-            logfile.write("\tINFO:saving plots to static and project directories\n")
 
+            logfile.write("\tINFO:saving plots to project directory\n")
             result_statistics=str(query)+ "/basic_statistics.png"
             result_statistics_static='../../../static/images/result_images/' + str(snakemake.params['project_id']) + "/" +str(query)+"_statistics.png"
             plt.savefig(result_statistics, dpi=400)
@@ -103,14 +106,13 @@ with open(snakemake.log['log'],'w') as logfile:
 
             logfile.write("\tINFO:writing target ids into textfile\n")
             output_file_path = query + '/' + 'target_sequence_ids.txt'
-            output = open(output_file_path,'w')
-            sacc_list = list(target_df['sacc'].unique())
-            for sacc in sacc_list:
-                output.write(sacc+'\n')
-            output.close()
+            with open(output_file_path,'w') as output:
+                sacc_list = list(target_df['sacc'].unique())
+                for sacc in sacc_list:
+                    output.write(sacc+'\n')
 
-            hit_info_file.write("qseqid: {} hits: {}\n".format(query, len(target_df)))
-
+            hit_info_file.write("{}\t{}\n".format(query, len(target_df)))
+            plt.close('all')
         hit_info_file.close()
         logfile.write("DONE\n")
     except Exception as e:

@@ -1,12 +1,17 @@
 # Create your models here.
 from os.path import isdir, isfile
 from os import mkdir
+from ast import literal_eval
 from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError
-from .managers import BlastProjectManager, BlastDatabaseManager
+from .managers import BlastProjectManager
+from refseq_transactions.models import BlastDatabase
 import pandas as pd
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+#TODO USE THOSE paths for setting up the project directory and snakemake config file
+#from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR
 
 class BlastSettings(models.Model):
     e_value = models.DecimalField(
@@ -21,7 +26,6 @@ class BlastSettings(models.Model):
     num_alignments = models.IntegerField()
     max_target_seqs = models.IntegerField()
     max_hsps = models.IntegerField()
-
     #TODO documentation
     def values_as_fw_or_bw_dict(self,fwOrBw):
         settings_dict = {
@@ -44,70 +48,6 @@ class BlastSettings(models.Model):
         }
         return settings_dict
 
-class AssemblyLevels(models.Model):
-    assembly_level = models.CharField(max_length=50)
-
-class BlastDatabase(models.Model):
-    # attribute fields
-    database_name = models.CharField(
-        max_length=200,
-        blank=False, unique=True,
-        verbose_name="database name")
-    database_description = models.CharField(
-        max_length=200,
-        verbose_name="short description of database purpose")
-
-    assembly_entries = models.IntegerField(
-        verbose_name="number of assembly entries that should get downloaded")
-    timestamp = models.DateTimeField(
-        auto_now=True,
-        verbose_name="date of database creation")
-
-    # nullable fields
-
-    uploaded_files = models.BooleanField(
-        default=False,blank=True,null=True
-    )
-
-    # possibility to add a taxonomic file
-    attached_taxonomic_node_file = models.CharField(
-        max_length=300,
-        blank=True, null=True,
-        verbose_name="associated taxonomic file, which was used to limit assembly entries in db creation by taxids")
-    path_to_database_file = models.CharField(
-        max_length=300,
-        blank=True, null=True,
-        verbose_name="after makeblastdb task has finished this field is set automatically with the path to the BLAST database")
-
-    # relationships
-    database_download_and_format_task = models.OneToOneField(
-        TaskResult,
-        on_delete=models.CASCADE,
-        blank=True, null=True,
-        verbose_name="django_celery_results taskresult model for download and formatting procedure")
-
-    # use the assembly_levels.SQL script for uploading the four existing assembly levels into the database
-    assembly_levels = models.ManyToManyField(
-        to=AssemblyLevels,
-        verbose_name="possible assembly levels within this BLAST database")
-
-    objects = BlastDatabaseManager()
-
-    # functions
-    def __str__(self):
-        return "BLAST database: {}, created {} with {} entries.\n\t Database description: {}".format(
-            self.database_name,
-            self.timestamp,
-            self.assembly_entries,
-            self.database_description)
-
-    def get_pandas_table_name(self):
-        return self.database_name.replace(' ','_').upper()
-
-    #can be deleted?
-    #TODO deprecated
-    def get_database_palfile_for_snakemake_config(self):
-        return self.path_to_database_file + '/' + self.database_name.replace(' ','_').upper() + '.database.pal'
 
 class BlastProject(models.Model):
     BLAST_SEARCH_PROGRAMS = [('blastp', 'blastp'), ('blastn', 'blastn')]
@@ -169,7 +109,15 @@ class BlastProject(models.Model):
         TaskResult,
         on_delete=models.SET_NULL,
         blank=True, null=True,
-        verbose_name="django_celery_results taskresult model for this project")
+        related_name="project_execution_snakemake_task",
+        verbose_name="django_celery_results taskresult model for this projects snakemake pipeline")
+
+    project_database_statistics_task = models.OneToOneField(
+        TaskResult,
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        related_name="project_database_statistics_task",
+        verbose_name="django_celery_results taskresult model for this projects database statistics")
 
     # customized initialization can be added in BlastProjectManager (e.g. direct creation of project directory
     objects = BlastProjectManager()
@@ -180,7 +128,20 @@ class BlastProject(models.Model):
             self.timestamp, self.project_user.username,
             self.project_forward_database.database_name)
 
-    def get_list_of_query_sequences(self, filepath='media/blast_projects/'):
+
+    '''get_list_of_query_sequences
+        
+        Returns a list of query sequences without the additional .version of the query.
+        
+        :param self
+            :type int
+        :param filepath
+            :type str
+        
+        :returns qseqids
+            :type list[str]
+    '''
+    def get_list_of_query_sequences(self, filepath=BLAST_PROJECT_DIR):
         try:
             query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
             query_file = open(query_sequence_file_path, 'r')
@@ -202,9 +163,9 @@ class BlastProject(models.Model):
         return self.project_user.email
 
     def get_project_dir(self):
-        return 'media/blast_projects/' + str(self.id)
+        return BLAST_PROJECT_DIR + str(self.id)
 
-    def get_project_query_sequence_filepath(self, filepath='media/blast_projects/'):
+    def get_project_query_sequence_filepath(self, filepath=BLAST_PROJECT_DIR):
         return filepath + str(self.id) + '/' + self.project_query_sequences
 
     def if_executed_return_associated_taskresult_model(self):
@@ -217,16 +178,21 @@ class BlastProject(models.Model):
 
     ''' initialize_project_directory
     
-        invokation is done with BlastProject.objects.initialize_project_directory() or 
+        Invocation is done with BlastProject.objects.initialize_project_directory() or 
         within the BlastProjectManager with blast_project.iniialize_project_directory()
         
-        this function is executed within the create_blast_project function of the manager, 
+        Throws an exception if the specified filepath does not exists or if the 
+        filepath + project_id directory exists.
+        This function is executed within the create_blast_project function of the manager class, 
         it directly creates a directory for the project and a directory for result images in the static folder
+            
     '''
-    def initialize_project_directory(self,filepath='media/blast_projects/'):
+    def initialize_project_directory(self,filepath=BLAST_PROJECT_DIR):
         # check if blast_project was previously created / check if media/blast_project directory exists
-        if (isdir(filepath + str(self.id)) or isdir(filepath) == False):
+        if (isdir(filepath + str(self.id)) == True):
             raise IntegrityError("project directory exists")
+        elif isdir(filepath) == False:
+            raise IntegrityError("{} is not a directory".format(filepath))
         else:
             try:
                 mkdir(filepath + str(self.id))
@@ -237,39 +203,69 @@ class BlastProject(models.Model):
 
 
     #TODO documentation
-    def write_snakemake_configuration_file(self, filepath='media/blast_projects/'):
+    def write_snakemake_configuration_file(self, filepath=BLAST_PROJECT_DIR):
         try:
-            snk_config_file = open(filepath + str(self.id)+'/snakefile_config','w')
-            #database path from media/blast_projects/project_id as working directory for snakemake
-            snk_config_file.write('project_id: '+str(self.id)+"\n")
-            snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
-            snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_backward_database.get_pandas_table_name() + ".database\"\n")
-            snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
-            snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
-            snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
-            bw_dict=self.project_backward_settings.values_as_fw_or_bw_dict('bw')
-            fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
+            with open(filepath + str(self.id)+'/snakefile_config','w') as snk_config_file:
+                #database path from media/blast_projects/project_id as working directory for snakemake
+                snk_config_file.write('project_id: '+str(self.id)+"\n")
+                snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
+                snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_backward_database.get_pandas_table_name() + ".database\"\n")
+                snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
+                snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
+                snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
+                bw_dict=self.project_backward_settings.values_as_fw_or_bw_dict('bw')
+                fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
 
-            for key_bw in bw_dict.keys():
-                snk_config_file.write(key_bw+': '+bw_dict[key_bw]+"\n")
+                for key_bw in bw_dict.keys():
+                    snk_config_file.write(key_bw+': '+bw_dict[key_bw]+"\n")
 
-            for key_fw in fw_dict.keys():
-                snk_config_file.write(key_fw+': '+fw_dict[key_fw]+"\n")
-
-            snk_config_file.close()
+                for key_fw in fw_dict.keys():
+                    snk_config_file.write(key_fw+': '+fw_dict[key_fw]+"\n")
 
         except Exception as e:
             raise IntegrityError("couldnt write snakemake configuration file in directory with exception : {}".format(e))
 
-    def read_query_information_table(self, filepath='media/blast_projects/'):
+    '''read_query_information_table
+        
+        This function is getting executed within the project_details_dashboard.html website.
+        
+    '''
+    def read_query_information_table(self, filepath=BLAST_PROJECT_DIR):
+        def clean_feature_column(features):
+            new_feature_column = []
+            try:
+                result_string = ''
+                for idx, feature in enumerate(literal_eval(features)):
+                    if idx % 2 == 0:
+                        result_string += feature + " "
+                    #TODO add functional linebreak
+                    elif idx % 2 == 1:
+                        result_string += feature + "     "
+                new_feature_column.append(result_string)
+                return pd.Series(new_feature_column)
+            except Exception as e:
+                raise Exception("ERROR:exception: {}".format(e))
+
         try:
-            path_to_information_table = filepath+str(self.id)+"/"+"query_sequence_information.csv"
+            path_to_information_table = filepath + str(self.id) + '/query_sequence_information.csv'
             if isfile(path_to_information_table):
-                table = pd.read_table(path_to_information_table,header=0,sep="\t",index_col=0)
+                table = pd.read_table(path_to_information_table, header=0, sep="\t", index_col=0)
+                table.Features = table.Features.apply(clean_feature_column)
                 table = table.fillna(value='')
                 table = table.to_html(classes='my_class" id="myTable')
                 return table
             else:
                 return "there is no query_sequence_information.csv in the project directory"
         except Exception as e:
-            raise Exception("[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
+            raise Exception(
+                "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
+
+    '''check_for_reciprocal_result_table
+        
+        This function checks if the reciprocal_result.html file is in the project directory or not.
+    '''
+    def check_for_reciprocal_result_table(self):
+        if isfile(self.get_project_dir() + '/' + 'reciprocal_results.html'):
+            return True
+        else:
+            return False

@@ -1,11 +1,94 @@
 import os
-import pandas as pd
-from .models import BlastProject, BlastDatabase, AssemblyLevels, BlastSettings
-from external_tools.models import ExternalTools
-from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file, write_pandas_table_for_uploaded_genomes, write_pandas_table_for_one_genome_file,write_pandas_table_for_multiple_uploaded_files, pyb
+from .models import BlastProject, BlastSettings
+from refseq_transactions.models import BlastDatabase, AssemblyLevels
+from external_tools.models import ExternalTools, QuerySequences
+#TODO fix circular imports
+from blast_project import py_biopython as pyb
+from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv, Series
+from celery_blast.settings import BLAST_DATABASE_DIR
+'''update_external_tool_with_cdd_search
+
+    This script uses model based functions of the ExternalTools model to update the QuerySequence model with 
+    the associated celery cdd search TaskResult model. This can then be used to track the status of the cdd search.
+    
+    :param project_id
+        :type int
+    :param query_sequence
+        :type str
+    :param task_id
+        :type int
+
+'''
+def update_external_tool_with_cdd_search(project_id:int,query_sequence:str,task_id:int):
+    try:
+        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tool.update_query_sequences_cdd_search_task(query_sequence,task_id)
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt update query sequence model with cdd search task with exception: {}".format(e))
+
+
+'''get_query_sequence_of_external_tools
+    
+    This function returns the query_sequence_model of the specified query_sequence. 
+    The query_sequence is the identifier of a protein used in the blast projects.
+    
+    :param project_id
+        :type int
+    :param query_sequence
+        :type str
+    
+    :return query_sequence_model
+        :type django model
+'''
+def get_query_sequence_of_external_tools(project_id:int,query_sequence:str):
+    try:
+        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        query_sequence_model = QuerySequences.objects.filter(external_tool_for_query_sequence=external_tool,
+                                      query_accession_id=query_sequence)
+        return query_sequence_model
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt get query sequence model instance from external tools model with exception: {}".format(e))
+
+'''get_reciprocal_result_target_fasta_files
+
+    This function returns a list of filepaths to the fasta files of RBHs.
+    
+    :param project_id
+        :type int
+    
+    :return target_fasta_files
+        :type list[str]
+    :return target_queries
+        :type list[str]
+'''
+def get_reciprocal_result_target_fasta_files_and_queries(project_id: int):
+    try:
+
+        blast_project = get_project_by_id(project_id)
+        project_dir = blast_project.get_project_dir()
+        project_dir += '/'
+
+        queries = blast_project.get_list_of_query_sequences()
+
+        target_fasta_files = []
+        target_queries = []
+        if os.path.isdir(project_dir):
+            for query in queries:
+                if os.path.isdir(project_dir + query):
+                    if os.path.isfile(project_dir + query + '/target_sequences.faa'):
+                        target_fasta_files.append(project_dir + query + '/target_sequences.faa')
+                        target_queries.append(query)
+                else:
+                    raise NotADirectoryError("{} is not a directory".format(project_dir + query))
+        else:
+            raise NotADirectoryError("{} is not a directory".format(project_dir))
+
+        return target_fasta_files, target_queries
+    except Exception as e:
+        raise Exception("[-] ERROR during get_reciprocal_result_target_fasta_files with exception: {}".format(e))
 
 '''py_django_db_services
 
@@ -31,7 +114,7 @@ def create_external_tools_after_snakemake_workflow_finishes(project_id:int)->Ext
         :type int
     :returns django.db.models.query.QuerySet of BlastProjects
 '''
-def get_users_blast_projects(userid):
+def get_users_blast_projects(userid:int):
     return BlastProject.objects.get_blast_projects_by_userid(userid)
 
 ''' get_all_blast_databases
@@ -42,7 +125,16 @@ def get_all_blast_databases():
     return BlastDatabase.objects.all()
 
 
-#TODO documentation
+'''get_project_by_id
+
+    Returns the associated BlastProject model instance.
+
+    :param project_id
+        :type int
+        
+    :returns BlastProject
+        :type blast_project.models.BlastProject
+'''
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)
 
@@ -65,7 +157,7 @@ the postgresql database. The input for this function is maintained by the py_pro
     :return blast_project
         :type django model (BlastProject)
 '''
-def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,query_sequence_filename):
+def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,query_sequence_filename,filepath='media/blast_projects/'):
     try:
         blast_project = BlastProject.objects.create_blast_project(
             project_title=valid_project_form.cleaned_data['project_title'],
@@ -76,7 +168,8 @@ def create_project_from_form(valid_project_form,user,fw_settings,bw_settings,que
             project_backward_settings=bw_settings,
             project_forward_database=valid_project_form.cleaned_data['project_forward_database'],
             project_backward_database=valid_project_form.cleaned_data['project_backward_database'],
-            species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast']
+            species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast'],
+            filepath=filepath
         )
         return blast_project
     except Exception as e:
@@ -126,6 +219,24 @@ def update_blast_project_with_task_result_model(project_id,task_id):
     except Exception as e:
         raise IntegrityError('problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
+'''update_blast_project_with_database_statistics_task_result_model
+    
+    see above description. Similar to update_blast_project_with_task_result_model function but for the database statistics task.
+    
+    :param project_id
+        :type int
+    :param task_id
+        :type int
+'''
+def update_blast_project_with_database_statistics_task_result_model(project_id:int,task_id:int):
+    try:
+        blast_project = BlastProject.objects.get(id=project_id)
+        taskresult = TaskResult.objects.get(task_id=task_id)
+        blast_project.project_database_statistics_task = taskresult
+        blast_project.save()
+    except Exception as e:
+        raise IntegrityError('problem during updating of blastproject model with task result instance exception : {}'.format(e))
+
 '''update_blast_database_with_task_result_model
 
 see above description. Similar to update_blast_project_with_task_result_model just for the celery database creation task, particularly the functions
@@ -139,6 +250,7 @@ execute_makeblastdb_with_uploaded_genomes and download_blast_databases_based_on_
 '''
 def update_blast_database_with_task_result_model(database_id,task_id):
     try:
+        print("+++++++",get_all_blast_databases())
         blastdb = BlastDatabase.objects.get(id=database_id)
         taskresult = TaskResult.objects.get(task_id=task_id)
         blastdb.database_download_and_format_task = taskresult
@@ -237,7 +349,7 @@ def save_uploaded_genomes_into_database(database_title,database_description,geno
                                                    taxonomic_node,
                                                    assembly_accession)
 
-        blast_database.path_to_database_file = "media/databases/"+str(blast_database.id)
+        blast_database.path_to_database_file = BLAST_DATABASE_DIR+str(blast_database.id)
         blast_database.save()
         return blast_database
     except Exception as e:
@@ -265,8 +377,8 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
             blast_database.assembly_levels.add(assembly_lvl)
 
         #creation of database directory:
-        create_blastdatabase_directory(database_id=blast_database.id)
-        path_to_database = 'media/databases/' + str(blast_database.id) + '/'
+        create_blastdatabase_directory(database_id=blast_database.id, database_filepath=BLAST_DATABASE_DIR)
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id) + '/'
 
         genomes_to_organism_and_taxid_dict = {}
         with open(path_to_database+'acc_taxmap.table','w') as taxmap_file:
@@ -275,7 +387,8 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
                 organism = 'organism_name_{}'.format(index)
 
                 organism = cleaned_data_multiple_files[organism]
-                taxid = pyb.get_species_taxid_by_name(user_email,organism)
+                #take the first taxid
+                taxid = pyb.get_species_taxid_by_name(user_email,organism)[0]
                 file = cleaned_data_multiple_files[file]
 
                 upload_file(file,path_to_database + file.name)
@@ -290,7 +403,7 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
 
         write_pandas_table_for_multiple_uploaded_files(blast_database,genomes_to_organism_and_taxid_dict)
 
-        blast_database.path_to_database_file = "media/databases/"+str(blast_database.id)
+        blast_database.path_to_database_file = BLAST_DATABASE_DIR+str(blast_database.id)
 
         genome_files = list(genomes_to_organism_and_taxid_dict.keys())
         concatenate_genome_fasta_files_in_db_dir(path_to_database, database_title, genome_files)
@@ -303,9 +416,8 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
 def create_database_directory_and_upload_files(blast_database,genome_file,taxmap_file=None):
     try:
 
-        path_to_database = 'media/databases/' + str(blast_database.id) + '/'
-
-        create_blastdatabase_directory(database_id=blast_database.id)
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id) + '/'
+        create_blastdatabase_directory(database_id=blast_database.id,database_filepath=BLAST_DATABASE_DIR)
 
         if taxmap_file != None:
             upload_file(taxmap_file, path_to_database+'acc_taxmap.table')
@@ -313,18 +425,41 @@ def create_database_directory_and_upload_files(blast_database,genome_file,taxmap
     except Exception as e:
         raise IntegrityError('couldnt upload genome or taxmap file into database directory with exception : {}'.format(e))
 
-#TODO documentation
+'''check_if_taxid_is_in_databaase
+    
+    Is used during ProjectCreationForm validation. Checks if the selected database
+    contains entries for the specified taxonomic node. Usually there is just one
+    taxonomic node but some species do possess more than one node (e.g. Bacillus subtilis). Therefore
+    the function returns true if just one taxonomic node is in the backward database. 
+    
+    :param database_id
+        :type int
+    :param taxonomic_nodes - derived by get_species_taxid_by_name from .py_biopython
+        :type list[int]
+    
+    :returns True OR not_in_database
+        :type boolean OR list[int]
+'''
 def check_if_taxid_is_in_database(database_id:int, taxonomic_nodes:list):
-    path_to_database = 'media/databases/' + str(database_id) + '/'
+    #path_to_database = 'media/databases/' + str(database_id) + '/'
     database = get_database_by_id(database_id)
+    #path now available for testing
+    path_to_database = database.path_to_database_file + '/'
     pandas_table_file = path_to_database + database.get_pandas_table_name()
     df = read_csv(pandas_table_file, header=0, index_col=0)
     not_in_database=[]
+    #sometimes there is more than one taxonomic node for an organism
+    #the counter resembles the number of corresponding organisms, therefor
+    #at the end of validation the counter must be one int smaller than the length
+    #of taxonomic_nodes
+    counter = len(taxonomic_nodes)
     for node in taxonomic_nodes:
-        if int(node) in list(df['taxid']) == False:
+        if int(node) not in list(df['taxid']):
             not_in_database.append(node)
-    if len(not_in_database) != 0:
-        return not_in_database
+        else:
+            counter -= 1
+    if counter == len(taxonomic_nodes):
+        return False
     else:
         return True
 
@@ -342,7 +477,10 @@ def check_if_taxid_is_in_database(database_id:int, taxonomic_nodes:list):
         :type boolean OR list
 '''
 def check_if_sequences_are_in_database(database_id:int, sequences:list):
-    path_to_database = 'media/databases/' + str(database_id) + '/'
+    #path_to_database = 'media/databases/' + str(database_id) + '/'
+    #correct path for testing
+    database = get_database_by_id(database_id)
+    path_to_database = database.path_to_database_file + '/'
 
     taxmap_files = os.listdir(path_to_database)
     taxmap_files = [file for file in taxmap_files if file.endswith('.table')]
@@ -365,3 +503,150 @@ def check_if_sequences_are_in_database(database_id:int, sequences:list):
 
     elif len(to_compare) == 0:
         return True
+
+
+'''write_pandas_table_for_one_genome_file
+
+    This function is used in blast_project.py_django_db_services.save_uploaded_genomes_into_database.
+'''
+def write_pandas_table_for_one_genome_file(blast_database, organism_name, assembly_level, taxonomic_node,
+                                           assembly_accession):
+    try:
+        # 'media/databases/' + str(blast_database.id) +
+        path_to_database = str(blast_database.path_to_database_file) + '/'
+
+        if assembly_accession == None:
+            assembly_accession = 'not provided'
+        if organism_name == None:
+            organism_name = 'not provided'
+
+        with open(path_to_database + blast_database.get_pandas_table_name(), 'w') as pandas_table_file:
+            pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+            pandas_table_file.write('0,{},{},{},{},{},{}\n'.format(
+                assembly_accession, organism_name, taxonomic_node, taxonomic_node, assembly_level, 'uploaded genome'
+            ))
+
+    except Exception as e:
+        raise IntegrityError(
+            "[-] ERROR: Couldnt write pandas dataframe for your uploaded genome file, with exception : {}".format(e))
+
+#TODO documentation
+def write_pandas_table_for_multiple_uploaded_files(blast_database, genomes_to_organism_and_taxid_dict):
+    try:
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id)+'/'
+        with open(path_to_database + blast_database.get_pandas_table_name(), 'w') as  pandas_table_file:
+            pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+            for line_index, key in enumerate(list(genomes_to_organism_and_taxid_dict.keys())):
+                pandas_table_file.write(str(line_index) + ',')
+                pandas_table_file.write(key + ',')
+                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][0] + ',')
+                pandas_table_file.write(genomes_to_organism_and_taxid_dict[key][1] + ',' + genomes_to_organism_and_taxid_dict[key][1] + ',')
+                pandas_table_file.write("Chromosome"+ ',uploaded genome\n')
+        return 0
+    except Exception as e:
+        raise IntegrityError('couldnt write database table : {}'.format(e))
+
+'''get_list_of_taxonomic_nodes_based_on_organism_file
+    
+    This function is executed in the write_pandas_table_for_uploaded_genomes. It converts the 
+    provided organism names to taxonomic ids by taking the first taxid occurence of the biopython call.
+    If no taxid is found a integrity error is raised. This should not happend due to Form validation.
+    
+    :param organisms_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param user_email
+        :type str
+    
+    :returns taxids, organisms
+        :type list[int], list[str]
+        
+'''
+def get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email:str):
+    try:
+        print(type(organisms_file))
+        taxids = []
+        organisms = []
+        for line in organisms_file:
+            line = line.decode().rstrip()
+
+            if line != '':
+                taxid = pyb.get_species_taxid_by_name(user_email,line)
+                taxids.append(taxid[0])
+                organisms.append(line)
+        return taxids, organisms
+    except Exception as e:
+        raise IntegrityError('couldnt translate organism names into taxonomic nodes with exception : {}'.format(e))
+
+'''write_pandas_table_for_uploaded_genomes
+    
+    This function writes the pandas table for the BlastDatabase instance.
+    The table is written into media/databases/BlastDatabase.id. Provided organism names
+    are translated to taxonomic identifier. Assembly levels and assembly accessions are optional
+    and if not provided the table entries are filled with the note: "not provided".
+    The columns of the resulting pandas table are: index,assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path.
+    The ftp_path column is filled with the string: "uploaded genome".
+    If an exception occurs the function raises an integrity error.
+    
+    :param blast_database
+        :type refseq_transactions.models.BlastDatabase
+    :param assembly_accessions_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param assembly_levels_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param organisms_file
+        :type django.core.files.uploadedfile.TemporaryUploadedFile
+    :param user_email
+        :type str
+'''
+def write_pandas_table_for_uploaded_genomes(blast_database:BlastDatabase,
+                                            assembly_accessions_file,
+                                            assembly_levels_file,
+                                            organisms_file,
+                                            user_email:str):
+    try:
+        path_to_database = BLAST_DATABASE_DIR + str(blast_database.id)+'/'
+
+        taxonomic_nodes,organisms = get_list_of_taxonomic_nodes_based_on_organisms_file(organisms_file,user_email)
+
+        assembly_accessions = []
+        assembly_levels = []
+
+        if assembly_accessions_file != None:
+            for line in assembly_accessions_file:
+                line = line.decode().rstrip()
+                if line != '' and line != '\r':
+                    assembly_accessions.append(line)
+
+            if assembly_levels_file != None:
+                for line in assembly_levels_file:
+                    line = line.decode().rstrip()
+                    if line != '' and line != '\r':
+                        assembly_levels.append(line)
+            else:
+                for line in range(len(taxonomic_nodes)):
+                    assembly_levels.append('not provided')
+
+        elif assembly_accessions_file == None:
+            for line in range(len(taxonomic_nodes)):
+                assembly_accessions.append('not provided')
+            if assembly_levels_file != None:
+                for line in assembly_levels_file:
+                    line = line.decode().rstrip()
+                    if line != '' and line != '\r':
+                        assembly_levels.append(line)
+            else:
+                for line in range(len(taxonomic_nodes)):
+                    assembly_levels.append('not provided')
+
+        pandas_table_file = open(path_to_database+blast_database.get_pandas_table_name(),'w')
+        pandas_table_file.write(',assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path\n')
+        for line_index in range(len(taxonomic_nodes)):
+            pandas_table_file.write(str(line_index)+',')
+            pandas_table_file.write(assembly_accessions[line_index]+',')
+            pandas_table_file.write(organisms[line_index]+',')
+            pandas_table_file.write(taxonomic_nodes[line_index]+','+taxonomic_nodes[line_index]+',')
+            pandas_table_file.write(assembly_levels[line_index]+',uploaded genome\n')
+        pandas_table_file.close()
+
+    except Exception as e:
+        raise IntegrityError('couldnt write database table : {}'.format(e))

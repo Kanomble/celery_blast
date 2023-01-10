@@ -26,7 +26,20 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt extract query sequence ids from associated project with exception : {}".format(e))
 
-    def update_query_sequences_msa_task(self, query_sequence_id, msa_task_id):
+    #TODO documentation
+    def update_query_sequences_cdd_search_task(self, query_sequence_id:str, cdd_search_task:int):
+        try:
+            if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
+                query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
+                taskresult = TaskResult.objects.get(task_id=cdd_search_task)
+                query_sequence.cdd_domain_search_task = taskresult
+                query_sequence.save()
+            else:
+                raise Exception("[-] couldnt update query sequence with multiple sequence alignment taskresult object")
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
+
+    def update_query_sequences_msa_task(self, query_sequence_id:str, msa_task_id:int):
         try:
             if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
                 query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
@@ -51,7 +64,7 @@ class ExternalTools(models.Model):
             raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
 
 
-    def update_for_all_query_sequences_msa_task(self, msa_task_id):
+    def update_for_all_query_sequences_msa_task(self, msa_task_id:int):
         try:
             query_sequences = self.query_sequences.get_queryset()
             for qseq in query_sequences:
@@ -68,6 +81,7 @@ class ExternalTools(models.Model):
             raise Exception(
                 "[-] couldnt update query sequences with taskresult object by performing msa for all queries with exception : {}".format(
                     e))
+
 
     #TODO refactoring!
     def check_if_msa_task_is_completed(self,query_sequence_id):
@@ -90,11 +104,11 @@ class ExternalTools(models.Model):
 
 #TODO documentation
 '''
-Query sequences of reciprocal BLAST projects. 
-This model combines the results of the RecBLAST for each query sequence to
-multiple sequence alignments and phylogenetic tree task result objects. 
+    Query sequences of reciprocal BLAST projects. 
+    This model combines the results of the RecBLAST for each query sequence to
+    multiple sequence alignments, phylogenetic tree and CDD search task result objects. 
 
-It can be used as a hub for new tasks.
+    It can be used as a hub for new tasks.
 '''
 class QuerySequences(models.Model):
     query_accession_id = models.CharField(
@@ -118,6 +132,7 @@ class QuerySequences(models.Model):
         related_name="tree_task",
         unique=False
     )
+
     #many to one relationship
     external_tool_for_query_sequence = models.ForeignKey(
         ExternalTools,
@@ -126,24 +141,74 @@ class QuerySequences(models.Model):
         on_delete=models.CASCADE
     )
 
+    cdd_domain_search_task = models.ForeignKey(
+        TaskResult,
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        verbose_name="celery task for cdd domain search with rpsblast",
+        related_name="cdd_search",
+        unique=False
+    )
+
     objects = QuerySequenceManager()
+
+    '''check_if_cdd_search_is_complete
+        
+        This function returns the associated CDD domain search task result object.
+        
+        :return status
+            :type string -> SUCCESS FAILURE PROGRESS NOTEXEC
+    '''
+    def check_if_cdd_search_is_complete(self):
+        try:
+            if self.cdd_domain_search_task:
+                return self.cdd_domain_search_task.status
+            else:
+                return "NOTEXEC"
+        except Exception as e:
+            raise Exception("[-] ERROR couldnt fetch CDD domain search task status for target query with exception: {}".format(e))
+
+    #TODO documentation
+    def update_cdd_domain_search_task(self, cdd_search_task_id: int):
+        try:
+            task_result = TaskResult.objects.get(task_id=cdd_search_task_id)
+            self.cdd_domain_search_task = task_result
+            self.save()
+        except Exception as e:
+            raise Exception(
+                "[-] couldnt update query sequence with taskresult object for cdd search task with exception: {}".format(
+                    e))
+
 
     def update_multiple_sequence_alignment_task(self, msa_task_id):
         try:
-            taskresult = TaskResult.objects.get(task_id=msa_task_id)
-            self.multiple_sequence_alignment_task = taskresult
+            task_result = TaskResult.objects.get(task_id=msa_task_id)
+            self.multiple_sequence_alignment_task = task_result
             self.save()
         except Exception as e:
             raise Exception("[-] couldnt update query sequences with taskresult object for msa with exception : {}".format(e))
 
     def update_phylogenetic_tree_task(self, phylo_task_id):
         try:
-            taskresult = TaskResult.objects.get(task_id=phylo_task_id)
-            self.phylogenetic_tree_construction_task = taskresult
+            task_result = TaskResult.objects.get(task_id=phylo_task_id)
+            self.phylogenetic_tree_construction_task = task_result
             self.save()
         except Exception as e:
             raise Exception(
                 "[-] couldnt update query sequences with taskresult object for msa with exception : {}".format(e))
+
+    def delete_cdd_search_task_result(self):
+        try:
+            if self.cdd_domain_search_task != None:
+                try:
+                    task_result = self.cdd_domain_search_task
+                    task_result.delete()
+                    return 0
+                except Exception as e:
+                    raise Exception("[-] couldnt fetch the cdd search task result model instance, with exception: {}".format(e))
+        except Exception as e:
+            raise Exception("[-] exception during deletion of cdd search task result and all associated "
+                            "output: {} for query sequence: {}".format(e, self.query_accession_id))
 
 class EntrezSearch(models.Model):
 

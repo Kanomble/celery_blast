@@ -2,7 +2,6 @@ from .py_django_db_services import create_one_way_project_from_form,create_blast
     create_one_way_remote_project_from_form, get_one_way_remote_project_by_id
 from django.db import IntegrityError, transaction
 from blast_project.py_services import upload_file
-from .models import OneWayRemoteBlastProject
 
 #TODO Documentation
 def create_one_way_blast_project(user, query_file_name,query_file, project_form, settings_form):

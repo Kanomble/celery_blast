@@ -1,0 +1,4 @@
+	Accession ID	Organism	Sequence Length	Sequence Definition	Features	PFAM	CDD	TIGR
+0	WP_010874243	unclassified Synechocystis	519	MULTISPECIES: circadian clock protein KaiC [unclassified Synechocystis]	['20..503', 'circ_KaiC circadian clock protein KaiC; TIGR02655 CDD:131703']			https://www.ncbi.nlm.nih.gov/genome/annotation_prok/evidence/TIGR02655
+1	WP_010874242	Synechocystis	105	MULTISPECIES: circadian clock protein KaiB [Synechocystis]	[]			
+2	WP_010874241	unclassified Synechocystis	299	MULTISPECIES: circadian clock protein KaiA [unclassified Synechocystis]	['167..288', 'KaiA KaiA C-terminal domain; pfam07688 CDD:429597']		https://www.ncbi.nlm.nih.gov/Structure/sparcle/archview.html?archid=10542398	

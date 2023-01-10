@@ -25,7 +25,7 @@ SECRET_KEY = '=0@uu%q3xsu%w+$h)p7(f*5&1fxgw8#x+n^(t)kt$17!(n1*-y'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1','192.168.1.97']
+ALLOWED_HOSTS = [ '*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'blast_project',
-    'django_celery_results',
     'refseq_transactions',
+    'django_celery_results',
     'celery_progress',
     'one_way_blast',
     'external_tools',
@@ -59,7 +59,7 @@ ROOT_URLCONF = 'celery_blast.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['celery_blast/templates','static/images/result_images','media/blast_projects'],
+        'DIRS': ['celery_blast/templates','static/images/result_images','media/blast_projects','media/one_way_blast','media/one_way_blast/remote_searches','media'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -143,8 +143,8 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
 
-CELERY_TASK_SOFT_TIME_LIMIT = 7200 #2 * 60min = 120min * 60sec = 7200sec
-CELERY_TASK_TIME_LIMIT = 8000
+CELERY_TASK_SOFT_TIME_LIMIT = 345600 #2 * 60min = 120min * 60sec = 7200sec
+CELERY_TASK_TIME_LIMIT = 345660
 SUBPROCESS_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT - 5
 
 '''
@@ -158,3 +158,10 @@ CACHES = {
 '''
 
 PANOPTES_IP = 'http://panoptes:5000'
+STATIC_RESULT_IMAGES = STATIC_URL + 'images/result_images/'
+BLAST_PROJECT_DIR = 'media/blast_projects/'
+ONE_WAY_BLAST_PROJECT_DIR = 'media/one_way_blast/'
+BLAST_DATABASE_DIR = 'media/databases/'
+ONE_WAY_BLAST_DIR = 'media/one_way_blast/'
+CDD_DIR = 'media/databases/CDD/Cdd'
+ESEARCH_OUTPUT = 'media/esearch_output/'

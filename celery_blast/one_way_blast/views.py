@@ -1,17 +1,15 @@
 import os
-
 from django.shortcuts import render, redirect, HttpResponse
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from blast_project.views import failure_view, success_view
 from .forms import OneWayProjectCreationForm, BlastSettingsForm, OneWayRemoteProjectCreationForm
-from django.db import transaction, IntegrityError
 from .py_project_creation import create_one_way_blast_project, create_one_way_remote_blast_project
 from .py_services import delete_one_way_blast_project_and_associated_directories_by_id,\
     delete_one_way_remote_blast_project_and_associated_directories_by_id, get_one_way_html_results
 from .py_django_db_services import get_one_way_project_by_id, get_one_way_remote_project_by_id
 from .py_biopython import calculate_pfam_and_protein_links_from_one_way_queries
-from blast_project.py_services import upload_file
 from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_project
 
 #TODO documentation
@@ -68,30 +66,27 @@ def one_way_blast_project_creation_view(request):
 
 #TODO documentation
 @login_required(login_url='login')
-def one_way_project_details_view(request, project_id):
-    try:
-        import os
-        blast_project = get_one_way_project_by_id(project_id)
-        genus_plot_template = "one_way_blast/"+str(blast_project.id)+'/genus_bars.html'
-        #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
-        context = {'OneWayBlastProject':blast_project,
-                    'Database':blast_project.project_database,
-                   'GenusPlotTemplate':genus_plot_template
-                   }
-                   #'ProtPfam':prot_to_pfam}
-        return render(request,'one_way_blast/one_way_blast_details.html',context)
-    except Exception as e:
-        return failure_view(request,e)
+def one_way_project_details_view(request, project_id:int):
+    #try:
+    blast_project = get_one_way_project_by_id(project_id)
+    bokeh_plot_template = "one_way_blast/"+str(project_id)+'/bokeh_plot.html'
+    context = {'OneWayBlastProject':blast_project,
+                'Database':blast_project.project_database,
+               'BokehPlot':bokeh_plot_template,
+               }
+    return render(request,'one_way_blast/one_way_blast_details.html',context)
+    #except Exception as e:
+    #    return failure_view(request,e)
 
 @login_required(login_url='login')
 def one_way_remote_project_details_view(request, project_id):
     try:
 
         blast_project = get_one_way_remote_project_by_id(project_id)
-        genus_plot_template = "one_way_blast/remote_searches/"+str(blast_project.id)+'/genus_bars.html'
+        bokeh_plot_template = "one_way_blast/remote_searches/"+str(project_id)+'/bokeh_plot.html'
         #prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
         context = {'OneWayRemoteBlastProject':blast_project,
-                   'GenusPlotTemplate':genus_plot_template}
+                   'BokehPlot':bokeh_plot_template}
                    #'ProtPfam':prot_to_pfam}
         return render(request,'one_way_blast/one_way_remote_blast_details.html',context)
     except Exception as e:

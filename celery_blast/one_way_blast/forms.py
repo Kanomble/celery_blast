@@ -1,8 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from blast_project.py_django_db_services import get_all_succeeded_databases
-from refseq_transactions.forms import get_taxonomic_files_tuple
-from blast_project.py_services import list_taxonomic_files
+from blast_project.py_biopython import fetch_protein_records
+from string import punctuation, ascii_letters
 
 #TODO documentation
 class OneWayProjectCreationForm(forms.Form):
@@ -16,8 +16,13 @@ class OneWayProjectCreationForm(forms.Form):
             'required': "A project title is required for saving project metadata into the database"})
 
     query_sequence_file = forms.FileField(
+        required=False,
         error_messages={
             'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
+
+    query_sequence_text = forms.CharField(
+        label="Query Sequence IDs",max_length=800,required=False
+    )
 
     project_database = BlastDatabaseModelChoiceField(
         queryset=get_all_succeeded_databases(),
@@ -33,30 +38,54 @@ class OneWayProjectCreationForm(forms.Form):
         self.fields['user_email'].charfield = user.email
         self.fields['user_email'].initial = user.email
 
-    def clean_query_sequence_file(self):
-        query_file = self.cleaned_data['query_sequence_file']
-        if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-            raise ValidationError("please upload only fasta files!")
-        header = []
-        for chunk in query_file.chunks():
-            lines = chunk.decode().split("\n")
-            for line in lines:
-                if line.startswith('>'):
-                    try:
-                        acc = line.split(" ")[0].split('>')[-1].split(".")[0]
-                        header.append(acc)
-                    except Exception as e:
-                        self.add_error('query_sequence_file', 'error during parsing of query_file : {}'.format(e))
+    def clean(self):
+        cleaned_data = super().clean()
+        query_file = cleaned_data['query_sequence_file']
+        query_sequences = cleaned_data['query_sequence_text']
 
-        if len(header) > 300:
-            self.add_error('query_sequence_file', 'You try to infer orthologs for more than 300 query sequences,'
-                                                  ' this is not allowed, consider to separate the query sequences.')
+        if query_file == None and query_sequences == '':
+            self.add_error('query_sequence_file',"please upload a fasta file containing your sequences or specify valid protein identifier")
 
-        if len(header) != len(set(header)):
-            self.add_error('query_sequence_file',
-                           'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+        if query_file != None:
+            if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
+                raise self.add_error('query_sequence_file',"please upload only fasta files!")
 
-        return query_file
+            if len(query_file.name.split(".")) != 2:
+                raise self.add_error('query_sequence_file',"there are no dots allowed except the filetype delimiter")
+            else:
+                filename = query_file.name.split(".")[0]
+                for character in filename:
+                    if character in punctuation:
+                        if character != '_' and character != '-':
+                            raise self.add_error('query_sequence_file',"bad character: \"{}\" in query file name".format(character))
+                    if character not in ascii_letters:
+                        if character != '_' and character != '-':
+                            raise self.add_error('query_sequence_file',"bad character: \"{}\" in query file name".format(character))
+
+            header = []
+            for chunk in query_file.chunks():
+                lines = chunk.decode().split("\n")
+                for line in lines:
+                    if line.startswith('>'):
+                        try:
+                            acc = line.split(" ")[0].split('>')[-1].split(".")[0]
+                            header.append(acc)
+                        except Exception as e:
+                            self.add_error('query_sequence_file', 'error during parsing of query_file : {}'.format(e))
+
+            if len(header) > 300:
+                self.add_error('query_sequence_file', 'You try to infer orthologs for more than 300 query sequences,'
+                                                      ' this is not allowed, consider to separate the query sequences.')
+
+            if len(header) != len(set(header)):
+                self.add_error('query_sequence_file',
+                               'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+        elif query_sequences != '':
+            self.add_error('query_sequence_text','not available yet')
+        else:
+            self.add_error('query_sequence_text',
+                           "please upload a fasta file containing your sequences or specify valid protein identifier")
+
 
 #TODO documentation
 class BlastSettingsForm(forms.Form):
@@ -127,6 +156,19 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         query_file = self.cleaned_data['r_query_sequence_file']
         if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
             raise ValidationError("please upload only fasta files!")
+
+        if len(query_file.name.split(".")) != 2:
+            raise ValidationError("there are no dots allowed except the filetype delimiter")
+        else:
+            filename = query_file.name.split(".")[0]
+            for character in filename:
+                if character in punctuation:
+                    if character != '_' and character != '-':
+                        raise ValidationError("bad character: \"{}\" in query file name".format(character))
+                if character not in ascii_letters:
+                    if character != '_' and character != '-':
+                        raise ValidationError("bad character: \"{}\" in query file name".format(character))
+
         header = []
         for chunk in query_file.chunks():
             lines = chunk.decode().split("\n")

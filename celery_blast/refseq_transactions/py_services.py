@@ -4,6 +4,7 @@ from django.db import IntegrityError
 from blast_project.py_django_db_services import get_database_by_id
 import pandas as pd
 import json
+from celery_blast.settings import BLAST_DATABASE_DIR
 
 ''' refseq_file_exists
     
@@ -129,7 +130,7 @@ def get_bdb_summary_table_name(database_id):
 def get_ftp_paths_and_taxids_from_summary_file(database_id):
     try:
         bdb_summary_table_name = get_database_by_id(database_id).get_pandas_table_name()
-        filepath = 'media/databases/' + str(database_id) + '/' + bdb_summary_table_name
+        filepath = BLAST_DATABASE_DIR + str(database_id) + '/' + bdb_summary_table_name
         dataframe = pd.read_table(filepath,header=0,index_col=0,delimiter=",")
         #there shouldnt be any duplicates
         dataframe = dataframe[dataframe['ftp_path'].duplicated() == False]
@@ -140,7 +141,7 @@ def get_ftp_paths_and_taxids_from_summary_file(database_id):
 #TODO this function is currently not used, in the near future it can be used to fill a custom logfile
 def write_progress_database_transactions(database_id:int, progress:str)->str:
     try:
-        filepath = 'media/databases/' + str(database_id) + '/task_progress.log'
+        filepath = BLAST_DATABASE_DIR + str(database_id) + '/task_progress.log'
         progress_log = open(filepath,'a')
         progress_log.write(str(progress)+'\n')
         progress_log.close()
@@ -151,7 +152,7 @@ def write_progress_database_transactions(database_id:int, progress:str)->str:
 #TODO this function is currently not used, in the near future it can be used to fill a custom logfile
 def get_current_progress_database_transactions(database_id):
     try:
-        filepath = 'media/databases/' + str(database_id) + '/task_progress.log'
+        filepath = BLAST_DATABASE_DIR + str(database_id) + '/task_progress.log'
         fd = open(filepath,'r')
         progress = round(float(fd.readlines()[-1]),3)
         fd.close()

@@ -23,8 +23,17 @@ service_urls = [
     path('<int:project_id>/project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results')
 ]
 
+#this ajax call is currently not used - it has been replaced by the snakemake pipeline script query_sequences_to_html_table
 ajax_urls = [
     path('<int:project_id>/ajax_wp_to_links',views.ajax_wp_to_links,name='ajax_wp_to_links')
+]
+
+py_optional_postprocessing = [
+    path('<int:project_id>/project_details/database_statistics', views.database_statistics_dashboard, name='database_statistics'),
+    path('<int:project_id>/project_details/execute_database_statistics_task', views.execute_database_statistics_task,name='execute_database_statistics_task'),
+    path('<int:project_id>/project_details/database_statisitcs_details/<str:taxonomic_unit>', views.database_statistics_details,name='database_statistics_details'),
+    path('<int:project_id>/project_details/delete_database_statistics_task_and_output', views.delete_database_statistics,name='delete_database_statistics'),
+    path('<int:project_id>/project_details/<str:taxonomic_unit>/taxonomic_unit_ajax_call', views.load_database_statistics_for_taxonomic_unit_ajax, name='ajax_call_for_taxonomic_unit'),
 ]
 
 success_failure_urls = [
@@ -33,7 +42,7 @@ success_failure_urls = [
 ]
 urlpatterns = [
     path('', views.dashboard_view, name='blast_project_dashboard'),
-
+    path('', include(py_optional_postprocessing)),
     path('', include(ajax_urls)),
     path('', include(registration_urls)),
     path('', include(service_urls)),

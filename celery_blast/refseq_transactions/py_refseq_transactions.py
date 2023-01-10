@@ -1,12 +1,11 @@
 #functions for the creation of BLAST databases which are triggered via POST and GET requests in the views.py file of this package
-from blast_project.models import BlastDatabase
+from .models import BlastDatabase
 from blast_project.py_services import create_blastdatabase_directory, upload_file
 from blast_project.py_django_db_services import create_and_save_refseq_database_model, get_database_by_id
 from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict, filter_duplicates_by_ftp_path
 from os.path import isfile
 import pandas as pd
 from django.db import IntegrityError, transaction
-
 ''' 
 transactions with models (manager)
 '''
@@ -144,21 +143,38 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
 
     #function for changing the ftp_header in the pandas table
     def set_protein_assembly_file(ftp_path):
-        protein_genome = ftp_path.split('/')[-1:][0]
-        protein_genome = ftp_path + '/' + str(protein_genome) + '_protein.faa.gz'
-        return protein_genome
+        try:
+            if type(ftp_path) == str:
+                protein_genome = ftp_path.split('/')[-1:][0]
+                protein_genome = ftp_path + '/' + str(protein_genome) + '_protein.faa.gz'
+                return protein_genome
+            else:
+                return ftp_path
+        except:
+            raise Exception("[-] Problem during parsing the ftp_path column in the refseq assembly summary file")
 
+    #TODO Documentation
     #init parsing refseq table with pandas
     try:
-        refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None, usecols=range(22),
-                                     dtype={20: str,
-                                            5:str,
-                                            6:str})
+        with open(summary_file_path, 'r') as rfile:
+            line = rfile.readline()
+            line = rfile.readline()
+            header=line.replace('#', '').replace(" ", '').rstrip().split("\t")
 
+        refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None,
+                                     dtype={20:str, #20 excluded from refseq
+                                            5:str, #5 taxid
+                                            6:str, #6 species taxid
+                                            'ftp_path':str})
+
+        '''
+        with usecols=range(22)
         header = ["assembly_accession", "bioproject", "biosample", "wgs_master", "refseq_category", "taxid",
-                  "species_taxid", "organism_name", "infraspecific_name", "isolate", "version_status", "assembly_level",
-                  "release_type", "genome_rep", "seq_rel_date", "asm_name", "submitter", "gbrs_paired_asm",
-                  "paired_asm_comp", "ftp_path", "excluded_from_refseq", "relation_to_type_material"]
+          "species_taxid", "organism_name", "infraspecific_name", "isolate", "version_status", "assembly_level",
+          "release_type", "genome_rep", "seq_rel_date", "asm_name", "submitter", "gbrs_paired_asm",
+          "paired_asm_comp", "ftp_path", "excluded_from_refseq", "relation_to_type_material"]      
+        '''
+
         refseq_table.columns = header
         refseq_table = refseq_table.astype({"taxid": str})
     except Exception as e:
@@ -229,4 +245,3 @@ def read_database_table_by_database_id_and_return_json(database_id):
     table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name,header=0,index_col=0)
     json = transform_data_table_to_json_dict(table)
     return json
-
