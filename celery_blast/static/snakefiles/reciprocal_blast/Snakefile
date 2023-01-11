@@ -230,9 +230,6 @@ rule conduct_multiple_sequence_alignment_mafft:
 				mafft=shell("mafft --auto {input} > {output} 2> {log}")
 				with open(log['log'],'a') as lfile:
 					lfile.write("INFO:ending mafft multiple sequence alignment\n")
-					if mafft != 0:
-						lfile.write("ERROR:mafft returncode is != 0\n")
-						raise Exception("mafft returncode is != 0\n")
 					lfile.write("DONE")
 			else:
 				with open(log['log'],'w') as lfile:
@@ -246,7 +243,7 @@ rule conduct_multiple_sequence_alignment_mafft:
 				shell("touch {output}")
 
 #RULE 13
-#this rule shouldnt throw exceptions, if an error occurs an empty file is created
+#this rule shouldn't throw exceptions, if an error occurs an empty file is created
 rule conduct_phylogeny_fast_tree:
 	input: "{qseqid}/target_sequences.msa"
 	output: "{qseqid}/target_sequences.tree"
@@ -265,9 +262,6 @@ rule conduct_phylogeny_fast_tree:
 				fasttree = shell("fasttree {input} > {output} 2> {log}")
 				with open(log['log'],'a') as lfile:
 					lfile.write("INFO:ending fasttree phylogeny construction\n")
-					if fasttree != 0:
-						lfile.write("ERROR:fasttree returncode is != 0\n")
-						raise Exception("fasttree returncode is != 0\n")
 					lfile.write("DONE\n")
 			else:
 				with open(log['log'],'w') as lfile:

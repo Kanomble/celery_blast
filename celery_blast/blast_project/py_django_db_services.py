@@ -250,7 +250,6 @@ execute_makeblastdb_with_uploaded_genomes and download_blast_databases_based_on_
 '''
 def update_blast_database_with_task_result_model(database_id,task_id):
     try:
-        print("+++++++",get_all_blast_databases())
         blastdb = BlastDatabase.objects.get(id=database_id)
         taskresult = TaskResult.objects.get(task_id=task_id)
         blastdb.database_download_and_format_task = taskresult

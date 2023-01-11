@@ -19,7 +19,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         xtract_format['pubmed'] = 'Id PubDate Source Author Title ELocationID'
         xtract_format['protein'] = 'Id Caption Title Organism'
         xtract_format['assembly'] = 'Id AssemblyName AssemblyStatus Organism Taxid'
-        xtract_format['cdd'] = "Id Title,Subtitle Abstract"
+        xtract_format['cdd'] = "Id Title Subtitle Abstract"
         xtract_format['protfam'] = "Id DispMethod DispReviewLevel string"
 
 
