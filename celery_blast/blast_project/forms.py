@@ -127,8 +127,13 @@ class ProjectCreationForm(forms.Form):
         required=False)
 
     query_sequence_file = forms.FileField(
+        required=False,
         error_messages={
             'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
+
+    query_sequence_text = forms.CharField(
+        label="Query Sequence IDs",max_length=800,required=False
+    )
 
     project_forward_database = BlastDatabaseModelChoiceField(
         queryset=get_all_succeeded_databases(),
@@ -151,6 +156,8 @@ class ProjectCreationForm(forms.Form):
 
             species_name = cleaned_data['species_name_for_backward_blast']
             user_email = self.fields['user_email'].charfield
+
+
             try:
                 taxonomic_nodes = get_species_taxid_by_name(user_email, species_name)
             except Exception as e:
@@ -175,26 +182,35 @@ class ProjectCreationForm(forms.Form):
 
 
             query_file = cleaned_data['query_sequence_file']
+            query_sequences = cleaned_data['query_sequence_text']
 
-            #check for fasta files
-            if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-                self.add_error("query_sequence_file","please upload only fasta files!")
+            # upload a query file or specify valid protein identifiers
+            if query_file == None and query_sequences == '':
+                self.add_error('query_sequence_file',
+                               "please upload a fasta file containing your sequences or specify valid protein identifier")
 
-            else:
+            # query file was uploaded
+            if query_file != None:
+                if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
+                    raise self.add_error('query_sequence_file', "please upload only fasta files!")
+
                 if len(query_file.name.split(".")) != 2:
-                    self.add_error("query_sequence_file","there are no dots allowed except the filetype delimiter")
+                    raise self.add_error('query_sequence_file',
+                                         "there are no dots allowed except the filetype delimiter")
                 else:
                     filename = query_file.name.split(".")[0]
                     for character in filename:
                         if character in punctuation:
                             if character != '_' and character != '-':
-                                self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+                                raise self.add_error('query_sequence_file',
+                                                     "bad character: \"{}\" in query file name".format(character))
                         if character not in ascii_letters:
                             if character != '_' and character != '-':
-                                self.add_error("query_sequence_file","bad character: \"{}\" in query file name".format(character))
+                                raise self.add_error('query_sequence_file',
+                                                     "bad character: \"{}\" in query file name".format(character))
 
                 header = []
-                #checks accession identifier of query sequences
+                # checks accession identifier of query sequences
                 for chunk in query_file.chunks():
                     lines = chunk.decode().split("\n")
                     for line in lines:
@@ -202,37 +218,45 @@ class ProjectCreationForm(forms.Form):
                             try:
                                 acc = line.split(" ")[0].split('>')[-1].split(".")[0]
                                 if "|" in acc or " " in acc:
-                                    raise Exception("{} is no valid protein identifier - Format: e.g. WP_8765432".format(acc))
+                                    raise Exception(
+                                        "{} is no valid protein identifier - Format: e.g. WP_8765432".format(acc))
                                 header.append(acc)
                             except Exception as e:
-                                self.add_error('query_sequence_file','error during parsing of query_file : {}'.format(e))
-                #maximum number of query sequences = 300
-                if len(header) > 300:
-                    self.add_error('query_sequence_file','You try to infer orthologs for more than 300 query sequences,'
-                                                         ' this is not allowed, consider to separate the query sequences.')
+                                self.add_error('query_sequence_file',
+                                               'error during parsing of query_file : {}'.format(e))
 
-                #checks if query sequences reside in the backward database
+                if len(header) > 300:
+                    self.add_error('query_sequence_file',
+                                   'You try to infer orthologs for more than 300 query sequences,'
+                                   ' this is not allowed, consider to separate the query sequences.')
                 else:
                     valid = check_if_sequences_are_in_database(backward_db.id, header)
                     if valid != True:
                         self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
-                #check for duplicate entries in the query file
-                if len(header) != len(set(header)):
-                    self.add_error('query_sequence_file','there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
 
-                #check if provided taxid corresponds to query sequence origin
-                #what if the user provides custom query sequence ids?
-                #try:
-                #    retcode=check_if_protein_identifier_correspond_to_backward_taxid(header,taxonomic_nodes[0],user_email)
-                #    if retcode != 0:
-                #        self.add_error('species_name_for_backward_blast',
-                #                       'specified taxonomic node: {} does not match with query sequences, following nodes have been translated from the protein queries: {}'.format(
-                #                           taxonomic_nodes[0],' '.join(retcode)))
-                #except Exception:
-                #    #TODO add taxid for query sequences
-                #    self.add_error('species_name_for_backward_blast',
-                #                   'specified taxonomic node: {} does not match with query sequences'.format(
-                #                       taxonomic_nodes[0]))
+                if len(header) != len(set(header)):
+                    self.add_error('query_sequence_file',
+                                   'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+            # protein identifier have been uploaded
+            elif query_sequences != '':
+                # check string for invalid characters
+                query_sequences = query_sequences.split(',')
+                try:
+                    valid = check_if_sequences_are_in_database(backward_db.id, query_sequences)
+                    if valid != True:
+                        self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+
+                    proteins, errors = fetch_protein_records(query_sequences, user_email)
+                    if len(errors) > 0:
+                        self.add_error('query_sequence_text', 'following sequences are unavailable: {}'.format(errors))
+                    cleaned_data['query_sequence_text'] = proteins
+                except Exception as e:
+                    self.add_error("query_sequence_text", "please provide valid protein identifiers")
+
+                # self.add_error('query_sequence_text','not available yet')
+            else:
+                self.add_error('query_sequence_text',
+                               "please upload a fasta file containing your sequences or specify valid protein identifier")
 
         except Exception as e:
             raise ValidationError(

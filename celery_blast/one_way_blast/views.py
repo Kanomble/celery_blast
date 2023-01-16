@@ -17,6 +17,7 @@ from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_p
 def one_way_blast_project_creation_view(request):
     try:
         if request.method == 'POST':
+            print("HELLO!")
             if request.POST['project_type'] == 'local':
                 project_creation_form = OneWayProjectCreationForm(
                     request.user, request.POST, request.FILES)
@@ -24,11 +25,8 @@ def one_way_blast_project_creation_view(request):
                 remote_project_creation_form = OneWayRemoteProjectCreationForm(request.user)
 
                 if project_creation_form.is_valid() and blast_settings_form.is_valid():
-                    query_sequences = request.FILES['query_sequence_file']
                     create_one_way_blast_project(
                         user=request.user,
-                        query_file_name=query_sequences.name,
-                        query_file=query_sequences,
                         project_form=project_creation_form,
                         settings_form=blast_settings_form)
 
@@ -38,13 +36,11 @@ def one_way_blast_project_creation_view(request):
                 remote_project_creation_form = OneWayRemoteProjectCreationForm(
                     request.user, request.POST, request.FILES)
                 blast_settings_form = BlastSettingsForm(request.POST)
-
                 if remote_project_creation_form.is_valid() and blast_settings_form.is_valid():
                     create_one_way_remote_blast_project(
                         request.user,
                         remote_project_creation_form,
-                        blast_settings_form,
-                        request)
+                        blast_settings_form)
 
                     return success_view(request)
 
@@ -61,7 +57,6 @@ def one_way_blast_project_creation_view(request):
 
         return render(request,'one_way_blast/one_way_blast_creation_dashboard.html',context)
     except Exception as e:
-
         return failure_view(request,e)
 
 #TODO documentation

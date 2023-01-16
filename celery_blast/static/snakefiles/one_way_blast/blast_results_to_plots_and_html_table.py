@@ -68,7 +68,7 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
         # RBH result dataframe
         result_data = result_data.loc[:,
                       ['order', 'class', 'phylum', 'genus', 'family', 'bitscore', 'pident', 'stitle', 'scomnames',
-                       'staxids', 'qseqid', 'sacc']]  # ,'slen'
+                       'staxids', 'qseqid', 'sacc','slen']]  # ,'slen'
         result_data = result_data.sort_values(by=taxonomic_unit)
 
         color_dict, marker_dict = create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data)
@@ -689,6 +689,7 @@ def add_taxonomic_information_to_db(user_email:str,log,taxids:list)->pd.DataFram
                                 taxid.append(record[i]['TaxId'])
                         else:
                             taxid.append(record[i]['TaxId'])
+
                         for j in record[i]['LineageEx']:
                             if j['Rank'] == 'genus':
                                 genus.append(j['ScientificName'])
@@ -764,7 +765,7 @@ try:
         queryfile.close()
 
         df = pd.read_table(snakemake.input['blast_results'], delimiter="\t", header=None)
-        df.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
+        df.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore","slen", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
                       "stitle"]
         unique_taxids = list(df["staxids"].unique())
 

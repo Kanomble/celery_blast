@@ -24,6 +24,7 @@ from .py_django_db_services import get_users_blast_projects, get_project_by_id, 
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
+from Bio import Entrez
 #BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 #BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
@@ -87,19 +88,44 @@ def project_creation_view(request):
 
             # RETURN PROJECT DETAILS VIEW
             if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() and blast_settings_backward_form.is_valid():
-                query_sequences = request.FILES['query_sequence_file']
+                query_sequence_file = project_creation_form.cleaned_data['query_sequence_file']
+                query_sequences = project_creation_form.cleaned_data['query_sequence_text']
+
+                print("VALID!")
+                print(query_sequences)
                 try:
                     with transaction.atomic():
+                        if query_sequence_file != None:
+                            blast_project = create_blast_project(
+                                user=request.user,
+                                query_file_name=query_sequence_file.name,
+                                project_form=project_creation_form,
+                                fw_settings_form=blast_settings_forward_form,
+                                bw_settings_form=blast_settings_backward_form,filepath=BLAST_PROJECT_DIR)
+                            path_to_query_file = BLAST_PROJECT_DIR + str(
+                                blast_project.id) + '/' + query_sequence_file.name
+                            upload_file(query_sequence_file, path_to_query_file)
+                        elif query_sequences != '':
+                            query_file_name = "target_sequences.faa"
+                            blast_project = create_blast_project(
+                                user=request.user,
+                                query_file_name=query_file_name,
+                                project_form=project_creation_form,
+                                fw_settings_form=blast_settings_forward_form,
+                                bw_settings_form=blast_settings_backward_form,filepath=BLAST_PROJECT_DIR)
 
-                        blast_project = create_blast_project(
-                            user=request.user,
-                            query_file_name=query_sequences.name,
-                            project_form=project_creation_form,
-                            fw_settings_form=blast_settings_forward_form,
-                            bw_settings_form=blast_settings_backward_form,filepath=BLAST_PROJECT_DIR)
-                        path_to_query_file = BLAST_PROJECT_DIR + str(
-                            blast_project.id) + '/' + query_sequences.name
-                        upload_file(query_sequences, path_to_query_file)
+
+                            path_to_query_file = BLAST_PROJECT_DIR + str(blast_project.id) + '/' + query_file_name
+                            if type(query_sequences) != Entrez.Parser.ListElement:
+                                raise Exception("wrong protein data for form field query_sequence_text")
+
+                            with open(path_to_query_file, 'w') as qfile:
+                                for rec in query_sequences:
+                                    txt = ">" + rec['GBSeq_primary-accession'] + " " + rec['GBSeq_definition'] + "\n" + \
+                                          rec[
+                                              'GBSeq_sequence'] + "\n"
+                                    qfile.write(txt)
+
                 except IntegrityError as e:
                     return failure_view(request,e)
 
@@ -137,6 +163,7 @@ def project_creation_view(request):
 
         return render(request,'blast_project/project_creation_dashboard.html',context)
     except Exception as e:
+        print(project_creation_form.errors)
         return failure_view(request,e)
 
 '''project_details_view

@@ -13,7 +13,7 @@ import math
 RETURNCODE=5
 try:
     result_data=pd.read_table(snakemake.input['results_table'], delimiter="\t", header=None)
-    result_data.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames",
+    result_data.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore", "slen", "qgi", "sgi", "sacc", "staxids", "sscinames",
                   "scomnames",
                   "stitle"]
     result_data['qseqid'] = result_data['qseqid'].map(lambda line: line.split('.')[0])

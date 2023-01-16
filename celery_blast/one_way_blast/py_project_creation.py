@@ -2,37 +2,72 @@ from .py_django_db_services import create_one_way_project_from_form,create_blast
     create_one_way_remote_project_from_form, get_one_way_remote_project_by_id
 from django.db import IntegrityError, transaction
 from blast_project.py_services import upload_file
+from Bio import Entrez
 
 #TODO Documentation
-def create_one_way_blast_project(user, query_file_name,query_file, project_form, settings_form):
+def create_one_way_blast_project(user, project_form, settings_form):
     try:
         with transaction.atomic():
+            query_file = project_form.cleaned_data['query_sequence_file']
+            query_sequences = project_form.cleaned_data['query_sequence_text']
             settings = create_blast_settings_from_form(settings_form)
-            blast_project = create_one_way_project_from_form(project_form, user, settings, query_file_name)
+            if query_file != None:
+                query_file_name = query_file.name
+                blast_project = create_one_way_project_from_form(project_form, user, settings, query_file_name)
+                path_to_query_file = blast_project.get_project_dir() + '/' + query_file_name
+                upload_file(query_file, path_to_query_file)
+            elif query_sequences != '':
+                query_file_name = 'target_sequences.faa'
+                blast_project = create_one_way_project_from_form(project_form, user, settings, query_file_name)
+                path_to_query_file = blast_project.get_project_dir() + '/' + query_file_name
+                if type(query_sequences) != Entrez.Parser.ListElement:
+                    raise Exception("wrong protein data for form field query_sequence_text")
 
-            path_to_query_file = blast_project.get_project_dir() + '/' + query_file_name
-
-            upload_file(query_file, path_to_query_file)
+                with open(path_to_query_file, 'w') as qfile:
+                    for rec in query_sequences:
+                        txt = ">" + rec['GBSeq_primary-accession'] + " " + rec['GBSeq_definition'] + "\n" + rec[
+                            'GBSeq_sequence'] + "\n"
+                        qfile.write(txt)
             return blast_project
     except Exception as e:
         raise IntegrityError('couldnt create one way blast project with exception : {}'.format(e))
 
 
-def create_one_way_remote_blast_project(user, project_form, settings_form, request):
+def create_one_way_remote_blast_project(user, project_form, settings_form):
     try:
         with transaction.atomic():
-            query_sequences = request.FILES['r_query_sequence_file']
+            query_file = project_form.cleaned_data['r_query_sequence_file']
+            query_sequences = project_form.cleaned_data['r_query_sequence_text']
             settings = create_blast_settings_from_form(settings_form)
-            #valid_project_form,user,settings,query_sequence_filename
-            blast_project = create_one_way_remote_project_from_form(
-                project_form,
-                user,
-                settings,
-                query_sequences.name)
 
-            path_to_query_file = blast_project.get_project_dir() + '/' + query_sequences.name
+            if query_file != None:
+                #valid_project_form,user,settings,query_sequence_filename
+                blast_project = create_one_way_remote_project_from_form(
+                    project_form,
+                    user,
+                    settings,
+                    query_file.name)
 
-            upload_file(query_sequences, path_to_query_file)
+                path_to_query_file = blast_project.get_project_dir() + '/' + query_file.name
+
+                upload_file(query_file, path_to_query_file)
+            elif query_sequences != '':
+                query_file_name = 'target_sequences.faa'
+                blast_project = create_one_way_remote_project_from_form(
+                    project_form,
+                    user,
+                    settings,
+                    query_file_name)
+
+                path_to_query_file = blast_project.get_project_dir() + '/' + query_file_name
+                if type(query_sequences) != Entrez.Parser.ListElement:
+                    raise Exception("wrong protein data for form field query_sequence_text")
+
+                with open(path_to_query_file, 'w') as qfile:
+                    for rec in query_sequences:
+                        txt = ">" + rec['GBSeq_primary-accession'] + " " + rec['GBSeq_definition'] + "\n" + rec[
+                            'GBSeq_sequence'] + "\n"
+                        qfile.write(txt)
 
             if project_form.cleaned_data['r_entrez_query'] != None:
                 entrez_query = project_form.cleaned_data['r_entrez_query']

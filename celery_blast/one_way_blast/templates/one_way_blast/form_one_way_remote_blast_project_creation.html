@@ -31,6 +31,16 @@
     </div>
 
     <div class="form-group">
+            <label for="r_query_sequence_text">Protein Identifiers:</label>
+            <input type="text" class="form-control" id="r_query_sequence_text" name="r_query_sequence_text">
+            {% if OneWayRemoteProjectCreationForm.r_query_sequence_text.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ OneWayRemoteProjectCreationForm.r_query_sequence_text.errors }}</strong>
+            </div>
+            {% endif %}
+    </div>
+
+    <div class="form-group">
         <label for="r_project_database">Select a BLAST Database </label>
         <select class="form-control" id="r_project_database" name="r_project_database">
             {% for database in OneWayRemoteProjectCreationForm.r_project_database %}

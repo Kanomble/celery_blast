@@ -22,13 +22,15 @@
             <span class="badge badge-info">  In FASTA format (with sequence name)
             </span></label>
             -->
-        <row>
             <input type="file" class="form-control-file" id="query_sequence_file" name="query_sequence_file">
             {% if OneWayProjectCreationForm.query_sequence_file.errors %}
                 <div class="alert alert-danger">
                     <strong>{{ OneWayProjectCreationForm.query_sequence_file.errors }}</strong>
                 </div>
             {% endif %}
+    </div>
+
+    <div class="form-group">
             <label for="query_sequence_text">Protein Identifiers:</label>
             <input type="text" class="form-control" id="query_sequence_text" name="query_sequence_text">
             {% if OneWayProjectCreationForm.query_sequence_text.errors %}
@@ -36,8 +38,6 @@
                 <strong>{{ OneWayProjectCreationForm.query_sequence_text.errors }}</strong>
             </div>
             {% endif %}
-        </row>
-
     </div>
 
     <div class="form-group">

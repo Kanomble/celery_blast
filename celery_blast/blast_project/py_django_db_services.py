@@ -453,6 +453,7 @@ def check_if_taxid_is_in_database(database_id:int, taxonomic_nodes:list):
     #of taxonomic_nodes
     counter = len(taxonomic_nodes)
     for node in taxonomic_nodes:
+        #and int(node) not in list(df['species_taxid']) is not allowed due to database formatting
         if int(node) not in list(df['taxid']):
             not_in_database.append(node)
         else:

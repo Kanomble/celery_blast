@@ -23,7 +23,7 @@ rule blast:
 	output: "blast_results.table"
 	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb']
 	shell:
-		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries}"
+		"blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore slen qgi sgi sacc staxids sscinames scomnames stitle\" -out {output} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -num_threads {params.num_threads} -query {input.queries}"
 
 rule blast_results_to_plots_and_html_table:
 	input: blast_results="blast_results.table", query_file=config['query_sequence']

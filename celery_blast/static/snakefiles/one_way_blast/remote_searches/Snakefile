@@ -28,7 +28,7 @@ rule blast:
 			if "orgn" not in entrez_query:
 				entrez_query = entrez_query + "[ORGN]"
 			cmd_string = params.search_strategy + " -db "+params.database+\
-			" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
+			" -outfmt \"6 qseqid sseqid pident evalue bitscore slen qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
 			" -word_size "+str(params.word_size)+\
 			" -evalue "+str(params.e_value)+\
@@ -39,7 +39,7 @@ rule blast:
 			shell(cmd_string)
 		else:
 			cmd_string = params.search_strategy + " -db "+params.database+\
-			" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle\""\
+			" -outfmt \"6 qseqid sseqid pident evalue bitscore slen qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\
 			" -word_size "+str(params.word_size)+\
 			" -evalue "+str(params.e_value)+\
