@@ -1,10 +1,13 @@
 ''' py_biopython.py
 
-functions that use the biopython package, more informations: https://biopython.org/wiki/Documentation
+    Functions that use the biopython package, more informations: https://biopython.org/wiki/Documentation.
+    The user_email parameter in the following functions is used for errorhandling by ncbi.
 
 '''
+
 from Bio import Entrez
 from .py_django_db_services import get_project_by_id
+
 ''' get_species_taxid_by_name 
 
     Utilization in the clean_species_name form field of CreateTaxonomicFileForm.
@@ -74,15 +77,15 @@ def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:
         raise Exception("[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(e))
 
 '''get_list_of_species_taxid_by_name
-sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)
-therefore this function can be used to iterate over all available nodes. Those nodes will be written into one file that is 
-than processed for database parsing.
-
-:param user_email
-    :type str
-:param scientific_name
-    :type str
-:returns taxonomic nodes (list:int)
+    sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)
+    therefore this function can be used to iterate over all available nodes. Those nodes will be written into one file that is 
+    than processed for database parsing.
+    
+    :param user_email
+        :type str
+    :param scientific_name
+        :type str
+    :returns taxonomic nodes (list:int)
 '''
 def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
     try:
@@ -95,8 +98,18 @@ def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
         raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
 
 '''get_list_of_species_taxids_by_list_of_scientific_names
-this function iterates over a list of scientific/taxonomic names and converts those names into taxonomic identifier.
-Those identifier are stored in a list. Exception can occure if taxonomic names are not specified. 
+
+    this function iterates over a list of scientific/taxonomic names and converts those names into taxonomic identifier.
+    Those identifier are stored in a list. Exception can occure if taxonomic names are not specified. Those strings
+    will be appended to the errors list.
+    
+    :param user_email
+        :type str
+    :param scientific_names
+        :type list[str]
+    
+    :returns taxonomic_nodes, errors
+        :type list[int], list[str]
 
 '''
 def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scientific_names:list)->list:
@@ -121,12 +134,20 @@ def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scient
     except Exception as e:
         raise Exception("[-] ERROR: {}".format(e))
 
-'''check_give_taxonomic_node
+'''check_given_taxonomic_node
 
+    This functions checks if a provided integer corresponds to a real taxonomic node.
+    If this is true, it returns the provided integer.
     
-
+    :param user_email
+        :type str
+    :param taxid
+        :type int
+    
+    :return taxid
+        :type int
 '''
-def check_given_taxonomic_node(user_email:str, taxid:int)->list:
+def check_given_taxonomic_node(user_email:str, taxid:int)->int:
     try:
         Entrez.email = user_email
         handle = Entrez.efetch(db="taxonomy", id=taxid, retmode="xml")
@@ -141,20 +162,20 @@ def check_given_taxonomic_node(user_email:str, taxid:int)->list:
 
 ''' calculate_pfam_and_protein_links_from_queries
 
-This function returns a dictionary 'prot_to_pfam', that contains several keys addressing relevant data for query sequences that reside in the coressponding file.
-The QUERIES key, which points to a list containing all query accession ids, the PFAM, TIGR, REFSEQ, CDD keys, which point to additional key (query_id) value (link to corresponding database) pairs.
-The Definition and Length keys contain key (query_id) value (sequence description, sequence length) as well.
-
-prot_to_pfam datastructure:
+    This function returns a dictionary 'prot_to_pfam', that contains several keys addressing relevant data for query sequences that reside in the coressponding file.
+    The QUERIES key, which points to a list containing all query accession ids, the PFAM, TIGR, REFSEQ, CDD keys, which point to additional key (query_id) value (link to corresponding database) pairs.
+    The Definition and Length keys contain key (query_id) value (sequence description, sequence length) as well.
     
-    1. QUERIES: accession ids defined in the corresponding fasta file
-    2. PFAM: The Pfam database is a large collection of protein families, each represented by multiple sequence alignments and hidden Markov models (HMMs)
-    3. TIGR: Protein Family Models are a hierarchical collection of curated Hidden Markov Model-based and BLAST-based protein families (HMMs and BlastRules),
-            and Conserved Domain Database architectures used to assign names, gene symbols,
-            publications and EC numbers to the prokaryotic RefSeq proteins that meet the criteria for inclusion in a family.
-            HMMs and BlastRules also contribute to structural annotation by NCBI's Prokaryotic Genome Annotation Pipeline (PGAP).
-            
-    4. CDD: Protein Family Model search by SPARCLE.
+    prot_to_pfam datastructure:
+        
+        1. QUERIES: accession ids defined in the corresponding fasta file
+        2. PFAM: The Pfam database is a large collection of protein families, each represented by multiple sequence alignments and hidden Markov models (HMMs)
+        3. TIGR: Protein Family Models are a hierarchical collection of curated Hidden Markov Model-based and BLAST-based protein families (HMMs and BlastRules),
+                and Conserved Domain Database architectures used to assign names, gene symbols,
+                publications and EC numbers to the prokaryotic RefSeq proteins that meet the criteria for inclusion in a family.
+                HMMs and BlastRules also contribute to structural annotation by NCBI's Prokaryotic Genome Annotation Pipeline (PGAP).
+                
+        4. CDD: Protein Family Model search by SPARCLE.
 '''
 def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
     try:
@@ -214,6 +235,7 @@ def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
         raise Exception("couldn't parse entrez.efetch with query ids with exception : {}".format(e))
 
 ''' fetch_protein_records
+
     Function wrapper for Entrez.efetch function. 
     Takes as input a list with maximal 500 protein accession ids and an email
     address for the current user.

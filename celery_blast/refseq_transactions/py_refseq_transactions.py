@@ -6,6 +6,9 @@ from .py_services import write_pandas_table_to_project_dir, transform_data_table
 from os.path import isfile
 import pandas as pd
 from django.db import IntegrityError, transaction
+from blast_project.tasks import write_species_taxids_into_file
+from string import digits, ascii_uppercase
+from random import choices
 ''' 
 transactions with models (manager)
 '''
@@ -43,12 +46,13 @@ def get_databases_in_progress():
 '''
 def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
     try:
+        print(valid_blastdatabase_form.cleaned_data.get('taxid_text_field', False))
         with transaction.atomic():
             database_name = valid_blastdatabase_form.cleaned_data['database_name']
             database_description = valid_blastdatabase_form.cleaned_data['database_description']
             assembly_levels = valid_blastdatabase_form.cleaned_data['assembly_levels']
 
-            if valid_blastdatabase_form.cleaned_data.get('taxid_file', False):
+            if valid_blastdatabase_form.cleaned_data.get('taxid_file', False) :
                 # upload taxonomic information file
                 taxid_file = valid_blastdatabase_form.cleaned_data['taxid_file']
                 taxid_file_path = 'media/' + 'taxonomic_node_files/' + taxid_file.name
@@ -100,6 +104,36 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                     assembly_levels=assembly_levels,
                     assembly_entries=len(filtered_table),
                     attached_taxonomic_file=taxid_file_path)
+                # create directory in media/databases
+                refseq_database_table_path = create_blastdatabase_directory(new_blastdb.id)
+
+                write_pandas_table_to_project_dir(refseq_database_table_path,
+                                                  filtered_table,
+                                                  database_name)
+            elif valid_blastdatabase_form.cleaned_data.get('taxid_text_field', False):
+                taxid_list = valid_blastdatabase_form.cleaned_data['taxid_text_field']
+                randomly_generated_filename = ''.join(choices(ascii_uppercase + digits, k=10))
+                taxid_filename = taxid_list[0].lower() + '_' + randomly_generated_filename + '_node_file.taxids'
+                #biopython does not translate higher taxonomic nodes into genus/species level nodes
+                try:
+                    write_species_taxids_into_file(taxid_list, taxid_filename)
+                except Exception as e:
+                    raise Exception("[-] ERROR creating taxonomic_node file for pandas dataframe parsing with exception: {}".format(e))
+
+                refseq_table = read_current_assembly_summary_with_pandas(assembly_levels)
+                taxonomy_table = read_taxonomy_table(taxid_filename)
+                filtered_table = filter_table_by_taxonomy(refseq_table, taxonomy_table)
+                filtered_table = filter_duplicates_by_ftp_path(filtered_table)
+
+                if len(filtered_table) == 0:
+                    raise IntegrityError("the database doesnt contain any entries, pls apply an other filter method!")
+
+                    # create new refseq database model and save it into the database
+                new_blastdb = create_and_save_refseq_database_model(
+                    database_name=database_name,
+                    database_description=database_description,
+                    assembly_levels=assembly_levels,
+                    assembly_entries=len(filtered_table))
                 # create directory in media/databases
                 refseq_database_table_path = create_blastdatabase_directory(new_blastdb.id)
 
@@ -206,7 +240,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
         :type str (filename)
     :returns pandas dataframe
 '''
-def read_taxonomy_table(taxfilename):
+def read_taxonomy_table(taxfilename:str)->pd.DataFrame:
     filepath = 'media/taxonomic_node_files/' + taxfilename
     if (isfile(filepath) == False):
         raise ValueError("there is no taxonomy file called: {}".format(filepath))
@@ -216,6 +250,25 @@ def read_taxonomy_table(taxfilename):
     taxonomy_file.columns = ['taxid']
     taxonomy_file = taxonomy_file.astype({"taxid": str})
     return taxonomy_file
+
+'''read_taxonomy_list
+    
+    Transforms a list of taxonomic nodes into a pandas dataframe (with one column).
+    
+    :param taxid_list
+        :type list[int]
+    
+    :returns taxid_df
+        :type pd.DataFrame
+        
+'''
+def read_taxonomy_list(taxid_list:list)->pd.DataFrame:
+    try:
+        taxid_df = pd.DataFrame({'taxid':taxid_list})
+        taxid_df = taxid_df.astype({"taxid":str})
+        return taxid_df
+    except Exception as e:
+        raise Exception("[-] error creating taxid dataframe with exception: {}".format(e))
 
 ''' filter_table_by_taxonomy
     

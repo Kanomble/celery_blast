@@ -1,11 +1,9 @@
-import os
 import pandas as pd
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db import IntegrityError, transaction
-from shutil import rmtree
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -20,7 +18,7 @@ from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output,\
     transform_normalized_database_table_to_json
 from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
-    save_uploaded_multiple_file_genomes_into_database, get_all_blast_databases
+    save_uploaded_multiple_file_genomes_into_database, delete_failed_or_unknown_databases
 from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
@@ -91,10 +89,9 @@ def project_creation_view(request):
                 query_sequence_file = project_creation_form.cleaned_data['query_sequence_file']
                 query_sequences = project_creation_form.cleaned_data['query_sequence_text']
 
-                print("VALID!")
-                print(query_sequences)
                 try:
                     with transaction.atomic():
+                        #user uploaded a fasta file
                         if query_sequence_file != None:
                             blast_project = create_blast_project(
                                 user=request.user,
@@ -105,6 +102,8 @@ def project_creation_view(request):
                             path_to_query_file = BLAST_PROJECT_DIR + str(
                                 blast_project.id) + '/' + query_sequence_file.name
                             upload_file(query_sequence_file, path_to_query_file)
+
+                        #user provided sequence identifier
                         elif query_sequences != '':
                             query_file_name = "target_sequences.faa"
                             blast_project = create_blast_project(
@@ -215,8 +214,13 @@ def project_delete_view(request, project_id:int):
     except Exception as e:
         return failure_view(request,e)
 
-#TODO documentation
-def ajax_wp_to_links(request, project_id):
+'''ajax_wp_to_links --> OBSOLETE
+    
+    Asynchronous call to NCBI-Server for fetching information of the provided query sequences.
+    This function is now obsolete as retrieving information is now done via the snakemake pipeline.
+    
+'''
+def ajax_wp_to_links(request, project_id:int):
     try:
         if request.is_ajax and request.method == "GET":
             #progress = read_database_download_and_format_logfile(database_id)
@@ -226,9 +230,17 @@ def ajax_wp_to_links(request, project_id):
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
-#TODO documentation
+'''execute_reciprocal_blast_project_view
+
+    This view is executed by pressing the "execute snakemake" button in the project_details page.
+    It triggers a celery_task, which in turn executes snakemake by a Popen command of the subprocess module.
+    
+    :POST
+        Executes the asynchronous celery function: execute_reciprocal_blast_project which resides in tasks.py.
+
+'''
 @login_required(login_url='login')
-def execute_reciprocal_blast_project_view(request, project_id):
+def execute_reciprocal_blast_project_view(request, project_id:int):
     try:
         if request.method == 'POST':
             execute_reciprocal_blast_project.delay(project_id)
@@ -236,7 +248,14 @@ def execute_reciprocal_blast_project_view(request, project_id):
     except Exception as e:
         return failure_view(request,e)
 
-#TODO documentation
+'''load_reciprocal_result_html_table_view
+
+    This function is triggered by pressing the "Reciprocal Results Table" button within the 
+    project details page. It loads the result table with all reciprocal best hits as HTML code
+    and returns a HttpResponse, which will redirect the user to a new page in which the table data
+    is displayed.
+    
+'''
 @login_required(login_url='login')
 def load_reciprocal_result_html_table_view(request, project_id):
     try:
@@ -271,6 +290,17 @@ def create_taxonomic_file_view_old(request):
     except Exception as e:
         return failure_view(request,e)
 
+'''create_taxonomic_file_view
+    
+    view for creation of taxonomic files, produced by the get_species_taxids.sh script.
+    
+    :GET
+        display available taxonomic files
+    :POST
+        create taxonomic files
+        synchronous call of write_species_taxids_into_file
+
+'''
 @login_required(login_url='login')
 def create_taxonomic_file_view(request):
     try:
@@ -291,7 +321,6 @@ def create_taxonomic_file_view(request):
         return failure_view(request, e)
 
 
-#TODO documentation rename function to upload_single_genome_ ...
 #two upload genome options one for single and one for multiple files
 #first view function - upload_genome_view for the single files
 #second view function - upload_multiple_genomes_post view
@@ -321,7 +350,7 @@ def upload_genome_view(request):
                         assembly_level_file=upload_genome_form.cleaned_data['assembly_level_file']
                     )
                     genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ','_').upper()+'.database'
-                    print("[+] path: {}".format(new_db.path_to_database_file))
+
                     #inside transaction atomic blog
                     if upload_genome_form.cleaned_data['taxmap_file'] != None:
                         execute_makeblastdb_with_uploaded_genomes.delay(
@@ -334,7 +363,6 @@ def upload_genome_view(request):
                             new_db.path_to_database_file + '/' + genome_file_name,
                             taxonomic_node=upload_genome_form.cleaned_data['taxonomic_node'])
                     else:
-                        #TODO refactor dont trigger integrity error but delete database!
                         raise IntegrityError('couldnt trigger makeblastdb execution ...')
                 return success_view(request)
             else:
@@ -346,26 +374,15 @@ def upload_genome_view(request):
             context = {'UploadGenomeForm': upload_genome_form,
                        'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
 
-        #files = request.FILES.getlist('genome_fasta_files')
         return render(request,'blast_project/upload_genome_files_dashboard.html',context)
     except Exception as e:
-        print("[-] ERROR: {}".format(e))
-        try:
-            #TODO outource this code in an own function
-            #check if there are database directories that do not reside in the postgres database
-            databases = get_all_blast_databases()
-            ids = [int(database.id) for database in databases]
-            for database_id in os.listdir(BLAST_DATABASE_DIR):
-                try:
-                    identifier = int(database_id)
-                    if identifier not in ids:
-                        if os.path.isdir(BLAST_DATABASE_DIR+str(identifier)):
-                            rmtree(BLAST_DATABASE_DIR+str(identifier)+'/')
-                except:
-                    continue
-        except:
-            pass
-        return failure_view(request,e)
+        #deletes all failed or unknown subdirectories within the database directories
+        #all directories without a corresponding database id
+        returncode = delete_failed_or_unknown_databases()
+        if returncode == 0:
+            return failure_view(request,e)
+        else:
+            return failure_view(request, "Error deleting unknown or failed databases, clean up your database and directories manually. {}".format(e))
 
 #TODO implement view for disentangling big genome upload view ...
 @login_required(login_url='login')
@@ -465,7 +482,6 @@ def failure_view(request,exception):
     context={'exception':exception}
     return render(request,'blast_project/failure.html', context)
 
-#TODO documentation
 @login_required(login_url='login')
 def success_view(request):
     return render(request,'blast_project/success.html')
@@ -514,8 +530,11 @@ def database_statistics_dashboard(request, project_id):
     except Exception as e:
         return failure_view(request, e)
 
-#TODO documentation
 '''database_statistics_details
+    
+    Details page for the database statistics. Within this page the user can view
+    the interactive Bokeh plot. By interacting with the plot, the user can download
+    subsets of target proteins for further analysis.
     
 '''
 def database_statistics_details(request,project_id:int,taxonomic_unit:str):

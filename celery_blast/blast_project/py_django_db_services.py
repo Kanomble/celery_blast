@@ -2,13 +2,14 @@ import os
 from .models import BlastProject, BlastSettings
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from external_tools.models import ExternalTools, QuerySequences
-#TODO fix circular imports
 from blast_project import py_biopython as pyb
 from .py_services import create_blastdatabase_directory,concatenate_genome_fasta_files_in_db_dir, upload_file
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv, Series
+from shutil import rmtree
 from celery_blast.settings import BLAST_DATABASE_DIR
+
 '''update_external_tool_with_cdd_search
 
     This script uses model based functions of the ExternalTools model to update the QuerySequence model with 
@@ -124,6 +125,33 @@ def get_users_blast_projects(userid:int):
 def get_all_blast_databases():
     return BlastDatabase.objects.all()
 
+'''delete_failed_or_unknown_databases
+    
+    This function parses the directory of all active databases by using the function get_all_databases().
+    If a directory without a corresponding database.id exists, it will get removed.
+    
+    :returns 0 by success
+        :type int
+    :returns 1 by failure
+        :type int
+    
+'''
+def delete_failed_or_unknown_databases():
+    try:
+        # check if there are database directories that do not reside in the postgres database
+        databases = get_all_blast_databases()
+        ids = [int(database.id) for database in databases]
+        for database_id in os.listdir(BLAST_DATABASE_DIR):
+            try:
+                identifier = int(database_id)
+                if identifier not in ids:
+                    if os.path.isdir(BLAST_DATABASE_DIR + str(identifier)):
+                        rmtree(BLAST_DATABASE_DIR + str(identifier) + '/')
+            except:
+                continue
+        return 0
+    except:
+        return 1
 
 '''get_project_by_id
 
@@ -306,7 +334,7 @@ def create_and_save_refseq_database_model(database_name,database_description,ass
         for assembly_level in assembly_levels_models:
             blast_database.assembly_levels.add(assembly_level)
 
-        blast_database.path_to_database_file = 'media/databases/' + str(blast_database.id)
+        blast_database.path_to_database_file = BLAST_DATABASE_DIR + str(blast_database.id)
         blast_database.save()
         return blast_database
     except Exception as e:

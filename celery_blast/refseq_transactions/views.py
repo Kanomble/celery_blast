@@ -31,7 +31,7 @@ def dashboard(request):
         if(refseq_file_exists()):
             context['refseq_exists'] = True
 
-        refseq_database_form = RefseqDatabaseForm()
+        refseq_database_form = RefseqDatabaseForm(request.user)
         executed_databases = get_downloaded_databases()
         not_executed_databases = get_databases_without_tasks()
         download_in_progress_databases = get_databases_in_progress()
@@ -84,16 +84,17 @@ def create_blast_database_model_and_directory(request):
     try:
         if request.method == 'POST':
             context = {}
-            refseq_database_form = RefseqDatabaseForm(request.POST,request.FILES)
+            refseq_database_form = RefseqDatabaseForm(request.user,request.POST,request.FILES)
             #validate form
             if refseq_database_form.is_valid():
-
+                print("VALID!")
                 create_blastdatabase_table_and_directory(refseq_database_form)
                 return redirect('refseq_transactions_dashboard')
 
             #validation error
             else:
-
+                print("NOT VALID")
+                print(refseq_database_form.errors)
                 if (refseq_file_exists()):
                     context['refseq_exists'] = True
 
@@ -110,7 +111,7 @@ def create_blast_database_model_and_directory(request):
             return render(request,'refseq_transactions/refseq_transactions_dashboard.html',context)
         # should never been executed
         else:
-            return failure_view(request, "error creating blast database model and directory")
+            return failure_view(request, "error creating blast database model and directory, there is no GET request for this view ...")
     except Exception as e:
         return failure_view(request,e)
 

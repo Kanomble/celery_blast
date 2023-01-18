@@ -44,10 +44,11 @@ class CreateTaxonomicFileForm(forms.Form):
             raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
 
 '''CreateTaxonomicFileForMultipleScientificNames
-This form replaces the old CreateTaxonomicFileForm. 
-In addition to all attributes from the previous form, this form
-inherits a filename field, which will be used as the actual filename,
- thus several species names will end up in too long names.
+
+    This form replaces the old CreateTaxonomicFileForm. 
+    In addition to all attributes from the previous form, this form
+    inherits a filename field, which will be used as the actual filename,
+     thus several species names will end up in too long names.
 
 '''
 class CreateTaxonomicFileForMultipleScientificNames(forms.Form):
