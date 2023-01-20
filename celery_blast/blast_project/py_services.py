@@ -1,3 +1,5 @@
+import pandas as pd
+
 from .models import BlastProject
 from refseq_transactions.models import BlastDatabase
 from os.path import isdir, isfile
@@ -6,32 +8,23 @@ from shutil import rmtree
 from django.db import IntegrityError, transaction
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
-'''return_list_of_all_logfiles
+
+'''read_task_logs_summary_table
     
-    Returns a list with all filepaths to logfiles of the snakemake run. 
-    If there is no "log" directory, in the BLAST_PROJECT_DIR the function returns an empty list.
+    This function loads the task_logfile.txt file into a pandas dataframe.
+    It is used within the project_details view to track the progress of the snakemake pipeline.
     
-    :param project_id
-        :type int
-    :returns filelist
-        :type list
+    :returns logfiles_table
+        :type pd.DataFrame
 '''
-def return_list_of_all_logfiles(project_id:int)->list:
+def read_task_logs_summary_table()->pd.DataFrame:
     try:
-        path_to_project_dir = BLAST_PROJECT_DIR + str(project_id) + "/log"
-        if isdir(path_to_project_dir) == False:
-            return []
-        else:
-            filelist = listdir(path_to_project_dir)
-            for file in filelist:
-                #check if "file" is a query sequence sub-directory
-                if isdir(path_to_project_dir + '/' + file):
-                    filelist.remove(file)
-                    for query_log in listdir(path_to_project_dir + '/' + file):
-                        filelist.append(file+'/'+query_log)
-            return filelist
+        data_path = BLAST_PROJECT_DIR + 'task_logfiles'
+        logfiles_table = pd.read_table(data_path, sep="\t", header=0)
+        return logfiles_table
     except Exception as e:
-        raise Exception("[-] ERROR creating list of all logfiles for project: {} with exception: {}".format(project_id, e))
+        print(e)
+        raise Exception("[-] ERROR reading task_logfile.txt file in {} with exception: {}".format(data_path,e))
 
 '''check_if_taxdb_exists
     

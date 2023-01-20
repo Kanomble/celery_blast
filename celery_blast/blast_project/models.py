@@ -1,6 +1,5 @@
 # Create your models here.
 from os.path import isdir, isfile
-from os import mkdir
 from ast import literal_eval
 from django.db import models
 from django.contrib.auth.models import User
@@ -8,6 +7,9 @@ from django_celery_results.models import TaskResult
 from django.db import IntegrityError
 from .managers import BlastProjectManager
 from refseq_transactions.models import BlastDatabase
+from os.path import isdir, isfile
+from os import mkdir, listdir
+
 import pandas as pd
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 #TODO USE THOSE paths for setting up the project directory and snakemake config file
@@ -269,3 +271,33 @@ class BlastProject(models.Model):
             return True
         else:
             return False
+
+    '''return_list_of_all_logfiles
+
+        Returns a list with all filepaths to logfiles of the snakemake run. 
+        If there is no "log" directory, in the BLAST_PROJECT_DIR the function returns an empty list.
+
+        :returns filelist
+            :type list
+    '''
+    def return_list_of_all_logfiles(self) -> list:
+        try:
+            path_to_project_dir = BLAST_PROJECT_DIR + str(self.id) + "/log"
+            if isdir(path_to_project_dir) == False:
+                return []
+            else:
+                files = listdir(path_to_project_dir)
+                filelist = []
+                for file in files:
+                    # check if "file" is a query sequence sub-directory
+                    if isdir(path_to_project_dir + '/' + file):
+                        for query_log in listdir(path_to_project_dir + '/' + file):
+                            filelist.append(file + '/' + query_log)
+                    else:
+                        filelist.append(file)
+                return filelist
+        except Exception as e:
+            raise Exception(
+                "[-] ERROR creating list of all logfiles for project: {} with exception: {}".format(self.id, e))
+
+

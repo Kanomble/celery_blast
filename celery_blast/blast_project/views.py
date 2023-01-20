@@ -13,7 +13,8 @@ from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesG
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
     calculate_database_statistics_task
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
-    delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists
+    delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
+    read_task_logs_summary_table
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output,\
     transform_normalized_database_table_to_json
@@ -23,6 +24,7 @@ from one_way_blast.py_django_db_services import  get_users_one_way_blast_project
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 from Bio import Entrez
+from os.path import isfile
 #BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 #BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
@@ -597,5 +599,61 @@ def delete_database_statistics(request, project_id):
         logfile=BLAST_PROJECT_DIR+str(project_id)+'/log/delete_database_statistics_task_and_output.log'
         delete_database_statistics_task_and_output(project_id,logfile=logfile)
         return redirect('database_statistics',project_id=project_id)
+    except Exception as e:
+        return failure_view(request,e)
+
+
+'''ajax_call_to_logfiles
+
+    This function sends task progress data based on available logfiles to the template.
+
+
+'''
+def ajax_call_to_logfiles(request, project_id: int):
+    try:
+        if request.is_ajax and request.method == "GET":
+            blast_project = get_project_by_id(project_id)
+            logfiles = blast_project.return_list_of_all_logfiles()
+            logfile_table = read_task_logs_summary_table()
+            logfile_table = logfile_table.loc[0:17, :]
+            queries = []
+            progress_without_subtasks = []
+            for logfile in logfiles:
+                if len(logfile.split("/")) == 2:
+                    query = logfile.split("/")[0]
+                    if query not in queries:
+                        queries.append(query)
+                else:
+                    progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+                    if len(progress) == 1:
+                        progress_without_subtasks.append(progress[0])
+            progress_without_subtasks.sort()
+            return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+        return JsonResponse({"ERROR": "NOT OK"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
+
+'''send_logfile_content_view
+    
+    This view function is part of the pipeline monitoring. It is executed
+    if the user presses an image within the progress bar of the project.
+    
+    :param project_id
+        :type int
+    :param logfile
+        :type str
+    
+'''
+@login_required(login_url='login')
+def send_logfile_content_view(request, project_id:int, logfile:str)->HttpResponse:
+    try:
+        logfile_path = BLAST_PROJECT_DIR + str(project_id) + '/log/' + logfile + ".log"
+        if isfile(logfile_path):
+            with open(logfile_path, 'r') as lfile:
+                lines = lfile.readlines()
+
+            return HttpResponse(lines, content_type="text/plain")
+        else:
+            return HttpResponse("couldnt find logfile: {} ...".format(logfile_path), content_type="text/plain")
     except Exception as e:
         return failure_view(request,e)

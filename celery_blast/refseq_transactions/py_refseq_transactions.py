@@ -9,6 +9,7 @@ from django.db import IntegrityError, transaction
 from blast_project.tasks import write_species_taxids_into_file
 from string import digits, ascii_uppercase
 from random import choices
+
 ''' 
 transactions with models (manager)
 '''
@@ -167,10 +168,11 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
     ['assembly_accession', 'organism_name', 'taxid', 'species_taxid','assembly_level', 'ftp_path'].
     
     :param assembly_levels
-        :type list with str objects
-    :returns pandas dataframe
+        :type list[str]
+    :returns desired_refseq_genomes_dataframe
+        :type pd.DataFrame
 '''
-def read_current_assembly_summary_with_pandas(assembly_levels):
+def read_current_assembly_summary_with_pandas(assembly_levels:list)->pd.DataFrame:
     summary_file_path = 'media/databases/refseq_summary_file/assembly_summary_refseq.txt'
     if(isfile(summary_file_path) == False):
         raise ValueError('assembly summary file does not exist!')
@@ -187,13 +189,12 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
         except:
             raise Exception("[-] Problem during parsing the ftp_path column in the refseq assembly summary file")
 
-    #TODO Documentation
+    #TODO Documentation, Refactoring
     #init parsing refseq table with pandas
     try:
         with open(summary_file_path, 'r') as rfile:
             line = rfile.readline()
-            line = rfile.readline()
-            header=line.replace('#', '').replace(" ", '').rstrip().split("\t")
+            header = line.replace('#', '').replace(" ", '').rstrip().split("\t")
 
         refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None,
                                      dtype={20:str, #20 excluded from refseq
@@ -211,6 +212,7 @@ def read_current_assembly_summary_with_pandas(assembly_levels):
 
         refseq_table.columns = header
         refseq_table = refseq_table.astype({"taxid": str})
+
     except Exception as e:
         raise ValueError("exception during pandas parsing of assembly_summary_refseq.txt file ...\n\tException: {}".format(e))
 

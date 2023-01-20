@@ -111,6 +111,12 @@
             An error occurred during execution of the pipeline.
         </div>
     </div>
+    {% else %}
+        <div class="dashboard_project_list_col">
+            <div class="progress">
+                <div id="progress_bar"> 0% </div>
+            </div>
+        </div>
     {% endif %}
 
     <!-- <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
@@ -144,6 +150,7 @@
 
 
     {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+
     <br>
     <div class="dashboard_project_list_col">
         <h2 style="text-align: center">Query Sequence Information</h2>
@@ -286,4 +293,46 @@
 
     });
     </script>
+
+    <!-- ajax call for snakemake pipeline progress_bar -->
+    <script>
+        (function() {
+            var status = $('.progress_bar'),
+            poll = function() {
+                jQuery.ajax({
+                    url: "{% url 'ajax_call_to_logfiles' project_id=BlastProject.id %}",
+                    dataType: 'json',
+                    type: 'get',
+                    success: function(data) { // check if available
+                        if(data){
+                            var static_url = '{% static 'images/' %}';
+                            var reciprocal_results_url = "{% url 'reciprocal_results' project_id=BlastProject.id %}";
+
+                            ajax_call_to_project_details(
+                                data,
+                                static_url,
+                                reciprocal_results_url
+                            )
+
+                            if(data.progress > 65){
+                                clearInterval(pollInterval); // optional: stop poll function
+                            } else if(data.progress == "ERROR"){
+                                clearInterval(pollInterval);
+                            }
+                        } else {
+                           clearInterval(pollInterval);
+                        }
+                     },
+                    error: function() { // error logging
+                        status.text("error polling progress data")
+                }
+            });
+        },
+        pollInterval = setInterval(function() { // run function every 5000 ms
+            poll();
+          }, 20000);
+            poll(); // also run function on init
+        })();
+    </script>
+
 {% endblock %}

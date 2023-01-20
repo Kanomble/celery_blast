@@ -168,7 +168,7 @@ def execute_reciprocal_blast_project(self,project_id):
                  '--cores','1',
                  '--configfile',snakemake_config_file,
                  '--directory',snakemake_working_dir,
-                 '--keep-incomplete', '-q'], shell=False)
+                 '--keep-incomplete'], shell=False) #-q
 
             progress_recorder.set_progress(50, 100, "PROGRESS")
 

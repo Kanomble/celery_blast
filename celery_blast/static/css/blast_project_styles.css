@@ -282,3 +282,29 @@ div.dashboard_project_list_col table th {
     border-radius: 10px;
 }
 
+div.progress {
+    background: transparent;
+    position: relative;
+    height: 400px;
+    padding: 20px;
+    display: flex;
+}
+
+div.progress #progress_bar {
+    width: 0%;
+    height: 30px;
+    background-color: black;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+    border: 2px solid white;
+    margin-top: 180px;
+    animation: progress 2000ms ease-in 1;
+}
+/* Animating the progress bar by
+initially starting from 0*/
+@keyframes progress {
+    from {
+        width: 0;
+    }
+}
