@@ -304,6 +304,7 @@
                     dataType: 'json',
                     type: 'get',
                     success: function(data) { // check if available
+                        console.log(data)
                         if(data){
                             var static_url = '{% static 'images/' %}';
                             var reciprocal_results_url = "{% url 'reciprocal_results' project_id=BlastProject.id %}";
@@ -314,7 +315,7 @@
                                 reciprocal_results_url
                             )
 
-                            if(data.progress > 65){
+                            if(data.progress >= 100){
                                 clearInterval(pollInterval); // optional: stop poll function
                             } else if(data.progress == "ERROR"){
                                 clearInterval(pollInterval);
@@ -324,6 +325,7 @@
                         }
                      },
                     error: function() { // error logging
+                        console.log("ERROR")
                         status.text("error polling progress data")
                 }
             });

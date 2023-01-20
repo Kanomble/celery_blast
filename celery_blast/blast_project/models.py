@@ -28,8 +28,19 @@ class BlastSettings(models.Model):
     num_alignments = models.IntegerField()
     max_target_seqs = models.IntegerField()
     max_hsps = models.IntegerField()
-    #TODO documentation
-    def values_as_fw_or_bw_dict(self,fwOrBw):
+
+    '''values_as_fw_or_bw_dict
+    
+        This function is used in the BlastProject model function write_snakemake_configuration_file.
+        It returns a dictionary composed of the provided project settings.
+        
+        :params fwOrBw - "bw", "fw"
+            :type str
+        :returns settings_dict
+            :type dict[str]=type(setting)
+            
+    '''
+    def values_as_fw_or_bw_dict(self,fwOrBw:str)->dict:
         settings_dict = {
             fwOrBw+'_e_value' : str(self.e_value),
             fwOrBw+'_word_size' : str(self.word_size),
@@ -40,6 +51,14 @@ class BlastSettings(models.Model):
         }
         return settings_dict
 
+    '''get_values_as_dict
+        
+        This function returns a dictionary of the provided settings without max_target_seqs.
+        
+        :returns settings_dict
+            :type dict[str]=type(settings)
+            
+    '''
     def get_values_as_dict(self):
         settings_dict = {
             'e_value' : str(self.e_value),
@@ -204,7 +223,15 @@ class BlastProject(models.Model):
                 raise IntegrityError("couldnt create project directory : {}".format(e))
 
 
-    #TODO documentation
+    '''write_snakemake_configuration_file
+        
+        This function is used during project creation. It writes all necessary settings for snakemake into
+        the file snakefile_config in BLAST_PROJECT_DIR. Additional parameters that want to be used during
+        the snakemake run have to be added here. The default filepath is media/blast_projects/.
+        
+        :params filepath=BLAST_PROJECT_DIR
+            :type str
+    '''
     def write_snakemake_configuration_file(self, filepath=BLAST_PROJECT_DIR):
         try:
             with open(filepath + str(self.id)+'/snakefile_config','w') as snk_config_file:

@@ -92,6 +92,7 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url) 
             var reciprocal_blast_finished = document.createElement("div");
             var recblast_result_link = document.createElement("a")
             recblast_result_link.href = "project_details/reciprocal_best_hits"
+            recblast_result_link.target = "_blank"
             recblast_result_link.classList.add("btn")
             recblast_result_link.style.cssText = recblast_result_link_style
             reciprocal_blast_finished.appendChild(recblast_result_link)
@@ -115,6 +116,7 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url) 
             var backward_blast_link = document.createElement("a")
 
             backward_blast_link.href = "project_details/backward_blast"
+            backward_blast_link.target = "_blank"
             backward_blast_link.classList.add("btn")
             backward_blast_link.style.cssText = backward_blast_link_style
             backward_blast_finished.appendChild(backward_blast_link)
@@ -138,6 +140,7 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url) 
             var result_link = document.createElement("a")
 
             result_link.href = "project_details/forward_blast"
+            result_link.target = "_blank"
             result_link.classList.add("btn")
             result_link.style.cssText = link_style
             blast_finished.appendChild(result_link)

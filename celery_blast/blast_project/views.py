@@ -612,22 +612,33 @@ def delete_database_statistics(request, project_id):
 def ajax_call_to_logfiles(request, project_id: int):
     try:
         if request.is_ajax and request.method == "GET":
+            print("HELLO")
             blast_project = get_project_by_id(project_id)
             logfiles = blast_project.return_list_of_all_logfiles()
             logfile_table = read_task_logs_summary_table()
             logfile_table = logfile_table.loc[0:17, :]
             queries = []
             progress_without_subtasks = []
+            print("HELLO 2")
+            print(logfile_table)
+            print(logfiles)
+            print(logfile_table[logfile_table['logfile'] == logfiles[0]]['progress'].values)
             for logfile in logfiles:
                 if len(logfile.split("/")) == 2:
                     query = logfile.split("/")[0]
                     if query not in queries:
                         queries.append(query)
+                    progress = logfile_table[logfile_table['logfile'] == query+"/"+logfile]['progress'].values
+
+                    if len(progress) == 1:
+                        progress_without_subtasks.append(progress[0])
                 else:
                     progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+
                     if len(progress) == 1:
                         progress_without_subtasks.append(progress[0])
             progress_without_subtasks.sort()
+            print(max(progress_without_subtasks))
             return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:

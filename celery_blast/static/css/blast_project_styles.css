@@ -299,8 +299,17 @@ div.progress #progress_bar {
     color: white;
     border: 2px solid white;
     margin-top: 180px;
-    animation: progress 2000ms ease-in 1;
+    animation: progress 5000ms ease 1;
 }
+
+/*
+    animation-name: progress;
+    animation-duration: 2s;
+    animation-direction: normal;
+    animation-delay: 1s;
+    animation-timing-function: ease;
+    animation-iteration-count: 1;
+*/
 /* Animating the progress bar by
 initially starting from 0*/
 @keyframes progress {
