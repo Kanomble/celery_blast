@@ -665,3 +665,11 @@ def send_logfile_content_view(request, project_id:int, logfile:str)->HttpRespons
             return HttpResponse("couldnt find logfile: {} ...".format(logfile_path), content_type="text/plain")
     except Exception as e:
         return failure_view(request,e)
+
+@login_required(login_url='login')
+def send_query_sequence_information_view(request, project_id:int)->HttpResponse:
+    try:
+        #BLAST_PROJECT_DIR+
+        return render(request,str(project_id)+'/query_sequence_information.html')
+    except Exception as e:
+        return failure_view(request, e)

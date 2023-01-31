@@ -32,7 +32,10 @@ ajax_urls = [
 progress_urls = [
     path('<int:project_id>/project_details/<str:logfile>',
          views.send_logfile_content_view,
-         name='send_logfile_content')
+         name='send_logfile_content'),
+    path('<int:project_id>/project_details/progress/query_sequence_information',
+         views.send_query_sequence_information_view,
+         name='send_query_sequence_information')
 ]
 py_optional_postprocessing = [
     path('<int:project_id>/project_details/database_statistics', views.database_statistics_dashboard, name='database_statistics'),

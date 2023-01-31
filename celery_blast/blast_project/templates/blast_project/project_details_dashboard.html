@@ -308,11 +308,12 @@
                         if(data){
                             var static_url = '{% static 'images/' %}';
                             var reciprocal_results_url = "{% url 'reciprocal_results' project_id=BlastProject.id %}";
-
+                            var query_sequence_info_url = "{% url 'send_query_sequence_information' project_id=BlastProject.id %}"
                             ajax_call_to_project_details(
                                 data,
                                 static_url,
-                                reciprocal_results_url
+                                reciprocal_results_url,
+                                query_sequence_info_url
                             )
 
                             if(data.progress >= 100){

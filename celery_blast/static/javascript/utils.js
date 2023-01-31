@@ -44,7 +44,7 @@ function loadMultipleOrSingleFileUpload(file_upload_type) {
     }
 }
 
-function ajax_call_to_project_details(data, static_url, reciprocal_results_url) { // check if available
+function ajax_call_to_project_details(data, static_url, reciprocal_results_url, query_sequence_info_url) { // check if available
     var progress_bar = document.getElementById('progress_bar');
     var progress_container = document.getElementsByClassName('progress')[0];
     var progress = data.progress;
@@ -82,8 +82,8 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url) 
         +"background-size: 32px 32px;";
 
     if(progress >= 70){
-        var query_sequence_infos_div = new_div_big
-            + "margin-left: 65%;" + "background-size: 64px 64px;" + "background-image: url("
+        var query_sequence_infos_div = new_div_small
+            + "margin-left: 65%;" + "background-image: url("
             +static_url+"festival-fireworks-icon.png"+");" + "border: 2px solid #d1d5db;"
 
         function buildProgressButtonQueryInfoFinished(){
@@ -102,7 +102,7 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url) 
 
 
 
-            query_info_link.href = reciprocal_results_url
+            query_info_link.href = query_sequence_info_url
             query_info_log_link.href = "project_details/query_sequences_to_html_table"
             blast_tables_to_plot_link.href = "project_details/blast_tables_to_plots"
 
@@ -206,7 +206,7 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url) 
 
     if(progress >= 5){
         var new_div_style = new_div_small
-            + "margin-left: 5%;"+ "background-size: 32px 32px;"
+            + "margin-left: 1%;"+ "background-size: 32px 32px;"
         var link_style = new_link_style_small
             + "background-image: url("
             +static_url+"festival-fireworks-icon.png"+");"
