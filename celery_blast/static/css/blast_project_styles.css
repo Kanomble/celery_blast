@@ -317,3 +317,30 @@ initially starting from 0*/
         width: 0;
     }
 }
+
+div.dropdown_content {
+    display: none;
+    min-width: 320px;
+    border: 2px solid black;
+    border-radius: 5%;
+    background-color: #f1f1f1;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    overflow-x:hidden;
+    overflow-y:auto;
+    max-height: 200px;
+
+}
+
+div.dropdown_content a {
+    color: black;
+    padding: 30px 46px;
+    text-decoration: none;
+    border-radius: inherit;
+    display: block;
+    z-index: 1;
+    overflow-x:hidden;
+    overflow-y:auto;
+}
+
+div.dropdown_menu:hover .dropdown_content {display: block}
+div.dropdown_content a:hover {background-color: #ddd;}

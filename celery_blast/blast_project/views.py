@@ -606,23 +606,20 @@ def delete_database_statistics(request, project_id):
 '''ajax_call_to_logfiles
 
     This function sends task progress data based on available logfiles to the template.
-
+    
+    :param project_id
+        :type int
 
 '''
 def ajax_call_to_logfiles(request, project_id: int):
     try:
         if request.is_ajax and request.method == "GET":
-            print("HELLO")
             blast_project = get_project_by_id(project_id)
             logfiles = blast_project.return_list_of_all_logfiles()
             logfile_table = read_task_logs_summary_table()
             logfile_table = logfile_table.loc[0:17, :]
             queries = []
             progress_without_subtasks = []
-            print("HELLO 2")
-            print(logfile_table)
-            print(logfiles)
-            print(logfile_table[logfile_table['logfile'] == logfiles[0]]['progress'].values)
             for logfile in logfiles:
                 if len(logfile.split("/")) == 2:
                     query = logfile.split("/")[0]

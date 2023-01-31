@@ -81,26 +81,103 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url) 
         "width:50px;height: 50px;"
         +"background-size: 32px 32px;";
 
-    if(progress >= 25){
+    if(progress >= 70){
+        var query_sequence_infos_div = new_div_big
+            + "margin-left: 65%;" + "background-size: 64px 64px;" + "background-image: url("
+            +static_url+"festival-fireworks-icon.png"+");" + "border: 2px solid #d1d5db;"
+
+        function buildProgressButtonQueryInfoFinished(){
+            var query_info_finished = document.createElement("div");
+
+            query_info_finished.style.cssText = query_sequence_infos_div
+            query_info_finished.classList.add("dropdown_menu")
+            var query_info_dropdown_menu = document.createElement("div")
+
+            var query_info_link = document.createElement("a")
+            var query_info_log_link = document.createElement("a")
+            var blast_tables_to_plot_link = document.createElement("a")
+            query_info_link.text = "Query Information"
+            query_info_log_link.text = "Query Information Log"
+            blast_tables_to_plot_link.text = "BLAST Tables To Plots Log"
+
+
+
+            query_info_link.href = reciprocal_results_url
+            query_info_log_link.href = "project_details/query_sequences_to_html_table"
+            blast_tables_to_plot_link.href = "project_details/blast_tables_to_plots"
+
+            query_info_link.target = "_blank"
+            query_info_log_link.target = "_blank"
+            blast_tables_to_plot_link.target = "_blank"
+
+
+            //recblast_result_link.classList.add("btn")
+            query_info_dropdown_menu.classList.add("dropdown_content")
+            query_info_dropdown_menu.appendChild(query_info_link)
+            query_info_dropdown_menu.appendChild(query_info_log_link)
+            query_info_dropdown_menu.appendChild(blast_tables_to_plot_link)
+
+            query_info_finished.appendChild(query_info_dropdown_menu)
+
+            progress_container.appendChild(query_info_finished);
+        }
+        setTimeout(buildProgressButtonQueryInfoFinished, 1050)
+    }
+
+    if(progress >= 50){
         var reciprocal_results_div_style = new_div_big
-            + "margin-left: 20%;" + "background-size: 64px 64px;"
-        var recblast_result_link_style = new_link_style_big
-            + "background-image: url("
-            +static_url+"festival-fireworks-icon.png"+");"
+            + "margin-left: 45%;" + "background-size: 64px 64px;" + "background-image: url("
+            +static_url+"festival-fireworks-icon.png"+");" + "border: 2px solid #d1d5db;"
 
         function buildProgressButtonReciprocalBlastFinished(){
             var reciprocal_blast_finished = document.createElement("div");
-            var recblast_result_link = document.createElement("a")
-            recblast_result_link.href = "project_details/reciprocal_best_hits"
-            recblast_result_link.target = "_blank"
-            recblast_result_link.classList.add("btn")
-            recblast_result_link.style.cssText = recblast_result_link_style
-            reciprocal_blast_finished.appendChild(recblast_result_link)
+
             reciprocal_blast_finished.style.cssText = reciprocal_results_div_style
+            reciprocal_blast_finished.classList.add("dropdown_menu")
+            var dropdown_menu = document.createElement("div")
+
+            var recblast_result_link = document.createElement("a")
+            var recblast_result_table_link = document.createElement("a")
+            var backward_blast_log = document.createElement("a")
+            var fw_result_preparation_log = document.createElement("a")
+            var build_folders_with_hit_info_for_each_qseqid_log = document.createElement("a")
+            var blast_tables_to_csv_log = document.createElement("a")
+
+            recblast_result_link.text = "Reciprocal BLAST Logfile"
+            recblast_result_table_link.text = "RBH Result Table"
+            backward_blast_log.text = "Backward BLAST Results Log"
+            fw_result_preparation_log.text = "Forward BLAST Results Log"
+            build_folders_with_hit_info_for_each_qseqid_log.text = "Subdirectories For Targets Log"
+            blast_tables_to_csv_log.text = "RBH Taxonomy Inference Log"
+
+            recblast_result_table_link.href = reciprocal_results_url
+            recblast_result_link.href = "project_details/reciprocal_best_hits"
+            backward_blast_log.href = "project_details/backward_blast"
+            fw_result_preparation_log.href = "project_details/fw_result_processing"
+            build_folders_with_hit_info_for_each_qseqid_log.href = "project_details/build_folders_with_hit_info_for_each_qseqid"
+            blast_tables_to_csv_log.href = "project_details/blast_tables_to_csv"
+
+            recblast_result_link.target = "_blank"
+            recblast_result_table_link.target = "_blank"
+            backward_blast_log.target = "_blank"
+            fw_result_preparation_log.target = "_blank"
+            build_folders_with_hit_info_for_each_qseqid_log.target = "_blank"
+            blast_tables_to_csv_log.target = "_blank"
+
+            //recblast_result_link.classList.add("btn")
+            dropdown_menu.classList.add("dropdown_content")
+            dropdown_menu.appendChild(blast_tables_to_csv_log)
+            dropdown_menu.appendChild(build_folders_with_hit_info_for_each_qseqid_log)
+            dropdown_menu.appendChild(recblast_result_table_link)
+            dropdown_menu.appendChild(recblast_result_link)
+            dropdown_menu.appendChild(backward_blast_log)
+            dropdown_menu.appendChild(fw_result_preparation_log)
+
+            reciprocal_blast_finished.appendChild(dropdown_menu)
 
             progress_container.appendChild(reciprocal_blast_finished);
         }
-        setTimeout(buildProgressButtonReciprocalBlastFinished, 1250)
+        setTimeout(buildProgressButtonReciprocalBlastFinished, 1050)
     }
 
     if(progress >= 20){

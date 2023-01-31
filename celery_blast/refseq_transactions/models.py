@@ -17,11 +17,10 @@ class BlastDatabase(models.Model):
 
     assembly_entries = models.IntegerField(
         verbose_name="number of assembly entries that should get downloaded")
+
     timestamp = models.DateTimeField(
         auto_now=True,
         verbose_name="date of database creation")
-
-    # nullable fields
 
     uploaded_files = models.BooleanField(
         default=False,blank=True,null=True
