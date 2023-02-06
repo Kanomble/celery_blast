@@ -359,7 +359,7 @@ def execute_cdd_domain_search_for_target_query(request, project_id:int):
 def cdd_domain_search_details_view(request, query_id:str, project_id:int):
     try:
         #query_sequence_model = QuerySequences.objects.get(query_accession_id=)
-        #okeh_plot = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        #bokeh_plot = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
         context = {}
         context['query_id'] = query_id
         context['project_id'] = project_id

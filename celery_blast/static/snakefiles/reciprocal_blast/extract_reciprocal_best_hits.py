@@ -1,6 +1,6 @@
 '''extract_reciprocal_best_hits
 This script extracts reciprocal best hits (RBHs).
-Based on the blast_fw_df (forward blast) and blaast_bw_df (backward blast) output files of the rules:
+Based on the blast_fw_df (forward blast) and blast_bw_df (backward blast) output files of the rules:
 forward_blast and backward_blast, RBHs are inferred.
 The inference is based on the pandas merge function.
 The columns for the qseqid and targetid as well as the corresponding taxid column are used for the merge comparison.
