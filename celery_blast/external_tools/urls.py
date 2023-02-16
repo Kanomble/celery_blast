@@ -1,4 +1,5 @@
 from django.urls import path, include
+
 from . import views
 
 cdd_search_urls = [

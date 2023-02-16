@@ -1,7 +1,8 @@
-from django import forms
 from os import listdir
-from django.core.exceptions import ValidationError
+
 from blast_project.py_biopython import get_list_of_species_taxids_by_list_of_scientific_names
+from django import forms
+from django.core.exceptions import ValidationError
 
 '''list_taxonomic_files
 
@@ -9,6 +10,8 @@ from blast_project.py_biopython import get_list_of_species_taxids_by_list_of_sci
     returns a list of all files and their corresponding total line length in the media/taxonomic_node_files folder that end with .taxids
 
 '''
+
+
 def list_taxonomic_files():
     try:
         files_in_taxonomic_node_files = listdir('media/taxonomic_node_files/')
@@ -16,16 +19,17 @@ def list_taxonomic_files():
         length = []
         for file in files_in_taxonomic_node_files:
             lines = 0
-            with open('media/taxonomic_node_files/'+file) as f:
+            with open('media/taxonomic_node_files/' + file) as f:
                 for line in f:
                     lines = lines + 1
             if file.endswith('.taxids'):
                 files.append(file)
                 length.append(lines)
-        #[file for file in files_in_taxonomic_node_files if file.endswith('.taxids')]
+        # [file for file in files_in_taxonomic_node_files if file.endswith('.taxids')]
         return files, length
     except Exception as e:
         raise Exception('[-] exception ocurred in blast_project/py_services.list_taxonomic_files : {}'.format(e))
+
 
 '''get_taxonomic_files_tuple
 
@@ -35,22 +39,27 @@ def list_taxonomic_files():
     :returns form_choice_field_input
         :type tuple[list:str, list:str]
 '''
+
+
 def get_taxonomic_files_tuple():
     taxid_files_list = list_taxonomic_files()[0]
     form_choice_field_input = tuple(zip(taxid_files_list, taxid_files_list))
     return form_choice_field_input
+
 
 '''RefseqDatabaseForm
     
     Input form class for downloading refseq proteoms from the NCBI-FTP server.
     
 '''
+
+
 class RefseqDatabaseForm(forms.Form):
     ASSEMBLY_LEVELS = [
-        ('Scaffold','Scaffold'),
-        ('Chromosome','Chromosome'),
-        ('Contig','Contig'),
-        ('Complete Genome','Complete Genome')]
+        ('Scaffold', 'Scaffold'),
+        ('Chromosome', 'Chromosome'),
+        ('Contig', 'Contig'),
+        ('Complete Genome', 'Complete Genome')]
 
     assembly_levels = forms.MultipleChoiceField(
         label="Assembly Completeness Level",
@@ -67,7 +76,7 @@ class RefseqDatabaseForm(forms.Form):
 
     database_description = forms.CharField(
         label="Database description",
-        error_messages={'required' : 'Add a short description about the purpose of this database!'}
+        error_messages={'required': 'Add a short description about the purpose of this database!'}
     )
 
     taxid_file = forms.FileField(
@@ -86,7 +95,6 @@ class RefseqDatabaseForm(forms.Form):
 
     user_email = forms.CharField(max_length=200)
 
-
     def __init__(self, user, *args, **kwargs):
         super(RefseqDatabaseForm, self).__init__(*args, **kwargs)
         self.fields['taxid_uploaded_file'].choices = get_taxonomic_files_tuple()
@@ -101,25 +109,29 @@ class RefseqDatabaseForm(forms.Form):
             taxid_text_field = cleaned_data['taxid_text_field']
             user_email = self.fields['user_email'].charfield
 
-            #if taxid_file empty --> taxid_file == None
-            #if taxid_uploaded_file empty --> taxid_uploaded_file == ''
-            #if taxid_text_field empty --> taxid_text_field == ''
+            # if taxid_file empty --> taxid_file == None
+            # if taxid_uploaded_file empty --> taxid_uploaded_file == ''
+            # if taxid_text_field empty --> taxid_text_field == ''
             if taxid_file != None and taxid_uploaded_file != '' and taxid_text_field != '':
-               self.add_error('taxid_file','Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
+                self.add_error('taxid_file',
+                               'Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
 
             if taxid_file != None and taxid_uploaded_file != '':
-               self.add_error('taxid_file','Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
+                self.add_error('taxid_file',
+                               'Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
 
             if taxid_file != None and taxid_text_field != '':
-               self.add_error('taxid_file','Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
+                self.add_error('taxid_file',
+                               'Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
 
             if taxid_uploaded_file != '' and taxid_text_field != '':
-               self.add_error('taxid_file','Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
+                self.add_error('taxid_file',
+                               'Choose just one taxonomic limitation: file upload, available taxonomic files or provide valid scientific names!')
 
             if taxid_file != None:
                 for line in list_taxonomic_files()[0]:
                     if taxid_file.name == line:
-                        self.add_error('taxid_file',"This taxid_file already exist!")
+                        self.add_error('taxid_file', "This taxid_file already exist!")
 
                 if taxid_file.name.endswith('.taxid') != True and taxid_file.name.endswith('.taxids') != True:
                     self.add_error('taxid_file', "Are you sure that this file is a taxonomic nodes file?"
@@ -140,12 +152,10 @@ class RefseqDatabaseForm(forms.Form):
 
                     cleaned_data['taxid_text_field'] = taxids
                 except Exception as e:
-                    self.add_error("taxid_text_field","{}".format(e))
+                    self.add_error("taxid_text_field", "{}".format(e))
 
         except Exception as e:
             raise ValidationError(
                 "validation error in refseq database creation, due to this exception: {}".format(
-                     e))
+                    e))
         return cleaned_data
-
-

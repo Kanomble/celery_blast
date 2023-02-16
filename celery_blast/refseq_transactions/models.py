@@ -1,9 +1,12 @@
 from django.db import models
-from .managers import BlastDatabaseManager
 from django_celery_results.models import TaskResult
+
+from .managers import BlastDatabaseManager
+
 
 class AssemblyLevels(models.Model):
     assembly_level = models.CharField(max_length=50)
+
 
 class BlastDatabase(models.Model):
     # attribute fields
@@ -23,7 +26,7 @@ class BlastDatabase(models.Model):
         verbose_name="date of database creation")
 
     uploaded_files = models.BooleanField(
-        default=False,blank=True,null=True
+        default=False, blank=True, null=True
     )
 
     # possibility to add a taxonomic file
@@ -49,6 +52,7 @@ class BlastDatabase(models.Model):
         verbose_name="possible assembly levels within this BLAST database")
 
     objects = BlastDatabaseManager()
+
     # functions
     def __str__(self):
         return "BLAST database: {}, created {} with {} entries.\n\t Database description: {}".format(
@@ -58,9 +62,9 @@ class BlastDatabase(models.Model):
             self.database_description)
 
     def get_pandas_table_name(self):
-        return self.database_name.replace(' ','_').upper()
+        return self.database_name.replace(' ', '_').upper()
 
-    #can be deleted?
-    #TODO deprecated
+    # can be deleted?
+    # TODO deprecated
     def get_database_palfile_for_snakemake_config(self):
-        return self.path_to_database_file + '/' + self.database_name.replace(' ','_').upper() + '.database.pal'
+        return self.path_to_database_file + '/' + self.database_name.replace(' ', '_').upper() + '.database.pal'

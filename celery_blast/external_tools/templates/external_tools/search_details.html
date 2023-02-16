@@ -5,169 +5,176 @@
 
 {% block content %}
     {% if EntrezSearch.database == 'protein' %}
-    <div class="dashboard_project_list_col" id="fasta_download_1" style="display: block">
-        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Entrez Search Details </b> </h2>
-        <a href="{% url 'download_protein_accessions' search_id=EntrezSearch.id %}">
-            <button class="btn btn-dark"  style="position: absolute;top: 10px; right: 10px;">Download Associated Protein Accessions</button>
-        </a>
-    </div>
+        <div class="dashboard_project_list_col" id="fasta_download_1" style="display: block">
+            <h2 style="text-align: center; font-family: 'Courier New'"><b> Entrez Search Details </b></h2>
+            <a href="{% url 'download_protein_accessions' search_id=EntrezSearch.id %}">
+                <button class="btn btn-dark" style="position: absolute;top: 10px; right: 10px;">Download Associated
+                    Protein Accessions
+                </button>
+            </a>
+        </div>
     {% endif %}
     {% if EntrezSearch.database == 'pubmed' %}
-    <div class="dashboard_project_list_col" id="fasta_download_1" style="display: block">
-        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Entrez Search Details </b> </h2>
-        <a href="{% url 'download_protein_accessions' search_id=EntrezSearch.id %}">
-            <button class="btn btn-dark"  style="position: absolute;top: 10px; right: 10px;">Download Associated Protein Accessions</button>
-        </a>
-    </div>
+        <div class="dashboard_project_list_col" id="fasta_download_1" style="display: block">
+            <h2 style="text-align: center; font-family: 'Courier New'"><b> Entrez Search Details </b></h2>
+            <a href="{% url 'download_protein_accessions' search_id=EntrezSearch.id %}">
+                <button class="btn btn-dark" style="position: absolute;top: 10px; right: 10px;">Download Associated
+                    Protein Accessions
+                </button>
+            </a>
+        </div>
     {% endif %}
     <div class="dashboard_project_list_col" id="fasta_download_2" style="display: none">
-        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Entrez Search Details </b> </h2>
+        <h2 style="text-align: center; font-family: 'Courier New'"><b> Entrez Search Details </b></h2>
         <div classs="container" style="text-align:right;float:right;top: 10px; right: 10px;">
-            <iframe src="https://giphy.com/embed/11FuEnXyGsXFba" style="border:0px" class="giphy-embed" allowFullScreen></iframe>
+            <iframe src="https://giphy.com/embed/11FuEnXyGsXFba" style="border:0px" class="giphy-embed"
+                    allowFullScreen></iframe>
             <a href="https://giphy.com/gifs/icon-loading-beaker-11FuEnXyGsXFba"></a>
         </div>
     </div>
 
     <div class="dashboard_project_list_col" id="fasta_download_3" style="display: none">
-        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Entrez Search Details </b> </h2>
+        <h2 style="text-align: center; font-family: 'Courier New'"><b> Entrez Search Details </b></h2>
         <a href="{% url 'view_downloaded_sequences' search_id=EntrezSearch.id %}" download="target_sequences.faa">
-            <button class="btn btn-dark"  style="position: absolute;top: 10px; right: 10px;">View Downloaded Sequences</button>
+            <button class="btn btn-dark" style="position: absolute;top: 10px; right: 10px;">View Downloaded Sequences
+            </button>
         </a>
     </div>
 
     <div class="dashboard_project_list_col" style="display: none" id="entrez_table">
-    {% if EntrezSearch.database == 'protein' %}
-    <button class="btn btn-dark" onclick="toggleText()">Show List of Organisms</button>
-    <div id ="Organism_list" style="display: none">
-        <table class="table">
-                <tr>
-                    <th>Organisms</th>
-                    <th>Progress</th>
-                    <th>Start download/ download</th>
-                </tr>
-            {% for organism in Organisms %}
-            {% for organism_task, result in Organism_progress_dic.items %}
-                <tr>
+        {% if EntrezSearch.database == 'protein' %}
+            <button class="btn btn-dark" onclick="toggleText()">Show List of Organisms</button>
+            <div id="Organism_list" style="display: none">
+                <table class="table">
+                    <tr>
+                        <th>Organisms</th>
+                        <th>Progress</th>
+                        <th>Start download/ download</th>
+                    </tr>
+                    {% for organism in Organisms %}
+                        {% for organism_task, result in Organism_progress_dic.items %}
+                            <tr>
 
-                {% if organism == organism_task %}
-                    <td>{{ organism_task }}</td>
-                    <td>{{ result }}</td>
-                {% if result == "SUCCESS" %}
-                    <td>
-                        <a href="{% url 'view_downloaded_organism_sequences' organism_download=organism search_id=EntrezSearch.id %}" download="{{ organism }}sequences.faa">
-                        <button class="btn btn-dark">Download Database</button>
-                        </a>
-                    </td>
-                {% elif result == "PROGRESS" or result == "FAILTURE" %}
-                    <td>
-                        <button class="btn btn-dark" disabled>Downloading Database</button>
-                    </td>
-                {% elif result == "" %}
-                    <td>
-                        <a href="{% url 'download_protein_organisms' organism_download=organism search_id=EntrezSearch.id %}">
-                        <button class="btn btn-dark">Start Download</button>
-                        </a>
-                    </td>
-                {% endif %}
-                {% endif %}
-                </tr>
-            {% endfor %}
-            {% endfor %}
-        </table>
-    </div>
-    {% endif %}
+                                {% if organism == organism_task %}
+                                    <td>{{ organism_task }}</td>
+                                    <td>{{ result }}</td>
+                                    {% if result == "SUCCESS" %}
+                                        <td>
+                                            <a href="{% url 'view_downloaded_organism_sequences' organism_download=organism search_id=EntrezSearch.id %}"
+                                               download="{{ organism }}sequences.faa">
+                                                <button class="btn btn-dark">Download Database</button>
+                                            </a>
+                                        </td>
+                                    {% elif result == "PROGRESS" or result == "FAILTURE" %}
+                                        <td>
+                                            <button class="btn btn-dark" disabled>Downloading Database</button>
+                                        </td>
+                                    {% elif result == "" %}
+                                        <td>
+                                            <a href="{% url 'download_protein_organisms' organism_download=organism search_id=EntrezSearch.id %}">
+                                                <button class="btn btn-dark">Start Download</button>
+                                            </a>
+                                        </td>
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
         <hr>
 
         {{ HtmlTable | safe }}
     </div>
     {% if EntrezSearch.database == 'assembly' %}
-    <div class="dashboard_project_list_col" style="display: block">
-        <p>Graphs</p>
-        {% load static %}
-        <img class="img" src={% static 'images/edirect_dashboard/hist.png' %} alt="hist" >
-    </div>
+        <div class="dashboard_project_list_col" style="display: block">
+            <p>Graphs</p>
+            {% load static %}
+            <img class="img" src={% static 'images/edirect_dashboard/hist.png' %} alt="hist">
+        </div>
     {% endif %}
 {% endblock %}
 
 {% block scripts %}
-<script>
-function toggleText(){
-  var x = document.getElementById("Organism_list");
-  if (x.style.display === "none") {
-    x.style.display = "block";
-  } else {
-    x.style.display = "none";
-  }
-}
-</script>
+    <script>
+        function toggleText() {
+            var x = document.getElementById("Organism_list");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+    </script>
 
-<script>
-$(document).ready(function() {
-    var dt = $('#T_searchResultTable').DataTable({
-        "pageLength": 10,
-        dom: 'Bfrtip',
-        //column( 'Slen:name' ).visible(false)
-        columnDefs:[{ title: ["Slen"], visible: false }],
-        buttons: [  'colvis', // auswahl verfeinern zukünftig mit colgroups
-                    { extend: 'csv', exportOptions: {columns: ':visible'}},
+    <script>
+        $(document).ready(function () {
+            var dt = $('#T_searchResultTable').DataTable({
+                "pageLength": 10,
+                dom: 'Bfrtip',
+                //column( 'Slen:name' ).visible(false)
+                columnDefs: [{title: ["Slen"], visible: false}],
+                buttons: ['colvis', // auswahl verfeinern zukünftig mit colgroups
+                    {extend: 'csv', exportOptions: {columns: ':visible'}},
                     'copy'],
-        });
-    dt.column("Slen").visible(false)
-
-    var entrezTable = document.getElementById("entrez_table")
-    entrezTable.style.display = "block"
-});
-
-</script>
-
-<script>
-    {% if DownloadTaskSuccess == 1 %}
-
-    (function() {
-        var divElementToShow = document.getElementById("fasta_download_3")
-        var divElement = document.getElementById("fasta_download_2")
-        var divElementToHide = document.getElementById("fasta_download_1")
-        divElementToHide.style.display = "none";
-        divElement.style.display = "block";
-        poll = function() {
-            jQuery.ajax({
-                url: "{% url 'ajax_call_progress_entrezsearch_to_fasta' search_id=EntrezSearch.id %}",
-                dataType: 'json',
-                type: 'get',
-                success: function(data) { // check if available
-                    if ( data ) { // get and check data value
-                        //status.text(data.progress); // get and print data string
-                        console.log(data.progress)
-
-                        if(data.progress == "SUCCESS"){
-                            divElement.style.display = "none";
-                            divElementToShow.style.display = "block";
-                            clearInterval(pollInterval); // optional: stop poll function
-                        } else if(data.progress == "FAILURE"){
-                            divElement.style.display = "none";
-                            divElementToHide.style.display = "block";
-                            clearInterval(pollInterval);
-                        }
-
-                    }
-                 },
-                error: function() { // error logging
-                    //console.log('Error!');
-                    status.text("error polling progress data")
-                }
             });
-        },
-        pollInterval = setInterval(function() { // run function every 5000 ms
-            poll();
-          }, 5000);
-        poll(); // also run function on init
-    })();
-    {% elif DownloadTaskSuccess == 0 %}
-        var divElementToHide = document.getElementById("fasta_download_1")
-        var divElementToShow = document.getElementById("fasta_download_3")
-        divElementToHide.style.display = "none";
-        divElementToShow.style.display = "block";
-    {% endif %}
+            dt.column("Slen").visible(false)
 
-</script>
+            var entrezTable = document.getElementById("entrez_table")
+            entrezTable.style.display = "block"
+        });
+
+    </script>
+
+    <script>
+        {% if DownloadTaskSuccess == 1 %}
+
+            (function () {
+                var divElementToShow = document.getElementById("fasta_download_3")
+                var divElement = document.getElementById("fasta_download_2")
+                var divElementToHide = document.getElementById("fasta_download_1")
+                divElementToHide.style.display = "none";
+                divElement.style.display = "block";
+                poll = function () {
+                    jQuery.ajax({
+                        url: "{% url 'ajax_call_progress_entrezsearch_to_fasta' search_id=EntrezSearch.id %}",
+                        dataType: 'json',
+                        type: 'get',
+                        success: function (data) { // check if available
+                            if (data) { // get and check data value
+                                //status.text(data.progress); // get and print data string
+                                console.log(data.progress)
+
+                                if (data.progress == "SUCCESS") {
+                                    divElement.style.display = "none";
+                                    divElementToShow.style.display = "block";
+                                    clearInterval(pollInterval); // optional: stop poll function
+                                } else if (data.progress == "FAILURE") {
+                                    divElement.style.display = "none";
+                                    divElementToHide.style.display = "block";
+                                    clearInterval(pollInterval);
+                                }
+
+                            }
+                        },
+                        error: function () { // error logging
+                            //console.log('Error!');
+                            status.text("error polling progress data")
+                        }
+                    });
+                },
+                    pollInterval = setInterval(function () { // run function every 5000 ms
+                        poll();
+                    }, 5000);
+                poll(); // also run function on init
+            })();
+        {% elif DownloadTaskSuccess == 0 %}
+            var divElementToHide = document.getElementById("fasta_download_1")
+            var divElementToShow = document.getElementById("fasta_download_3")
+            divElementToHide.style.display = "none";
+            divElementToShow.style.display = "block";
+        {% endif %}
+
+    </script>
 {% endblock %}

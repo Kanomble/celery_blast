@@ -1,30 +1,30 @@
 <form action="{% url 'create_refseq_database_metadata' %}"
-      method = "POST" enctype="multipart/form-data"
-      >
+      method="POST" enctype="multipart/form-data"
+>
 
     {% csrf_token %}
     <div class="form-row" style="text-align: center; padding: 30px">
 
         <div class="col">
-             <div class="form-group">
+            <div class="form-group">
                 <label for="database_name">Database Name</label>
                 <input type="text" class="form-control" id="database_name" name="database_name">
                 {% if RefseqDatabaseForm.database_name.errors %}
-                <div class="alert alert-danger">
-                    <strong>{{RefseqDatabaseForm.database_name.errors}}</strong>
-                </div>
+                    <div class="alert alert-danger">
+                        <strong>{{ RefseqDatabaseForm.database_name.errors }}</strong>
+                    </div>
                 {% endif %}
             </div>
         </div>
 
         <div class="col">
-             <div class="form-group">
+            <div class="form-group">
                 <label for="database_description">Database Description</label>
                 <input type="text" class="form-control" id="database_description" name="database_description">
                 {% if RefseqDatabaseForm.database_description.errors %}
-                <div class="alert alert-danger">
-                    <strong>{{RefseqDatabaseForm.database_description.errors}}</strong>
-                </div>
+                    <div class="alert alert-danger">
+                        <strong>{{ RefseqDatabaseForm.database_description.errors }}</strong>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -34,12 +34,12 @@
 
                 <label for="assembly_levels"> Assembly Completness Level </label>
 
-                {{RefseqDatabaseForm.assembly_levels}}
+                {{ RefseqDatabaseForm.assembly_levels }}
 
                 {% if RefseqDatabaseForm.assembly_levels.errors %}
-                <div class="alert alert-danger">
-                    <strong>{{RefseqDatabaseForm.assembly_levels.errors}}</strong>
-                </div>
+                    <div class="alert alert-danger">
+                        <strong>{{ RefseqDatabaseForm.assembly_levels.errors }}</strong>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -48,23 +48,23 @@
                 <label for="taxid_file">Optional File For Limiting BLAST Databases By Taxonomy</label>
                 <input type="file" class="form-control-file" id="taxid_file" name="taxid_file">
                 {% if RefseqDatabaseForm.taxid_file.errors %}
-                <div class="alert alert-danger">
-                    <strong>{{RefseqDatabaseForm.taxid_file.errors}}</strong>
-                </div>
+                    <div class="alert alert-danger">
+                        <strong>{{ RefseqDatabaseForm.taxid_file.errors }}</strong>
+                    </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-              <label for="taxid_uploaded_file">Select Taxonomic File:</label>
-              <select class="form-control" id="taxid_uploaded_file" name="taxid_uploaded_file">
-                      <option value=""> </option>
-                  {% for taxid_uploaded_file,option in  RefseqDatabaseForm.taxid_uploaded_file.field.choices %}
-                      <option value="{{ taxid_uploaded_file }}">{{ taxid_uploaded_file }}</option>
-                  {% endfor %}
-              </select>
+                <label for="taxid_uploaded_file">Select Taxonomic File:</label>
+                <select class="form-control" id="taxid_uploaded_file" name="taxid_uploaded_file">
+                    <option value=""></option>
+                    {% for taxid_uploaded_file,option in  RefseqDatabaseForm.taxid_uploaded_file.field.choices %}
+                        <option value="{{ taxid_uploaded_file }}">{{ taxid_uploaded_file }}</option>
+                    {% endfor %}
+                </select>
                 {% if RefseqDatabaseForm.taxid_uploaded_file.errors %}
                     <div class="alert alert-danger">
-                        <strong>{{RefseqDatabaseForm.taxid_uploaded_file.errors}}</strong>
+                        <strong>{{ RefseqDatabaseForm.taxid_uploaded_file.errors }}</strong>
                     </div>
                 {% endif %}
             </div>
@@ -73,26 +73,27 @@
                 <label for="taxid_text_field">Scientific Names (sep. by ",")</label>
                 <input type="text" class="form-control" id="taxid_text_field" name="taxid_text_field">
                 {% if RefseqDatabaseForm.taxid_text_field.errors %}
-                <div class="alert alert-danger">
-                    <strong>{{RefseqDatabaseForm.taxid_text_field.errors}}</strong>
-                </div>
-                {% endif %}
-            </div>
-            </div>
-                <div class="form-group">
-                <!-- <label for="user_email"> User Email </label> -->
-                <input type="hidden" class="form-control" id="user_email" name="user_email" value='{{RefseqDatabaseForm.user_email.value}}'>
-                {% if RefseqDatabaseForm.user_email.errors %}
                     <div class="alert alert-danger">
-                        <strong>{{RefseqDatabaseForm.user_email.errors}}</strong>
+                        <strong>{{ RefseqDatabaseForm.taxid_text_field.errors }}</strong>
                     </div>
                 {% endif %}
             </div>
+        </div>
+        <div class="form-group">
+            <!-- <label for="user_email"> User Email </label> -->
+            <input type="hidden" class="form-control" id="user_email" name="user_email"
+                   value='{{ RefseqDatabaseForm.user_email.value }}'>
+            {% if RefseqDatabaseForm.user_email.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ RefseqDatabaseForm.user_email.errors }}</strong>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
     <div class="form-row" style="text-align: center; padding: 30px">
         <div class="col">
-            <input type = "submit" value = "Submit" class="btn btn-dark">
+            <input type="submit" value="Submit" class="btn btn-dark">
         </div>
     </div>
 

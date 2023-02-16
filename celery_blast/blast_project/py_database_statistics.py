@@ -24,7 +24,7 @@ from bokeh.plotting import figure
 from django.db import IntegrityError
 
 plt.rcParams['legend.fontsize'] = 10
-from bokeh.palettes import Spectral #inferno, viridis, magma,
+from bokeh.palettes import Spectral  # inferno, viridis, magma,
 # from matplotlib.ticker import MaxNLocator
 from random import shuffle
 from celery_blast.settings import BLAST_PROJECT_DIR
@@ -40,8 +40,11 @@ from celery_blast.settings import BLAST_PROJECT_DIR
     :returns BlastProject
         :type blast_project.models.BlastProject
 '''
+
+
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)
+
 
 '''add_taxonomic_information_to_db
 
@@ -63,9 +66,11 @@ def get_project_by_id(project_id):
     :returns db_df
         :type pandas.core.frame.DataFrame
 '''
-def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) -> pd.core.frame.DataFrame:
+
+
+def add_taxonomic_information_to_db(user_email: str, logfile: str, taxids: list) -> pd.core.frame.DataFrame:
     try:
-        with open(logfile,'w') as log:
+        with open(logfile, 'w') as log:
             Entrez.email = user_email
 
             taxid = []
@@ -102,7 +107,7 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
                     else:
                         for i in range(len(record)):
                             taxonomy.append(record[i]['ScientificName'])
-                            #if taxonomic identifiers are renamed there is no field TaxId but AkaTaxIds
+                            # if taxonomic identifiers are renamed there is no field TaxId but AkaTaxIds
                             if 'AkaTaxIds' in record[i].keys():
                                 for akaid in record[i]['AkaTaxIds']:
                                     if int(akaid) in splitted_ids:
@@ -128,7 +133,8 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
                                     phylum.append(j['ScientificName'])
 
                             if (len(taxonomy) != len(genus)):
-                                log.write("\tINFO:appending unknown for object: {} of record: {}\n".format(i,round(steps/step,1)))
+                                log.write("\tINFO:appending unknown for object: {} of record: {}\n".format(i, round(
+                                    steps / step, 1)))
                                 genus.append('unknown')
                             if (len(taxonomy) != len(superfamily)):
                                 superfamily.append('unknown')
@@ -144,7 +150,9 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
                             if len(record) != len(splitted_ids):
                                 missing_ids = [m_taxid for m_taxid in splitted_ids if m_taxid not in taxid]
                                 for m_taxid in missing_ids:
-                                    log.write("WARNING: problem during fetching of taxonomic information for: {}\n".format(m_taxid))
+                                    log.write(
+                                        "WARNING: problem during fetching of taxonomic information for: {}\n".format(
+                                            m_taxid))
                                     taxid.append(m_taxid)
                                     taxonomy.append('unknown')
                                     genus.append('unknown')
@@ -192,6 +200,8 @@ def add_taxonomic_information_to_db(user_email: str,logfile:str, taxids:list) ->
         :type list[pd.core.series.Series]
 
 '''
+
+
 def extract_taxonomic_information(logfile: str, uploaded: bool, rbh_df: pd.core.frame.DataFrame,
                                   db_df: pd.core.frame.DataFrame, taxonomic_unit: str) -> list:
     with open(logfile, 'w') as log:
@@ -248,6 +258,7 @@ def extract_taxonomic_information(logfile: str, uploaded: bool, rbh_df: pd.core.
             log.write("ERROR:{}\n".format(e))
             raise Exception("[-] ERROR in extract_taxonomic_information with exception: {}".format(e))
 
+
 '''tax_counts_to_db_statistic_tables
 
     This function produces pandas dataframes with statistical information of the reciprocal best hits 
@@ -272,6 +283,8 @@ def extract_taxonomic_information(logfile: str, uploaded: bool, rbh_df: pd.core.
         :type (pd.core.frame.DataFrame, pd.core.frame.DataFrame)
 
 '''
+
+
 def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.core.frame.DataFrame,
                                       tax_counts: list, taxonomic_unit: str) -> tuple:
     with open(logfile, 'w') as log:
@@ -279,7 +292,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
             log.write("INFO:starting statistical inference for {}\n".format(taxonomic_unit))
             if len(tax_counts) > 0:
 
-                #counting the number of {taxonomic_unit} database entries
+                # counting the number of {taxonomic_unit} database entries
                 percentage = db_df[taxonomic_unit].value_counts()
                 percentage = percentage.rename('Database')
                 tax_counts.append(percentage)
@@ -292,7 +305,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
                 df.to_csv(df_path)
                 log.write("INFO:produced {} table\n".format(df_path))
 
-                #normalization based on number of entries in the database
+                # normalization based on number of entries in the database
                 log.write("INFO:trying to normalize values\n")
                 f = lambda x, y: (100 / y) * x
                 normalizing_results = tax_counts
@@ -311,7 +324,8 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
                         taxonomic_unit))
                 normalized_df = pd.DataFrame(normalized_table)
                 normalized_df = normalized_df.fillna(0)
-                df_path = BLAST_PROJECT_DIR + str(project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
+                df_path = BLAST_PROJECT_DIR + str(
+                    project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
                 normalized_df.to_csv(df_path)
                 log.write("INFO:produced {} table\n".format(df_path))
             else:
@@ -322,6 +336,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
         except Exception as e:
             log.write("ERROR:{}".format(e))
             raise Exception("[-] ERROR in tax_counts_to_db_statistics_tables function with exception {}".format(e))
+
 
 '''calculate_database_statistics
 
@@ -340,7 +355,9 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
     :returns 0
         :type int
 '''
-def calculate_database_statistics(project_id: int,logfile:str,user_email:str, taxonomic_units:list)->int:
+
+
+def calculate_database_statistics(project_id: int, logfile: str, user_email: str, taxonomic_units: list) -> int:
     with open(logfile, 'w') as log:
         try:
             log.write("INFO:defining taxonomic units")
@@ -350,7 +367,7 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
             project = get_project_by_id(project_id)
             forward_db = project.project_forward_database
             path_to_db_csv = forward_db.path_to_database_file
-            db_name = forward_db.database_name.replace(' ','_').upper()
+            db_name = forward_db.database_name.replace(' ', '_').upper()
             path_to_db_csv = path_to_db_csv + '/' + db_name
             new_database_name = path_to_db_csv + '_with_taxonomic_information.csv'
 
@@ -359,19 +376,19 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
                 log.write("ERROR: {} or {} file not found\n".format(path_to_db_csv, path_to_reciprocal_results))
                 raise FileNotFoundError
 
-            result_data = pd.read_csv(path_to_reciprocal_results,index_col=0)
+            result_data = pd.read_csv(path_to_reciprocal_results, index_col=0)
 
-            if(isfile(new_database_name)):
+            if (isfile(new_database_name)):
                 log.write("INFO:database: {} exists\n".format(new_database_name))
                 db_df = pd.read_csv(new_database_name, index_col=0)
                 log.write("INFO:Done loading result and database dataframe\n")
             else:
-                db_df = pd.read_csv(path_to_db_csv,index_col=0)
+                db_df = pd.read_csv(path_to_db_csv, index_col=0)
                 log.write("INFO:Done loading result and database dataframe\n")
 
-                #addition of taxonomic information via the biopython entrez module in add_taxonomic_information_to_db
+                # addition of taxonomic information via the biopython entrez module in add_taxonomic_information_to_db
                 log.write("INFO:Trying to add taxonomic information to dataframe ...\n")
-                add_tax_logfile=path_to_project+'/log/add_taxonomic_information_to_db.log'
+                add_tax_logfile = path_to_project + '/log/add_taxonomic_information_to_db.log'
                 tax_df = add_taxonomic_information_to_db(user_email, add_tax_logfile, list(db_df['taxid'].unique()))
                 tax_df['taxid'] = tax_df['taxid'].astype('int64')
                 db_df = db_df.merge(tax_df, on='taxid')
@@ -381,42 +398,46 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
                 db_df.to_csv(new_database_name)
                 log.write("INFO:DONE writing database csv file\n")
 
-            #extraction of taxonomic information
+            # extraction of taxonomic information
             for taxonomic_unit in taxonomic_units:
-                #result_data[taxonomic_unit].astype = str
+                # result_data[taxonomic_unit].astype = str
 
-                #path_to_project = BLAST_PROJECT_DIR + str(project_id)
+                # path_to_project = BLAST_PROJECT_DIR + str(project_id)
                 normalized_df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
                 df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics.csv'
                 if isfile(normalized_df_filepath) is False or isfile(df_filepath) is False:
                     log.write("INFO:starting function extract_taxonomic_information ...\n")
                     logfile_tax_count_function = path_to_project + '/log/' + taxonomic_unit + '_extract_taxonomic_information.log'
-                    tax_counts=extract_taxonomic_information(logfile_tax_count_function, forward_db.uploaded_files, result_data, db_df, taxonomic_unit)
+                    tax_counts = extract_taxonomic_information(logfile_tax_count_function, forward_db.uploaded_files,
+                                                               result_data, db_df, taxonomic_unit)
                     log.write("INFO:Done extracting list of taxonomic informations\n")
 
                     log.write("INFO:Starting to produce output tables and graphs\n")
                     logfile_tax_to_db_stat_function = path_to_project + '/log/' + taxonomic_unit + '_tax_counts_to_db_statistics_tables.log'
-                    df, normalized_df = tax_counts_to_db_statistic_tables(logfile_tax_to_db_stat_function, project_id, db_df, tax_counts, taxonomic_unit)
+                    df, normalized_df = tax_counts_to_db_statistic_tables(logfile_tax_to_db_stat_function, project_id,
+                                                                          db_df, tax_counts, taxonomic_unit)
                     log.write("INFO:DONE extraction of {} database statistics\n".format(taxonomic_unit))
                 else:
                     log.write("INFO:the database statistics dataframes do exist, skipping creation procedure\n")
-                    #df = pd.read_csv(df_filepath,index_col=0,header=0)
-                    normalized_df = pd.read_csv(normalized_df_filepath,index_col=0,header=0)
+                    # df = pd.read_csv(df_filepath,index_col=0,header=0)
+                    normalized_df = pd.read_csv(normalized_df_filepath, index_col=0, header=0)
 
-                #database_statistics_to_altair_plots(project_id: int, taxonomic_unit: str, full_df: pd.DataFrame, normalized_df: pd.DataFrame, logfile: str)
+                # database_statistics_to_altair_plots(project_id: int, taxonomic_unit: str, full_df: pd.DataFrame, normalized_df: pd.DataFrame, logfile: str)
                 log.write("INFO:starting to produce altair plots for database statistics dataframes\n")
                 logfile_altair_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_altair_plots.log'
-                database_statistics_to_altair_plots(project_id,taxonomic_unit,result_data,normalized_df,logfile_altair_plots)
+                database_statistics_to_altair_plots(project_id, taxonomic_unit, result_data, normalized_df,
+                                                    logfile_altair_plots)
 
             log.write("INFO:starting to produce interactive bokeh result plot\n")
             create_bokeh_plots(result_df=result_data, database=db_df,
-                               taxonomic_unit='phylum',project_id=project_id)
+                               taxonomic_unit='phylum', project_id=project_id)
             log.write("DONE\n")
             return 0
 
         except Exception as e:
             log.write("ERROR: problems during calculation of database statistics {}\n".format(e))
             raise Exception("ERROR during calculation of database statistics with exception: {}".format(e))
+
 
 '''get_database_statistics_task_status
     
@@ -432,10 +453,12 @@ def calculate_database_statistics(project_id: int,logfile:str,user_email:str, ta
     :return status
         :type str
 '''
-def get_database_statistics_task_status(project_id:int)->str:
+
+
+def get_database_statistics_task_status(project_id: int) -> str:
     try:
         project = get_project_by_id(project_id)
-        if(project.project_database_statistics_task):
+        if (project.project_database_statistics_task):
             task_status = str(project.project_database_statistics_task.status)
         else:
             task_status = "NOTEXEC"
@@ -443,7 +466,8 @@ def get_database_statistics_task_status(project_id:int)->str:
     except Exception as e:
         raise Exception("ERROR during database statistics task status query with exception: {}".format(e))
 
-#TODO remove also static plots
+
+# TODO remove also static plots
 '''delete_database_statistics_task_and_output
     
     This function removes the output generated by the calculate_database_statistics_task.
@@ -456,37 +480,40 @@ def get_database_statistics_task_status(project_id:int)->str:
     :return returncode
         :type int
 '''
-def delete_database_statistics_task_and_output(project_id:int,logfile:str)->int:
+
+
+def delete_database_statistics_task_and_output(project_id: int, logfile: str) -> int:
     try:
-        with open(logfile,'w') as log:
+        with open(logfile, 'w') as log:
             log.write("INFO:trying to delete database statistics output and task\n")
             project = get_project_by_id(project_id)
-            if(project.project_database_statistics_task):
+            if (project.project_database_statistics_task):
                 project.project_database_statistics_task.delete()
             else:
                 raise Exception("ERROR there is no database statistics task for this project ...")
 
-            path_to_project='media/blast_projects/'+str(project_id)
+            path_to_project = 'media/blast_projects/' + str(project_id)
             if isdir(path_to_project):
-                path_to_database_statistics='media/blast_projects/' + str(project_id)+ '/database_statistics.csv'
+                path_to_database_statistics = 'media/blast_projects/' + str(project_id) + '/database_statistics.csv'
                 if isfile(path_to_database_statistics):
                     remove(path_to_database_statistics)
                     log.write("INFO:removed: {}\n".format(path_to_database_statistics))
                 for directory in listdir(path_to_project):
-                    directory=path_to_project+'/'+directory
+                    directory = path_to_project + '/' + directory
                     if isdir(directory):
-                        path_to_database_statistics_image=directory+'/'+'database_result_statistics.png'
-                        if(isfile(path_to_database_statistics_image)):
+                        path_to_database_statistics_image = directory + '/' + 'database_result_statistics.png'
+                        if (isfile(path_to_database_statistics_image)):
                             remove(path_to_database_statistics_image)
                             log.write("INFO:removed: {}\n".format(path_to_database_statistics_image))
 
-            #path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
-            #path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
+            # path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
+            # path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
             log.write("DONE\n")
             return 0
     except IntegrityError as e:
         log.write("ERROR: couldnt delete database statistics task with exception: {}\n".format(e))
-        raise IntegrityError("ERROR during deletion of database statistics task result object with exception: {}".format(e))
+        raise IntegrityError(
+            "ERROR during deletion of database statistics task result object with exception: {}".format(e))
     except Exception as e:
         log.write("ERROR: couldnt delete database statistics task with exception: {}\n".format(e))
         raise Exception("ERROR during removing database statistics output with exception: {}".format(e))
@@ -505,15 +532,17 @@ def delete_database_statistics_task_and_output(project_id:int,logfile:str)->int:
     :returns data
         :type list[json_dicts]
 '''
-def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:str)->list:
+
+
+def transform_normalized_database_table_to_json(project_id: int, taxonomic_unit: str) -> list:
     try:
         df_path = BLAST_PROJECT_DIR + str(project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
         if isfile(df_path):
-            table = pd.read_csv(df_path,header=0,index_col=0)
+            table = pd.read_csv(df_path, header=0, index_col=0)
             number_queries = len(table.index)
             table = table.round(2)
             table = table.transpose()[(table == 0.0).sum() != number_queries]
-            if(table.shape[1] > table.shape[0]):
+            if (table.shape[1] > table.shape[0]):
                 table = table.transpose()
             json_records = table.reset_index().to_json(orient='records')
             data = json.loads(json_records)
@@ -525,12 +554,16 @@ def transform_normalized_database_table_to_json(project_id:int,taxonomic_unit:st
     except Exception as e:
         raise Exception("[-] Couldnt transform normalized database statistics to json with exception: {}".format(e))
 
+
 '''database_statistics_to_altair_plots
 #OBSOLETE ??
 '''
-def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result_data:pd.DataFrame,normalized_df:pd.DataFrame,logfile:str):
+
+
+def database_statistics_to_altair_plots(project_id: int, taxonomic_unit: str, result_data: pd.DataFrame,
+                                        normalized_df: pd.DataFrame, logfile: str):
     try:
-        with open(logfile,'w') as log:
+        with open(logfile, 'w') as log:
             path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
             log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
             path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
@@ -555,7 +588,7 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
                     bar = alt.Chart(result_data).mark_bar().encode(
                         y=taxonomic_unit,
                         color=taxonomic_unit,
-                        x='count('+taxonomic_unit+')'
+                        x='count(' + taxonomic_unit + ')'
                     ).transform_filter(
                         brush
                     )
@@ -565,7 +598,7 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
                     number_queries = len(normalized_df.index)
                     normalized_df = normalized_df.transpose()[(normalized_df == 0.0).sum() != number_queries]
                     normalized_df = normalized_df.transpose()
-                    #TODO this plot is wrong -> qseqid is not correctly integrated
+                    # TODO this plot is wrong -> qseqid is not correctly integrated
                     if len(normalized_df.columns) <= 15 and len(normalized_df.columns) >= 2:
                         altair_df = pd.melt(normalized_df)
                         altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
@@ -579,13 +612,13 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
                         input_dropdown = alt.binding_select(options=list(normalized_df.columns), name=taxonomic_unit)
                         selection = alt.selection_single(fields=[taxonomic_unit], bind=input_dropdown)
                         color = alt.condition(selection,
-                                              alt.Color(taxonomic_unit+':N', legend=None),
+                                              alt.Color(taxonomic_unit + ':N', legend=None),
                                               alt.value('lightgray'))
 
                         chart = alt.Chart(result_data).mark_point().encode(
                             x='bitscore',
                             y='pident',
-                            tooltip=['qseqid', 'sacc_transformed', 'pident', 'bitscore',taxonomic_unit],
+                            tooltip=['qseqid', 'sacc_transformed', 'pident', 'bitscore', taxonomic_unit],
                             color=color
                         ).add_selection(
                             selection
@@ -593,12 +626,14 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
                         )
                         chart.save(path_to_altair_plot)
 
-                log.write("INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
+                log.write(
+                    "INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
             else:
                 log.write("ERROR:static directory does not exist\n")
                 raise IsADirectoryError(path_to_static_dir)
     except Exception as e:
         raise Exception("[-] ERROR in producing altair plots for database statistics with exception: {}".format(e))
+
 
 ################################## BOKEH INTERACTIVE RESULTS ###########################################################
 
@@ -618,13 +653,16 @@ def database_statistics_to_altair_plots(project_id:int,taxonomic_unit:str,result
         :type int
 
 '''
-def create_bokeh_plots(result_df:pd.DataFrame,database:pd.DataFrame,taxonomic_unit: str, project_id: int):
-        try:
-            path_to_project = BLAST_PROJECT_DIR + str(project_id)
-            logfile_bokeh_plots = path_to_project + '/log/' + 'create_bokeh_plots.log'
-            create_linked_bokeh_plot(logfile_bokeh_plots, result_df, database, taxonomic_unit, project_id)
-        except Exception as e:
-            raise Exception("[-] ERROR during creation of bokeh plots with exception : {}".format(e))
+
+
+def create_bokeh_plots(result_df: pd.DataFrame, database: pd.DataFrame, taxonomic_unit: str, project_id: int):
+    try:
+        path_to_project = BLAST_PROJECT_DIR + str(project_id)
+        logfile_bokeh_plots = path_to_project + '/log/' + 'create_bokeh_plots.log'
+        create_linked_bokeh_plot(logfile_bokeh_plots, result_df, database, taxonomic_unit, project_id)
+    except Exception as e:
+        raise Exception("[-] ERROR during creation of bokeh plots with exception : {}".format(e))
+
 
 '''create_color_palette_selection_callback
     
@@ -643,6 +681,8 @@ def create_bokeh_plots(result_df:pd.DataFrame,database:pd.DataFrame,taxonomic_un
         :type bokeh.models.CustomJS
     
 '''
+
+
 def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: Select,
                                             taxonomy_table_callback_dict: dict) -> CustomJS:
     try:
@@ -692,7 +732,9 @@ def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: 
     :returns color_palette_menu
         :type bokeh.models.Select
 '''
-def create_color_palette_selection()->Select:
+
+
+def create_color_palette_selection() -> Select:
     try:
 
         options = [(str(val), "Spectral" + str(val)) for val in range(3, 12)]
@@ -702,6 +744,7 @@ def create_color_palette_selection()->Select:
         return color_palette_menu
     except Exception as e:
         raise Exception("[-] ERROR couldnt create color palette selection with exception: {}".format(e))
+
 
 '''build_taxonomy_menu
     
@@ -719,7 +762,9 @@ def create_color_palette_selection()->Select:
     :returns tax_menu
         :type bokeh.models.MultiSelect
 '''
-def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str)->MultiSelect:
+
+
+def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str) -> MultiSelect:
     try:
         unique_tax = list(bokeh_dataframe[taxonomic_unit].unique())
         if len(unique_tax) > 1:
@@ -732,6 +777,7 @@ def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str)->Mul
         return tax_menu
     except Exception as e:
         raise Exception("[-] ERROR creating taxonomy menu for bokeh plot with exception: {}".format(e))
+
 
 '''build_json_callback_for_taxonomy
 
@@ -768,6 +814,8 @@ def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str)->Mul
     :returns tax_menu_callback
         :type bokeh.models.CustomJS
 '''
+
+
 def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: ColumnDataSource,
                                      table_dat: ColumnDataSource, taxonomic_unit: str, tax_selection: dict,
                                      menu_qseqid: MultiSelect, xaxis_menu: Select, yaxis_menu: Select,
@@ -909,6 +957,8 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
     
     
 '''
+
+
 def create_y_axis_menu(circle, axis, data_column):
     y_axis_menu = Select(options=['bitscore', 'pident', 'evalue', 'slen'],  # ,'slen'
                          value='pident',
@@ -925,9 +975,12 @@ def create_y_axis_menu(circle, axis, data_column):
     y_axis_menu.js_on_change('value', y_axis_menu_callback)
     return y_axis_menu
 
+
 '''create_x_axis_menu
 
 '''
+
+
 def create_x_axis_menu(circle, axis, data_column):
     x_axis_menu = Select(options=['bitscore', 'pident', 'evalue', 'slen'],  # ,'slen'
                          value='bitscore',
@@ -944,9 +997,12 @@ def create_x_axis_menu(circle, axis, data_column):
     x_axis_menu.js_on_change('value', x_axis_menu_callback)
     return x_axis_menu
 
+
 '''create_color_and_marker_dictionaries_for_bokeh_dataframe
 
 '''
+
+
 def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.DataFrame) -> tuple:
     try:
         # prepare distinct colors for the specified taxonomic unit
@@ -983,6 +1039,8 @@ def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.Dat
 '''create_qseqid_menu_callback
 
 '''
+
+
 def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSource, DbData: ColumnDataSource,
                                 taxonomic_unit: str, tax_menu: MultiSelect, xaxis_menu: MultiSelect,
                                 yaxis_menu: MultiSelect,
@@ -1078,8 +1136,10 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
 '''create_initial_bokeh_database_data
     
 '''
+
+
 def create_initial_bokeh_database_data(database: pd.DataFrame, data_selection: pd.DataFrame, taxcount_df: pd.DataFrame,
-                                       taxonomic_unit: str)->pd.DataFrame:
+                                       taxonomic_unit: str) -> pd.DataFrame:
     try:
         # unique database entries
         db_df = pd.DataFrame(database[taxonomic_unit].value_counts())
@@ -1111,6 +1171,8 @@ def create_initial_bokeh_database_data(database: pd.DataFrame, data_selection: p
 '''create_initial_bokeh_result_data
 
 '''
+
+
 def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: str) -> tuple:
     try:
         # RBH result dataframe
@@ -1140,6 +1202,8 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
 '''create_initial_bokeh_data_selection
 
 '''
+
+
 def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_unit: str):
     try:
         unique_tax = list(result_data[taxonomic_unit].unique())
@@ -1164,7 +1228,7 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
         taxcount_df['staxids'] = taxcount_df.index
         taxcount_df.index = pd.Index(range(len(taxcount_df)))
         taxid_to_taxonomic_unit = lambda taxid: \
-        data_selection[data_selection.staxids == taxid][taxonomic_unit].unique()[0]
+            data_selection[data_selection.staxids == taxid][taxonomic_unit].unique()[0]
         taxcount_df[taxonomic_unit] = taxcount_df.staxids.apply(taxid_to_taxonomic_unit)
         taxcount_df = pd.DataFrame(taxcount_df[taxonomic_unit].value_counts())
 
@@ -1178,19 +1242,22 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
             "[-] ERROR creating initial result dataframe selection for bokeh RBH result plot with exception: {}".format(
                 e))
 
+
 '''create_linked_bokeh_plot
 
     Main function for the interactive bokeh reciprocal result plots.
 
 '''
+
+
 def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: pd.DataFrame, taxonomic_unit: str,
-                               project_id: int) -> int:
+                             project_id: int) -> int:
     try:
         with open(logfile, 'w') as log:
-            #initializing output directories
+            # initializing output directories
             path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
             log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
-            #no static saving until now
+            # no static saving until now
             path_to_static_bokeh_plot = path_to_static_dir + "interactive_bokeh_plot.html"
             path_to_project_dir = BLAST_PROJECT_DIR + str(project_id) + '/' + "interactive_bokeh_plot.html"
 
@@ -1228,7 +1295,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             unique_qseqids = list(data_all['qseqid'].unique())
 
             # selection subset for initial plot data
-
 
             table = DataTable(source=DbData, width=390, height=275,
                               sizing_mode="scale_both", reorderable=True, sortable=True, fit_columns=True,
@@ -1500,13 +1566,10 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                             toolbar_location='right')
 
             output_file(filename=path_to_project_dir,
-                      title="Reciprocal BLAST Interactive Result Plot".format(
-                           taxonomic_unit))
+                        title="Reciprocal BLAST Interactive Result Plot".format(
+                            taxonomic_unit))
             save(grid)
 
         return 0
     except Exception as e:
         raise Exception("ERROR in producing bokeh plots for database statistics with exception: {}".format(e))
-
-
-

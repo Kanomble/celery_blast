@@ -1,16 +1,19 @@
-from os.path import isdir, isfile
-import pandas as pd
-from os import mkdir
-from django.db import models
-from django.contrib.auth.models import User
-from django_celery_results.models import TaskResult
-from blast_project.models import BlastSettings
-from refseq_transactions.models import BlastDatabase
-from .managers import OneWayBlastProjectManager, OneWayRemoteBlastProjectManager
-from django.db import IntegrityError
 from ast import literal_eval
+from os import mkdir
+from os.path import isdir, isfile
 
-#TODO documentation
+import pandas as pd
+from blast_project.models import BlastSettings
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from django.db import models
+from django_celery_results.models import TaskResult
+from refseq_transactions.models import BlastDatabase
+
+from .managers import OneWayBlastProjectManager, OneWayRemoteBlastProjectManager
+
+
+# TODO documentation
 class OneWayBlastProject(models.Model):
     project_title = models.CharField(
         max_length=200, blank=False, unique=True,
@@ -53,7 +56,7 @@ class OneWayBlastProject(models.Model):
 
     def __str__(self):
         return "One Way BLAST Project, created {} by {} with database {}".format(
-            self.timestamp,self.project_user.username, self.project_database.database_name
+            self.timestamp, self.project_user.username, self.project_database.database_name
         )
 
     def get_project_username(self):
@@ -85,8 +88,7 @@ class OneWayBlastProject(models.Model):
             snk_config_file.write('blastdb: ' + "\"" + "../../databases/" + str(
                 self.project_database.id) + "/" + self.project_database.get_pandas_table_name() + ".database\"\n")
             snk_config_file.write('query_sequence: ' + "\"" + self.project_query_sequences + "\"\n")
-            snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
-
+            snk_config_file.write('user_email: ' + str(self.project_user.email) + "\n")
 
             settings_dict = self.project_settings.get_values_as_dict()
 
@@ -105,6 +107,7 @@ class OneWayBlastProject(models.Model):
         This function is getting executed within the project_details_dashboard.html website.
 
     '''
+
     def read_query_information_table(self, filepath='media/one_way_blast/'):
         def clean_feature_column(features):
             new_feature_column = []
@@ -135,11 +138,11 @@ class OneWayBlastProject(models.Model):
             raise Exception(
                 "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
 
-#TODO documentation - on_delete=models.CASCADE!?
-class OneWayRemoteBlastProject(models.Model):
 
+# TODO documentation - on_delete=models.CASCADE!?
+class OneWayRemoteBlastProject(models.Model):
     BLAST_SEARCH_PROGRAMS = [('blastp', 'blastp'), ('blastn', 'blastn')]
-    BLAST_REMOTE_DATABASES = [('nr','nr'),('nt','nt')]
+    BLAST_REMOTE_DATABASES = [('nr', 'nr'), ('nt', 'nt')]
 
     r_project_title = models.CharField(
         max_length=200, blank=False, unique=True,
@@ -182,7 +185,7 @@ class OneWayRemoteBlastProject(models.Model):
         verbose_name="django_celery_results taskresult model for this project"
     )
 
-    #path to taxonomic node file ...
+    # path to taxonomic node file ...
     r_entrez_query = models.CharField(
         max_length=300,
         blank=True, null=True,
@@ -194,7 +197,7 @@ class OneWayRemoteBlastProject(models.Model):
 
     def __str__(self):
         return "One Way BLAST Project, created {} by {} with database {}".format(
-            self.r_timestamp,self.r_project_user.username, self.r_project_database
+            self.r_timestamp, self.r_project_user.username, self.r_project_database
         )
 
     def get_project_username(self):
@@ -208,7 +211,8 @@ class OneWayRemoteBlastProject(models.Model):
 
     def initialize_project_directory(self):
         # check if blast_project was previously created / check if media/blast_project directory exists
-        if (isdir('media/one_way_blast/remote_searches/' + str(self.id)) or isdir('media/one_way_blast/remote_searches/') == False):
+        if (isdir('media/one_way_blast/remote_searches/' + str(self.id)) or isdir(
+                'media/one_way_blast/remote_searches/') == False):
             raise IntegrityError("project directory exists")
         else:
             try:
@@ -223,11 +227,11 @@ class OneWayRemoteBlastProject(models.Model):
             snk_config_file = open('media/one_way_blast/remote_searches/' + str(self.id) + '/snakefile_config', 'w')
             # database path from media/blast_projects/project_id as working directory for snakemake
             snk_config_file.write('project_id: ' + str(self.id) + "\n")
-            snk_config_file.write('blastdb: '  + str(self.r_project_database) + "\n")
+            snk_config_file.write('blastdb: ' + str(self.r_project_database) + "\n")
             snk_config_file.write('query_sequence: ' + "\"" + self.r_project_query_sequences + "\"\n")
-            snk_config_file.write('search_strategy: ' + str(self.r_search_strategy) +"\n")
-            snk_config_file.write('entrez_query:'+"\n")
-            snk_config_file.write('user_email: '+str(self.r_project_user.email)+"\n")
+            snk_config_file.write('search_strategy: ' + str(self.r_search_strategy) + "\n")
+            snk_config_file.write('entrez_query:' + "\n")
+            snk_config_file.write('user_email: ' + str(self.r_project_user.email) + "\n")
 
             settings_dict = self.r_project_settings.get_values_as_dict()
 

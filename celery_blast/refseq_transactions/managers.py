@@ -1,8 +1,11 @@
 from django.db import models
+
+
 class BlastDatabaseManager(models.Manager):
     '''
     Functions returning Query-Sets
     '''
+
     def get_databases_with_executed_tasks(self):
         return self.filter(database_download_and_format_task__isnull=False)
 

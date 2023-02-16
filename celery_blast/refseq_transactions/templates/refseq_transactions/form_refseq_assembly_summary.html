@@ -1,21 +1,22 @@
-<form action="{% url 'download_refseq_assembly_summary' %}" method="post" onsubmit="showLoader('loading_div','whole_dashboard')">
+<form action="{% url 'download_refseq_assembly_summary' %}" method="post"
+      onsubmit="showLoader('loading_div','whole_dashboard')">
     {% csrf_token %}
     <div class="form-group">
 
         <a href="#" data-toggle="tooltip"
-            {% if refseq_exists %}
-                title="RefSeq assembly summary exists, but you can download a newer version!"
-            {% else %}
-                title="RefSeq assembly summary does not exists, download it by pressing the button!"
-            {% endif %}
+                {% if refseq_exists %}
+           title="RefSeq assembly summary exists, but you can download a newer version!"
+                {% else %}
+           title="RefSeq assembly summary does not exists, download it by pressing the button!"
+                {% endif %}
         >
 
             <input type="submit"
-                {% if not refseq_exists %}
+                    {% if not refseq_exists %}
                    value="Download Newest RefSeq Assembly Summary"
-               {% else %}
+                    {% else %}
                    value="Download RefSeq Assembly Summary"
-               {% endif %}
+                    {% endif %}
                    class="btn btn-primary btn-dark">
         </a>
 

@@ -1,103 +1,105 @@
 {% extends "base.html" %}
 
 {% block title %}
-BLAST Dashboard
+    BLAST Dashboard
 {% endblock %}
 
 {% block page_title %} Refseq Transaction Dashboard {% endblock %}
 {% block infoheader %} Refseq Transaction Dashboard {% endblock %}
 
 {% block page_header %}
-Welcome to your Refseq Transaction dashboard, {{request.user}}!
+    Welcome to your Refseq Transaction dashboard, {{ request.user }}!
 {% endblock %}
 
 {% block page_description %}
-Manage your refseq databases. This website allows transactions with the <a href="https://ftp.ncbi.nih.gov/genomes/refseq/">refseq database</a>.
-Particularly, the functions triggered by the form submit either interact with a previously downloaded <a href="https://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt">assembly_summary_refseq.txt</a>
-to create BLAST databases with the makeblastdb script, or they refresh the assembly_summary_refseq.txt file.
+    Manage your refseq databases. This website allows transactions with the
+    <a href="https://ftp.ncbi.nih.gov/genomes/refseq/">refseq database</a>.
+    Particularly, the functions triggered by the form submit either interact with a previously downloaded
+    <a href="https://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt">assembly_summary_refseq.txt</a>
+    to create BLAST databases with the makeblastdb script, or they refresh the assembly_summary_refseq.txt file.
 {% endblock %}
 
 
 {% block content %}
 
-<div class="container-fluid" id="whole_dashboard">
-    <div class="row">
-        <div class="col" style="text-align: right" >
-            {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
+    <div class="container-fluid" id="whole_dashboard">
+        <div class="row">
+            <div class="col" style="text-align: right">
+                {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
+            </div>
         </div>
+
+        {% if refseq_exists %}
+            <div class="dashboard_project_list_col" style="margin-bottom: 30px;" id="post_form_container">
+                {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
+            </div>
+        {% endif %}
+
+        {% if DownloadInProgressBlastDatabases.count > 0 %}
+            <div class="dashboard_project_list_col" style="margin-bottom: 30px">
+                {% include "refseq_transactions/table_download_in_progress_databases.html" %}
+            </div>
+        {% endif %}
+
+        {% if ActiveBlastDatabases.count > 0 %}
+            <div class="dashboard_project_list_col" style="margin-bottom: 30px">
+                {% include "refseq_transactions/table_active_blast_databases.html" %}
+            </div>
+        {% endif %}
+
+        {% if UnactiveBlastDatabases.count > 0 %}
+            <div class="dashboard_project_list_col" style="margin-bottom: 30px">
+                {% include "refseq_transactions/table_unactive_blast_databases.html" %}
+            </div>
+        {% endif %}
+
     </div>
-
-    {% if refseq_exists %}
-    <div class="dashboard_project_list_col" style="margin-bottom: 30px;" id="post_form_container">
-        {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
-    </div>
-    {% endif %}
-
-    {% if DownloadInProgressBlastDatabases.count > 0 %}
-        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
-            {% include "refseq_transactions/table_download_in_progress_databases.html" %}
-        </div>
-    {% endif %}
-
-    {% if ActiveBlastDatabases.count > 0 %}
-        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
-            {% include "refseq_transactions/table_active_blast_databases.html" %}
-        </div>
-    {% endif %}
-
-    {% if UnactiveBlastDatabases.count > 0 %}
-        <div class="dashboard_project_list_col" style="margin-bottom: 30px">
-            {% include "refseq_transactions/table_unactive_blast_databases.html" %}
-        </div>
-    {% endif %}
-
-</div>
 
 {% endblock %}
 
 {% block scripts %}
-<script>
-$(document).ready(function(){
-  $('#activeDatabasesTable').DataTable();
-  $('#unactiveDatabasesTable').DataTable();
-  $('[data-toggle="tooltip"]').tooltip();
-});
-</script>
+    <script>
+        $(document).ready(function () {
+            $('#activeDatabasesTable').DataTable();
+            $('#unactiveDatabasesTable').DataTable();
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
 
-{% if DownloadInProgressBlastDatabases.count > 0 %}
-    {% for database in DownloadInProgressBlastDatabases %}
-        <script>
-            (function() {
-                var status = $('.progress-{{database.id}}'),
-                poll = function() {
-                    jQuery.ajax({
-                        url: "{% url 'ajax_call_progress' database_id=database.id %}",
-                        dataType: 'json',
-                        type: 'get',
-                        success: function(data) { // check if available
-                            if ( data ) { // get and check data value
-                                status.text(data.progress); // get and print data string
-                                //console.log(data.progress)
-                                if(data.progress > 99){
-                                    status.text("DONE")
-                                    clearInterval(pollInterval); // optional: stop poll function
-                                } else if(data.progress == "ERROR"){
-                                    clearInterval(pollInterval);
+    {% if DownloadInProgressBlastDatabases.count > 0 %}
+        {% for database in DownloadInProgressBlastDatabases %}
+            <script>
+                (function () {
+                    var status = $('.progress-{{database.id}}'),
+                        poll = function () {
+                            jQuery.ajax({
+                                url: "{% url 'ajax_call_progress' database_id=database.id %}",
+                                dataType: 'json',
+                                type: 'get',
+                                success: function (data) { // check if available
+                                    if (data) { // get and check data value
+                                        status.text(data.progress); // get and print data string
+                                        //console.log(data.progress)
+                                        if (data.progress > 99) {
+                                            status.text("DONE")
+                                            clearInterval(pollInterval); // optional: stop poll function
+                                        } else if (data.progress == "ERROR") {
+                                            clearInterval(pollInterval);
+                                        }
+
+                                    }
+                                },
+                                error: function () { // error logging
+                                    status.text("error polling progress data")
                                 }
-
-                            }
-                         },
-                        error: function() { // error logging
-                            status.text("error polling progress data")
-                        }
-                    });
-                },
-                pollInterval = setInterval(function() { // run function every 5000 ms
-                    poll();
-                  }, 5000);
-                poll(); // also run function on init
-            })();
-        </script>
-    {% endfor %}
-{% endif %}
+                            });
+                        },
+                        pollInterval = setInterval(function () { // run function every 5000 ms
+                            poll();
+                        }, 5000);
+                    poll(); // also run function on init
+                })();
+            </script>
+        {% endfor %}
+    {% endif %}
 {% endblock %}

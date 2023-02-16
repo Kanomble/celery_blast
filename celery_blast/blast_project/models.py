@@ -12,8 +12,10 @@ from os import mkdir, listdir
 
 import pandas as pd
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
-#TODO USE THOSE paths for setting up the project directory and snakemake config file
-#from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR
+
+
+# TODO USE THOSE paths for setting up the project directory and snakemake config file
+# from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR
 
 class BlastSettings(models.Model):
     e_value = models.DecimalField(
@@ -40,14 +42,15 @@ class BlastSettings(models.Model):
             :type dict[str]=type(setting)
             
     '''
-    def values_as_fw_or_bw_dict(self,fwOrBw:str)->dict:
+
+    def values_as_fw_or_bw_dict(self, fwOrBw: str) -> dict:
         settings_dict = {
-            fwOrBw+'_e_value' : str(self.e_value),
-            fwOrBw+'_word_size' : str(self.word_size),
-            fwOrBw+'_num_threads' : str(self.num_threads),
-            fwOrBw+'_num_alignments' : str(self.num_alignments),
-            fwOrBw+'_max_target_seqs' : str(self.max_target_seqs),
-            fwOrBw+'_max_hsps' : str(self.max_hsps)
+            fwOrBw + '_e_value': str(self.e_value),
+            fwOrBw + '_word_size': str(self.word_size),
+            fwOrBw + '_num_threads': str(self.num_threads),
+            fwOrBw + '_num_alignments': str(self.num_alignments),
+            fwOrBw + '_max_target_seqs': str(self.max_target_seqs),
+            fwOrBw + '_max_hsps': str(self.max_hsps)
         }
         return settings_dict
 
@@ -59,13 +62,14 @@ class BlastSettings(models.Model):
             :type dict[str]=type(settings)
             
     '''
+
     def get_values_as_dict(self):
         settings_dict = {
-            'e_value' : str(self.e_value),
-            'word_size' : str(self.word_size),
-            'num_threads' : str(self.num_threads),
-            'num_alignments' : str(self.num_alignments),
-            'max_hsps' : str(self.max_hsps)
+            'e_value': str(self.e_value),
+            'word_size': str(self.word_size),
+            'num_threads': str(self.num_threads),
+            'num_alignments': str(self.num_alignments),
+            'max_hsps': str(self.max_hsps)
         }
         return settings_dict
 
@@ -105,7 +109,7 @@ class BlastProject(models.Model):
         verbose_name="settings for the backward BLAST execution",
         related_name='project_backward_settings')
 
-    #each project can have one forward BlastDatabase
+    # each project can have one forward BlastDatabase
     project_forward_database = models.ForeignKey(
         BlastDatabase,
         on_delete=models.CASCADE,
@@ -149,7 +153,6 @@ class BlastProject(models.Model):
             self.timestamp, self.project_user.username,
             self.project_forward_database.database_name)
 
-
     '''get_list_of_query_sequences
         
         Returns a list of query sequences without the additional .version of the query.
@@ -162,6 +165,7 @@ class BlastProject(models.Model):
         :returns qseqids
             :type list[str]
     '''
+
     def get_list_of_query_sequences(self, filepath=BLAST_PROJECT_DIR):
         try:
             query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
@@ -208,7 +212,8 @@ class BlastProject(models.Model):
         it directly creates a directory for the project and a directory for result images in the static folder
             
     '''
-    def initialize_project_directory(self,filepath=BLAST_PROJECT_DIR):
+
+    def initialize_project_directory(self, filepath=BLAST_PROJECT_DIR):
         # check if blast_project was previously created / check if media/blast_project directory exists
         if (isdir(filepath + str(self.id)) == True):
             raise IntegrityError("project directory exists")
@@ -217,11 +222,10 @@ class BlastProject(models.Model):
         else:
             try:
                 mkdir(filepath + str(self.id))
-                if(isdir('static/images/result_images/'+str(self.id)) == False):
-                    mkdir('static/images/result_images/'+str(self.id))
+                if (isdir('static/images/result_images/' + str(self.id)) == False):
+                    mkdir('static/images/result_images/' + str(self.id))
             except Exception as e:
                 raise IntegrityError("couldnt create project directory : {}".format(e))
-
 
     '''write_snakemake_configuration_file
         
@@ -232,33 +236,38 @@ class BlastProject(models.Model):
         :params filepath=BLAST_PROJECT_DIR
             :type str
     '''
+
     def write_snakemake_configuration_file(self, filepath=BLAST_PROJECT_DIR):
         try:
-            with open(filepath + str(self.id)+'/snakefile_config','w') as snk_config_file:
-                #database path from media/blast_projects/project_id as working directory for snakemake
-                snk_config_file.write('project_id: '+str(self.id)+"\n")
-                snk_config_file.write('blastdb: ' +"\"" +"../../databases/" + str(self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
-                snk_config_file.write('backwarddb: '+"\""+"../../databases/"+str(self.project_backward_database.id) + "/" + self.project_backward_database.get_pandas_table_name() + ".database\"\n")
-                snk_config_file.write('query_sequence: '+"\""+self.project_query_sequences+"\"\n")
-                snk_config_file.write('bw_taxid: '+str(self.species_name_for_backward_blast[1])+"\n")
-                snk_config_file.write('user_email: '+str(self.project_user.email)+"\n")
-                bw_dict=self.project_backward_settings.values_as_fw_or_bw_dict('bw')
-                fw_dict=self.project_forward_settings.values_as_fw_or_bw_dict('fw')
+            with open(filepath + str(self.id) + '/snakefile_config', 'w') as snk_config_file:
+                # database path from media/blast_projects/project_id as working directory for snakemake
+                snk_config_file.write('project_id: ' + str(self.id) + "\n")
+                snk_config_file.write('blastdb: ' + "\"" + "../../databases/" + str(
+                    self.project_forward_database.id) + "/" + self.project_forward_database.get_pandas_table_name() + ".database\"\n")
+                snk_config_file.write('backwarddb: ' + "\"" + "../../databases/" + str(
+                    self.project_backward_database.id) + "/" + self.project_backward_database.get_pandas_table_name() + ".database\"\n")
+                snk_config_file.write('query_sequence: ' + "\"" + self.project_query_sequences + "\"\n")
+                snk_config_file.write('bw_taxid: ' + str(self.species_name_for_backward_blast[1]) + "\n")
+                snk_config_file.write('user_email: ' + str(self.project_user.email) + "\n")
+                bw_dict = self.project_backward_settings.values_as_fw_or_bw_dict('bw')
+                fw_dict = self.project_forward_settings.values_as_fw_or_bw_dict('fw')
 
                 for key_bw in bw_dict.keys():
-                    snk_config_file.write(key_bw+': '+bw_dict[key_bw]+"\n")
+                    snk_config_file.write(key_bw + ': ' + bw_dict[key_bw] + "\n")
 
                 for key_fw in fw_dict.keys():
-                    snk_config_file.write(key_fw+': '+fw_dict[key_fw]+"\n")
+                    snk_config_file.write(key_fw + ': ' + fw_dict[key_fw] + "\n")
 
         except Exception as e:
-            raise IntegrityError("couldnt write snakemake configuration file in directory with exception : {}".format(e))
+            raise IntegrityError(
+                "couldnt write snakemake configuration file in directory with exception : {}".format(e))
 
     '''read_query_information_table
         
         This function is getting executed within the project_details_dashboard.html website.
         
     '''
+
     def read_query_information_table(self, filepath=BLAST_PROJECT_DIR):
         def clean_feature_column(features):
             new_feature_column = []
@@ -267,7 +276,7 @@ class BlastProject(models.Model):
                 for idx, feature in enumerate(literal_eval(features)):
                     if idx % 2 == 0:
                         result_string += feature + " "
-                    #TODO add functional linebreak
+                    # TODO add functional linebreak
                     elif idx % 2 == 1:
                         result_string += feature + "     "
                 new_feature_column.append(result_string)
@@ -293,6 +302,7 @@ class BlastProject(models.Model):
         
         This function checks if the reciprocal_result.html file is in the project directory or not.
     '''
+
     def check_for_reciprocal_result_table(self):
         if isfile(self.get_project_dir() + '/' + 'reciprocal_results.html'):
             return True
@@ -307,6 +317,7 @@ class BlastProject(models.Model):
         :returns filelist
             :type list
     '''
+
     def return_list_of_all_logfiles(self) -> list:
         try:
             path_to_project_dir = BLAST_PROJECT_DIR + str(self.id) + "/log"
@@ -326,5 +337,3 @@ class BlastProject(models.Model):
         except Exception as e:
             raise Exception(
                 "[-] ERROR creating list of all logfiles for project: {} with exception: {}".format(self.id, e))
-
-

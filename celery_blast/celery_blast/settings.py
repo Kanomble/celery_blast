@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
@@ -25,7 +24,7 @@ SECRET_KEY = '=0@uu%q3xsu%w+$h)p7(f*5&1fxgw8#x+n^(t)kt$17!(n1*-y'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ '*']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -59,7 +58,8 @@ ROOT_URLCONF = 'celery_blast.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['celery_blast/templates','static/images/result_images','media/blast_projects','media/one_way_blast','media/one_way_blast/remote_searches','media'],
+        'DIRS': ['celery_blast/templates', 'static/images/result_images', 'media/blast_projects', 'media/one_way_blast',
+                 'media/one_way_blast/remote_searches', 'media'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,7 +74,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'celery_blast.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
@@ -88,8 +87,6 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -109,7 +106,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
@@ -123,7 +119,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 STATIC_URL = '/static/'
@@ -136,14 +131,13 @@ STATICFILES_DIRS = (
 
 FILE_UPLOAD_TEMP_DIR = '/tmp'
 
-#celery settings from celery projects website and following github repo: https://github.com/chrisk314/django-celery-docker-example/tree/master/mysite/settings
-CELERY_BROKER_URL= 'pyamqp://rabbitmq:5672'
+# celery settings from celery projects website and following github repo: https://github.com/chrisk314/django-celery-docker-example/tree/master/mysite/settings
+CELERY_BROKER_URL = 'pyamqp://rabbitmq:5672'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
-
-CELERY_TASK_SOFT_TIME_LIMIT = 345600 #2 * 60min = 120min * 60sec = 7200sec
+CELERY_TASK_SOFT_TIME_LIMIT = 345600  # 2 * 60min = 120min * 60sec = 7200sec
 CELERY_TASK_TIME_LIMIT = 345660
 SUBPROCESS_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT - 5
 
@@ -162,6 +156,5 @@ STATIC_RESULT_IMAGES = STATIC_URL + 'images/result_images/'
 BLAST_PROJECT_DIR = 'media/blast_projects/'
 ONE_WAY_BLAST_PROJECT_DIR = 'media/one_way_blast/'
 BLAST_DATABASE_DIR = 'media/databases/'
-ONE_WAY_BLAST_DIR = 'media/one_way_blast/'
 CDD_DIR = 'media/databases/CDD/Cdd'
 ESEARCH_OUTPUT = 'media/esearch_output/'

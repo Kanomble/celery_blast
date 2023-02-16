@@ -7,227 +7,244 @@
 {% block infoheader %} External Tools {% endblock %}
 
 {% block page_description %}
-<h2> External Tools </h2>
-<br>
+    <h2> External Tools </h2>
+    <br>
     <h4> Multiple Sequence Alignment with MAFFT </h4>
     <ul>
-        <li> MAFFT can be used for conducting a multiple sequence alignment with all orthologous sequences </li>
+        <li> MAFFT can be used for conducting a multiple sequence alignment with all orthologous sequences</li>
     </ul>
 
     <h4> Phylogenetic Tree inference with FastTree </h4>
     <ul>
-        <li> FastTree can be used directly after MAFFT for the inference of ml phylogenetic trees </li>
+        <li> FastTree can be used directly after MAFFT for the inference of ml phylogenetic trees</li>
     </ul>
 {% endblock %}
 
 {% block page_header %}
-<div class="container-fluid">
-    MSA and Phylogenetic Inference
-    <p style="text-align: center;font-size: small"> Execute Multiple Sequence Alignments with mafft and phylogenetic tree inference with fasttree, {{ request.user }}!</p>
-</div>
+    <div class="container-fluid">
+        MSA and Phylogenetic Inference
+        <p style="text-align: center;font-size: small"> Execute Multiple Sequence Alignments with mafft and phylogenetic
+            tree inference with fasttree, {{ request.user }}!</p>
+    </div>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard_project_list_col">
-    <div class="table-responsive">
-        <table class="table table-hover" id="externalTools">
-            <thead>
+    <div class="dashboard_project_list_col">
+        <div class="table-responsive">
+            <table class="table table-hover" id="externalTools">
+                <thead>
                 <tr>
                     <th>Accession ID</th>
                     <th>MSA</th>
                     <th>Phylogeny</th>
                     <!-- <th>Timestamp</th> -->
                     <th>Tree</th>
-                    <th> </th>
+                    <th></th>
                     <th>Phylogenetic information</th>
                 </tr>
-            </thead>
-            <tbody>
+                </thead>
+                <tbody>
                 {% for qseq in qseqids.query_sequences.get_queryset %}
-                <tr>
-                    <td>
-                        {{ qseq.query_accession_id }}
-                    </td>
-                    <td>
-                        <form id="msa_form_{{ qseq.id }}" style="display: block" action='{% url 'perform_simple_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
-                              method="POST">
-                            {% csrf_token %}
-                            <input type="submit" value="Conduct MSA" class="btn btn-dark">
-                        </form>
+                    <tr>
+                        <td>
+                            {{ qseq.query_accession_id }}
+                        </td>
+                        <td>
+                            <form id="msa_form_{{ qseq.id }}" style="display: block"
+                                  action='{% url 'perform_simple_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                  method="POST">
+                                {% csrf_token %}
+                                <input type="submit" value="Conduct MSA" class="btn btn-dark">
+                            </form>
 
-                        <div id="msa_loading_div_{{ qseq.id }}" style="display: none;text-align:right;float:right;top: 10px; right: 10px;" class="container">
-                            <iframe src="https://giphy.com/embed/11FuEnXyGsXFba" style="border:0px" class="giphy-embed" allowFullScreen></iframe>
-                            <a href="https://giphy.com/gifs/icon-loading-beaker-11FuEnXyGsXFba"></a>
-                        </div>
-                    </td>
-                    <td>
-                        {% if qseq.multiple_sequence_alignment_task == None %}
-                            <button type="button" class="btn btn-secondary">Before PhyloTree construction, perform MSA</button>
-                        {% elif qseq.multiple_sequence_alignment_task != None %}
-                        <form id="phylo_form_{{ qseq.id }}" action='{% url 'perform_fasttree_phylobuild' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
-                           method="POST" style="display: block">
-                        {% csrf_token %}
-                        <input type="submit"
-                               {% if not qseq.phylogenetic_tree_construction_task %}
-                                  value="Build Phylogenetic Tree" class="btn btn-dark"
-                               {% elif qseq.phylogenetic_tree_construction_task %}
-                                    {% if qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %} value="ReBuild Phylogenetic Tree" class="btn btn-warning"
-                                    {% elif qseq.phylogenetic_tree_construction_task.status == 'FAILURE' %} value="Error in previous phylo task, ReBuild Phylo Tree" class="btn btn-danger"
-                                    {% endif %}
-                               {% endif %}>
-                        </form>
+                            <div id="msa_loading_div_{{ qseq.id }}"
+                                 style="display: none;text-align:right;float:right;top: 10px; right: 10px;"
+                                 class="container">
+                                <iframe src="https://giphy.com/embed/11FuEnXyGsXFba" style="border:0px"
+                                        class="giphy-embed" allowFullScreen></iframe>
+                                <a href="https://giphy.com/gifs/icon-loading-beaker-11FuEnXyGsXFba"></a>
+                            </div>
+                        </td>
+                        <td>
+                            {% if qseq.multiple_sequence_alignment_task == None %}
+                                <button type="button" class="btn btn-secondary">Before PhyloTree construction, perform
+                                    MSA
+                                </button>
+                            {% elif qseq.multiple_sequence_alignment_task != None %}
+                                <form id="phylo_form_{{ qseq.id }}"
+                                      action='{% url 'perform_fasttree_phylobuild' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
+                                      method="POST" style="display: block">
+                                    {% csrf_token %}
+                                    <input type="submit"
+                                            {% if not qseq.phylogenetic_tree_construction_task %}
+                                           value="Build Phylogenetic Tree" class="btn btn-dark"
+                                            {% elif qseq.phylogenetic_tree_construction_task %}
+                                                {% if qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
+                                           value="ReBuild Phylogenetic Tree" class="btn btn-warning"
+                                                {% elif qseq.phylogenetic_tree_construction_task.status == 'FAILURE' %}
+                                           value="Error in previous phylo task, ReBuild Phylo Tree"
+                                           class="btn btn-danger"
+                                                {% endif %}
+                                            {% endif %}>
+                                </form>
 
-                        <div id="phylo_loading_div_{{ qseq.id }}" class="container" style="display:none;text-align:right;float:right;top: 10px; right: 10px;">
-                            <iframe src="https://giphy.com/embed/11FuEnXyGsXFba" style="border:0px" class="giphy-embed" allowFullScreen></iframe>
-                            <a href="https://giphy.com/gifs/icon-loading-beaker-11FuEnXyGsXFba"></a>
-                        </div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-                            {% load static %}
-                            <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.svg">
-                                <button class="btn btn-dark"> View Phylogeny </button>
-                            </a>
-                            <!-- <iframe src="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}/target_sequences.html"> </iframe> -->
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-                        <a href="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}_target_sequences.svg" download="{{project_id}}/{{ qseq.query_accession_id }}_target_sequences">
-                            <button class="btn btn-dark"> Download Phylogeny </button>
-                        </a>
-                        {% endif %}
-                    </td>
-                    <td> {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-                        <a class="btn btn-dark" href="{% url 'phylogenetic_information' project_id=project_id query_sequence_id=qseq.query_accession_id %}"> Phylogenetic Information
-                        </a>
-                        {% endif %}
-                    </td>
-                </tr>
+                                <div id="phylo_loading_div_{{ qseq.id }}" class="container"
+                                     style="display:none;text-align:right;float:right;top: 10px; right: 10px;">
+                                    <iframe src="https://giphy.com/embed/11FuEnXyGsXFba" style="border:0px"
+                                            class="giphy-embed" allowFullScreen></iframe>
+                                    <a href="https://giphy.com/gifs/icon-loading-beaker-11FuEnXyGsXFba"></a>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
+                                {% load static %}
+                                <a href="{% static '/images/result_images' %}/{{ project_id }}/{{ qseq.query_accession_id }}_target_sequences.svg">
+                                    <button class="btn btn-dark"> View Phylogeny</button>
+                                </a>
+                                <!-- <iframe src="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}/target_sequences.html"> </iframe> -->
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
+                                <a href="{% static '/images/result_images' %}/{{ project_id }}/{{ qseq.query_accession_id }}_target_sequences.svg"
+                                   download="{{ project_id }}/{{ qseq.query_accession_id }}_target_sequences">
+                                    <button class="btn btn-dark"> Download Phylogeny</button>
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
+                                <a class="btn btn-dark"
+                                   href="{% url 'phylogenetic_information' project_id=project_id query_sequence_id=qseq.query_accession_id %}">
+                                    Phylogenetic Information
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-$(document).ready(function() {
-    $('#externalTools').DataTable();
-    msaPhyloTasks.style.display = "block";
+    <script>
+        $(document).ready(function () {
+            $('#externalTools').DataTable();
+            msaPhyloTasks.style.display = "block";
 
-} );
-</script>
-<script>
-{% for qseq in qseqids.query_sequences.get_queryset %}
-    {% if qseq.multiple_sequence_alignment_task.status == 'PROGRESS' %}
-        (function() {
+        });
+    </script>
+    <script>
+        {% for qseq in qseqids.query_sequences.get_queryset %}
+            {% if qseq.multiple_sequence_alignment_task.status == 'PROGRESS' %}
+                (function () {
 
-            var divElementToHide = document.getElementById("msa_loading_div_{{ qseq.id }}");
-            var formElementToShow = document.getElementById("msa_form_{{ qseq.id }}");
-            formElementToShow.style.display = "none";
-            divElementToHide.style.display = "block";
-            poll = function() {
-                jQuery.ajax({
-                    url: "{% url 'ajax_call_progress_msa_task' query_sequence_id=qseq.id %}",
-                    dataType: 'json',
-                    type: 'GET',
-                    success: function(data) { // check if available
-                        if ( data ) { // get and check data value
-                            //status.text(data.progress); // get and print data string
-                            console.log(data.progress)
-                            if(data.progress == "SUCCESS"){
-                                divElementToHide.style.display = "none";
-                                formElementToShow.style.display = "block";
-                                clearInterval(pollInterval); // optional: stop poll function
-                            } else if(data.progress == "FAILURE"){
-                                divElementToHide.style.display = "none";
-                                formElementToShow.style.display = "block";
-                                clearInterval(pollInterval)
+                    var divElementToHide = document.getElementById("msa_loading_div_{{ qseq.id }}");
+                    var formElementToShow = document.getElementById("msa_form_{{ qseq.id }}");
+                    formElementToShow.style.display = "none";
+                    divElementToHide.style.display = "block";
+                    poll = function () {
+                        jQuery.ajax({
+                            url: "{% url 'ajax_call_progress_msa_task' query_sequence_id=qseq.id %}",
+                            dataType: 'json',
+                            type: 'GET',
+                            success: function (data) { // check if available
+                                if (data) { // get and check data value
+                                    //status.text(data.progress); // get and print data string
+                                    console.log(data.progress)
+                                    if (data.progress == "SUCCESS") {
+                                        divElementToHide.style.display = "none";
+                                        formElementToShow.style.display = "block";
+                                        clearInterval(pollInterval); // optional: stop poll function
+                                    } else if (data.progress == "FAILURE") {
+                                        divElementToHide.style.display = "none";
+                                        formElementToShow.style.display = "block";
+                                        clearInterval(pollInterval)
+                                    }
+
+                                }
+                            },
+                            error: function () { // error logging
+                                console.log('Error!');
                             }
+                        });
+                    },
+                        pollInterval = setInterval(function () { // run function every 5000 ms
+                            poll();
+                        }, 5000);
+                    poll(); // also run function on init
+                })();
+            {% elif qseq.multiple_sequence_alignment_task.status == 'SUCCESS' %}
+                var divElementToHide = document.getElementById("msa_loading_div_{{ qseq.id }}");
+                var formElementToShow = document.getElementById("msa_form_{{ qseq.id }}");
+                divElementToHide.style.display = "none";
+                formElementToShow.style.display = "block";
+            {% elif qseq.multiple_sequence_alignment_task == None %}
+                var divElementToHide = document.getElementById("msa_loading_div_{{ qseq.id }}");
+                var formElementToShow = document.getElementById("msa_form_{{ qseq.id }}");
+                divElementToHide.style.display = "none";
+                formElementToShow.style.display = "block";
+            {% endif %}
+        {% endfor %}
+    </script>
 
-                        }
-                     },
-                    error: function() { // error logging
-                        console.log('Error!');
-                    }
-                });
-            },
-            pollInterval = setInterval(function() { // run function every 5000 ms
-                poll();
-              }, 5000);
-            poll(); // also run function on init
-        })();
-    {% elif qseq.multiple_sequence_alignment_task.status == 'SUCCESS' %}
-        var divElementToHide = document.getElementById("msa_loading_div_{{ qseq.id }}");
-        var formElementToShow = document.getElementById("msa_form_{{ qseq.id }}");
-        divElementToHide.style.display = "none";
-        formElementToShow.style.display = "block";
-    {% elif qseq.multiple_sequence_alignment_task == None %}
-        var divElementToHide = document.getElementById("msa_loading_div_{{ qseq.id }}");
-        var formElementToShow = document.getElementById("msa_form_{{ qseq.id }}");
-        divElementToHide.style.display = "none";
-        formElementToShow.style.display = "block";
-    {% endif %}
-{% endfor %}
-</script>
+    <script>
+        {% for qseq in qseqids.query_sequences.get_queryset %}
+            {% if qseq.multiple_sequence_alignment_task != None %}
+                {% if qseq.phylogenetic_tree_construction_task.status == 'PROGRESS' %}
+                    (function () {
+                        var divElementToHide = document.getElementById("phylo_loading_div_{{ qseq.id }}");
+                        var formElementToShow = document.getElementById("phylo_form_{{ qseq.id }}");
+                        formElementToShow.style.display = "none";
+                        divElementToHide.style.display = "block";
+                        console.log("progress");
 
-<script>
-{% for qseq in qseqids.query_sequences.get_queryset %}
-    {% if qseq.multiple_sequence_alignment_task != None %}
-    {% if qseq.phylogenetic_tree_construction_task.status == 'PROGRESS' %}
-        (function() {
-            var divElementToHide = document.getElementById("phylo_loading_div_{{ qseq.id }}");
-            var formElementToShow = document.getElementById("phylo_form_{{ qseq.id }}");
-            formElementToShow.style.display = "none";
-            divElementToHide.style.display = "block";
-            console.log("progress");
+                        poll = function () {
+                            jQuery.ajax({
+                                url: "{% url 'ajax_call_progress_phylogeny_task' query_sequence_id=qseq.id %}",
+                                dataType: 'json',
+                                type: 'GET',
+                                success: function (data) { // check if available
+                                    if (data) { // get and check data value
+                                        //status.text(data.progress); // get and print data string
+                                        console.log(data.progress)
+                                        if (data.progress == "SUCCESS") {
+                                            divElementToHide.style.display = "none";
+                                            formElementToShow.style.display = "block";
+                                            clearInterval(pollInterval); // optional: stop poll function
+                                        } else if (data.progress == "FAILURE") {
+                                            divElementToHide.style.display = "none";
+                                            formElementToShow.style.display = "block";
+                                            clearInterval(pollInterval)
+                                        }
 
-            poll = function() {
-                jQuery.ajax({
-                    url: "{% url 'ajax_call_progress_phylogeny_task' query_sequence_id=qseq.id %}",
-                    dataType: 'json',
-                    type: 'GET',
-                    success: function(data) { // check if available
-                        if ( data ) { // get and check data value
-                            //status.text(data.progress); // get and print data string
-                            console.log(data.progress)
-                            if(data.progress == "SUCCESS"){
-                                divElementToHide.style.display = "none";
-                                formElementToShow.style.display = "block";
-                                clearInterval(pollInterval); // optional: stop poll function
-                            } else if(data.progress == "FAILURE"){
-                                divElementToHide.style.display = "none";
-                                formElementToShow.style.display = "block";
-                                clearInterval(pollInterval)
-                            }
-
-                        }
-                     },
-                    error: function() { // error logging
-                        console.log('Error!');
-                    }
-                });
-            },
-            pollInterval = setInterval(function() { // run function every 5000 ms
-                poll();
-              }, 5000);
-            poll(); // also run function on init
-        })();
-    {% elif qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-        var divElementToHide = document.getElementById("phylo_loading_div_{{ qseq.id }}");
-        var formElementToShow = document.getElementById("phylo_form_{{ qseq.id }}");
-        divElementToHide.style.display = "none";
-        formElementToShow.style.display = "block";
-    {% elif qseq.phylogenetic_tree_construction_task == None %}
-        var divElementToHide = document.getElementById("phylo_loading_div_{{ qseq.id }}");
-        var formElementToShow = document.getElementById("phylo_form_{{ qseq.id }}");
-        divElementToHide.style.display = "none";
-        formElementToShow.style.display = "block";
-    {% endif %}
-    {% endif %}
-{% endfor %}
-</script>
+                                    }
+                                },
+                                error: function () { // error logging
+                                    console.log('Error!');
+                                }
+                            });
+                        },
+                            pollInterval = setInterval(function () { // run function every 5000 ms
+                                poll();
+                            }, 5000);
+                        poll(); // also run function on init
+                    })();
+                {% elif qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
+                    var divElementToHide = document.getElementById("phylo_loading_div_{{ qseq.id }}");
+                    var formElementToShow = document.getElementById("phylo_form_{{ qseq.id }}");
+                    divElementToHide.style.display = "none";
+                    formElementToShow.style.display = "block";
+                {% elif qseq.phylogenetic_tree_construction_task == None %}
+                    var divElementToHide = document.getElementById("phylo_loading_div_{{ qseq.id }}");
+                    var formElementToShow = document.getElementById("phylo_form_{{ qseq.id }}");
+                    divElementToHide.style.display = "none";
+                    formElementToShow.style.display = "block";
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </script>
 {% endblock %}

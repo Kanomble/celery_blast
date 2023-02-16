@@ -1,9 +1,11 @@
-from django import forms
-from blast_project.py_django_db_services import get_all_succeeded_databases
-from blast_project.py_biopython import fetch_protein_records
 from string import punctuation, ascii_letters
 
-#TODO documentation
+from blast_project.py_biopython import fetch_protein_records
+from blast_project.py_django_db_services import get_all_succeeded_databases
+from django import forms
+
+
+# TODO documentation
 class OneWayProjectCreationForm(forms.Form):
     class BlastDatabaseModelChoiceField(forms.ModelChoiceField):
         def label_from_instance(self, blast_database):
@@ -17,10 +19,10 @@ class OneWayProjectCreationForm(forms.Form):
     query_sequence_file = forms.FileField(
         required=False,
         error_messages={
-            'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
+            'required': "Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
 
     query_sequence_text = forms.CharField(
-        label="Query Sequence IDs",max_length=800,required=False
+        label="Query Sequence IDs", max_length=800, required=False
     )
 
     project_database = BlastDatabaseModelChoiceField(
@@ -43,26 +45,29 @@ class OneWayProjectCreationForm(forms.Form):
         query_sequences = cleaned_data['query_sequence_text']
         user_email = cleaned_data['user_email']
 
-        #upload a query file or specify valid protein identifiers
+        # upload a query file or specify valid protein identifiers
         if query_file is None and query_sequences == '':
-            self.add_error('query_sequence_file',"please upload a fasta file containing your sequences or specify valid protein identifier")
+            self.add_error('query_sequence_file',
+                           "please upload a fasta file containing your sequences or specify valid protein identifier")
 
-        #query file was uploaded
+        # query file was uploaded
         if query_file is not None:
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-                raise self.add_error('query_sequence_file',"please upload only fasta files!")
+                raise self.add_error('query_sequence_file', "please upload only fasta files!")
 
             if len(query_file.name.split(".")) != 2:
-                raise self.add_error('query_sequence_file',"there are no dots allowed except the filetype delimiter")
+                raise self.add_error('query_sequence_file', "there are no dots allowed except the filetype delimiter")
             else:
                 filename = query_file.name.split(".")[0]
                 for character in filename:
                     if character in punctuation:
                         if character != '_' and character != '-':
-                            raise self.add_error('query_sequence_file',"bad character: \"{}\" in query file name".format(character))
+                            raise self.add_error('query_sequence_file',
+                                                 "bad character: \"{}\" in query file name".format(character))
                     if character not in ascii_letters:
                         if character != '_' and character != '-':
-                            raise self.add_error('query_sequence_file',"bad character: \"{}\" in query file name".format(character))
+                            raise self.add_error('query_sequence_file',
+                                                 "bad character: \"{}\" in query file name".format(character))
 
             header = []
             for chunk in query_file.chunks():
@@ -87,19 +92,20 @@ class OneWayProjectCreationForm(forms.Form):
             # check string for invalid characters
             query_sequences = query_sequences.replace(" ", "").split(',')
             try:
-                proteins, errors = fetch_protein_records(query_sequences,user_email)
+                proteins, errors = fetch_protein_records(query_sequences, user_email)
                 if len(errors) > 0:
                     self.add_error('query_sequence_text', 'following sequences are unavailable: {}'.format(errors))
                 cleaned_data['query_sequence_text'] = proteins
             except Exception as e:
-                self.add_error("query_sequence_text","please provide valid protein identifiers")
+                self.add_error("query_sequence_text", "please provide valid protein identifiers")
         else:
             self.add_error('query_sequence_text',
                            "please upload a fasta file containing your sequences or specify valid protein identifier")
 
         return cleaned_data
 
-#TODO documentation
+
+# TODO documentation
 class BlastSettingsForm(forms.Form):
     e_value = forms.FloatField(
         label="E-Value", initial=0.001)
@@ -114,20 +120,20 @@ class BlastSettingsForm(forms.Form):
     )
 
 
-#TODO documentation
+# TODO documentation
 class OneWayRemoteProjectCreationForm(forms.Form):
-
-    BLAST_SEARCH_PROGRAMS = [('blastp', 'search against protein databases'), ('blastn', 'search against nucleotide databases')]
+    BLAST_SEARCH_PROGRAMS = [('blastp', 'search against protein databases'),
+                             ('blastn', 'search against nucleotide databases')]
     BLAST_REMOTE_DATABASES = [
-        ( 'nr','none redundant proteins'),
-        ('nt','none redundant dna'),
-        ('env_nr','nr for not yet known organisms (env_nr)'),
-        ('env_nt','nt for not yet known organisms (env_nt)'),
-        ('refseq_protein','refseq protein database'),
-        ('refseq_rna','refseq rna database'),
-        ('refseq_select_prot','refseq selected protein database'),
-        ('refseq_select_rna','refseq selected rna database'),
-        ('swissprot','protein sequences from the swissprot database')]
+        ('nr', 'none redundant proteins'),
+        ('nt', 'none redundant dna'),
+        ('env_nr', 'nr for not yet known organisms (env_nr)'),
+        ('env_nt', 'nt for not yet known organisms (env_nt)'),
+        ('refseq_protein', 'refseq protein database'),
+        ('refseq_rna', 'refseq rna database'),
+        ('refseq_select_prot', 'refseq selected protein database'),
+        ('refseq_select_rna', 'refseq selected rna database'),
+        ('swissprot', 'protein sequences from the swissprot database')]
 
     r_project_title = forms.CharField(
         label="Project title",
@@ -137,7 +143,7 @@ class OneWayRemoteProjectCreationForm(forms.Form):
     r_query_sequence_file = forms.FileField(
         required=False,
         error_messages={
-            'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
+            'required': "Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
 
     r_query_sequence_text = forms.CharField(
         label="Query Sequence IDs",
@@ -175,26 +181,29 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         query_sequences = cleaned_data['r_query_sequence_text']
         user_email = cleaned_data['r_user_email']
 
-        #upload a query file or specify valid protein identifiers
+        # upload a query file or specify valid protein identifiers
         if query_file == None and query_sequences == '':
-            self.add_error('r_query_sequence_file',"please upload a fasta file containing your sequences or specify valid protein identifier")
+            self.add_error('r_query_sequence_file',
+                           "please upload a fasta file containing your sequences or specify valid protein identifier")
 
-        #query file was uploaded
+        # query file was uploaded
         if query_file != None:
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-                raise self.add_error('r_query_sequence_file',"please upload only fasta files!")
+                raise self.add_error('r_query_sequence_file', "please upload only fasta files!")
 
             if len(query_file.name.split(".")) != 2:
-                raise self.add_error('r_query_sequence_file',"there are no dots allowed except the filetype delimiter")
+                raise self.add_error('r_query_sequence_file', "there are no dots allowed except the filetype delimiter")
             else:
                 filename = query_file.name.split(".")[0]
                 for character in filename:
                     if character in punctuation:
                         if character != '_' and character != '-':
-                            raise self.add_error('r_query_sequence_file',"bad character: \"{}\" in query file name".format(character))
+                            raise self.add_error('r_query_sequence_file',
+                                                 "bad character: \"{}\" in query file name".format(character))
                     if character not in ascii_letters:
                         if character != '_' and character != '-':
-                            raise self.add_error('r_query_sequence_file',"bad character: \"{}\" in query file name".format(character))
+                            raise self.add_error('r_query_sequence_file',
+                                                 "bad character: \"{}\" in query file name".format(character))
 
             header = []
             for chunk in query_file.chunks():
@@ -209,7 +218,7 @@ class OneWayRemoteProjectCreationForm(forms.Form):
 
             if len(header) > 300:
                 self.add_error('r_query_sequence_file', 'You try to infer orthologs for more than 300 query sequences,'
-                                                      ' this is not allowed, consider to separate the query sequences.')
+                                                        ' this is not allowed, consider to separate the query sequences.')
 
             if len(header) != len(set(header)):
                 self.add_error('r_query_sequence_file',
@@ -219,15 +228,14 @@ class OneWayRemoteProjectCreationForm(forms.Form):
             # check string for invalid characters
             query_sequences = query_sequences.split(',')
             try:
-                proteins, errors = fetch_protein_records(query_sequences,user_email)
+                proteins, errors = fetch_protein_records(query_sequences, user_email)
                 if len(errors) > 0:
                     self.add_error('r_query_sequence_text', 'following sequences are unavailable: {}'.format(errors))
                 cleaned_data['r_query_sequence_text'] = proteins
             except Exception as e:
-                self.add_error("r_query_sequence_text","please provide valid protein identifiers")
+                self.add_error("r_query_sequence_text", "please provide valid protein identifiers")
 
-
-            #self.add_error('r_query_sequence_text','not available yet')
+            # self.add_error('r_query_sequence_text','not available yet')
         else:
             self.add_error('r_query_sequence_text',
                            "please upload a fasta file containing your sequences or specify valid protein identifier")

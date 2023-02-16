@@ -5,39 +5,39 @@
 
     {% csrf_token %}
 
-     <div class="form-group">
+    <div class="form-group">
         <label for="project_title">Project Title</label>
         <input type="text" class="form-control" id="project_title" name="project_title">
         {% if OneWayProjectCreationForm.project_title.errors %}
-        <div class="alert alert-danger">
-            <strong>{{ OneWayProjectCreationForm.project_title.errors }}</strong>
-        </div>
+            <div class="alert alert-danger">
+                <strong>{{ OneWayProjectCreationForm.project_title.errors }}</strong>
+            </div>
         {% endif %}
     </div>
 
 
     <div class="form-group">
         <label for="query_sequence_file"> Query Sequences as FASTA File </label>
-            <!--
-            <span class="badge badge-info">  In FASTA format (with sequence name)
-            </span></label>
-            -->
-            <input type="file" class="form-control-file" id="query_sequence_file" name="query_sequence_file">
-            {% if OneWayProjectCreationForm.query_sequence_file.errors %}
-                <div class="alert alert-danger">
-                    <strong>{{ OneWayProjectCreationForm.query_sequence_file.errors }}</strong>
-                </div>
-            {% endif %}
+        <!--
+        <span class="badge badge-info">  In FASTA format (with sequence name)
+        </span></label>
+        -->
+        <input type="file" class="form-control-file" id="query_sequence_file" name="query_sequence_file">
+        {% if OneWayProjectCreationForm.query_sequence_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ OneWayProjectCreationForm.query_sequence_file.errors }}</strong>
+            </div>
+        {% endif %}
     </div>
 
     <div class="form-group">
-            <label for="query_sequence_text">Protein Identifiers:</label>
-            <input type="text" class="form-control" id="query_sequence_text" name="query_sequence_text">
-            {% if OneWayProjectCreationForm.query_sequence_text.errors %}
+        <label for="query_sequence_text">Protein Identifiers:</label>
+        <input type="text" class="form-control" id="query_sequence_text" name="query_sequence_text">
+        {% if OneWayProjectCreationForm.query_sequence_text.errors %}
             <div class="alert alert-danger">
                 <strong>{{ OneWayProjectCreationForm.query_sequence_text.errors }}</strong>
             </div>
-            {% endif %}
+        {% endif %}
     </div>
 
     <div class="form-group">
@@ -45,7 +45,7 @@
         <select class="form-control" id="project_database" name="project_database">
 
             {% for database in OneWayProjectCreationForm.project_database %}
-                {{database}}
+                {{ database }}
             {% endfor %}
 
         </select>
@@ -53,61 +53,61 @@
 
 
     <div class="form-row" id="advanced_settings" style="display: none">
-            <hr>
-            <h3 style="font-family: 'Courier New';text-align: center;
+        <hr>
+        <h3 style="font-family: 'Courier New';text-align: center;
                 margin-bottom: 5px;
                 font-weight: bold;">
-                BLAST Settings </h3>
+            BLAST Settings </h3>
 
-            <div class="col">
-                <div class="form-group">
-                    <label for="e_value">E-Value</label>
-                    <input type="number" class="form-control" step=any id="e_value" name="e_value" value="0.001">
-                    {% if BlastSettingsForm.e_value.errors %}
+        <div class="col">
+            <div class="form-group">
+                <label for="e_value">E-Value</label>
+                <input type="number" class="form-control" step=any id="e_value" name="e_value" value="0.001">
+                {% if BlastSettingsForm.e_value.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsForm.e_value.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="word_size">Word Size </label>
-                    <input type="number" class="form-control"  id="word_size" name="word_size" value="3">
-                    {% if BlastSettingsForm.word_size.errors %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="word_size">Word Size </label>
+                <input type="number" class="form-control" id="word_size" name="word_size" value="3">
+                {% if BlastSettingsForm.word_size.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsForm.word_size.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
+                {% endif %}
+            </div>
 
-                <div class="form-group">
-                    <label for="num_alignments">Num Alignments </label>
-                    <input type="number" class="form-control"  id="num_alignments" name="num_alignments" value="10000">
-                    {% if BlastSettingsForm.num_alignments.errors %}
+            <div class="form-group">
+                <label for="num_alignments">Num Alignments </label>
+                <input type="number" class="form-control" id="num_alignments" name="num_alignments" value="10000">
+                {% if BlastSettingsForm.num_alignments.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsForm.num_alignments.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="num_threads">Num Threads </label>
-                    <input type="number" class="form-control"  id="num_threads" name="num_threads" value="1">
-                    {% if BlastSettingsForm.num_threads.errors %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="num_threads">Num Threads </label>
+                <input type="number" class="form-control" id="num_threads" name="num_threads" value="1">
+                {% if BlastSettingsForm.num_threads.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsForm.num_threads.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="max_hsps">Max Hsps </label>
-                    <input type="number" class="form-control"  id="max_hsps" name="max_hsps" value="500">
-                    {% if BlastSettingsForm.max_hsps.errors %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="max_hsps">Max Hsps </label>
+                <input type="number" class="form-control" id="max_hsps" name="max_hsps" value="500">
+                {% if BlastSettingsForm.max_hsps.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsForm.max_hsps.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
+                {% endif %}
             </div>
-            <hr>
+        </div>
+        <hr>
 
     </div>
     <br>

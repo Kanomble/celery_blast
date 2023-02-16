@@ -1,22 +1,23 @@
 from django import forms
-from .models import ExternalTools
 
 '''
     EntrezSearchForm for the EntrezSearch model, which instances hold information 
     of conducted entrez searches. Supported databases can be included into the DATABASES list.
 '''
+
+
 class EntrezSearchForm(forms.Form):
     # for adding  more databases, the NCBI database need to be added here, in the models.py get_pandas_table function and in entrez_search_service.py to the execute_entrez_search function
-    DATABASES = [('pubmed','Pubmed'),
-                 ('protein','Protein'),
-                 ('assembly','Assembly'),
-                 ('cdd','CDD'),
-                 ('protfam','Protfam')]
+    DATABASES = [('pubmed', 'Pubmed'),
+                 ('protein', 'Protein'),
+                 ('assembly', 'Assembly'),
+                 ('cdd', 'CDD'),
+                 ('protfam', 'Protfam')]
 
     entrez_query = forms.CharField(initial="ribosomes AND cyanobacteria AND review [PT]", widget=forms.widgets.Textarea)
 
     database = forms.ChoiceField(choices=DATABASES,
-                                 initial=('protein','protein'))
+                                 initial=('protein', 'protein'))
 
 
 '''RpsBLASTSettingsForm
@@ -24,8 +25,9 @@ class EntrezSearchForm(forms.Form):
     Form for RPSBLAST settings.
     
 '''
-class RpsBLASTSettingsForm(forms.Form):
 
+
+class RpsBLASTSettingsForm(forms.Form):
     query_sequence = forms.ChoiceField(
     )
 
@@ -39,7 +41,7 @@ class RpsBLASTSettingsForm(forms.Form):
 
     rps_max_target_seqs = forms.IntegerField(
         label="RPSBLAST max_target_seqs of possible alignment description outputs",
-        initial=10000,min_value=1, max_value=50000)
+        initial=10000, min_value=1, max_value=50000)
 
     rps_num_threads = forms.IntegerField(
         label="RPSBLAST Threads",
@@ -53,4 +55,5 @@ class RpsBLASTSettingsForm(forms.Form):
         super(RpsBLASTSettingsForm, self).__init__(*args, **kwargs)
         self.fields['query_sequence'] = forms.ChoiceField(
             choices=tuple(
-                [(query_name.query_accession_id,query_name.query_accession_id) for query_name in query_sequences_rdy_for_cdd]))
+                [(query_name.query_accession_id, query_name.query_accession_id) for query_name in
+                 query_sequences_rdy_for_cdd]))

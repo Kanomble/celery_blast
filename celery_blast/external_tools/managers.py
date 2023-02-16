@@ -1,13 +1,15 @@
-from django.db import models, IntegrityError
+from os.path import isfile
+import pandas as pd
 from blast_project.models import BlastProject
+from django.db import models, IntegrityError
 from django_celery_results.models import TaskResult
 from external_tools import models as mdl
+
 from .py_services import check_if_cdd_search_can_get_executed
-import os
-import pandas as pd
+
 
 class ExternalToolsManager(models.Manager):
-    def create_external_tools(self,project_id):
+    def create_external_tools(self, project_id):
         try:
             if self.filter(associated_project_id=project_id).exists() == False:
                 blast_project = BlastProject.objects.get(id=project_id)
@@ -25,12 +27,14 @@ class ExternalToolsManager(models.Manager):
     def get_external_tools_based_on_project_id(self, project_id):
         try:
             if self.filter(associated_project_id=project_id).exists() == False:
-                raise IntegrityError("[-] there is no external tools object with your specified project id : {}".format(project_id))
+                raise IntegrityError(
+                    "[-] there is no external tools object with your specified project id : {}".format(project_id))
             else:
                 return self.get(associated_project_id=project_id)
         except Exception as e:
             raise IntegrityError(
-                "[-] there is no external tools object with your specified project id : {} with exception: {}".format(project_id,e))
+                "[-] there is no external tools object with your specified project id : {} with exception: {}".format(
+                    project_id, e))
 
     def get_all_associated_query_sequences(self, project_id):
         try:
@@ -39,7 +43,8 @@ class ExternalToolsManager(models.Manager):
             return query_sequence_set
         except Exception as e:
             raise IntegrityError(
-                "[-] ERROR fetching associated query sequences for external tools with project id: {} and exception: {}".format(project_id,e))
+                "[-] ERROR fetching associated query sequences for external tools with project id: {} and exception: {}".format(
+                    project_id, e))
 
     '''get_associated_query_sequence
         
@@ -53,14 +58,17 @@ class ExternalToolsManager(models.Manager):
         :returns query_sequence
             :type django.db.models.query.QuerySet
     '''
-    def get_associated_query_sequence(self, project_id:int, query_sequence:str):
+
+    def get_associated_query_sequence(self, project_id: int, query_sequence: str):
         try:
             external_tools = self.get_external_tools_based_on_project_id(project_id)
-            query_sequence = mdl.QuerySequences.objects.filter(external_tool_for_query_sequence=external_tools, query_accession_id=query_sequence)
+            query_sequence = mdl.QuerySequences.objects.filter(external_tool_for_query_sequence=external_tools,
+                                                               query_accession_id=query_sequence)
             return query_sequence
         except Exception as e:
             raise IntegrityError(
-                "[-] ERROR fetching associated query sequences for external tools with project id: {} and exception: {}".format(project_id,e))
+                "[-] ERROR fetching associated query sequences for external tools with project id: {} and exception: {}".format(
+                    project_id, e))
 
     '''get_associated_query_sequence_and_return_cdd_task
 
@@ -74,6 +82,7 @@ class ExternalToolsManager(models.Manager):
         :returns task_result
             :type TaskResult
     '''
+
     def get_associated_query_sequence_and_return_cdd_task(self, project_id: int, query_sequence: str):
         try:
             external_tools = self.get_external_tools_based_on_project_id(project_id)
@@ -99,19 +108,20 @@ class ExternalToolsManager(models.Manager):
         :returns query_sequence_cdd_tasks
             :type dict[str] = tuple(int,str)
     '''
-    def check_cdd_domain_search_task_status(self, project_id: int)->dict:
+
+    def check_cdd_domain_search_task_status(self, project_id: int) -> dict:
         try:
             query_sequence_cdd_tasks = {}
             # query sequence set
             query_sequences = self.get_all_associated_query_sequences(project_id)
             for query_sequence in query_sequences:
-                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id,project_id)
+                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id, project_id)
                 if returncode == 1:
-                    query_sequence_cdd_tasks[query_sequence.query_accession_id] = query_sequence.\
-                                                                                      check_if_cdd_search_is_complete(),\
+                    query_sequence_cdd_tasks[query_sequence.query_accession_id] = query_sequence. \
+                                                                                      check_if_cdd_search_is_complete(), \
                                                                                   'not valid'
                 else:
-                    query_sequence_cdd_tasks[query_sequence.query_accession_id] = query_sequence.\
+                    query_sequence_cdd_tasks[query_sequence.query_accession_id] = query_sequence. \
                                                                                       check_if_cdd_search_is_complete(), \
                                                                                   'valid'
             return query_sequence_cdd_tasks
@@ -119,6 +129,7 @@ class ExternalToolsManager(models.Manager):
             raise Exception(
                 "[-] ERROR fetching CDD domain search task status for project: {} with exception: {}".format(project_id,
                                                                                                              e))
+
     '''get_cdd_searchable_queries
         
         Returns a list with QuerySequence models for potential CDD serches.
@@ -129,13 +140,14 @@ class ExternalToolsManager(models.Manager):
         :returns query_sequences_rdy_for_cdd
             :type list[QuerySequence]
     '''
-    def get_cdd_searchable_queries(self, project_id:int)->list:
+
+    def get_cdd_searchable_queries(self, project_id: int) -> list:
         try:
             query_sequences_rdy_for_cdd = []
             # query sequence set
             query_sequences = self.get_all_associated_query_sequences(project_id)
             for query_sequence in query_sequences:
-                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id,project_id)
+                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id, project_id)
                 if returncode == 0:
                     if query_sequence.check_if_cdd_search_is_complete() == 'NOTEXEC':
                         query_sequences_rdy_for_cdd.append(query_sequence)
@@ -147,7 +159,7 @@ class ExternalToolsManager(models.Manager):
 
 
 class QuerySequenceManager(models.Manager):
-    def create_query_sequence(self,query_sequence_id,external_tools):
+    def create_query_sequence(self, query_sequence_id, external_tools):
         try:
             query_sequence = self.create(
                 query_accession_id=query_sequence_id,
@@ -156,10 +168,11 @@ class QuerySequenceManager(models.Manager):
         except Exception as e:
             raise IntegrityError("[-] couldnt save query sequence model into database with exception : {}".format(e))
 
+
 class EntrezSearchManager(models.Manager):
     def create_entrez_search(self, database, entrez_query, file_path, search_task_result, entrez_user):
         file_name = file_path
-        if os.path.isfile(file_name) == False:
+        if isfile(file_name) == False:
             paper_entries = 0
         else:
             paper_entries = len(pd.read_table(file_name, header=None))
@@ -173,8 +186,7 @@ class EntrezSearchManager(models.Manager):
         return edirect_paper
 
     def get_entrezsearch_on_query(self, search_query, database):
-        return self.filter(search_query=search_query,database=database)
+        return self.filter(search_query=search_query, database=database)
 
-    def get_all_entrez_searches_from_current_user(self,user_id):
+    def get_all_entrez_searches_from_current_user(self, user_id):
         return self.filter(entrez_user__id=user_id)
-

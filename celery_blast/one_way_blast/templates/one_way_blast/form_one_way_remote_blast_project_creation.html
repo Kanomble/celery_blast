@@ -1,27 +1,27 @@
-<form action="{% url 'one_way_project_creation'  %}"
+<form action="{% url 'one_way_project_creation' %}"
       method="post"
       enctype="multipart/form-data"
       onsubmit="showLoader('loading_div','post_form_one_way_remote_blast_container')">
 
     {% csrf_token %}
 
-     <div class="form-group">
+    <div class="form-group">
         <label for="r_project_title">Project Title</label>
         <input type="text" class="form-control" id="r_project_title" name="r_project_title">
         {% if OneWayRemoteProjectCreationForm.r_project_title.errors %}
-        <div class="alert alert-danger">
-            <strong>{{ OneWayRemoteProjectCreationForm.r_project_title.errors }}</strong>
-        </div>
+            <div class="alert alert-danger">
+                <strong>{{ OneWayRemoteProjectCreationForm.r_project_title.errors }}</strong>
+            </div>
         {% endif %}
     </div>
 
 
     <div class="form-group">
         <label for="r_query_sequence_file"> Query Sequences as FASTA File </label>
-            <!--
-            <span class="badge badge-info">  In FASTA format (with sequence name)
-            </span></label>
-            -->
+        <!--
+        <span class="badge badge-info">  In FASTA format (with sequence name)
+        </span></label>
+        -->
         <input type="file" class="form-control-file" id="r_query_sequence_file" name="r_query_sequence_file">
         {% if OneWayRemoteProjectCreationForm.r_query_sequence_file.errors %}
             <div class="alert alert-danger">
@@ -31,20 +31,20 @@
     </div>
 
     <div class="form-group">
-            <label for="r_query_sequence_text">Protein Identifiers:</label>
-            <input type="text" class="form-control" id="r_query_sequence_text" name="r_query_sequence_text">
-            {% if OneWayRemoteProjectCreationForm.r_query_sequence_text.errors %}
+        <label for="r_query_sequence_text">Protein Identifiers:</label>
+        <input type="text" class="form-control" id="r_query_sequence_text" name="r_query_sequence_text">
+        {% if OneWayRemoteProjectCreationForm.r_query_sequence_text.errors %}
             <div class="alert alert-danger">
                 <strong>{{ OneWayRemoteProjectCreationForm.r_query_sequence_text.errors }}</strong>
             </div>
-            {% endif %}
+        {% endif %}
     </div>
 
     <div class="form-group">
         <label for="r_project_database">Select a BLAST Database </label>
         <select class="form-control" id="r_project_database" name="r_project_database">
             {% for database in OneWayRemoteProjectCreationForm.r_project_database %}
-                {{database}}
+                {{ database }}
             {% endfor %}
 
         </select>
@@ -54,7 +54,7 @@
         <label for="r_search_strategy">Select a Search Strategy </label>
         <select class="form-control" id="r_search_strategy" name="r_search_strategy">
             {% for strategy in OneWayRemoteProjectCreationForm.r_search_strategy %}
-                {{strategy}}
+                {{ strategy }}
             {% endfor %}
 
         </select>
@@ -62,72 +62,72 @@
 
     <div class="form-group">
         <label for="r_entrez_query">Optional Query For Limiting BLAST Searches By Taxonomy</label>
-        <input type="text" class="form-control"  id="r_entrez_query" name="r_entrez_query">
+        <input type="text" class="form-control" id="r_entrez_query" name="r_entrez_query">
         {% if OneWayRemoteProjectCreationForm.r_entrez_query.errors %}
-        <div class="alert alert-danger">
-            <strong>{{OneWayRemoteProjectCreationForm.r_entrez_query.errors}}</strong>
-        </div>
+            <div class="alert alert-danger">
+                <strong>{{ OneWayRemoteProjectCreationForm.r_entrez_query.errors }}</strong>
+            </div>
         {% endif %}
     </div>
 
     <div class="form-row" id="advanced_remote_settings" style="display: none">
-            <hr>
-            <h3 style="font-family: 'Courier New';text-align: center;
+        <hr>
+        <h3 style="font-family: 'Courier New';text-align: center;
                 margin-bottom: 5px;
                 font-weight: bold;">
-                BLAST Settings </h3>
+            BLAST Settings </h3>
 
-            <div class="col">
-                <div class="form-group">
-                    <label for="e_value">E-Value</label>
-                    <input type="number" class="form-control" step=any id="e_value" name="e_value" value="0.001">
-                    {% if BlastRemoteSettingsForm.e_value.errors %}
+        <div class="col">
+            <div class="form-group">
+                <label for="e_value">E-Value</label>
+                <input type="number" class="form-control" step=any id="e_value" name="e_value" value="0.001">
+                {% if BlastRemoteSettingsForm.e_value.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastRemoteSettingsForm.e_value.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="word_size">Word Size </label>
-                    <input type="number" class="form-control"  id="word_size" name="word_size" value="3">
-                    {% if BlastRemoteSettingsForm.word_size.errors %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="word_size">Word Size </label>
+                <input type="number" class="form-control" id="word_size" name="word_size" value="3">
+                {% if BlastRemoteSettingsForm.word_size.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastRemoteSettingsForm.word_size.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
+                {% endif %}
+            </div>
 
-                <!-- Not Displayed -->
-                <div class="form-group" style="display: none">
-                    <label for="num_threads">Num Threads </label>
-                    <input type="number" class="form-control"  id="num_threads" name="num_threads" value="1">
-                    {% if BlastSettingsForm.num_threads.errors %}
+            <!-- Not Displayed -->
+            <div class="form-group" style="display: none">
+                <label for="num_threads">Num Threads </label>
+                <input type="number" class="form-control" id="num_threads" name="num_threads" value="1">
+                {% if BlastSettingsForm.num_threads.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastSettingsForm.num_threads.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
+                {% endif %}
+            </div>
 
-                <div class="form-group">
-                    <label for="num_alignments">Num Alignments </label>
-                    <input type="number" class="form-control"  id="num_alignments" name="num_alignments" value="10000">
-                    {% if BlastRemoteSettingsForm.num_alignments.errors %}
+            <div class="form-group">
+                <label for="num_alignments">Num Alignments </label>
+                <input type="number" class="form-control" id="num_alignments" name="num_alignments" value="10000">
+                {% if BlastRemoteSettingsForm.num_alignments.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastRemoteSettingsForm.num_alignments.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="max_hsps">Max Hsps </label>
-                    <input type="number" class="form-control"  id="max_hsps" name="max_hsps" value="500">
-                    {% if BlastRemoteSettingsForm.max_hsps.errors %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="max_hsps">Max Hsps </label>
+                <input type="number" class="form-control" id="max_hsps" name="max_hsps" value="500">
+                {% if BlastRemoteSettingsForm.max_hsps.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ BlastRemoteSettingsForm.max_hsps.errors }}</strong>
                     </div>
-                    {% endif %}
-                </div>
+                {% endif %}
             </div>
-            <hr>
+        </div>
+        <hr>
 
     </div>
     <br>

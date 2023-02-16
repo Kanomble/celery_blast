@@ -1,20 +1,22 @@
-from django.test import Client, TestCase, tag
-from django.contrib.auth.models import User
+from time import sleep
+
 from blast_project.models import BlastProject, BlastSettings
-from refseq_transactions.models import AssemblyLevels, BlastDatabase
+# from blast_project.py_django_db_services import get_all_succeeded_databases
+# from django.core.files.uploadedfile import SimpleUploadedFile
+# from blast_project.py_services import check_if_taxdb_exists
+# from shutil import rmtree
+# from os.path import isdir
+from blast_project.py_services import delete_blastdb_and_associated_directories_by_id
+from django.contrib.auth.models import User
+from django.test import Client, TestCase, tag
 from django.utils import timezone
 from django_celery_results.models import TaskResult
-#from blast_project.py_django_db_services import get_all_succeeded_databases
-#from django.core.files.uploadedfile import SimpleUploadedFile
-#from blast_project.py_services import check_if_taxdb_exists
-#from shutil import rmtree
-#from os.path import isdir
-from blast_project.py_services import delete_blastdb_and_associated_directories_by_id
-from time import sleep
+from refseq_transactions.models import AssemblyLevels, BlastDatabase
 
 
 class RefseqTransactionsViewsTestCase(TestCase):
     c = Client()
+
     def tearDown(self) -> None:
         super().tearDown()
         print("[+] Tear down refseqtrasactions celery test data")
@@ -114,7 +116,7 @@ class RefseqTransactionsViewsTestCase(TestCase):
         print("\t[*] Sleeping now ...")
         sleep(2)
         new_database = BlastDatabase.objects.get(database_name='test database curvibacter 2')
-        print("\t[*] New Database: ",new_database.database_name)
+        print("\t[*] New Database: ", new_database.database_name)
         response_delete = self.c.post('/refseq_transactions/{}/delete_database'.format(new_database.id))
         print("\t[*] Deleting database ...")
         self.assertTrue(200, response.status_code)

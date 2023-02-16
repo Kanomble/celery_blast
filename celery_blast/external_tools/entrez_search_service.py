@@ -1,18 +1,21 @@
 import os
-import psutil
-import subprocess
-import string
 import random
 import shutil
-from django.db import transaction, IntegrityError
-from .models import EntrezSearch
-from django.contrib.auth.models import User
-from django_celery_results.models import TaskResult
-from django.conf import settings
+import string
+import subprocess
+
+import psutil
 from Bio import Entrez
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import transaction, IntegrityError
+from django_celery_results.models import TaskResult
+
+from .models import EntrezSearch
+
 
 def execute_entrez_search(database: str, entrez_query: str, output_filepath: str, entrez_search: EntrezSearch) -> int:
-    #starts an Esearch which downloads the requested search with the selected database and saves it in a file
+    # starts an Esearch which downloads the requested search with the selected database and saves it in a file
     # for adding  more databases, the columns need to be added here, in the models.py get_pandas_table function and in forms.py to the EntrezSearchForm class
     try:
         xtract_format = {}
@@ -21,7 +24,6 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         xtract_format['assembly'] = 'Id AssemblyName AssemblyStatus Organism Taxid'
         xtract_format['cdd'] = "Id Title Subtitle Abstract"
         xtract_format['protfam'] = "Id DispMethod DispReviewLevel string"
-
 
         cmd = 'esearch -db {} -query "{}" | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
             database, entrez_query, xtract_format[database], output_filepath)
@@ -44,8 +46,9 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
     except Exception:
         return 1
 
+
 def download_by_organism(search_id: int, organism_download: str, email: str) -> int:
-    #uses biopython entrez tool to download fasta files of a selected organism in an entrezsearch paper and saves it in a file
+    # uses biopython entrez tool to download fasta files of a selected organism in an entrezsearch paper and saves it in a file
     try:
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
 
@@ -55,9 +58,10 @@ def download_by_organism(search_id: int, organism_download: str, email: str) -> 
         filtered_organism_target_df = organism_target_df[organism_target_df.Organism == organism]
         filtered_organism_target_id_list = filtered_organism_target_df["Id"].to_list()
         Entrez.email = email  # use the email of the user
-        if os.path.isdir("media/esearch_output/"+ str(search_id))== False:
-            os.mkdir("media/esearch_output/"+ str(search_id))
-        output = open("media/esearch_output/"+ str(search_id)+"/"+str(organism)+".faa", 'w')  # could use the name of the file used as input
+        if os.path.isdir("media/esearch_output/" + str(search_id)) == False:
+            os.mkdir("media/esearch_output/" + str(search_id))
+        output = open("media/esearch_output/" + str(search_id) + "/" + str(organism) + ".faa",
+                      'w')  # could use the name of the file used as input
 
         end = len(filtered_organism_target_id_list)
         begin = 0
@@ -91,10 +95,9 @@ def download_by_organism(search_id: int, organism_download: str, email: str) -> 
         return 1
 
 
-
-#TODO implementation
-def download_esearch_protein_fasta_files(search_id:int) -> int:
-    #downloads a fasta file of the associated protein sequences of an enztezsearch if the entrez database is protein or pubmed
+# TODO implementation
+def download_esearch_protein_fasta_files(search_id: int) -> int:
+    # downloads a fasta file of the associated protein sequences of an enztezsearch if the entrez database is protein or pubmed
     try:
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
 
@@ -119,12 +122,12 @@ def download_esearch_protein_fasta_files(search_id:int) -> int:
 
             pandas_table = entrez_search.get_pandas_table()
             sequence_ids = list(pandas_table['Caption'])
-            with open(sequence_list_file_path,'w') as seq_id_file:
+            with open(sequence_list_file_path, 'w') as seq_id_file:
                 for seqid in sequence_ids:
                     seq_id_file.write("{}\n".format(seqid))
 
-
-            cmd = 'efetch -db protein -format fasta -input {} > {}'.format(sequence_list_file_path,target_fasta_file_path)
+            cmd = 'efetch -db protein -format fasta -input {} > {}'.format(sequence_list_file_path,
+                                                                           target_fasta_file_path)
             process = subprocess.Popen(cmd, shell=True)
             returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
 
@@ -134,8 +137,8 @@ def download_esearch_protein_fasta_files(search_id:int) -> int:
 
             return returncode
         if database == "pubmed":
-
-            cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efetch -format fasta > {}'.format(entrez_query,target_fasta_file_path)
+            cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efetch -format fasta > {}'.format(
+                entrez_query, target_fasta_file_path)
             process = subprocess.Popen(cmd, shell=True)
             returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
 
@@ -144,9 +147,9 @@ def download_esearch_protein_fasta_files(search_id:int) -> int:
                 entrez_search.save()
             return returncode
 
-    #catch either subprocess
+    # catch either subprocess
     except subprocess.TimeoutExpired:
-    # delete all child processes
+        # delete all child processes
         if 'process' in locals():
             pid = process.pid
             parent = psutil.Process(pid)
@@ -159,13 +162,15 @@ def download_esearch_protein_fasta_files(search_id:int) -> int:
         else:
             return 1
     except subprocess.SubprocessError as e:
-        raise Exception("[-] Couldnt download protein fasta files for esearch {} on protein database and exception: {}".format(search_id,e))
+        raise Exception(
+            "[-] Couldnt download protein fasta files for esearch {} on protein database and exception: {}".format(
+                search_id, e))
 
-#TODO documentation
-def update_entrezsearch_with_download_task_result(search_id: int,task_id: int) -> int:
+
+# TODO documentation
+def update_entrezsearch_with_download_task_result(search_id: int, task_id: int) -> int:
     try:
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
-
 
         file_path = entrez_search.file_name
         file_random_number = file_path.split("_")[-1].split(".")[0]
@@ -186,9 +191,12 @@ def update_entrezsearch_with_download_task_result(search_id: int,task_id: int) -
             entrez_search.save()
         return 0
     except Exception as e:
-        raise Exception("[-] Couldnt update entrezsearch with taskresult instance for downloading protein accessions with exception: {}".format(e))
+        raise Exception(
+            "[-] Couldnt update entrezsearch with taskresult instance for downloading protein accessions with exception: {}".format(
+                e))
 
-#TODO implementation documentation
+
+# TODO implementation documentation
 def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_filepath: str) -> int:
     try:
         if database == 'pubmed':
@@ -196,7 +204,7 @@ def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_f
                 entrez_query, output_filepath)
         elif database == 'protein':
             cmd = 'esearch -db protein -query "{}" | efilter -source refseq | efetch -format fasta > {}'.format(
-                entrez_query,output_filepath
+                entrez_query, output_filepath
             )
         else:
             raise Exception
@@ -222,8 +230,8 @@ def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_f
 
 
 def create_random_filename() -> str:
-    #creates a rondom file name and returns it
-    randomly_generated_filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
+    # creates a rondom file name and returns it
+    randomly_generated_filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
     esearch_output_filepath = 'media/esearch_output/result_dataframe_' + randomly_generated_filename
     while os.path.isfile(esearch_output_filepath) == True:
         randomly_generated_filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -231,8 +239,9 @@ def create_random_filename() -> str:
 
     return randomly_generated_filename
 
+
 def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
-    #gets an entrez search database row based on a search_id and returns it
+    # gets an entrez search database row based on a search_id and returns it
     try:
         entrez_search = EntrezSearch.objects.get(id=search_id)
         return entrez_search
@@ -241,8 +250,8 @@ def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
 
 
 def delete_esearch_by_id(search_id: int):
-    #deletes en entrazsearch assoiciated files and taskresult entry based on a search_id
-    #returns 0 if it worked or 1 if it did not
+    # deletes en entrazsearch assoiciated files and taskresult entry based on a search_id
+    # returns 0 if it worked or 1 if it did not
     try:
         with transaction.atomic():
 
@@ -250,7 +259,7 @@ def delete_esearch_by_id(search_id: int):
             task_db_id = EntrezSearch.objects.values('search_task_result_id').filter(id=search_id)
             task_db_id = task_db_id[0]['search_task_result_id']
             task_db = TaskResult.objects.get(id=task_db_id)
-            organism_db_file_name = "media/esearch_output/"+str(search_id)
+            organism_db_file_name = "media/esearch_output/" + str(search_id)
 
             if os.path.isdir(organism_db_file_name):
                 shutil.rmtree(organism_db_file_name)
@@ -268,19 +277,23 @@ def delete_esearch_by_id(search_id: int):
             else:
                 return 1
     except Exception as e:
-        raise IntegrityError("ERROR during deletion of entrez_search with id : {} with exception: {}".format(search_id,e))
+        raise IntegrityError(
+            "ERROR during deletion of entrez_search with id : {} with exception: {}".format(search_id, e))
 
-def save_entrez_search_model(database:str,entrez_query:str,file_name:str, task_result_id:int, user_id:int) -> EntrezSearch:
-    #saves users entrezsearch input into a datbase with extra information
-    #returns the database row
+
+def save_entrez_search_model(database: str, entrez_query: str, file_name: str, task_result_id: int,
+                             user_id: int) -> EntrezSearch:
+    # saves users entrezsearch input into a datbase with extra information
+    # returns the database row
     try:
         with transaction.atomic():
             user = User.objects.get(id=user_id)
             esearch_object = EntrezSearch.edirect_objects.create_entrez_search(database=database,
-                                                              entrez_query=entrez_query,
-                                                              file_path=file_name,
-                                                              search_task_result=task_result_id,
-                                                              entrez_user=user)
+                                                                               entrez_query=entrez_query,
+                                                                               file_path=file_name,
+                                                                               search_task_result=task_result_id,
+                                                                               entrez_user=user)
             return esearch_object
     except Exception as e:
-        raise IntegrityError("[-] An error occcurred during saving the edirect search object into the database: {}".format(e))
+        raise IntegrityError(
+            "[-] An error occcurred during saving the edirect search object into the database: {}".format(e))

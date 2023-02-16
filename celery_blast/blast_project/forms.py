@@ -4,7 +4,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
     get_list_of_species_taxids_by_list_of_scientific_names, fetch_protein_records
-from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, check_if_sequences_are_in_database
+from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, \
+    check_if_sequences_are_in_database
 from string import punctuation, ascii_letters
 
 ''' CreateTaxonomicFileForm
@@ -24,9 +25,10 @@ fields:
     species_name: filled by user, valid input should be able to successfully 
     user_email: user e-mail provided by passing the request.user object into form object creation, can get altered by the user
 '''
-class CreateTaxonomicFileForm(forms.Form):
 
-    species_name = forms.CharField(max_length=200, required=True,)
+
+class CreateTaxonomicFileForm(forms.Form):
+    species_name = forms.CharField(max_length=200, required=True, )
     user_email = forms.CharField(max_length=200)
 
     def __init__(self, user, *args, **kwargs):
@@ -38,10 +40,12 @@ class CreateTaxonomicFileForm(forms.Form):
         species_name = self.cleaned_data['species_name']
         user_email = self.fields['user_email'].charfield
         try:
-            taxonomic_nodes = get_list_of_species_taxid_by_name(user_email,species_name)
+            taxonomic_nodes = get_list_of_species_taxid_by_name(user_email, species_name)
             return species_name, taxonomic_nodes
         except Exception as e:
-            raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
+            raise ValidationError(
+                "validation error in clean_species_name pls check your provided scientific name : {}".format(e))
+
 
 '''CreateTaxonomicFileForMultipleScientificNames
 
@@ -50,6 +54,8 @@ class CreateTaxonomicFileForm(forms.Form):
     long names. This form can replace the CreateTaxonomicFileForm. 
 
 '''
+
+
 class CreateTaxonomicFileForMultipleScientificNames(forms.Form):
     filename = forms.CharField(max_length=200, required=True)
     species_names = forms.CharField(max_length=600, required=True)
@@ -75,13 +81,16 @@ class CreateTaxonomicFileForMultipleScientificNames(forms.Form):
                     "{}".format(error_string))
             return taxids
         except Exception as e:
-            raise ValidationError("validation error in clean_species_name pls check your provided scientific name : {}".format(e))
+            raise ValidationError(
+                "validation error in clean_species_name pls check your provided scientific name : {}".format(e))
 
-#registration and login form
+
+# registration and login form
 class CreateUserForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ['username','email','password1','password2']
+        fields = ['username', 'email', 'password1', 'password2']
+
 
 ''' ProjectCreationForm
     This form is used in the form_project_creation.html.
@@ -102,6 +111,8 @@ class CreateUserForm(UserCreationForm):
         - species_name_for_backward_blast | charfield
         - user_email | charfield
 '''
+
+
 class ProjectCreationForm(forms.Form):
     class BlastDatabaseModelChoiceField(forms.ModelChoiceField):
         def label_from_instance(self, blast_database):
@@ -112,7 +123,7 @@ class ProjectCreationForm(forms.Form):
         error_messages={
             'required': "A project title is required for saving project metadata into the database"})
 
-    #for now just blastp is possible this field is not included in the html form
+    # for now just blastp is possible this field is not included in the html form
     search_strategy = forms.ChoiceField(
         required=False,
         choices=(('blastp', 'blastp'), ('blastn', 'blastn')),
@@ -124,7 +135,7 @@ class ProjectCreationForm(forms.Form):
         required=True,
         label='Scientific Names (conversion to Taxonomic Nodes) for Backward BLAST',
         error_messages={
-            'required':"Specify a Scientific Name for your backward BLAST - use a comma separated list - names will be converted to taxids that will be written to a file which will serve as the -taxidlist parameter of your backward BLAST"})
+            'required': "Specify a Scientific Name for your backward BLAST - use a comma separated list - names will be converted to taxids that will be written to a file which will serve as the -taxidlist parameter of your backward BLAST"})
 
     user_email = forms.CharField(
         max_length=200,
@@ -133,10 +144,10 @@ class ProjectCreationForm(forms.Form):
     query_sequence_file = forms.FileField(
         required=False,
         error_messages={
-            'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
+            'required': "Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
 
     query_sequence_text = forms.CharField(
-        label="Query Sequence IDs",max_length=800,required=False
+        label="Query Sequence IDs", max_length=800, required=False
     )
 
     project_forward_database = BlastDatabaseModelChoiceField(
@@ -170,6 +181,7 @@ class ProjectCreationForm(forms.Form):
         
             functions: fetch_protein_records, check_if_sequences_are_in_database
     '''
+
     def clean(self):
         try:
             cleaned_data = super().clean()
@@ -177,11 +189,11 @@ class ProjectCreationForm(forms.Form):
             species_name = cleaned_data['species_name_for_backward_blast']
             user_email = self.fields['user_email'].charfield
 
-
             try:
                 taxonomic_nodes = get_species_taxid_by_name(user_email, species_name)
             except Exception as e:
-                self.add_error('species_name_for_backward_blast','your provided species has no taxonomic node - check on NCBI'.format(species_name))
+                self.add_error('species_name_for_backward_blast',
+                               'your provided species has no taxonomic node - check on NCBI'.format(species_name))
 
             backward_db = cleaned_data['project_backward_database']
             try:
@@ -192,14 +204,13 @@ class ProjectCreationForm(forms.Form):
                                        taxonomic_nodes, backward_db.database_name))
 
                 if booleanbw == True:
-                    #taking the first taxonomic node in the provided list
+                    # taking the first taxonomic node in the provided list
                     cleaned_data['species_name_for_backward_blast'] = (species_name, taxonomic_nodes[0])
 
             except Exception:
                 self.add_error('species_name_for_backward_blast',
                                'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
                                    taxonomic_nodes, backward_db.database_name))
-
 
             query_file = cleaned_data['query_sequence_file']
             query_sequences = cleaned_data['query_sequence_text']
@@ -252,7 +263,8 @@ class ProjectCreationForm(forms.Form):
                 else:
                     valid = check_if_sequences_are_in_database(backward_db.id, header)
                     if valid != True:
-                        self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+                        self.add_error('query_sequence_file',
+                                       'following sequences do not reside in your backward database: {}'.format(valid))
 
                 if len(header) != len(set(header)):
                     self.add_error('query_sequence_file',
@@ -260,11 +272,12 @@ class ProjectCreationForm(forms.Form):
             # protein identifier have been uploaded
             elif query_sequences != '' and query_file is None:
                 # check string for invalid characters
-                query_sequences = query_sequences.replace(" ","").split(",")
+                query_sequences = query_sequences.replace(" ", "").split(",")
                 try:
                     valid = check_if_sequences_are_in_database(backward_db.id, query_sequences)
                     if valid != True:
-                        self.add_error('query_sequence_file','following sequences do not reside in your backward database: {}'.format(valid))
+                        self.add_error('query_sequence_file',
+                                       'following sequences do not reside in your backward database: {}'.format(valid))
 
                     proteins, errors = fetch_protein_records(query_sequences, user_email)
                     if len(errors) > 0:
@@ -281,8 +294,9 @@ class ProjectCreationForm(forms.Form):
         except Exception as e:
             raise ValidationError(
                 "validation error in project creation, due to this exception: {}".format(
-                     e))
+                    e))
         return cleaned_data
+
 
 '''BlastSettingsFormForward
     
@@ -290,6 +304,8 @@ class ProjectCreationForm(forms.Form):
     ectory. This form contains the fields for the forward BLAST settings, that are written into this configuration file.
     
 '''
+
+
 class BlastSettingsFormForward(forms.Form):
     fw_e_value = forms.FloatField(
         label="FW E-Value", initial=0.001)
@@ -305,26 +321,30 @@ class BlastSettingsFormForward(forms.Form):
         label='FW max hsps', initial=500
     )
 
+
 '''BlastSettingsFormBackward
 
     Form for the BlastProject. During project creation, a snakemake configuration file is written into the project dir-
     ectory. This form contains the fields for the backward BLAST settings, that are written into this configuration file.
     
 '''
+
+
 class BlastSettingsFormBackward(forms.Form):
     bw_e_value = forms.FloatField(
         label="BW E-Value", initial=0.001)
     bw_word_size = forms.IntegerField(
         label="BW Word Size", initial=3)
     bw_num_alignments = forms.IntegerField(
-        label="BW Number of possible alignment outputs",initial=1)
+        label="BW Number of possible alignment outputs", initial=1)
     bw_max_target_seqs = forms.IntegerField(
         label="BW max_target_seqs of possible alignment description outputs", initial=1)
     bw_num_threads = forms.IntegerField(
-        label="BW Threads",initial=1)
+        label="BW Threads", initial=1)
     bw_max_hsps = forms.IntegerField(
         label='BW max hsps', initial=500
     )
+
 
 '''UploadGenomeForm
 
@@ -346,16 +366,19 @@ class BlastSettingsFormBackward(forms.Form):
     
            
 '''
+
+
 class UploadGenomeForm(forms.Form):
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
-    assembly_entries = forms.IntegerField(min_value=1,required=True)
-    #obsolete due to multiple genome form for just one genome file
-    #TODO remove fields and fix associated view/form functions
+    assembly_entries = forms.IntegerField(min_value=1, required=True)
+    # obsolete due to multiple genome form for just one genome file
+    # TODO remove fields and fix associated view/form functions
     ###### OBSOLETE ######
-    assembly_accession = forms.CharField(max_length=200,required=False)
+    assembly_accession = forms.CharField(max_length=200, required=False)
     assembly_level = forms.ChoiceField(
-        choices=(("Chromosome","Chromosome"),("Complete Genome","Complete Genome"),("Scaffold","Scaffold"),("Contig","Contig")),
+        choices=(("Chromosome", "Chromosome"), ("Complete Genome", "Complete Genome"), ("Scaffold", "Scaffold"),
+                 ("Contig", "Contig")),
         required=False)
 
     organism_name = forms.CharField(
@@ -385,11 +408,10 @@ class UploadGenomeForm(forms.Form):
 
     genome_fasta_file = forms.FileField(required=True)
 
-    user_email = forms.CharField(max_length=200,required=False)
+    user_email = forms.CharField(max_length=200, required=False)
 
-
-    def __init__(self,user,*args,**kwargs):
-        super(UploadGenomeForm,self).__init__(*args,**kwargs)
+    def __init__(self, user, *args, **kwargs):
+        super(UploadGenomeForm, self).__init__(*args, **kwargs)
         self.fields['user_email'].charfield = user.email
         self.fields['user_email'].initial = user.email
 
@@ -403,18 +425,20 @@ class UploadGenomeForm(forms.Form):
         assembly_level_file = cleaned_data['assembly_level_file']
         user_email = cleaned_data['user_email']
 
-        if genome_fasta_file.name.endswith('.faa') is not True and genome_fasta_file.name.endswith('.fasta') is not True:
+        if genome_fasta_file.name.endswith('.faa') is not True and genome_fasta_file.name.endswith(
+                '.fasta') is not True:
             self.add_error('genome_fasta_file', 'specify a valid fasta file (with .faa or .fasta file name extension)')
 
         if taxonomic_node is not None:
             try:
-                check_given_taxonomic_node(user_email,taxonomic_node)
+                check_given_taxonomic_node(user_email, taxonomic_node)
             except Exception as e:
-                self.add_error('taxonomic_node','there is no organism with your specified taxonomic node, exception : {}'.format(e))
+                self.add_error('taxonomic_node',
+                               'there is no organism with your specified taxonomic node, exception : {}'.format(e))
 
         if taxmap_file is None and taxonomic_node is None:
-           self.add_error('taxonomic_node','specify a taxonomic node for the formatting procedure')
-           self.add_error('taxmap_file','specify a taxmap file for the formatting procedure')
+            self.add_error('taxonomic_node', 'specify a taxonomic node for the formatting procedure')
+            self.add_error('taxmap_file', 'specify a taxmap file for the formatting procedure')
 
         if taxmap_file is not None:
 
@@ -423,7 +447,8 @@ class UploadGenomeForm(forms.Form):
                 self.add_error('taxmap_file', 'just specify one, a taxonomic node or a taxmap file')
 
             if organism_file is None:
-                self.add_error('organism_name_file','if you upload a taxmap file you should also upload a file that contains the organism names of target genomes, separated by lines')
+                self.add_error('organism_name_file',
+                               'if you upload a taxmap file you should also upload a file that contains the organism names of target genomes, separated by lines')
 
             protein_ids = 0
             for chunk in genome_fasta_file.chunks():
@@ -433,7 +458,7 @@ class UploadGenomeForm(forms.Form):
             for chunk in taxmap_file.chunks():
                 taxmap_ids += chunk.decode().count('\n')
 
-            #check if taxonomic_nodes_exists
+            # check if taxonomic_nodes_exists
             organisms = 0
             for chunk in organism_file.chunks():
 
@@ -441,18 +466,20 @@ class UploadGenomeForm(forms.Form):
                 for line in lines:
                     if line != '':
                         try:
-                            #check if there are taxids available (for provided organism names)
-                            taxids = get_species_taxid_by_name(user_email,line)
-                            #multiple taxids are valid
+                            # check if there are taxids available (for provided organism names)
+                            taxids = get_species_taxid_by_name(user_email, line)
+                            # multiple taxids are valid
                             if len(taxids) == 0:
                                 raise Exception
                         except:
-                            self.add_error('organism_name_file','there is no taxonomic node available for : {}'.format(line))
+                            self.add_error('organism_name_file',
+                                           'there is no taxonomic node available for : {}'.format(line))
                 organisms += chunk.decode().count('\n')
 
             if taxmap_ids != protein_ids:
-                self.add_error('taxmap_file','the amount of provided acc_ids: {} does not match the provided amount of protein_ids: {}'.format(taxmap_ids,protein_ids))
-
+                self.add_error('taxmap_file',
+                               'the amount of provided acc_ids: {} does not match the provided amount of protein_ids: {}'.format(
+                                   taxmap_ids, protein_ids))
 
             if assembly_accessions_file is not None:
                 amount_of_assemblies = 0
@@ -460,18 +487,24 @@ class UploadGenomeForm(forms.Form):
                     lines = chunk.decode().split('\n')
                     for line in lines:
                         if line == '\r':
-                            self.add_error('assembly_accessions_file','there are lines without any informations in your assembly accessions file')
+                            self.add_error('assembly_accessions_file',
+                                           'there are lines without any informations in your assembly accessions file')
                     amount_of_assemblies += chunk.decode().count('\n')
                 if amount_of_assemblies != organisms:
-                    self.add_error('assembly_accessions_file','the amount of assemblies: {} does not match the amount of provided organisms: {}'.format(amount_of_assemblies,organisms))
+                    self.add_error('assembly_accessions_file',
+                                   'the amount of assemblies: {} does not match the amount of provided organisms: {}'.format(
+                                       amount_of_assemblies, organisms))
 
             if assembly_level_file is not None:
                 amount_of_levels = 0
                 for chunk in assembly_level_file.chunks():
                     amount_of_levels += chunk.decode().count('\n')
                 if amount_of_levels != organisms:
-                    self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
+                    self.add_error('assembly_level_file',
+                                   'the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(
+                                       amount_of_levels, organisms))
         return cleaned_data
+
 
 '''UploadMultipleFilesGenomeForm
 
@@ -479,15 +512,16 @@ class UploadGenomeForm(forms.Form):
     a taxonomic identifier. This form can replace the UploadGenomeForm, as it has a similar functionality. 
 
 '''
+
+
 class UploadMultipleFilesGenomeForm(forms.Form):
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
 
     genome_file_field_0 = forms.FileField(required=True)
     organism_name_0 = forms.CharField(max_length=200, required=True)
-    extra_field_count = forms.CharField(initial="0",widget=forms.HiddenInput())
-    user_email = forms.CharField(max_length=200,required=False)
-
+    extra_field_count = forms.CharField(initial="0", widget=forms.HiddenInput())
+    user_email = forms.CharField(max_length=200, required=False)
 
     def __init__(self, user, *args, **kwargs):
         extra_fields = kwargs.pop('extra', 0)
@@ -504,7 +538,7 @@ class UploadMultipleFilesGenomeForm(forms.Form):
             self.fields['genome_file_field_{index}'.format(index=index)] = forms.FileField(required=False)
             self.fields['organism_name_{index}'.format(index=index)] = forms.CharField(required=False)
 
-    #https://stackoverflow.com/questions/6142025/dynamically-add-field-to-a-form
+    # https://stackoverflow.com/questions/6142025/dynamically-add-field-to-a-form
 
     def clean(self):
         cleaned_data = super().clean()
@@ -513,27 +547,24 @@ class UploadMultipleFilesGenomeForm(forms.Form):
             if "genome_file" in field:
                 file = cleaned_data.get(field)
                 if file == None:
-                    self.add_error(field,'You have to provide a genome file')
+                    self.add_error(field, 'You have to provide a genome file')
 
-                elif file.name.split(".")[-1] in ["fasta","faa","fa"] == False:
-                    self.add_error(field,'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
+                elif file.name.split(".")[-1] in ["fasta", "faa", "fa"] == False:
+                    self.add_error(field,
+                                   'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
 
             elif "organism" in field:
                 if cleaned_data.get(field) == '':
-                    self.add_error(field,'You have to provide a valid scientific name')
+                    self.add_error(field, 'You have to provide a valid scientific name')
                 elif cleaned_data.get(field) == None:
-                    self.add_error(field,"You have to provide a valid scientific name")
+                    self.add_error(field, "You have to provide a valid scientific name")
                 else:
                     try:
-                        taxids = get_species_taxid_by_name(user_email,cleaned_data.get(field))
-                        #multiple taxids are valid
+                        taxids = get_species_taxid_by_name(user_email, cleaned_data.get(field))
+                        # multiple taxids are valid
                         if len(taxids) == 0:
                             raise Exception
                     except Exception as e:
-                        self.add_error(field,"{} : {} is no valid name!".format(e,cleaned_data.get(field)))
+                        self.add_error(field, "{} : {} is no valid name!".format(e, cleaned_data.get(field)))
 
         return cleaned_data
-
-
-
-

@@ -1,5 +1,6 @@
 from django.test import TestCase
-from refseq_transactions.models import BlastDatabase, AssemblyLevels
+from refseq_transactions.models import AssemblyLevels
+
 
 class AssemblyLevelsTest(TestCase):
     def setUp(self) -> None:

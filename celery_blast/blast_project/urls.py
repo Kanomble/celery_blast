@@ -23,7 +23,8 @@ service_urls = [
     path('<int:project_id>/project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results')
 ]
 
-#this ajax call is currently not used - it has been replaced by the snakemake pipeline script query_sequences_to_html_table
+# this ajax call is currently not used - it has been replaced by the snakemake pipeline script
+# query_sequences_to_html_table
 ajax_urls = [
     path('<int:project_id>/ajax_wp_to_links',views.ajax_wp_to_links,name='ajax_wp_to_links'),
     path('<int:project_id>/ajax_call_to_logfiles',views.ajax_call_to_logfiles,name='ajax_call_to_logfiles')

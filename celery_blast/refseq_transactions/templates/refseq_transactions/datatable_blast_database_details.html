@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-BLAST Database
+    BLAST Database
 {% endblock %}
 
 
@@ -12,78 +12,79 @@ BLAST Database
 {% endblock %}
 
 {% block page_description %}
-This website displays information of the {{Database.database_name}} BLAST database.
+    This website displays information of the {{ Database.database_name }} BLAST database.
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="dashboard_project_list_col">
-        <h2 style="text-align: center; font-family: 'Courier New'">
-            <b>BLAST Database Details </b>
-        </h2>
-        <form
-           action="{% url 'delete_blast_database' database_id=Database.id%}"
-           method="POST"
-           onSubmit="return confirm('Are you sure you wish to delete?');" >
-        {% csrf_token %}
-        <input type="submit" value="Delete Blast Database" class="btn btn-danger" style="position: absolute; top: 10px; right: 10px;">
-        </form>
-    </div>
+    <div class="container-fluid">
+        <div class="dashboard_project_list_col">
+            <h2 style="text-align: center; font-family: 'Courier New'">
+                <b>BLAST Database Details </b>
+            </h2>
+            <form
+                    action="{% url 'delete_blast_database' database_id=Database.id %}"
+                    method="POST"
+                    onSubmit="return confirm('Are you sure you wish to delete?');">
+                {% csrf_token %}
+                <input type="submit" value="Delete Blast Database" class="btn btn-danger"
+                       style="position: absolute; top: 10px; right: 10px;">
+            </form>
+        </div>
 
-</div>
-<div class="container-fluid">
-    <div class="dashboard_project_list_col">
-        <table class="table table-hover" id="blastdatabase">
-            <thead>
-             <tr>
-                <th>Index</th>
-                 <th> Assembly Accession</th>
-                 <th> Organism Name</th>
-                 <th> Taxid </th>
-                 <th> Species Taxid </th>
-                 <th> Assembly Level </th>
-                 <th> FTP Path </th>
-             </tr>
-            </thead>
-            <tbody>
-             <tr>
-             </tr>
-            </tbody>
-        </table>
     </div>
-</div>
+    <div class="container-fluid">
+        <div class="dashboard_project_list_col">
+            <table class="table table-hover" id="blastdatabase">
+                <thead>
+                <tr>
+                    <th>Index</th>
+                    <th> Assembly Accession</th>
+                    <th> Organism Name</th>
+                    <th> Taxid</th>
+                    <th> Species Taxid</th>
+                    <th> Assembly Level</th>
+                    <th> FTP Path</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 {% endblock %}
 
 {% block scripts %}
-<script>
-$(document).ready(function() {
-    $('#blastdatabase').DataTable({
-        dom: 'Bfrtip',
-        buttons: [
-            'copy',
-            'csv',
-            'selectAll',
-            'selectNone',
-            'selectRows'
-        ],
-        select: true,
+    <script>
+        $(document).ready(function () {
+            $('#blastdatabase').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy',
+                    'csv',
+                    'selectAll',
+                    'selectNone',
+                    'selectRows'
+                ],
+                select: true,
 
-        "ajax": {
-            "url": "{% url 'ajax_call' database_id=Database.id %}",
-            "type": "GET",
-            "dataSrc": "data",
-        },
-        "columns": [
-            {"data":'index'},
-            {"data":'assembly_accession'},
-            {"data":'organism_name'},
-            {"data":'taxid'},
-            {"data":'species_taxid'},
-            {"data":'assembly_level'},
-            {"data":'ftp_path'}],
-        "deferRender": true
+                "ajax": {
+                    "url": "{% url 'ajax_call' database_id=Database.id %}",
+                    "type": "GET",
+                    "dataSrc": "data",
+                },
+                "columns": [
+                    {"data": 'index'},
+                    {"data": 'assembly_accession'},
+                    {"data": 'organism_name'},
+                    {"data": 'taxid'},
+                    {"data": 'species_taxid'},
+                    {"data": 'assembly_level'},
+                    {"data": 'ftp_path'}],
+                "deferRender": true
+            });
         });
-} );
-</script>
+    </script>
 {% endblock %}

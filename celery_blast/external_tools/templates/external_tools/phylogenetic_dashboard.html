@@ -7,67 +7,71 @@
 {% block infoheader %} Phylogenetic Tools {% endblock %}
 
 {% block page_description %}
-<h2> Phylogenetic Tools </h2>
-<br>
-    <h4> Phylogenetic Tree  </h4>
+    <h2> Phylogenetic Tools </h2>
+    <br>
+    <h4> Phylogenetic Tree </h4>
     <ul>
-        <li> This pngs shows a most likelihood tree that was crated based on a multiple sequence alignment. </li>
-        <li> The labels within the tree show the scientific name of the organism as well as the sequence accession id of the protein. </li>
-        <li> In the lower left corner of the tree a scale is shown. </li>
+        <li> This pngs shows a most likelihood tree that was crated based on a multiple sequence alignment.</li>
+        <li> The labels within the tree show the scientific name of the organism as well as the sequence accession id of
+            the protein.
+        </li>
+        <li> In the lower left corner of the tree a scale is shown.</li>
     </ul>
 
     <h4> All vs all pairwise alignment </h4>
     <ul>
-        <li> Heatmap showing the results of an all vs all pairwise sequence alignment </li>
+        <li> Heatmap showing the results of an all vs all pairwise sequence alignment</li>
     </ul>
 {% endblock %}
 
 {% block page_header %}
-<div class="container-fluid">
-    Phylogenetic Tree and other Information
-    <p style="text-align: center;font-size: small"> See and download your Phylogenetic Trees and other cool stuff, {{ request.user }}!</p>
-</div>
+    <div class="container-fluid">
+        Phylogenetic Tree and other Information
+        <p style="text-align: center;font-size: small"> See and download your Phylogenetic Trees and other cool
+            stuff, {{ request.user }}!</p>
+    </div>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+    <div class="container-fluid">
 
-    <div class="row" style="text-align: center;">
-          <div class="col-sm dashboard_project_list_col" style="height: 600px">
+        <div class="row" style="text-align: center;">
+            <div class="col-sm dashboard_project_list_col" style="height: 600px">
 
                 <h3 class="col_header"> Basic Information about {{ query_sequence_id }} </h3>
-              <p style="font-size: medium">Identification of Protein function (needs to be changed)</p>
-              {% load static %}
-              <img src="{% static '/images/result_images'%}/{{project_id}}/{{ query_sequence_id }}_statistics.png"
-                        alt="Basic statistics of the reciprocal BLAST run."
-                        style='height: 80%; width: 80%; object-fit: contain'>
+                <p style="font-size: medium">Identification of Protein function (needs to be changed)</p>
+                {% load static %}
+                <img src="{% static '/images/result_images' %}/{{ project_id }}/{{ query_sequence_id }}_statistics.png"
+                     alt="Basic statistics of the reciprocal BLAST run."
+                     style='height: 80%; width: 80%; object-fit: contain'>
             </div>
 
             <div class="col-sm dashboard_project_list_col" style="height: 600px">
                 <h3 class="col_header"> Multiple Sequence alignment </h3>
-              <p style="font-size: medium">some subtext</p>
+                <p style="font-size: medium">some subtext</p>
             </div>
-    </div>
-        <div class="row"  style="text-align: center;">
+        </div>
+        <div class="row" style="text-align: center;">
             <div class="col-sm dashboard_project_list_col" style="height: 600px;">
                 <h3 class="col_header"> Reciprocal Results </h3>
-                {{html_results|safe}}
+                {{ html_results|safe }}
             </div>
 
             <div class="col-sm dashboard_project_list_col" style="height: 600px">
                 <h3 class="col_header"> Phylogenetic Tree</h3>
                 <p style="font-size: medium">Phylogenetic tree ceated with ete3</p>
-                    {% load static %}
+                {% load static %}
 
-                    <img class="img-phylo" src="{% static '/images/result_images'%}/{{project_id}}/{{ query_sequence_id }}_target_sequences.svg"
-                        alt="Phylogenetic Tree created with ete3"
-                        style='height: 80%; width: 80%; object-fit: contain'>
+                <img class="img-phylo"
+                     src="{% static '/images/result_images' %}/{{ project_id }}/{{ query_sequence_id }}_target_sequences.svg"
+                     alt="Phylogenetic Tree created with ete3"
+                     style='height: 80%; width: 80%; object-fit: contain'>
 
 
-              <p style="font-size: medium">Some cool information about the tree, such as what the bar means etc.</p>
+                <p style="font-size: medium">Some cool information about the tree, such as what the bar means etc.</p>
             </div>
-    </div>
+        </div>
 
-</div>
+    </div>
 
 {% endblock %}

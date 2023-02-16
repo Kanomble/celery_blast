@@ -1,16 +1,20 @@
 import os
-from django.conf import settings
+
 import pandas as pd
+from django.conf import settings
+
 
 def create_html_output_for_newicktree(path_to_fasttree_output, project_id, query_accession):
     try:
         if os.path.isfile(path_to_fasttree_output):
             path_to_html_phylogeny = path_to_fasttree_output.split(".nwk")[0] + '.html'
-            if os.path.isdir('static/images/result_images/' + str(project_id) + '/'+query_accession):
-                path_to_static_html_phylogeny = 'static/images/result_images/' + str(project_id) + '/'+query_accession+'/target_sequences.html'
+            if os.path.isdir('static/images/result_images/' + str(project_id) + '/' + query_accession):
+                path_to_static_html_phylogeny = 'static/images/result_images/' + str(
+                    project_id) + '/' + query_accession + '/target_sequences.html'
             else:
-                os.mkdir('static/images/result_images/' + str(project_id) + '/'+query_accession)
-                path_to_static_html_phylogeny = 'static/images/result_images/' + str(project_id) + '/'+query_accession+'/target_sequences.html'
+                os.mkdir('static/images/result_images/' + str(project_id) + '/' + query_accession)
+                path_to_static_html_phylogeny = 'static/images/result_images/' + str(
+                    project_id) + '/' + query_accession + '/target_sequences.html'
 
             return 0
         else:
@@ -18,17 +22,20 @@ def create_html_output_for_newicktree(path_to_fasttree_output, project_id, query
     except Exception as e:
         raise Exception("[-] couldnt create html table for the newick file: {}".format(path_to_fasttree_output))
 
+
 def get_list_of_query_sequence_folder(project_id):
     path_to_project = settings.BLAST_PROJECT_DIR + str(project_id)
     try:
-        qseqids = [pathname for pathname in os.listdir(path_to_project) if os.path.isdir(os.path.join(path_to_project,pathname))]
+        qseqids = [pathname for pathname in os.listdir(path_to_project) if
+                   os.path.isdir(os.path.join(path_to_project, pathname))]
         if '.snakemake' in qseqids:
             qseqids.remove('.snakemake')
         return qseqids
     except OSError as e:
         raise Exception("[-] couldnt perform query id folder listing with exception : {}".format(e))
 
-def get_msa_files_from_folder_list(project_id,folders):
+
+def get_msa_files_from_folder_list(project_id, folders):
     try:
         qseqid_to_msa = {}
         path_to_folder = settings.BLAST_PROJECT_DIR + str(project_id)
@@ -42,11 +49,14 @@ def get_msa_files_from_folder_list(project_id,folders):
     except Exception as e:
         raise Exception("[-] couldnt identify if qseq folder contains msa file or not, exception : {}".format(e))
 
+
 '''
 check if there are > 2 target sequences available (for msa task).
     
     :returns 0 if task can proceed, 1 if file was not found and 2 if there are not enough sequences
 '''
+
+
 def check_if_target_sequences_are_available(path_to_query_file: str) -> int:
     try:
         if os.path.isfile(path_to_query_file):
@@ -57,16 +67,20 @@ def check_if_target_sequences_are_available(path_to_query_file: str) -> int:
                         count += 1
             if count >= 2:
                 return 0
-            else: #not enough target sequences
+            else:  # not enough target sequences
                 return 2
-        else: #FileNotFound
+        else:  # FileNotFound
             return 1
     except Exception as e:
-        raise Exception("[-] error during checking amount of sequence targets for msa task with exception: {}".format(e))
+        raise Exception(
+            "[-] error during checking amount of sequence targets for msa task with exception: {}".format(e))
+
 
 '''
 check if multiple sequence file is available (for phylo task)
 '''
+
+
 def check_if_msa_file_is_available(path_to_msa_file: str) -> int:
     try:
         if os.path.isfile(path_to_msa_file):
@@ -75,6 +89,7 @@ def check_if_msa_file_is_available(path_to_msa_file: str) -> int:
             return 1
     except Exception as e:
         raise Exception("[-] error during checking if msa file exists with exception: {}".format(e))
+
 
 '''delete_cdd_search_output
 
@@ -89,7 +104,9 @@ def check_if_msa_file_is_available(path_to_msa_file: str) -> int:
     :returns returncode
         :type int
 '''
-def delete_cdd_search_output(query_sequence:str, project_id:int)->int:
+
+
+def delete_cdd_search_output(query_sequence: str, project_id: int) -> int:
     try:
         path_to_project_dir = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
         cdd_table = path_to_project_dir + 'cdd_domains.tsf'
@@ -97,13 +114,14 @@ def delete_cdd_search_output(query_sequence:str, project_id:int)->int:
         domain_corrected_faa_file = path_to_project_dir + 'domain_corrected_target_sequences.faa'
         msa_file = path_to_project_dir + 'domain_corrected_target_sequences.msa'
         tree_file = path_to_project_dir + 'domain_corrected_domain_corrected_target_sequences.nwk'
-        filelist = [cdd_table,bokeh_plot,domain_corrected_faa_file,msa_file,tree_file]
+        filelist = [cdd_table, bokeh_plot, domain_corrected_faa_file, msa_file, tree_file]
         for file in filelist:
             if os.path.isfile(file):
                 os.remove(file)
         return 0
     except Exception as e:
         raise Exception("[-] error during deletion of cdd search output with exception: {}".format(e))
+
 
 '''check_if_cdd_search_can_get_executed
     
@@ -119,7 +137,9 @@ def delete_cdd_search_output(query_sequence:str, project_id:int)->int:
     :returns returncode - 1 = dont execute PCA plotting, 0 = execute PCA plotting
         :type int
 '''
-def check_if_cdd_search_can_get_executed(query_sequence:str, project_id:int)->int:
+
+
+def check_if_cdd_search_can_get_executed(query_sequence: str, project_id: int) -> int:
     try:
         path_to_project_dir = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
         path_to_query_domains = path_to_project_dir + 'query_domains.tsf'
@@ -145,4 +165,3 @@ def check_if_cdd_search_can_get_executed(query_sequence:str, project_id:int)->in
     except Exception as e:
         raise Exception("[-] error checking if a PCA for the CDD search result "
                         "dataframe for: {} is practicable, with exception: {}".format(query_sequence, e))
-

@@ -10,60 +10,78 @@
 {% block infoheader %} One-Way BLAST Project Creation Dashboard {% endblock %}
 
 {% block page_description %}
-    This website can be used for creation of simple unidirectional BLAST sequence similarity searches. There are two options that can be used.
-    The first option allows you to create BLAST projects based on <strong>local protein databases</strong> and the second option allows you to create
-    BLAST projects based on databases that reside on <strong>NCBI-Servers</strong>. The second option is achieved by using the <strong>-remote</strong>
+    This website can be used for creation of simple unidirectional BLAST sequence similarity searches. There are two
+    options that can be used.
+    The first option allows you to create BLAST projects based on <strong>local protein databases</strong> and thesecond
+    option allows you to create
+    BLAST projects based on databases that reside on <strong>NCBI-Servers</strong>. The second option is achieved by
+    using the <strong>-remote</strong>
     parameter of the <a href="https://www.ncbi.nlm.nih.gov/books/NBK279690/">BLAST-C++</a> software package.
     <br>
     <h2> Informations on advanced BLAST settings </h2>
     <ul>
-        <li> Turn the <strong>Thread</strong> parameter to the number of your available CPU cores to enhance the search speed (only available for local BLAST searches) </li>
-        <li> If you search against very small local databases increase the <strong> E-Value </strong> parameter (<a href="https://www.metagenomics.wiki/tools/blast/evalue">E-Value informations</a>)</li>
-        <li> Changing the <strong>Word Size</strong> parameter will effect the amount of High-Scoring-Pairs and increases (higher word-size) or decreases (lower word-size) the search speed</li>
-        <li> You can provide an <strong>Entrez Query</strong> to your remote BLAST projects, this will limit your BLAST search based on your query (e.g. apes[organism] - more <a href="https://www.ncbi.nlm.nih.gov/books/NBK3837/">informations</a>)</li>
+        <li> Turn the <strong>Thread</strong> parameter to the number of your available CPU cores to enhance the search
+            speed (only available for local BLAST searches)
+        </li>
+        <li> If you search against very small local databases increase the <strong> E-Value </strong> parameter (<a
+                href="https://www.metagenomics.wiki/tools/blast/evalue">E-Value informations</a>)
+        </li>
+        <li> Changing the <strong>Word Size</strong> parameter will effect the amount of High-Scoring-Pairs and
+            increases (higher word-size) or decreases (lower word-size) the search speed
+        </li>
+        <li> You can provide an <strong>Entrez Query</strong> to your remote BLAST projects, this will limit your BLAST
+            search based on your query (e.g. apes[organism] - more <a
+                    href="https://www.ncbi.nlm.nih.gov/books/NBK3837/">informations</a>)
+        </li>
         <li> The <strong> Max Hsps </strong> parameter is used to control the amount of HSPs on your subject sequences.
-            HSPs are assigned if the scoring value between the aligned sequences is above a certain threshold, thus subject sequences with more than one region of similarity will have multiple HSPs. </li>
+            HSPs are assigned if the scoring value between the aligned sequences is above a certain threshold, thus
+            subject sequences with more than one region of similarity will have multiple HSPs.
+        </li>
     </ul>
 {% endblock %}
 
 <!-- Welcome to your one way BLAST project dashboard, request.user!-->
 {% block header %}
-{%  endblock %}
-{%  block extend_body %} {% if OneWayRemoteProjectCreationForm.errors %} onload="loadRemoteOrLocal('remote')" {% endif %} {% if OneWayProjectCreationForm.errors %} onload="loadRemoteOrLocal('local')" {% endif %} {% endblock %}
+{% endblock %}
+{% block extend_body %} {% if OneWayRemoteProjectCreationForm.errors %} onload="loadRemoteOrLocal('remote')" {% endif %}
+    {% if OneWayProjectCreationForm.errors %} onload="loadRemoteOrLocal('local')" {% endif %} {% endblock %}
 {% block content %}
 
-<div class="container-fluid text-center dashboard_project_list_col">
-    <form name="project_creation_menu" action="javascript:void(0)" id="one_way_project_creation_form">
-        <div class="custom-control custom-radio custom-control-inline">
-            <input class="custom-control-input" type="radio" id="local" name="local_search_button" value="local" onchange="loadRemoteOrLocal(this.value)">
-            <label class="custom-control-label" for="local">Search Against Available Local BLAST Databases</label>
-        </div>
+    <div class="container-fluid text-center dashboard_project_list_col">
+        <form name="project_creation_menu" action="javascript:void(0)" id="one_way_project_creation_form">
+            <div class="custom-control custom-radio custom-control-inline">
+                <input class="custom-control-input" type="radio" id="local" name="local_search_button" value="local"
+                       onchange="loadRemoteOrLocal(this.value)">
+                <label class="custom-control-label" for="local">Search Against Available Local BLAST Databases</label>
+            </div>
 
-        <div class="custom-control custom-radio custom-control-inline">
-            <input class="custom-control-input" type="radio" id="remote" name="remote_search_button" value="remote" onchange="loadRemoteOrLocal(this.value)">
-            <label class="custom-control-label" for="remote">Search Against Available Remote BLAST Databases</label>
-        </div>
-    </form>
-</div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input class="custom-control-input" type="radio" id="remote" name="remote_search_button" value="remote"
+                       onchange="loadRemoteOrLocal(this.value)">
+                <label class="custom-control-label" for="remote">Search Against Available Remote BLAST Databases</label>
+            </div>
+        </form>
+    </div>
 
-<br>
-<div class="dashboard_project_list_col" id="project_creation_local" style="display: none">
     <br>
-    <h3 class="project-creation-header"> BLAST Project Creation </h3>
-    <br>
-    {% include "one_way_blast/form_one_way_blast_project_creation.html" %}
-    <br>
-    <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')">Advanced BLAST Settings </button>
-</div>
+    <div class="dashboard_project_list_col" id="project_creation_local" style="display: none">
+        <br>
+        <h3 class="project-creation-header"> BLAST Project Creation </h3>
+        <br>
+        {% include "one_way_blast/form_one_way_blast_project_creation.html" %}
+        <br>
+        <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')">Advanced BLAST Settings</button>
+    </div>
 
-<div class="dashboard_project_list_col" id="project_creation_remote" style="display: none">
-    <br>
-    <h3 class="project-creation-header"> Remote BLAST Project Creation </h3>
-    <br>
-    {% include "one_way_blast/form_one_way_remote_blast_project_creation.html" %}
-    <br>
-    <button class="btn btn-dark" onclick="displayDivElement('advanced_remote_settings')">Advanced BLAST Settings </button>
-</div>
+    <div class="dashboard_project_list_col" id="project_creation_remote" style="display: none">
+        <br>
+        <h3 class="project-creation-header"> Remote BLAST Project Creation </h3>
+        <br>
+        {% include "one_way_blast/form_one_way_remote_blast_project_creation.html" %}
+        <br>
+        <button class="btn btn-dark" onclick="displayDivElement('advanced_remote_settings')">Advanced BLAST Settings
+        </button>
+    </div>
 {% endblock %}
 
 

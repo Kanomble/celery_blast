@@ -1,20 +1,21 @@
+import math
 import os
 from os import getcwd, mkdir, remove
 from os.path import isdir, isfile
 from subprocess import Popen, SubprocessError, TimeoutExpired
-import pandas as pd
-import math
 
-from blast_project.py_django_db_services import get_database_by_id, update_blast_database_with_task_result_model
-from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
-from celery.exceptions import SoftTimeLimitExceeded
+import pandas as pd
+from blast_project.py_django_db_services import update_blast_database_with_task_result_model
 from celery import shared_task
+from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
+from celery_blast.settings import BLAST_DATABASE_DIR
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
-from celery_blast.settings import BLAST_DATABASE_DIR
 
-#logger for celery worker instances
+from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
+
+# logger for celery worker instances
 logger = get_task_logger(__name__)
 
 ''' download_refseq_assembly_summary_file
@@ -30,6 +31,8 @@ logger = get_task_logger(__name__)
     :returns returncode of Popen
         :type str
 '''
+
+
 @shared_task()
 def download_refseq_assembly_summary():
     try:
@@ -82,17 +85,20 @@ def download_refseq_assembly_summary():
             if isfile(path_to_assembly_file):
                 os.remove(path_to_assembly_file)
 
-        raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due Popen call time limit : {}".format(e))
+        raise Exception(
+            "ERROR couldn't download assembly_summary_refseq.txt file due Popen call time limit : {}".format(e))
 
     except SubprocessError as e:
         wget_process.kill()
         if 'path_to_assembly_file' in locals():
             if isfile(path_to_assembly_file):
                 os.remove(path_to_assembly_file)
-        raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due Popen call exception : {}".format(e))
+        raise Exception(
+            "ERROR couldn't download assembly_summary_refseq.txt file due Popen call exception : {}".format(e))
 
     except Exception as e:
         raise Exception("couldn't download assembly_summary_refseq.txt file : {}".format(e))
+
 
 f'''write_alias_file
 
@@ -107,16 +113,18 @@ f'''write_alias_file
     :returns 0 on success
         :type int
 '''
+
+
 @shared_task()
-def write_alias_file(alias_filename:str,available_databases:list)->int:
+def write_alias_file(alias_filename: str, available_databases: list) -> int:
     try:
         logger.info('starting to write database alias file : {}'.format(alias_filename))
-        with open(alias_filename,'w') as alias_file:
+        with open(alias_filename, 'w') as alias_file:
             database_title = '.'.join(alias_filename.split("/")[3].split(".")[0:2])
             alias_file.write("TITLE {}\n".format(database_title))
             alias_file.write("DBLIST")
             for database_file in available_databases:
-                alias_file.write(" \""+database_file.split("/")[3]+"\"")
+                alias_file.write(" \"" + database_file.split("/")[3] + "\"")
             alias_file.write("\n")
             alias_file.close()
         return 0
@@ -156,11 +164,13 @@ def write_alias_file(alias_filename:str,available_databases:list)->int:
     :returns errorlist - List of databases with errors during the formatting procedure.
         :type list
 '''
+
+
 @shared_task()
-def format_blast_databases(path_to_database:str,chunks:list,progress_recorder:ProgressRecorder)->tuple:
+def format_blast_databases(path_to_database: str, chunks: list, progress_recorder: ProgressRecorder) -> tuple:
     try:
-        errorlist=[]
-        available_databases=[]
+        errorlist = []
+        available_databases = []
 
         progress = 75
         # to 75 %
@@ -171,13 +181,13 @@ def format_blast_databases(path_to_database:str,chunks:list,progress_recorder:Pr
         for chunk in chunks:
             database = path_to_database + "database_chunk_{}.faa".format(chunk)
             taxonomic_mapfile = path_to_database + "acc_taxmap_file_{}.table".format(chunk)
-            proc = Popen(["makeblastdb","-in",database,
-                                     '-dbtype','prot',
-                                     '-taxid_map',taxonomic_mapfile,
-                                     '-parse_seqids',
-                                     '-out',database,'-blastdb_version','5'])
+            proc = Popen(["makeblastdb", "-in", database,
+                          '-dbtype', 'prot',
+                          '-taxid_map', taxonomic_mapfile,
+                          '-parse_seqids',
+                          '-out', database, '-blastdb_version', '5'])
             returncode = proc.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
-            if(returncode != 0):
+            if (returncode != 0):
                 logger.warning("ERROR during database creation of chunk {}".format(chunk))
                 errorlist.append(chunk)
             else:
@@ -187,25 +197,27 @@ def format_blast_databases(path_to_database:str,chunks:list,progress_recorder:Pr
                 progress_recorder.set_progress(progress, 100, "formatted chunk {}".format(chunk))
 
         progress_recorder.set_progress(99, 100, "formatted chunk {}".format(chunk))
-        return available_databases,errorlist
+        return available_databases, errorlist
 
     except TimeoutExpired as e:
         logger.warning("ERROR in makeblastdb for database chunk: {} - process timed out".format(database))
         if 'proc' in locals():
             proc.kill()
-        raise Exception("ERROR in makeblastdb for database chunk: {} with exception: {} - process timed out".format(database,e))
+        raise Exception(
+            "ERROR in makeblastdb for database chunk: {} with exception: {} - process timed out".format(database, e))
 
     except SubprocessError as e:
         logger.warning("ERROR in makeblastdb for database chunk: {}".format(database))
         if 'proc' in locals():
             proc.kill()
-        raise Exception("ERROR in makeblastdb for database chunk: {} with exception: {}".format(database,e))
+        raise Exception("ERROR in makeblastdb for database chunk: {} with exception: {}".format(database, e))
 
     except SoftTimeLimitExceeded:
         raise Exception("ERROR in formatting blast databases with makeblastdb soft time limit exceeded ...")
     except Exception as e:
         logger.warning('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
         raise Exception('couldnt format downloaded assembly files to blast databases with exception : {}'.format(e))
+
 
 '''create_chunks_of_databases
     This function combines each 500 fasta files to one database chunk that can gets formatted to 
@@ -224,29 +236,30 @@ def format_blast_databases(path_to_database:str,chunks:list,progress_recorder:Pr
     :returns chunks - list of integers that define the database chunks
         :type list - list[int]
 '''
+
+
 @shared_task()
-def create_chunks_of_databases(df:pd.DataFrame,path_to_database:str,progress_recorder:ProgressRecorder)->list:
+def create_chunks_of_databases(df: pd.DataFrame, path_to_database: str, progress_recorder: ProgressRecorder) -> list:
     try:
         total_formatted = 0
         chunk = 1
         chunks = []
 
         progress = 50
-        #to 75 %
+        # to 75 %
         steps = 100 / len(df['ftp_path']) / 4
         logger.info("starting to concatenate available fasta assemblies")
         progress_recorder.set_progress(progress, 100, "concatenate available fasta assemblies")
 
-        iteration_steps = 500 #chunks --> 500 fasta files build "one" database chunk
+        iteration_steps = 500  # chunks --> 500 fasta files build "one" database chunk
         if round(len(df['ftp_path']) / iteration_steps) > 35:
-            iteration_steps = math.ceil( len(df['ftp_path']) / 35)
+            iteration_steps = math.ceil(len(df['ftp_path']) / 35)
 
         logger.info("set iteration steps to : {}".format(iteration_steps))
         while total_formatted < len(df['ftp_path']):
             iteration_end = total_formatted + iteration_steps
             if (iteration_end > len(df['ftp_path'])):
                 iteration_end = len(df['ftp_path'])
-
 
             logger.info("looping from {} to {}".format(total_formatted, iteration_end))
 
@@ -275,15 +288,15 @@ def create_chunks_of_databases(df:pd.DataFrame,path_to_database:str,progress_rec
 
                     lines = genome_file.readlines()
                     genome_file.close()
-                    remove(path_to_database+assembly_name)
+                    remove(path_to_database + assembly_name)
 
                     for line in lines:
-                        #transformes accession id and adds additional informations
+                        # transformes accession id and adds additional informations
                         if line[0] == ">":
                             split = line.split(" ")
                             header = ' '.join(split[1:])
                             acc_id = split[0].split(">")[1] + "_" + fasta_header
-                            #accession header max length for makeblastdb is 50
+                            # accession header max length for makeblastdb is 50
                             acc_to_tax.write(acc_id[0:49] + "\t" + str(taxid) + "\n")
                             line = '>' + acc_id[0:49] + ' ' + header
                         database_chunk.write(line)
@@ -324,60 +337,64 @@ def create_chunks_of_databases(df:pd.DataFrame,path_to_database:str,progress_rec
         type: dict - dictionary of downloaded filenames and their corresponding taxids as values
     
 '''
+
+
 @shared_task()
-def download_wget_ftp_paths(path_to_database:str,dictionary_ftp_paths_taxids:dict,progress_recorder:ProgressRecorder)->dict:
+def download_wget_ftp_paths(path_to_database: str, dictionary_ftp_paths_taxids: dict,
+                            progress_recorder: ProgressRecorder) -> dict:
     try:
-        error_log = open(path_to_database+'download_error.log', 'w')
+        error_log = open(path_to_database + 'download_error.log', 'w')
         transform_ftp_path = lambda file: file.split('/')[-1].rstrip(file[-3:])
 
-        #progress_steps = round(100 / (len(dictionary_ftp_paths_taxids.keys()) * 2), 3)
+        # progress_steps = round(100 / (len(dictionary_ftp_paths_taxids.keys()) * 2), 3)
 
         downloaded_files = {}
-        #database_id for format_available_databases
+        # database_id for format_available_databases
 
-        progress_steps = 100/((len(dictionary_ftp_paths_taxids.keys()))*2)
+        progress_steps = 100 / ((len(dictionary_ftp_paths_taxids.keys())) * 2)
         progress = 0
         progress_recorder.set_progress(progress, 100, "starting wget processes")
 
         for file in dictionary_ftp_paths_taxids.keys():
 
             gunzip_output = transform_ftp_path(file)
-            if(isfile(path_to_database + gunzip_output) == True):
+            if (isfile(path_to_database + gunzip_output) == True):
                 downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
                 logger.info('file {} exists, scipping download'.format(gunzip_output))
                 progress += progress_steps
                 progress_recorder.set_progress(progress, 100, "downloaded {}".format(gunzip_output))
-            elif(isfile(path_to_database + gunzip_output) == False):
-                #0 ... 9 attempts
+            elif (isfile(path_to_database + gunzip_output) == False):
+                # 0 ... 9 attempts
                 for attempt in range(10):
                     try:
 
-
-                        proc = Popen('wget -qO- {} | gzip -d > {}'.format(file, path_to_database+gunzip_output), shell=True)
+                        proc = Popen('wget -qO- {} | gzip -d > {}'.format(file, path_to_database + gunzip_output),
+                                     shell=True)
                         returncode = proc.wait(timeout=300)  # 66 Minutes
-                        if(returncode != 0):
+                        if (returncode != 0):
                             raise Exception
-                        #downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
-                        #logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
+                        # downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
+                        # logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
 
-                    #catch exception raised if the subproccess failed e.g. gzip failure due to invalid download
+                    # catch exception raised if the subproccess failed e.g. gzip failure due to invalid download
                     except Exception as e:
                         logger.warning("download exception : {}".format(e))
                         error_log.write("{} {}\n".format(file, attempt))
-                        logger.warning('next download attempt of file : {} with attempt : {}'.format(file,attempt))
-                        if(attempt == 9):
+                        logger.warning('next download attempt of file : {} with attempt : {}'.format(file, attempt))
+                        if (attempt == 9):
                             error_log.write('couldnt download: {} '.format(file))
                             logger.warning('couldnt download: {} after 10 attempts'.format(file))
-                            if(isfile(path_to_database + gunzip_output) == True):
-                                remove(path_to_database + gunzip_output)#removes partially downloaded files
+                            if (isfile(path_to_database + gunzip_output) == True):
+                                remove(path_to_database + gunzip_output)  # removes partially downloaded files
                                 logger.warning("removed empty file: {}".format(gunzip_output))
 
                             progress += progress_steps
                             progress_recorder.set_progress(progress, 100, "failed trying to download {}".format(file))
-                            #break
-                    #fills the returned dictionary with successfully downloaded genome files
+                            # break
+                    # fills the returned dictionary with successfully downloaded genome files
                     else:
-                        logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
+                        logger.info(
+                            'downloaded : {} returncode : {}'.format(path_to_database + gunzip_output, returncode))
                         downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
                         progress += progress_steps
                         progress_recorder.set_progress(progress, 100, "downloaded {}".format(gunzip_output))
@@ -409,6 +426,8 @@ def download_wget_ftp_paths(path_to_database:str,dictionary_ftp_paths_taxids:dic
         available_db_chunks, errorlist = format_blast_databases(db_path,chunks,progress_recorder)
         
 '''
+
+
 @shared_task(bind=True)
 def download_blast_databases_based_on_summary_file(self, database_id):
     try:
@@ -418,33 +437,35 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         logger.info('working dir : {}'.format(working_dir))
         path_to_database = BLAST_DATABASE_DIR + str(database_id) + '/'
 
-        progress_recorder.set_progress(0,100,"started downloading")
+        progress_recorder.set_progress(0, 100, "started downloading")
 
-        #loads the desired database summary table into an dictionary with the 'ftp_path' column as key
-        #and 'taxid' as value
+        # loads the desired database summary table into an dictionary with the 'ftp_path' column as key
+        # and 'taxid' as value
         dictionary_ftp_paths_taxids = get_ftp_paths_and_taxids_from_summary_file(database_id)
 
         logger.info('trying to update blast database with current task')
         update_blast_database_with_task_result_model(database_id, str(self.request.id))
 
-        #download
-        dictionary_ftp_paths_taxids = download_wget_ftp_paths(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
+        # download
+        dictionary_ftp_paths_taxids = download_wget_ftp_paths(path_to_database, dictionary_ftp_paths_taxids,
+                                                              progress_recorder)
 
-        #build pandas dataframe from dictionary that is returned by the download function
+        # build pandas dataframe from dictionary that is returned by the download function
         pandas_ftp_paths_taxids_df = pd.DataFrame(dictionary_ftp_paths_taxids.items(), columns=['ftp_path', 'taxid'])
-        available_database_chunks = create_chunks_of_databases(pandas_ftp_paths_taxids_df,path_to_database,progress_recorder)
+        available_database_chunks = create_chunks_of_databases(pandas_ftp_paths_taxids_df, path_to_database,
+                                                               progress_recorder)
 
-        #execute makeblastdb
-        databases = format_blast_databases(path_to_database,available_database_chunks,progress_recorder)
+        # execute makeblastdb
+        databases = format_blast_databases(path_to_database, available_database_chunks, progress_recorder)
 
-        #database_files = format_available_databases(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
+        # database_files = format_available_databases(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
         progress_recorder.set_progress(99, 100, "writing alias file")
         database_pandas_table_name = get_bdb_summary_table_name(database_id)
-        alias_filename = BLAST_DATABASE_DIR + str(database_id) + '/' + database_pandas_table_name+'.database.pal'
+        alias_filename = BLAST_DATABASE_DIR + str(database_id) + '/' + database_pandas_table_name + '.database.pal'
 
         logger.info('starting to write database alias file : {}'.format(alias_filename))
 
-        returncode = write_alias_file(alias_filename,databases[0])
+        returncode = write_alias_file(alias_filename, databases[0])
         progress_recorder.set_progress(100, 100, "writing alias file")
         return returncode
     except Exception as e:

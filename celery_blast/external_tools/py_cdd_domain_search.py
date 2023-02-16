@@ -1,21 +1,21 @@
+import random
+
 import bokeh.models
 import pandas as pd
+# module to parse fasta files
+from Bio import SeqIO
+# output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
+from bokeh.io import output_file, save
+# This is for creating layout
+from bokeh.layouts import column, gridplot
+# ColumnDataSource makes selection of the column easier and Select is used to create drop down
+from bokeh.models import ColumnDataSource, MultiSelect, DataTable, TableColumn, HTMLTemplateFormatter
+# To create intractive plot we need this to add callback method.
+from bokeh.models import CustomJS, Legend
+# Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
+from bokeh.plotting import figure
 from django.conf import settings
 from sklearn.decomposition import PCA
-
-#module to parse fasta files
-from Bio import SeqIO
-#output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
-from bokeh.io import output_file, save
-#ColumnDataSource makes selection of the column easier and Select is used to create drop down
-from bokeh.models import ColumnDataSource, MultiSelect,  DataTable, TableColumn, HTMLTemplateFormatter
-#Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
-from bokeh.plotting import figure
-#To create intractive plot we need this to add callback method.
-from bokeh.models import CustomJS, Legend
-#This is for creating layout
-from bokeh.layouts import column, gridplot
-import random
 
 '''load_domain_query_data
     
@@ -28,19 +28,22 @@ import random
     :return domain_dict
         :type dict[str] = list[str,...]
 '''
-def load_domain_query_data(path_to_query_domains:str)->dict:
+
+
+def load_domain_query_data(path_to_query_domains: str) -> dict:
     try:
-        #sseq qseq stitle
+        # sseq qseq stitle
         header = "qseqid qlen sacc slen qstart qend sstart send qseq sseq bitscore evalue pident stitle".split(" ")
-        cdd_queries = pd.read_table(path_to_query_domains,header=None)
-        cdd_queries.columns=header
+        cdd_queries = pd.read_table(path_to_query_domains, header=None)
+        cdd_queries.columns = header
         domain_dict = {}
         for qseq in cdd_queries.qseqid.unique():
             qseq_key = qseq.split(".")[0]
-            domain_dict[qseq_key]=cdd_queries[cdd_queries.qseqid == qseq].sacc.unique()
+            domain_dict[qseq_key] = cdd_queries[cdd_queries.qseqid == qseq].sacc.unique()
         return domain_dict
     except Exception as e:
         raise Exception("[-] ERROR loading domain query dictionary with exception: {}".format(e))
+
 
 '''load_domain_data
     
@@ -60,6 +63,8 @@ def load_domain_query_data(path_to_query_domains:str)->dict:
         :type pd.DataFrame
     
 '''
+
+
 def load_domain_data(path_to_domains: str, qseqid_key: str, domain_dict: dict) -> pd.DataFrame:
     try:
         header = "qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident".split(" ")
@@ -84,7 +89,7 @@ def load_domain_data(path_to_domains: str, qseqid_key: str, domain_dict: dict) -
             domain_df = domain_df.drop_duplicates(subset='sacc').reset_index()
             domain_df = domain_df.drop('index', axis=1)
 
-            #counting domains not present in the query sequence
+            # counting domains not present in the query sequence
             counter = 0
             for domain in domain_df.sacc:
                 if domain not in header:
@@ -122,6 +127,8 @@ def load_domain_data(path_to_domains: str, qseqid_key: str, domain_dict: dict) -
     :return color_dict
         :type dict
 '''
+
+
 def add_color_column_to_dataframe(result_df: pd.DataFrame, taxonomic_unit) -> tuple:
     try:
         import matplotlib._color_data as mcd
@@ -171,6 +178,8 @@ def add_color_column_to_dataframe(result_df: pd.DataFrame, taxonomic_unit) -> tu
     :return header -> CDD domains
         :type list[str]
 '''
+
+
 def build_dataframe_for_bokeh(cdd_dataframe: pd.DataFrame, pca_df: pd.DataFrame, selection: pd.DataFrame) -> tuple:
     try:
         cdd_dataframe = cdd_dataframe.reset_index()
@@ -226,6 +235,8 @@ def build_dataframe_for_bokeh(cdd_dataframe: pd.DataFrame, pca_df: pd.DataFrame,
     :return tax_menu
         :type MulitSelect -> bokeh
 '''
+
+
 def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str):
     try:
         unique_tax = list(bokeh_dataframe[taxonomic_unit].unique())
@@ -256,6 +267,8 @@ def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str):
     :returns selection_callback
         :type bokeh.models.CustomJS
 '''
+
+
 def build_json_callback_for_selection(column_dat: ColumnDataSource, table_dat: ColumnDataSource,
                                       table_header: list) -> CustomJS:
     selection_callback = CustomJS(args=dict(sc=column_dat, table_data=table_dat, columns=table_header), code="""
@@ -284,6 +297,7 @@ def build_json_callback_for_selection(column_dat: ColumnDataSource, table_dat: C
             """)
     return selection_callback
 
+
 '''build_json_callback_for_taxonomy
     
     This function produces the custom javascript callback function for the taxonomy. It is similar to the 
@@ -306,6 +320,8 @@ def build_json_callback_for_selection(column_dat: ColumnDataSource, table_dat: C
     :returns tax_menu_callback
         :type bokeh.models.CustomJS
 '''
+
+
 def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: ColumnDataSource,
                                      table_dat: ColumnDataSource, domains: list, taxonomic_unit: str,
                                      tax_selection: dict) -> CustomJS:
@@ -399,6 +415,7 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
                         """)
     return tax_menu_callback
 
+
 '''build_table_html_formatter
     
     This function recolors the bokeh datatable, based on the pident values of the underlying CDD dataframe.
@@ -410,8 +427,10 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
     :returns formatter
         :type bokeh.models.HTMLTemplateFormatter
 '''
-def build_table_html_formatter(value:str)->bokeh.models.HTMLTemplateFormatter:
-    condition_string=""" 
+
+
+def build_table_html_formatter(value: str) -> bokeh.models.HTMLTemplateFormatter:
+    condition_string = """ 
     if({val}<0.25)
         {{return("red")}}
     else if({val}>=0.25 && {val}<0.5)
@@ -421,7 +440,7 @@ def build_table_html_formatter(value:str)->bokeh.models.HTMLTemplateFormatter:
     else if({val}>=0.75)
         {{return("green")}}
     """.format(val=value)
-    template="""
+    template = """
     <p style="color:<%=(function colorfromint(){{{cond}}}()) %>;"><%=value%></p>
             """.format(cond=condition_string)
     formatter = HTMLTemplateFormatter(template=template)
@@ -442,7 +461,9 @@ def build_table_html_formatter(value:str)->bokeh.models.HTMLTemplateFormatter:
     :return cdd_header
         :type list[str]
 '''
-def build_table_columns(cdd_dataframe: pd.DataFrame)->tuple:
+
+
+def build_table_columns(cdd_dataframe: pd.DataFrame) -> tuple:
     try:
         table_columns = []
         cdd_headers = []
@@ -482,6 +503,8 @@ def build_table_columns(cdd_dataframe: pd.DataFrame)->tuple:
     :param query_sequence
         :type str
 '''
+
+
 def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_unit: str, variances: list,
                      query_sequence: str):
     try:
@@ -569,9 +592,12 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
                                                                'genus', {})
         genus_menu.js_on_change('value', genus_menu_callback)
 
-        return gridplot([[column(p), column(table), column(phylum_menu, class_menu, order_menu, family_menu, genus_menu)]], toolbar_location='right'), circle
+        return gridplot(
+            [[column(p), column(table), column(phylum_menu, class_menu, order_menu, family_menu, genus_menu)]],
+            toolbar_location='right'), circle
     except Exception as e:
         raise Exception("[-] ERROR during creation of bokeh plots with exception: {}".format(e))
+
 
 '''produce_bokeh_pca_plot
     
@@ -588,8 +614,10 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
     :returns return_value - 0 success, 1 failure
         :type int
 '''
-def produce_bokeh_pca_plot(project_id:int, qseqid: str,
-                        taxonomic_unit='class')->int:
+
+
+def produce_bokeh_pca_plot(project_id: int, qseqid: str,
+                           taxonomic_unit='class') -> int:
     try:
         path_to_output = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/pca_bokeh_domain_plot.html'
         path_to_query_domains = settings.BLAST_PROJECT_DIR + str(project_id) + '/query_domains.tsf'
@@ -627,7 +655,7 @@ def produce_bokeh_pca_plot(project_id:int, qseqid: str,
                 pca_selection = PCA(n_components=len(selection.index), svd_solver='full')
             else:
                 pca_selection = PCA(n_components=len(cdd_dataframe.columns) - 1, svd_solver='full')
-            #pca_selection = None
+            # pca_selection = None
             cols = list(cdd_dataframe.columns)
             cols.remove('additional_domains')
 
@@ -643,8 +671,8 @@ def produce_bokeh_pca_plot(project_id:int, qseqid: str,
             grid, p = build_bokeh_plot(bk_df, header, taxonomic_unit, variances, qseqid)
             # save bokeh plot
             output_file(filename=path_to_output,
-                      title="Principal Component Analysis of CDD-pidents".format(
-                           taxonomic_unit))
+                        title="Principal Component Analysis of CDD-pidents".format(
+                            taxonomic_unit))
             save(grid)
             return 0
 
@@ -653,6 +681,7 @@ def produce_bokeh_pca_plot(project_id:int, qseqid: str,
 
     except Exception as e:
         raise Exception("[-] ERROR with exception : {}".format(e))
+
 
 ########################################################################################################################
 
@@ -689,6 +718,8 @@ def check_range_and_return_new_values(x: int, y: int, boundary_x: int, boundary_
         :type pd.DataFrame
 
 '''
+
+
 def get_sequence_segments(qseqid_df: pd.DataFrame) -> list:
     try:
         segments = []
@@ -733,13 +764,17 @@ def get_sequence_segments(qseqid_df: pd.DataFrame) -> list:
         :type int
 
 '''
+
+
 def write_domain_corrected_fasta_file(project_id: int, query_sequence: str) -> int:
     try:
-        logfile_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/log/' + query_sequence + '/domain_corrected_fasta_file.log'
+        logfile_path = settings.BLAST_PROJECT_DIR + str(
+            project_id) + '/log/' + query_sequence + '/domain_corrected_fasta_file.log'
         with open(logfile_path, "w") as logfile:
             logfile.write("INFO: Starting to produce multiple fasta file with overlapping domains.\n")
             cdd_filepath = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/cdd_domains.tsf'
-            fasta_filepath = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/target_sequences.faa'
+            fasta_filepath = settings.BLAST_PROJECT_DIR + str(
+                project_id) + '/' + query_sequence + '/target_sequences.faa'
             domain_fasta_filepath = settings.BLAST_PROJECT_DIR + str(
                 project_id) + '/' + query_sequence + '/domain_corrected_target_sequences.faa'
             # read cdd dataframe
@@ -752,7 +787,8 @@ def write_domain_corrected_fasta_file(project_id: int, query_sequence: str) -> i
             for qseqid in df.qseqid.unique():
                 query_domains_range[qseqid] = get_sequence_segments(df[df['qseqid'] == qseqid])
 
-            logfile.write("INFO: parsing target fasta file with biopython to slice sequences based on the segment list.\n")
+            logfile.write(
+                "INFO: parsing target fasta file with biopython to slice sequences based on the segment list.\n")
             records = list(SeqIO.parse(fasta_filepath, "fasta"))
             # write new fasta file with only overlapping domain entries
             with open(domain_fasta_filepath, 'w') as domain_fasta:

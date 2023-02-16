@@ -9,170 +9,190 @@
 {% block header %}
 {% endblock %}
 {% block page_description %}
-<h2> Project Details </h2>
-<br>
+    <h2> Project Details </h2>
+    <br>
     <h4> What to do if an error occures during Snakemake execution? </h4>
     <ul>
-        <li> Monitor your current Snakemake run via Panoptes and check if the workflow has thrown an error or is still running </li>
-        <li> If an error occurred during Snakemake execution you might think about deleting this project and starting a new one with different query sequences, databases or BLAST settings </li>
-        <li> If your server machine lost internet connection during execution of the last Snakemake rules, just restart the execution process </li>
+        <li> Monitor your current Snakemake run via Panoptes and check if the workflow has thrown an error or is still
+            running
+        </li>
+        <li> If an error occurred during Snakemake execution you might think about deleting this project and starting a
+            new one with different query sequences, databases or BLAST settings
+        </li>
+        <li> If your server machine lost internet connection during execution of the last Snakemake rules, just restart
+            the execution process
+        </li>
     </ul>
 
     <h4> Basic Informations </h4>
     <ul>
-        <li> Click on the "Execute Snakemake" Button if you haven't started your remote BLAST analysis </li>
-        <li> Monitor your current Snakemake run via Panoptes by clicking on the "Panoptes Monitoring" button </li>
-        <li> If your Snakemake execution finishes you can view and download the results by clicking on the "Results Table" button which appears after successfull termination at the right side of the project information panel</li>
+        <li> Click on the "Execute Snakemake" Button if you haven't started your remote BLAST analysis</li>
+        <li> Monitor your current Snakemake run via Panoptes by clicking on the "Panoptes Monitoring" button</li>
+        <li> If your Snakemake execution finishes you can view and download the results by clicking on the "Results
+            Table" button which appears after successfull termination at the right side of the project information panel
+        </li>
     </ul>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="dashboard_project_list_col">
-        <h2 style="text-align: center"> Remote BLAST Project Details and Execution Dashboard </h2>
-        <p style="font-size: medium; text-align: center">
-            {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
-                Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
-            {% elif BlastProject.project_execution_task_result.status == 'FAILURE' %}
-                Re-Execute your Snakemake Run for this BLAST project or delete the project.
-            {% elif BlastProject.project_execution_task_result.status == 'PROGRESS' %}
-                Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
-            {% else %}
-                Execute your BLAST project by pressing the Execute Snakemake button.
-            {% endif %}
-        <div class="table-responsive">
-            <table class="table table-hover" id="blastProjectTable">
-                <thead>
+    <div class="container-fluid">
+        <div class="dashboard_project_list_col">
+            <h2 style="text-align: center"> Remote BLAST Project Details and Execution Dashboard </h2>
+            <p style="font-size: medium; text-align: center">
+                {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
+                    Your BLAST Project finished successfully, check the result table and the genus graph for evaluating
+                    your results.
+                {% elif BlastProject.project_execution_task_result.status == 'FAILURE' %}
+                    Re-Execute your Snakemake Run for this BLAST project or delete the project.
+                {% elif BlastProject.project_execution_task_result.status == 'PROGRESS' %}
+                    Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
+                {% else %}
+                    Execute your BLAST project by pressing the Execute Snakemake button.
+                {% endif %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="blastProjectTable">
+                    <thead>
                     <tr>
                         <th>Project Title</th>
                         <th>Database</th>
                         <th>Timestamp</th>
                         {% if OneWayRemoteBlastProject.r_entrez_query %}
-                        <th>Entrez Query (Optional)</th>
+                            <th>Entrez Query (Optional)</th>
                         {% endif %}
                     </tr>
-                </thead>
-                <tbody id="blastProjectTableBody">
+                    </thead>
+                    <tbody id="blastProjectTableBody">
                     <tr>
-                        <td>{{OneWayRemoteBlastProject.r_project_title}}</td>
-                        <td>{{OneWayRemoteBlastProject.r_project_database}}</td>
-                        <td>{{OneWayRemoteBlastProject.r_timestamp |date:'d.m.Y, h:m:s'}}</td>
+                        <td>{{ OneWayRemoteBlastProject.r_project_title }}</td>
+                        <td>{{ OneWayRemoteBlastProject.r_project_database }}</td>
+                        <td>{{ OneWayRemoteBlastProject.r_timestamp |date:'d.m.Y, h:m:s'}}</td>
                         {% if OneWayRemoteBlastProject.r_entrez_query %}
-                        <td>{{OneWayRemoteBlastProject.r_entrez_query}}</td>
+                            <td>{{ OneWayRemoteBlastProject.r_entrez_query }}</td>
                         {% endif %}
 
                         <td>
                             <form class="col"
-                                   action="{% url 'one_way_remote_project_deletion' project_id=OneWayRemoteBlastProject.id%}"
-                                   method="GET">
+                                  action="{% url 'one_way_remote_project_deletion' project_id=OneWayRemoteBlastProject.id %}"
+                                  method="GET">
                                 {% csrf_token %}
                                 <input type="submit" value="Delete Blast Project" class="btn btn-danger">
                             </form>
                         </td>
                         <td>
                             <form class="col"
-                                   action="{% url 'one_way_remote_project_execution' project_id=OneWayRemoteBlastProject.id %}"
-                                   method="POST">
+                                  action="{% url 'one_way_remote_project_execution' project_id=OneWayRemoteBlastProject.id %}"
+                                  method="POST">
                                 {% csrf_token %}
                                 <input type="submit" value="Execute Snakemake" class="btn btn-dark">
                             </form>
                         </td>
                         {% if OneWayRemoteBlastProject.r_project_execution_task_result %}
-                            <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
+                            <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES
+                                MONITORING </a></td>
                         {% endif %}
                         {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark" href="{% url 'one_way_html_results' project_id=OneWayRemoteBlastProject.id remote=1%}"> Results Table </a></td>
+                            <td><a class="btn btn-dark"
+                                   href="{% url 'one_way_html_results' project_id=OneWayRemoteBlastProject.id remote=1 %}">
+                                Results Table </a></td>
                         {% endif %}
 
                         <td>
-                            <a class="btn btn-dark" href="{% url 'one_way_target_sequence_download' project_id=OneWayRemoteBlastProject.id project_type='remote_searches' filename=OneWayRemoteBlastProject.r_project_query_sequences %}"> Download Query Fasta Files </a>
+                            <a class="btn btn-dark"
+                               href="{% url 'one_way_target_sequence_download' project_id=OneWayRemoteBlastProject.id project_type='remote_searches' filename=OneWayRemoteBlastProject.r_project_query_sequences %}">
+                                Download Query Fasta Files </a>
                         </td>
 
                     </tr>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-    <br>
-    <!-- <div class="dashboard_project_list_col" id="QUERY_INFO">
-    </div> -->
-    {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
-    <div class="dashboard_project_list_col">
-        <h2 style="text-align: center">Query Sequence Information</h2>
-        <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
-            Information is just available for valid accession ids (ids with sequences stored in the NCBI protein database). </p>
         <br>
-        <div class="container-fluid">
-            {{ OneWayRemoteBlastProject.read_query_information_table | safe }}
-        </div>
-    </div>
-    <br>
-    <div class="dashboard_project_list_col" style="max-height: 50%;">
-            {% include BokehPlot %}
-    </div>
+        <!-- <div class="dashboard_project_list_col" id="QUERY_INFO">
+        </div> -->
+        {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
+            <div class="dashboard_project_list_col">
+                <h2 style="text-align: center">Query Sequence Information</h2>
+                <p style="font-size: medium; text-align: center"> This table combines information about your uploaded
+                    query sequences.
+                    Information is just available for valid accession ids (ids with sequences stored in the NCBI protein
+                    database). </p>
+                <br>
+                <div class="container-fluid">
+                    {{ OneWayRemoteBlastProject.read_query_information_table | safe }}
+                </div>
+            </div>
+            <br>
+            <div class="dashboard_project_list_col" style="max-height: 50%;">
+                {% include BokehPlot %}
+            </div>
 
-    {% endif %}
+        {% endif %}
 
-</div>
+    </div>
 {% endblock %}
 
 
 {% block scripts %}
 
-<script>
-$(document).ready(function(){
-    var result_table = document.getElementById('myTable');
-    result_table.setAttribute("class","display")
-    $('#myTable').DataTable(
-        {
-            dom: 'Bfrtip',
-            "lengthMenu": [ 10 ],
-            buttons: [
-                'copy',
-                'csv',
-                'selectAll',
-                'selectNone',
-                'selectRows'
-            ],
-            select: true,
-            "columns":[
-                {"data":"index"},
-                {"data":"Accession ID"},
-                {"data":"Organism"},
-                {"data":"Sequence Length"},
-                {"data":"Sequence Definition"},
-                {"data":"Features"},
-                {"data":"PFAM",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        if(oData.PFAM){
-                            $(nTd).html("<a href='"+oData.PFAM+"'>"+oData.PFAM+"</a>");
-                        } else {
-                            $(nTd).html("<p>no link available</p>");
+    <script>
+        $(document).ready(function () {
+            var result_table = document.getElementById('myTable');
+            result_table.setAttribute("class", "display")
+            $('#myTable').DataTable(
+                {
+                    dom: 'Bfrtip',
+                    "lengthMenu": [10],
+                    buttons: [
+                        'copy',
+                        'csv',
+                        'selectAll',
+                        'selectNone',
+                        'selectRows'
+                    ],
+                    select: true,
+                    "columns": [
+                        {"data": "index"},
+                        {"data": "Accession ID"},
+                        {"data": "Organism"},
+                        {"data": "Sequence Length"},
+                        {"data": "Sequence Definition"},
+                        {"data": "Features"},
+                        {
+                            "data": "PFAM", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                                if (oData.PFAM) {
+                                    $(nTd).html("<a href='" + oData.PFAM + "'>" + oData.PFAM + "</a>");
+                                } else {
+                                    $(nTd).html("<p>no link available</p>");
+                                }
+                            }
+                        },
+                        {
+                            "data": "CDD", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                                if (oData.CDD) {
+                                    $(nTd).html("<a href='" + oData.CDD + "'>" + oData.CDD + "</a>");
+                                } else {
+                                    $(nTd).html("<p>no link available</p>");
+                                }
+                            }
+                        },
+                        {
+                            "data": "TIGR", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                                if (oData.TIGR) {
+                                    $(nTd).html("<a href='" + oData.TIGR + "'>" + oData.TIGR + "</a>");
+                                } else {
+                                    $(nTd).html("<p>no link available</p>");
+                                }
+                            }
                         }
-                    }},
-                {"data":"CDD",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        if(oData.CDD) {
-                            $(nTd).html("<a href='"+oData.CDD+"'>"+oData.CDD+"</a>");
-                        } else {
-                            $(nTd).html("<p>no link available</p>");
-                        }
-                    }
-                },
-                {"data":"TIGR",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        if(oData.TIGR) {
-                            $(nTd).html("<a href='"+oData.TIGR+"'>"+oData.TIGR+"</a>");
-                        } else {
-                            $(nTd).html("<p>no link available</p>");
-                        }
-                    }
+                    ],
+                    "deferRender": true,
                 }
-            ],
-            "deferRender": true,
-        }
-    );
+            );
 
-});
-</script>
-<!--
+        });
+    </script>
+    <!--
 {%  load static %}
 <script src="{% static 'javascript/load_ajax_table.js' %}"></script>
 <script>

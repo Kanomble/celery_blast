@@ -1,10 +1,11 @@
-#service function for the BLAST database formatting and download procedures as well as for the view functions of this package
-from os.path import isfile
-from django.db import IntegrityError
-from blast_project.py_django_db_services import get_database_by_id
-import pandas as pd
+# service function for the BLAST database formatting and download procedures as well as for the view functions of this package
 import json
+from os.path import isfile
+
+import pandas as pd
+from blast_project.py_django_db_services import get_database_by_id
 from celery_blast.settings import BLAST_DATABASE_DIR
+from django.db import IntegrityError
 
 ''' refseq_file_exists
     
@@ -13,8 +14,11 @@ from celery_blast.settings import BLAST_DATABASE_DIR
     :returns
         :type boolean
 '''
+
+
 def refseq_file_exists():
     return isfile('media/databases/refseq_summary_file/assembly_summary_refseq.txt')
+
 
 '''get_database_download_and_formatting_task_result_progress
     
@@ -28,7 +32,9 @@ def refseq_file_exists():
     :returns progress
         :type str
 '''
-def get_database_download_and_formatting_task_result_progress(database_id:int)->str:
+
+
+def get_database_download_and_formatting_task_result_progress(database_id: int) -> str:
     try:
         blastdb = get_database_by_id(database_id)
         results = blastdb.database_download_and_format_task.result
@@ -48,14 +54,17 @@ def get_database_download_and_formatting_task_result_progress(database_id:int)->
     :returns database_table
         :type pd.DataFrame
 '''
-def filter_duplicates_by_ftp_path(database_table:pd.DataFrame)->pd.DataFrame:
+
+
+def filter_duplicates_by_ftp_path(database_table: pd.DataFrame) -> pd.DataFrame:
     try:
         database_table = database_table[database_table['ftp_path'].duplicated() == False]
-        if(len(database_table) == 0):
+        if (len(database_table) == 0):
             raise Exception('there are no entries in the pandas table')
         return database_table
     except Exception as e:
         raise IntegrityError('couldnt filter pandas table by duplicates Exception : {}'.format(e))
+
 
 '''write_pandas_table_to_project_dir
     This function converts the BLAST database pandas dataframe to csv file, which is saved in the 
@@ -72,12 +81,15 @@ def filter_duplicates_by_ftp_path(database_table:pd.DataFrame)->pd.DataFrame:
     :params database_name
         :type str
 '''
-def write_pandas_table_to_project_dir(blastdatabase_path:str, database_table:pd.DataFrame, database_name:str):
+
+
+def write_pandas_table_to_project_dir(blastdatabase_path: str, database_table: pd.DataFrame, database_name: str):
     try:
         database_table_filepath = blastdatabase_path + '/' + database_name.replace(' ', '_').upper()
         database_table.to_csv(database_table_filepath)
     except Exception as e:
         raise IntegrityError('couldnt write pandas table to refseq genome directory: {}'.format(e))
+
 
 '''transform_data_table_to_json_dict
 
@@ -92,10 +104,13 @@ def write_pandas_table_to_project_dir(blastdatabase_path:str, database_table:pd.
     :returns data
         :type json object
 '''
-def transform_data_table_to_json_dict(df:pd.DataFrame):
+
+
+def transform_data_table_to_json_dict(df: pd.DataFrame):
     json_records = df.reset_index().to_json(orient='records')
     data = json.loads(json_records)
     return data
+
 
 '''get_bdb_summary_table_name
 
@@ -108,11 +123,15 @@ def transform_data_table_to_json_dict(df:pd.DataFrame):
     :returns BLAST database pandas table name 
         :type str
 '''
+
+
 def get_bdb_summary_table_name(database_id):
     try:
         return get_database_by_id(database_id).get_pandas_table_name()
     except Exception as e:
-        raise Exception('couldnt read blast database pandas table name with exception : {} and id : {}'.format(e,database_id))
+        raise Exception(
+            'couldnt read blast database pandas table name with exception : {} and id : {}'.format(e, database_id))
+
 
 '''get_ftp_paths_and_taxids_from_summary_file
     
@@ -127,34 +146,38 @@ def get_bdb_summary_table_name(database_id):
         :type dict - dict[ftp_path,taxid]
 
 '''
+
+
 def get_ftp_paths_and_taxids_from_summary_file(database_id):
     try:
         bdb_summary_table_name = get_database_by_id(database_id).get_pandas_table_name()
         filepath = BLAST_DATABASE_DIR + str(database_id) + '/' + bdb_summary_table_name
-        dataframe = pd.read_table(filepath,header=0,index_col=0,delimiter=",")
-        #there shouldnt be any duplicates
+        dataframe = pd.read_table(filepath, header=0, index_col=0, delimiter=",")
+        # there shouldnt be any duplicates
         dataframe = dataframe[dataframe['ftp_path'].duplicated() == False]
-        return dict(zip(dataframe['ftp_path'],dataframe['taxid']))
+        return dict(zip(dataframe['ftp_path'], dataframe['taxid']))
     except Exception as e:
         raise Exception('couldnt read database summary table with exception : {}'.format(e))
 
-#TODO this function is currently not used, in the near future it can be used to fill a custom logfile
-def write_progress_database_transactions(database_id:int, progress:str)->str:
+
+# TODO this function is currently not used, in the near future it can be used to fill a custom logfile
+def write_progress_database_transactions(database_id: int, progress: str) -> str:
     try:
         filepath = BLAST_DATABASE_DIR + str(database_id) + '/task_progress.log'
-        progress_log = open(filepath,'a')
-        progress_log.write(str(progress)+'\n')
+        progress_log = open(filepath, 'a')
+        progress_log.write(str(progress) + '\n')
         progress_log.close()
         return progress
     except Exception as e:
         raise Exception("error writing logfile exception : {}".format(e))
 
-#TODO this function is currently not used, in the near future it can be used to fill a custom logfile
+
+# TODO this function is currently not used, in the near future it can be used to fill a custom logfile
 def get_current_progress_database_transactions(database_id):
     try:
         filepath = BLAST_DATABASE_DIR + str(database_id) + '/task_progress.log'
-        fd = open(filepath,'r')
-        progress = round(float(fd.readlines()[-1]),3)
+        fd = open(filepath, 'r')
+        progress = round(float(fd.readlines()[-1]), 3)
         fd.close()
         return progress
     except Exception as e:

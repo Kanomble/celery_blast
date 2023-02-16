@@ -1,6 +1,6 @@
 div.dashboard_project_list_col {
-    //background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
-    //background: rgba(204, 204, 204, 0.5);
+/ / background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
+/ / background: rgba(204, 204, 204, 0.5);
     background: linear-gradient(whitesmoke, #4ebadc);
     border: 1px solid #000000;
     padding: 10px;
@@ -36,16 +36,16 @@ h3.col_header {
 
 body.body_bg {
     background: white;
-    //background: linear-gradient(whitesmoke,darkgreen);
-    //background: linear-gradient(whitesmoke, #4ebadc);
-    //background: url(../images/background_2.jpg);
-    //background-size: contain;
+/ / background: linear-gradient(whitesmoke, darkgreen);
+/ / background: linear-gradient(whitesmoke, #4ebadc);
+/ / background: url(../images/background_2.jpg);
+/ / background-size: contain;
 }
 
 div.transparent-box {
-    //background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
-    //background: rgba(204, 204, 204, 0.5);
-    background: linear-gradient(whitesmoke,lightblue);
+/ / background: rgb(204, 204, 204); /* Fallback for older browsers without RGBA-support */
+/ / background: rgba(204, 204, 204, 0.5);
+    background: linear-gradient(whitesmoke, lightblue);
     border: 1px solid #000000;
     padding: 10px;
 
@@ -94,7 +94,7 @@ h3.project-creation-header {
 
 #pageHeader {
     font-weight: bold;
-    background: linear-gradient(whitesmoke,lightblue);
+    background: linear-gradient(whitesmoke, lightblue);
     border: 1px solid #000000;
     padding: 10px;
     border-radius: 5px;
@@ -194,7 +194,7 @@ div.dashboard_project_list_col table th {
     border-radius: 10px;
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
     background-image: -webkit-gradient(linear, left bottom, left top, from(#ff9a9e), color-stop(99%, #fecfef),
-            to(#fecfef));
+    to(#fecfef));
     background-image: -webkit-linear-gradient(bottom, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
     background-image: linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
 }
@@ -256,7 +256,8 @@ div.dashboard_project_list_col table th {
 .thin::-webkit-scrollbar {
     width: 6px;
 }
-::-webkit-scrollbar{
+
+::-webkit-scrollbar {
     height: 4px;
     width: 4px;
     background: gray;
@@ -264,20 +265,20 @@ div.dashboard_project_list_col table th {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+    background: #f1f1f1;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #888;
+    background: #888;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+    background: #555;
 }
 
-::-webkit-scrollbar-thumb:horizontal{
+::-webkit-scrollbar-thumb:horizontal {
     background: #000;
     border-radius: 10px;
 }
@@ -324,9 +325,9 @@ div.dropdown_content {
     border: 2px solid black;
     border-radius: 5%;
     background-color: #f1f1f1;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    overflow-x:hidden;
-    overflow-y:auto;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    overflow-x: hidden;
+    overflow-y: auto;
     max-height: 200px;
 
 }
@@ -338,9 +339,14 @@ div.dropdown_content a {
     border-radius: inherit;
     display: block;
     z-index: 1;
-    overflow-x:hidden;
-    overflow-y:auto;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
-div.dropdown_menu:hover .dropdown_content {display: block}
-div.dropdown_content a:hover {background-color: #ddd;}
+div.dropdown_menu:hover .dropdown_content {
+    display: block
+}
+
+div.dropdown_content a:hover {
+    background-color: #ddd;
+}

@@ -9,24 +9,27 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .view_access_decorators import unauthenticated_user
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
-    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, CreateTaxonomicFileForMultipleScientificNames
-from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
+    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, \
+    CreateTaxonomicFileForMultipleScientificNames
+from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
+    execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
     calculate_database_statistics_task
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
     read_task_logs_summary_table
 from .py_project_creation import create_blast_project
-from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output,\
+from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json
 from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
     save_uploaded_multiple_file_genomes_into_database, delete_failed_or_unknown_databases
-from one_way_blast.py_django_db_services import  get_users_one_way_blast_projects, get_users_one_way_remote_blast_projects
+from one_way_blast.py_django_db_services import get_users_one_way_blast_projects, \
+    get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 from Bio import Entrez
 from os.path import isfile
-#BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
-#BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
+# BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
+# BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
 '''dashboard_view
@@ -41,6 +44,8 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
         display blast_projects and links to other view functions
 
 '''
+
+
 @login_required(login_url='login')
 def dashboard_view(request):
     try:
@@ -54,9 +59,10 @@ def dashboard_view(request):
             context['ActiveBlastDatabases'] = available_blast_databases
             context['OneWayBlastProjects'] = one_way_blast_projects
             context['OneWayRemoteBlastProjects'] = one_way_remote_blast_projects
-        return render(request,'blast_project/blast_project_dashboard.html',context)
+        return render(request, 'blast_project/blast_project_dashboard.html', context)
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 '''project_creation_view
 
@@ -78,6 +84,8 @@ def dashboard_view(request):
     associated project_details page. If the POST data is not valid, the function returns the 
     /blast_project/project_creation_dashboard template with validation errors.
 '''
+
+
 @login_required(login_url='login')
 def project_creation_view(request):
     try:
@@ -93,19 +101,19 @@ def project_creation_view(request):
 
                 try:
                     with transaction.atomic():
-                        #user uploaded a fasta file
+                        # user uploaded a fasta file
                         if query_sequence_file != None:
                             blast_project = create_blast_project(
                                 user=request.user,
                                 query_file_name=query_sequence_file.name,
                                 project_form=project_creation_form,
                                 fw_settings_form=blast_settings_forward_form,
-                                bw_settings_form=blast_settings_backward_form,filepath=BLAST_PROJECT_DIR)
+                                bw_settings_form=blast_settings_backward_form, filepath=BLAST_PROJECT_DIR)
                             path_to_query_file = BLAST_PROJECT_DIR + str(
                                 blast_project.id) + '/' + query_sequence_file.name
                             upload_file(query_sequence_file, path_to_query_file)
 
-                        #user provided sequence identifier
+                        # user provided sequence identifier
                         elif query_sequences != '':
                             query_file_name = "target_sequences.faa"
                             blast_project = create_blast_project(
@@ -113,8 +121,7 @@ def project_creation_view(request):
                                 query_file_name=query_file_name,
                                 project_form=project_creation_form,
                                 fw_settings_form=blast_settings_forward_form,
-                                bw_settings_form=blast_settings_backward_form,filepath=BLAST_PROJECT_DIR)
-
+                                bw_settings_form=blast_settings_backward_form, filepath=BLAST_PROJECT_DIR)
 
                             path_to_query_file = BLAST_PROJECT_DIR + str(blast_project.id) + '/' + query_file_name
                             if type(query_sequences) != Entrez.Parser.ListElement:
@@ -128,23 +135,23 @@ def project_creation_view(request):
                                     qfile.write(txt)
 
                 except IntegrityError as e:
-                    return failure_view(request,e)
+                    return failure_view(request, e)
 
-                return redirect('project_details',project_id=blast_project.id)
+                return redirect('project_details', project_id=blast_project.id)
 
-            else: #RETURN PROJECT CREATION VIEW WITH VALIDATION ERRORS
-                #TODO what happens if taxdb is not there - downloading database
+            else:  # RETURN PROJECT CREATION VIEW WITH VALIDATION ERRORS
+                # TODO what happens if taxdb is not there - downloading database
                 if check_if_taxdb_exists():
-                    taxdb=True
+                    taxdb = True
                 else:
-                    #what happens if task runs into any error?
-                    taxdb=False
+                    # what happens if task runs into any error?
+                    taxdb = False
                     task = download_and_format_taxdb.delay()
 
-                context = {'ProjectCreationForm':project_creation_form,
-                           'BlastSettingsForwardForm':blast_settings_forward_form,
-                           'BlastSettingsBackwardForm':blast_settings_backward_form,
-                           'taxdb':taxdb}
+                context = {'ProjectCreationForm': project_creation_form,
+                           'BlastSettingsForwardForm': blast_settings_forward_form,
+                           'BlastSettingsBackwardForm': blast_settings_backward_form,
+                           'taxdb': taxdb}
 
         else:
             if check_if_taxdb_exists():
@@ -152,20 +159,21 @@ def project_creation_view(request):
                 blast_settings_forward_form = BlastSettingsFormForward()
                 blast_settings_backward_form = BlastSettingsFormBackward()
 
-                context = {'ProjectCreationForm':project_creation_form,
-                           'BlastSettingsForwardForm':blast_settings_forward_form,
-                           'BlastSettingsBackwardForm':blast_settings_backward_form,
-                           'taxdb':True}
+                context = {'ProjectCreationForm': project_creation_form,
+                           'BlastSettingsForwardForm': blast_settings_forward_form,
+                           'BlastSettingsBackwardForm': blast_settings_backward_form,
+                           'taxdb': True}
 
             else:
                 # what happens if task runs into any error?
-                context = {'taxdb':False}
+                context = {'taxdb': False}
                 task = download_and_format_taxdb.delay()
 
-        return render(request,'blast_project/project_creation_dashboard.html',context)
+        return render(request, 'blast_project/project_creation_dashboard.html', context)
     except Exception as e:
         print(project_creation_form.errors)
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 '''project_details_view
 
@@ -181,15 +189,18 @@ def project_creation_view(request):
     :param project_id
         :type int 
 '''
+
+
 @login_required(login_url='login')
-def project_details_view(request, project_id:int):
+def project_details_view(request, project_id: int):
     try:
         blast_project = get_project_by_id(project_id)
-        context = {'BlastProject':blast_project,
-                   'Database':blast_project.project_forward_database}
-        return render(request,'blast_project/project_details_dashboard.html',context)
+        context = {'BlastProject': blast_project,
+                   'Database': blast_project.project_forward_database}
+        return render(request, 'blast_project/project_details_dashboard.html', context)
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 '''project_delete_view
 
@@ -205,16 +216,19 @@ def project_details_view(request, project_id:int):
     :param project_id
         :type int
 '''
+
+
 @login_required(login_url='login')
-def project_delete_view(request, project_id:int):
+def project_delete_view(request, project_id: int):
     try:
         if request.method == "POST":
             delete_project_and_associated_directories_by_id(project_id)
             return success_view(request)
         else:
-            return project_details_view(request,project_id)
+            return project_details_view(request, project_id)
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 '''ajax_wp_to_links --> OBSOLETE
     
@@ -222,15 +236,18 @@ def project_delete_view(request, project_id:int):
     This function is now obsolete as retrieving information is now done via the snakemake pipeline.
     
 '''
-def ajax_wp_to_links(request, project_id:int):
+
+
+def ajax_wp_to_links(request, project_id: int):
     try:
         if request.is_ajax and request.method == "GET":
-            #progress = read_database_download_and_format_logfile(database_id)
-            prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
-            return JsonResponse(prot_to_pfam,status=200)
-        return JsonResponse({"ERROR":"NOT OK"},status=200)
+            # progress = read_database_download_and_format_logfile(database_id)
+            prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email, project_id)
+            return JsonResponse(prot_to_pfam, status=200)
+        return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
+
 
 '''execute_reciprocal_blast_project_view
 
@@ -241,14 +258,17 @@ def ajax_wp_to_links(request, project_id:int):
         Executes the asynchronous celery function: execute_reciprocal_blast_project which resides in tasks.py.
 
 '''
+
+
 @login_required(login_url='login')
-def execute_reciprocal_blast_project_view(request, project_id:int):
+def execute_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
             execute_reciprocal_blast_project.delay(project_id)
         return redirect('project_details', project_id=project_id)
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 '''load_reciprocal_result_html_table_view
 
@@ -258,6 +278,8 @@ def execute_reciprocal_blast_project_view(request, project_id:int):
     is displayed.
     
 '''
+
+
 @login_required(login_url='login')
 def load_reciprocal_result_html_table_view(request, project_id):
     try:
@@ -265,6 +287,7 @@ def load_reciprocal_result_html_table_view(request, project_id):
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
+
 
 ''' create_taxonomic_file_view
 
@@ -276,21 +299,24 @@ def load_reciprocal_result_html_table_view(request, project_id):
         create taxonomic files
         synchronous call of write_species_taxids_into_file
 '''
+
+
 @login_required(login_url='login')
 def create_taxonomic_file_view_old(request):
     try:
         taxform = CreateTaxonomicFileForm(request.user)
         if request.method == 'POST':
-            taxform = CreateTaxonomicFileForm(request.user,request.POST)
+            taxform = CreateTaxonomicFileForm(request.user, request.POST)
             if taxform.is_valid():
-                species_name,taxonomic_nodes = taxform.cleaned_data['species_name']
-                task = write_species_taxids_into_file(taxonomic_nodes,species_name+'.taxids')
+                species_name, taxonomic_nodes = taxform.cleaned_data['species_name']
+                task = write_species_taxids_into_file(taxonomic_nodes, species_name + '.taxids')
         taxid_files = list_taxonomic_files()
-        taxid_files = zip(taxid_files[0],taxid_files[1])
+        taxid_files = zip(taxid_files[0], taxid_files[1])
         context = {'taxform': taxform, 'taxid_files': taxid_files}
         return render(request, 'blast_project/create_taxonomic_file.html', context)
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 '''create_taxonomic_file_view
     
@@ -303,17 +329,19 @@ def create_taxonomic_file_view_old(request):
         synchronous call of write_species_taxids_into_file
 
 '''
+
+
 @login_required(login_url='login')
 def create_taxonomic_file_view(request):
     try:
         taxform = CreateTaxonomicFileForMultipleScientificNames(request.user)
         if request.method == 'POST':
-            taxform = CreateTaxonomicFileForMultipleScientificNames(request.user,request.POST)
+            taxform = CreateTaxonomicFileForMultipleScientificNames(request.user, request.POST)
             if taxform.is_valid():
                 filename = taxform.cleaned_data['filename']
                 filename = filename + '.taxids'
                 taxonomic_nodes = taxform.cleaned_data['species_names']
-                task = write_species_taxids_into_file(taxonomic_nodes,filename)
+                task = write_species_taxids_into_file(taxonomic_nodes, filename)
         taxid_files = list_taxonomic_files()
         taxid_files = zip(taxid_files[0], taxid_files[1])
         context = {'taxform': taxform, 'taxid_files': taxid_files}
@@ -323,15 +351,15 @@ def create_taxonomic_file_view(request):
         return failure_view(request, e)
 
 
-#two upload genome options one for single and one for multiple files
-#first view function - upload_genome_view for the single files
-#second view function - upload_multiple_genomes_post view
+# two upload genome options one for single and one for multiple files
+# first view function - upload_genome_view for the single files
+# second view function - upload_multiple_genomes_post view
 @login_required(login_url='login')
 def upload_genome_view(request):
     try:
         if request.method == "POST":
-            #the UploadMultipleFilesGenomeForm instance has to reside here because both post requests
-            #belong to one template, the upload_genome_files_dashboard.html
+            # the UploadMultipleFilesGenomeForm instance has to reside here because both post requests
+            # belong to one template, the upload_genome_files_dashboard.html
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
             upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
 
@@ -352,9 +380,10 @@ def upload_genome_view(request):
                         assembly_accession_file=upload_genome_form.cleaned_data['assembly_accessions_file'],
                         assembly_level_file=upload_genome_form.cleaned_data['assembly_level_file']
                     )
-                    genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ','_').upper()+'.database'
+                    genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ',
+                                                                                                 '_').upper() + '.database'
 
-                    #inside transaction atomic blog
+                    # inside transaction atomic blog
                     if upload_genome_form.cleaned_data['taxmap_file'] != None:
                         execute_makeblastdb_with_uploaded_genomes.delay(
                             new_db.id,
@@ -375,25 +404,28 @@ def upload_genome_view(request):
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
             upload_genome_form = UploadGenomeForm(request.user)
             context = {'UploadGenomeForm': upload_genome_form,
-                       'MultipleFileUploadGenomeForm': multiple_files_genome_form,}
+                       'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
 
-        return render(request,'blast_project/upload_genome_files_dashboard.html',context)
+        return render(request, 'blast_project/upload_genome_files_dashboard.html', context)
     except Exception as e:
-        #deletes all failed or unknown subdirectories within the database directories
-        #all directories without a corresponding database id
+        # deletes all failed or unknown subdirectories within the database directories
+        # all directories without a corresponding database id
         returncode = delete_failed_or_unknown_databases()
         if returncode == 0:
-            return failure_view(request,e)
+            return failure_view(request, e)
         else:
-            return failure_view(request, "Error deleting unknown or failed databases, clean up your database and directories manually. {}".format(e))
+            return failure_view(request,
+                                "Error deleting unknown or failed databases, clean up your database and directories manually. {}".format(
+                                    e))
 
-#TODO implement view for disentangling big genome upload view ...
+
+# TODO implement view for disentangling big genome upload view ...
 @login_required(login_url='login')
 def upload_multiple_genomes_view(request):
     try:
         if request.method == 'POST':
-            #the UploadGenomeForm instance has to reside here because both post requests
-            #belong to one template, the upload_genome_files_dashboard.html
+            # the UploadGenomeForm instance has to reside here because both post requests
+            # belong to one template, the upload_genome_files_dashboard.html
             upload_genome_form = UploadGenomeForm(request.user)
             extra_field_count = request.POST.get('extra_field_count')
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user, request.POST, request.FILES,
@@ -416,12 +448,13 @@ def upload_multiple_genomes_view(request):
             else:
                 context = {'UploadGenomeForm': upload_genome_form,
                            'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
-                return render(request,'blast_project/upload_genome_files_dashboard.html',context)
+                return render(request, 'blast_project/upload_genome_files_dashboard.html', context)
 
         else:
-            return failure_view(request,exception="This view is just for POST requests!")
+            return failure_view(request, exception="This view is just for POST requests!")
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 ''' registration, login and logout views
 
@@ -429,10 +462,11 @@ def upload_multiple_genomes_view(request):
     user needs to authenticate otherwise they will get redirected to this login page
 
 '''
-@unauthenticated_user #you dont need an account to trigger this view
-def login_user(request):
 
-    #login with django default authenticate method
+
+@unauthenticated_user  # you dont need an account to trigger this view
+def login_user(request):
+    # login with django default authenticate method
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -441,21 +475,23 @@ def login_user(request):
             login(request, user)
             return redirect('blast_project_dashboard')
         else:
-            messages.info(request,'Username OR password is incorrect')
+            messages.info(request, 'Username OR password is incorrect')
             return render(request, 'blast_project/login.html')
-    return render(request,'blast_project/login.html')
+    return render(request, 'blast_project/login.html')
 
-#logout view
+
+# logout view
 def logout_user(request):
     logout(request)
     return redirect('login')
 
-#registration view
+
+# registration view
 @unauthenticated_user
 def registration_view(request):
     user_form = CreateUserForm()
     if request.method == 'POST':
-        user_form = CreateUserForm(request.POST,initial={'last_login':timezone.now()})
+        user_form = CreateUserForm(request.POST, initial={'last_login': timezone.now()})
         if user_form.is_valid():
             try:
                 username = user_form.cleaned_data.get('username')
@@ -463,14 +499,15 @@ def registration_view(request):
                 email = user_form.cleaned_data.get('email')
                 user = User.objects.create_user(username, email, password=password, last_login=timezone.now())
 
-                #group = Group.objects.get(name='customer')
-                #user.groups.add(group)
-                messages.success(request,'Account was created for '+ username)
+                # group = Group.objects.get(name='customer')
+                # user.groups.add(group)
+                messages.success(request, 'Account was created for ' + username)
                 return redirect('login')
             except Exception as e:
-                return failure_view(request,e)
+                return failure_view(request, e)
     context = {'form': user_form, }
-    return render(request,'blast_project/register.html',context)
+    return render(request, 'blast_project/register.html', context)
+
 
 ''' failure view
 
@@ -479,14 +516,18 @@ def registration_view(request):
     :param exception
         :type str
 '''
-#if an exception occurres this page is rendered in order to evaluate the exception context
-def failure_view(request,exception):
-    context={'exception':exception}
-    return render(request,'blast_project/failure.html', context)
+
+
+# if an exception occurres this page is rendered in order to evaluate the exception context
+def failure_view(request, exception):
+    context = {'exception': exception}
+    return render(request, 'blast_project/failure.html', context)
+
 
 @login_required(login_url='login')
 def success_view(request):
-    return render(request,'blast_project/success.html')
+    return render(request, 'blast_project/success.html')
+
 
 '''database_statistics
     
@@ -500,11 +541,13 @@ def success_view(request):
     :param project_id
         :type int
 '''
+
+
 @login_required(login_url='login')
 def database_statistics_dashboard(request, project_id):
     try:
-        task_status=get_database_statistics_task_status(project_id)
-        context={'project_id':project_id,'task_status':task_status}
+        task_status = get_database_statistics_task_status(project_id)
+        context = {'project_id': project_id, 'task_status': task_status}
 
         if task_status == 'SUCCESS':
             context['DatabaseStatisticsBokehPlot'] = str(project_id) + "/" + "interactive_bokeh_plot.html"
@@ -512,7 +555,7 @@ def database_statistics_dashboard(request, project_id):
             for unit in taxonomic_units:
                 project_path = BLAST_PROJECT_DIR + str(project_id) + "/" + unit + "_database_statistics_normalized.csv"
                 if check_if_file_exists(project_path):
-                    table = pd.read_csv(project_path,index_col=0,header=0)
+                    table = pd.read_csv(project_path, index_col=0, header=0)
                     number = len(table.columns)
                     key = unit + "_number"
                     context[key] = number
@@ -527,10 +570,11 @@ def database_statistics_dashboard(request, project_id):
                     error_phrase = "table does not exist, please recompute the database statistics by pressing the button"
                     context[key] = error_phrase
 
-        #calculate_database_statistics(project_id)
-        return render(request,'blast_project/database_statistics_dashboard.html',context)
+        # calculate_database_statistics(project_id)
+        return render(request, 'blast_project/database_statistics_dashboard.html', context)
     except Exception as e:
         return failure_view(request, e)
+
 
 '''database_statistics_details
     
@@ -539,34 +583,40 @@ def database_statistics_dashboard(request, project_id):
     subsets of target proteins for further analysis.
     
 '''
-def database_statistics_details(request,project_id:int,taxonomic_unit:str):
+
+
+def database_statistics_details(request, project_id: int, taxonomic_unit: str):
     try:
-        task_status=get_database_statistics_task_status(project_id)
-        context={'project_id':project_id,'task_status':task_status}
+        task_status = get_database_statistics_task_status(project_id)
+        context = {'project_id': project_id, 'task_status': task_status}
         if task_status == 'SUCCESS':
             context_key_altair = 'DatabaseStatisticsAltairPlot'
             context_key_bokeh = 'DatabaseStatisticsBokehPlot'
             context[context_key_altair] = str(project_id) + "/" + taxonomic_unit + "_altair_plot_normalized.html"
             context[context_key_bokeh] = str(project_id) + "/" + taxonomic_unit + "_bokeh_plot.html"
             context['taxonomic_unit'] = taxonomic_unit
-        return render(request,'blast_project/database_statistics_details.html',context)
+        return render(request, 'blast_project/database_statistics_details.html', context)
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 '''load_database_statistics_for_class_ajax
     
     Function returns database statistics json dataframe of the specified taxonomic unit.
     
 '''
+
+
 @login_required(login_url='login')
-def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxonomic_unit:str):
+def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxonomic_unit: str):
     try:
         if request.is_ajax and request.method == "GET":
-            data = transform_normalized_database_table_to_json(project_id,taxonomic_unit)
-            return JsonResponse({"data":data}, status=200)
-        return JsonResponse({"ERROR":"NOT OK"},status=200)
+            data = transform_normalized_database_table_to_json(project_id, taxonomic_unit)
+            return JsonResponse({"data": data}, status=200)
+        return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
+
 
 '''execute_database_statistics_task
 
@@ -576,14 +626,17 @@ def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxono
     :param project_id
         :type int
 '''
+
+
 @login_required(login_url='login')
-def execute_database_statistics_task(request, project_id:int):
+def execute_database_statistics_task(request, project_id: int):
     try:
         taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
-        calculate_database_statistics_task.delay(project_id,request.user.email,taxonomic_units)
-        return redirect('database_statistics',project_id=project_id)
+        calculate_database_statistics_task.delay(project_id, request.user.email, taxonomic_units)
+        return redirect('database_statistics', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
+
 
 '''delete_database_statistics
 
@@ -593,14 +646,16 @@ def execute_database_statistics_task(request, project_id:int):
         :type int
  
 '''
+
+
 @login_required(login_url='login')
 def delete_database_statistics(request, project_id):
     try:
-        logfile=BLAST_PROJECT_DIR+str(project_id)+'/log/delete_database_statistics_task_and_output.log'
-        delete_database_statistics_task_and_output(project_id,logfile=logfile)
-        return redirect('database_statistics',project_id=project_id)
+        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/delete_database_statistics_task_and_output.log'
+        delete_database_statistics_task_and_output(project_id, logfile=logfile)
+        return redirect('database_statistics', project_id=project_id)
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
 
 
 '''ajax_call_to_logfiles
@@ -611,6 +666,8 @@ def delete_database_statistics(request, project_id):
         :type int
 
 '''
+
+
 def ajax_call_to_logfiles(request, project_id: int):
     try:
         if request.is_ajax and request.method == "GET":
@@ -625,7 +682,7 @@ def ajax_call_to_logfiles(request, project_id: int):
                     query = logfile.split("/")[0]
                     if query not in queries:
                         queries.append(query)
-                    progress = logfile_table[logfile_table['logfile'] == query+"/"+logfile]['progress'].values
+                    progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
 
                     if len(progress) == 1:
                         progress_without_subtasks.append(progress[0])
@@ -641,6 +698,7 @@ def ajax_call_to_logfiles(request, project_id: int):
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+
 '''send_logfile_content_view
     
     This view function is part of the pipeline monitoring. It is executed
@@ -652,8 +710,10 @@ def ajax_call_to_logfiles(request, project_id: int):
         :type str
     
 '''
+
+
 @login_required(login_url='login')
-def send_logfile_content_view(request, project_id:int, logfile:str)->HttpResponse:
+def send_logfile_content_view(request, project_id: int, logfile: str) -> HttpResponse:
     try:
         logfile_path = BLAST_PROJECT_DIR + str(project_id) + '/log/' + logfile + ".log"
         if isfile(logfile_path):
@@ -664,12 +724,13 @@ def send_logfile_content_view(request, project_id:int, logfile:str)->HttpRespons
         else:
             return HttpResponse("couldnt find logfile: {} ...".format(logfile_path), content_type="text/plain")
     except Exception as e:
-        return failure_view(request,e)
+        return failure_view(request, e)
+
 
 @login_required(login_url='login')
-def send_query_sequence_information_view(request, project_id:int)->HttpResponse:
+def send_query_sequence_information_view(request, project_id: int) -> HttpResponse:
     try:
-        #BLAST_PROJECT_DIR+
-        return render(request,str(project_id)+'/query_sequence_information.html')
+        # BLAST_PROJECT_DIR+
+        return render(request, str(project_id) + '/query_sequence_information.html')
     except Exception as e:
         return failure_view(request, e)

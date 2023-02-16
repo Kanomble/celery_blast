@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class OneWayBlastProjectManager(models.Manager):
     # functions
     def create_one_way_blast_project(
@@ -24,6 +25,7 @@ class OneWayBlastProjectManager(models.Manager):
     '''
     Functions returning Query-Sets
     '''
+
     # returns all executed projects
     def get_executed_projects(self):
         return self.filter(project_execution_task_result__isnull=False)
@@ -34,7 +36,7 @@ class OneWayBlastProjectManager(models.Manager):
 
 
 class OneWayRemoteBlastProjectManager(models.Manager):
-    #functions
+    # functions
     def create_one_way_remote_blast_project(
             self, r_project_title,
             r_project_query_sequences,

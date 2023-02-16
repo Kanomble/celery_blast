@@ -21,7 +21,9 @@ from .py_django_db_services import get_project_by_id
     :returns taxonomic nodes defined in Entrez.esearch dictionary instance
         :type list  
 '''
-def get_species_taxid_by_name(user_email:str,scientific_name:str)->list:
+
+
+def get_species_taxid_by_name(user_email: str, scientific_name: str) -> list:
     try:
         Entrez.email = user_email
         search = Entrez.esearch(term=scientific_name, db="taxonomy", retmode="xml")
@@ -30,7 +32,9 @@ def get_species_taxid_by_name(user_email:str,scientific_name:str)->list:
         taxids = record['IdList']
         return taxids
     except Exception as e:
-        raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+        raise Exception(
+            "there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+
 
 '''check_if_protein_identifier_correspond_to_backward_taxid
     
@@ -43,10 +47,13 @@ def get_species_taxid_by_name(user_email:str,scientific_name:str)->list:
     :param user_email
         :type str
 '''
-def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:list,taxonomic_identifier:str,user_email:str)->int:
+
+
+def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier: list, taxonomic_identifier: str,
+                                                             user_email: str) -> int:
     try:
         Entrez.email = user_email
-        search = Entrez.elink(dbfrom='protein',id=protein_identifier,linkname="protein_taxonomy")
+        search = Entrez.elink(dbfrom='protein', id=protein_identifier, linkname="protein_taxonomy")
         record = Entrez.read(search)
         search.close()
         taxonomic_ids = []
@@ -57,7 +64,7 @@ def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:
                     taxonomic_ids.append(taxid)
 
         if len(taxonomic_ids) != 0:
-            search = Entrez.efetch(id=taxonomic_ids,db='taxonomy',retmode='xml')
+            search = Entrez.efetch(id=taxonomic_ids, db='taxonomy', retmode='xml')
             record = Entrez.read(search)
             search.close()
 
@@ -74,7 +81,10 @@ def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:
 
         return 0
     except Exception as e:
-        raise Exception("[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(e))
+        raise Exception(
+            "[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(
+                e))
+
 
 '''get_list_of_species_taxid_by_name
     sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)
@@ -87,7 +97,9 @@ def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier:
         :type str
     :returns taxonomic nodes (list:int)
 '''
-def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
+
+
+def get_list_of_species_taxid_by_name(user_email: str, scientific_name: str) -> list:
     try:
         Entrez.email = user_email
         search = Entrez.esearch(term=scientific_name, db="taxonomy", retmode="xml")
@@ -95,7 +107,9 @@ def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
         taxid = record['IdList']
         return taxid
     except Exception as e:
-        raise Exception("there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+        raise Exception(
+            "there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+
 
 '''get_list_of_species_taxids_by_list_of_scientific_names
 
@@ -112,7 +126,9 @@ def get_list_of_species_taxid_by_name(user_email:str,scientific_name:str)->list:
         :type list[int], list[str]
 
 '''
-def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scientific_names:list)->list:
+
+
+def get_list_of_species_taxids_by_list_of_scientific_names(user_email: str, scientific_names: list) -> list:
     try:
         Entrez.email = user_email
         taxonomic_nodes = []
@@ -129,10 +145,12 @@ def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scient
                 errors.append(name)
                 continue
         if len(taxonomic_nodes) == 0:
-            raise Exception("There are no taxonomic nodes for the provided scientific names : {}".format(' '.join(scientific_names)))
+            raise Exception("There are no taxonomic nodes for the provided scientific names : {}".format(
+                ' '.join(scientific_names)))
         return taxonomic_nodes, errors
     except Exception as e:
         raise Exception("[-] ERROR: {}".format(e))
+
 
 '''check_given_taxonomic_node
 
@@ -147,18 +165,21 @@ def get_list_of_species_taxids_by_list_of_scientific_names(user_email:str,scient
     :return taxid
         :type int
 '''
-def check_given_taxonomic_node(user_email:str, taxid:int)->int:
+
+
+def check_given_taxonomic_node(user_email: str, taxid: int) -> int:
     try:
         Entrez.email = user_email
         handle = Entrez.efetch(db="taxonomy", id=taxid, retmode="xml")
         record = Entrez.read(handle)
         handle.close()
-        if(len(record) != 0):
+        if (len(record) != 0):
             return taxid
         else:
             raise Exception("there is no scientific name defined by your procided taxonomic node")
     except Exception as e:
         raise Exception("exception occured during validation of taxonomic node : {}".format(e))
+
 
 ''' calculate_pfam_and_protein_links_from_queries
 
@@ -177,14 +198,16 @@ def check_given_taxonomic_node(user_email:str, taxid:int)->int:
                 
         4. CDD: Protein Family Model search by SPARCLE.
 '''
-def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
+
+
+def calculate_pfam_and_protein_links_from_queries(user_email, project_id):
     try:
-        #load BlastProject from database
+        # load BlastProject from database
         project = get_project_by_id(project_id)
-        #setup filepath to BlastProject
+        # setup filepath to BlastProject
         path_to_queries = project.get_project_dir()
         path_to_queries += '/' + project.project_query_sequences
-        #open query fasta file and read protein identifier
+        # open query fasta file and read protein identifier
         with open(path_to_queries, 'r') as queries:
             lines = queries.readlines()
 
@@ -193,20 +216,20 @@ def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
             if ">" in line:
                 queries.append(line.split(" ")[0].split(".")[0].split(">")[1])
 
-        #retrieving information from NCBIs protein database - biopython
+        # retrieving information from NCBIs protein database - biopython
         Entrez.email = user_email
         handle = Entrez.efetch(db="protein", id=queries, retmode="xml")
         record = Entrez.read(handle)
         handle.close()
 
-        #setup dictionary that is returned to ajax_wp_to_links
-        prot_to_pfam = {'QUERIES': [], 'PFAM': {}, 'TIGR': {}, 'REFSEQ': {}, 'CDD': {}, 'Definition':{}, 'Length':{}}
+        # setup dictionary that is returned to ajax_wp_to_links
+        prot_to_pfam = {'QUERIES': [], 'PFAM': {}, 'TIGR': {}, 'REFSEQ': {}, 'CDD': {}, 'Definition': {}, 'Length': {}}
         for i in range(len(record)):
             prot_to_pfam['QUERIES'].append(record[i]['GBSeq_locus'])
             prot_to_pfam['Definition'][record[i]['GBSeq_locus']] = record[i]['GBSeq_definition']
             prot_to_pfam['Length'][record[i]['GBSeq_locus']] = record[i]['GBSeq_length']
 
-            #setting up standard urls
+            # setting up standard urls
             pfam = 'http://pfam.xfam.org/family/'
             jvci = 'https://www.ncbi.nlm.nih.gov/genome/annotation_prok/evidence/'
             cdd = 'https://www.ncbi.nlm.nih.gov/Structure/sparcle/archview.html?archid='
@@ -219,7 +242,8 @@ def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
                     prot_to_pfam['CDD'][record[i]['GBSeq_locus']] = cdd
 
                 if "EMBL-EBI" in record[i]['GBSeq_comment']:
-                    pfam += record[i]['GBSeq_comment'].split("EMBL-EBI")[1].split("::")[1].split(";")[0].strip().rstrip()
+                    pfam += record[i]['GBSeq_comment'].split("EMBL-EBI")[1].split("::")[1].split(";")[
+                        0].strip().rstrip()
                     prot_to_pfam['PFAM'][record[i]['GBSeq_locus']] = pfam
 
                 if "TIGR" in record[i]['GBSeq_comment']:
@@ -233,6 +257,7 @@ def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
         return prot_to_pfam
     except Exception as e:
         raise Exception("couldn't parse entrez.efetch with query ids with exception : {}".format(e))
+
 
 ''' fetch_protein_records
 
@@ -251,6 +276,8 @@ def calculate_pfam_and_protein_links_from_queries(user_email,project_id):
     :returns records, failures
         :type tuple(Entrez.Parser.ListElement,list)
 '''
+
+
 def fetch_protein_records(proteins: list, email: str):
     try:
         Entrez.email = email

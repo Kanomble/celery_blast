@@ -8,7 +8,6 @@ from shutil import rmtree
 from django.db import IntegrityError, transaction
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
-
 '''read_task_logs_summary_table
     
     This function loads the task_logfile.txt file into a pandas dataframe.
@@ -17,14 +16,17 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
     :returns logfiles_table
         :type pd.DataFrame
 '''
-def read_task_logs_summary_table()->pd.DataFrame:
+
+
+def read_task_logs_summary_table() -> pd.DataFrame:
     try:
         data_path = BLAST_PROJECT_DIR + 'task_logfiles'
         logfiles_table = pd.read_table(data_path, sep="\t", header=0)
         return logfiles_table
     except Exception as e:
         print(e)
-        raise Exception("[-] ERROR reading task_logfile.txt file in {} with exception: {}".format(data_path,e))
+        raise Exception("[-] ERROR reading task_logfile.txt file in {} with exception: {}".format(data_path, e))
+
 
 '''check_if_taxdb_exists
     
@@ -33,13 +35,16 @@ def read_task_logs_summary_table()->pd.DataFrame:
     :returns True or False
         :type boolean
 '''
-def check_if_taxdb_exists()->bool:
+
+
+def check_if_taxdb_exists() -> bool:
     if isfile('media/databases/taxdb.btd') and isfile('media/databases/taxdb.bti'):
         return True
     else:
         return False
 
-def check_if_file_exists(file_path)->bool:
+
+def check_if_file_exists(file_path) -> bool:
     return isfile(file_path)
 
 
@@ -49,6 +54,8 @@ utilization in create_taxonomic_file_view and refseqdatabaseform
 returns a list of all files and their corresponding total line length in the media/taxonomic_node_files folder that end with .taxids
 
 '''
+
+
 def list_taxonomic_files():
     try:
         files_in_taxonomic_node_files = listdir('media/taxonomic_node_files/')
@@ -56,13 +63,13 @@ def list_taxonomic_files():
         length = []
         for file in files_in_taxonomic_node_files:
             lines = 0
-            with open('media/taxonomic_node_files/'+file) as f:
+            with open('media/taxonomic_node_files/' + file) as f:
                 for line in f:
                     lines = lines + 1
             if file.endswith('.taxids'):
                 files.append(file)
                 length.append(lines)
-        #[file for file in files_in_taxonomic_node_files if file.endswith('.taxids')]
+        # [file for file in files_in_taxonomic_node_files if file.endswith('.taxids')]
         return files, length
     except Exception as e:
         raise Exception('exception ocurred in blast_project/py_services.list_taxonomic_files : {}'.format(e))
@@ -78,6 +85,8 @@ def list_taxonomic_files():
     :param database_id
         :type int
 '''
+
+
 def delete_blastdb_and_associated_directories_by_id(database_id):
     try:
         with transaction.atomic():
@@ -87,6 +96,7 @@ def delete_blastdb_and_associated_directories_by_id(database_id):
             blastdatabase.delete()
     except Exception as e:
         raise IntegrityError("couldnt delete blast database entry : {}".format(e))
+
 
 '''delete_project_and_associated_directories_by_id
 
@@ -98,14 +108,16 @@ def delete_blastdb_and_associated_directories_by_id(database_id):
         :type int
     
 '''
-def delete_project_and_associated_directories_by_id(project_id:int)->None:
+
+
+def delete_project_and_associated_directories_by_id(project_id: int) -> None:
     try:
         with transaction.atomic():
             project = BlastProject.objects.get(id=project_id)
             if isdir(BLAST_PROJECT_DIR + str(project_id)):
                 rmtree(BLAST_PROJECT_DIR + str(project_id))
-            if isdir('static/images/result_images/'+str(project_id)):
-                rmtree('static/images/result_images/'+str(project_id))
+            if isdir('static/images/result_images/' + str(project_id)):
+                rmtree('static/images/result_images/' + str(project_id))
             project.delete()
     except Exception as e:
         raise IntegrityError("couldnt delete blast project entry : {}".format(e))
@@ -118,7 +130,9 @@ def delete_project_and_associated_directories_by_id(project_id:int)->None:
     :param database_id
         :type int
 '''
-def create_blastdatabase_directory(database_id,database_filepath=BLAST_DATABASE_DIR):
+
+
+def create_blastdatabase_directory(database_id, database_filepath=BLAST_DATABASE_DIR):
     try:
         mkdir(database_filepath + str(database_id))
         return database_filepath + str(database_id)
@@ -126,17 +140,20 @@ def create_blastdatabase_directory(database_id,database_filepath=BLAST_DATABASE_
         raise IntegrityError(
             'something went wrong during database directory creation: {}'.format(e))
 
+
 '''upload_file
     simple function for uploading a file to a specific server side location, defined by destination
 '''
-def upload_file(project_file, destination:str):
+
+
+def upload_file(project_file, destination: str):
     try:
         with open(destination, 'wb+') as dest:
             for chunk in project_file.chunks():
                 dest.write(chunk)
     except Exception as e:
         raise IntegrityError(
-            'exception during file upload of : {} : exception : {}'.format(project_file.name,e))
+            'exception during file upload of : {} : exception : {}'.format(project_file.name, e))
 
 
 '''get_html_results
@@ -153,31 +170,37 @@ def upload_file(project_file, destination:str):
     :returns data - string representation of a pandas html table
         :type list[str]
 '''
-#loads the reciprocal results table that is written with one of the last rules in the snakefiles
-def get_html_results(project_id:int,filename:str,html_result_path=BLAST_PROJECT_DIR)->list:
+
+
+# loads the reciprocal results table that is written with one of the last rules in the snakefiles
+def get_html_results(project_id: int, filename: str, html_result_path=BLAST_PROJECT_DIR) -> list:
     try:
-        with open(html_result_path+str(project_id)+"/"+filename) as res:
+        with open(html_result_path + str(project_id) + "/" + filename) as res:
             data = res.readlines()
         return data
     except Exception as e:
-        raise FileNotFoundError("[-] ERROR: Couldn't read file {} with Exception: {}".format(filename,e))
+        raise FileNotFoundError("[-] ERROR: Couldn't read file {} with Exception: {}".format(filename, e))
+
 
 '''html_table_exists
     Checks if the html table exists.
 '''
-def html_table_exists(project_id,filename,html_result_path=BLAST_PROJECT_DIR):
-    if(isfile(html_result_path+str(project_id)+"/"+filename)):
+
+
+def html_table_exists(project_id, filename, html_result_path=BLAST_PROJECT_DIR):
+    if (isfile(html_result_path + str(project_id) + "/" + filename)):
         return True
     else:
         return False
 
-#TODO documentation
-def concatenate_genome_fasta_files_in_db_dir(path_to_database,database_title,genome_files):
+
+# TODO documentation
+def concatenate_genome_fasta_files_in_db_dir(path_to_database, database_title, genome_files):
     try:
         database_name = database_title.replace(' ', '_').upper() + '.database'
-        with open(path_to_database+database_name,'w') as dbfile:
+        with open(path_to_database + database_name, 'w') as dbfile:
             for file in genome_files:
-                with open(path_to_database+file, 'r') as gfile:
+                with open(path_to_database + file, 'r') as gfile:
                     for line in gfile.readlines():
                         dbfile.write(line)
     except Exception as e:
