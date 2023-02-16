@@ -192,7 +192,10 @@ def read_current_assembly_summary_with_pandas(assembly_levels:list)->pd.DataFram
     #TODO Documentation, Refactoring
     #init parsing refseq table with pandas
     try:
+        #skipping the first line with .readline()
+        # --> second line resides the header information for the assembly summary file
         with open(summary_file_path, 'r') as rfile:
+            line = rfile.readline()
             line = rfile.readline()
             header = line.replace('#', '').replace(" ", '').rstrip().split("\t")
 
@@ -201,15 +204,6 @@ def read_current_assembly_summary_with_pandas(assembly_levels:list)->pd.DataFram
                                             5:str, #5 taxid
                                             6:str, #6 species taxid
                                             'ftp_path':str})
-
-        '''
-        with usecols=range(22)
-        header = ["assembly_accession", "bioproject", "biosample", "wgs_master", "refseq_category", "taxid",
-          "species_taxid", "organism_name", "infraspecific_name", "isolate", "version_status", "assembly_level",
-          "release_type", "genome_rep", "seq_rel_date", "asm_name", "submitter", "gbrs_paired_asm",
-          "paired_asm_comp", "ftp_path", "excluded_from_refseq", "relation_to_type_material"]      
-        '''
-
         refseq_table.columns = header
         refseq_table = refseq_table.astype({"taxid": str})
 

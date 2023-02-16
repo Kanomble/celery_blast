@@ -1,12 +1,14 @@
 from django.db import models
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
-# allows customization of queries for the database
 ''' BlastProjectManager
+    
+    This manager class provides functionality for creating BLAST projects. It is a hub for the creation of the 
+    BlastProject model and all important necessary files. 
     The create_blast_project function is used in py_django_db_services.create_project_from_form.
+    
 '''
 class BlastProjectManager(models.Manager):
-    # functions
     def create_blast_project(
             self, project_title,
             search_strategy,
@@ -16,7 +18,8 @@ class BlastProjectManager(models.Manager):
             project_forward_database, project_backward_database,
             species_name_for_backward_blast,
             filepath=BLAST_PROJECT_DIR):
-        # calling the create method (objects.create) ..
+
+        # overwriting the create method
         blast_project = self.create(
             project_title=project_title, search_strategy=search_strategy,
             project_query_sequences=project_query_sequences,

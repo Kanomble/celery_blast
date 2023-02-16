@@ -1,9 +1,7 @@
 from django import forms
-from django.core.exceptions import ValidationError
 from blast_project.py_django_db_services import get_all_succeeded_databases
 from blast_project.py_biopython import fetch_protein_records
 from string import punctuation, ascii_letters
-from tempfile import NamedTemporaryFile
 
 #TODO documentation
 class OneWayProjectCreationForm(forms.Form):
@@ -46,11 +44,11 @@ class OneWayProjectCreationForm(forms.Form):
         user_email = cleaned_data['user_email']
 
         #upload a query file or specify valid protein identifiers
-        if query_file == None and query_sequences == '':
+        if query_file is None and query_sequences == '':
             self.add_error('query_sequence_file',"please upload a fasta file containing your sequences or specify valid protein identifier")
 
         #query file was uploaded
-        if query_file != None:
+        if query_file is not None:
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
                 raise self.add_error('query_sequence_file',"please upload only fasta files!")
 
@@ -85,9 +83,9 @@ class OneWayProjectCreationForm(forms.Form):
                 self.add_error('query_sequence_file',
                                'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
         # protein identifier have been uploaded
-        elif query_sequences != '':
+        elif query_sequences != '' and query_file is None:
             # check string for invalid characters
-            query_sequences = query_sequences.split(',')
+            query_sequences = query_sequences.replace(" ", "").split(',')
             try:
                 proteins, errors = fetch_protein_records(query_sequences,user_email)
                 if len(errors) > 0:
@@ -95,9 +93,6 @@ class OneWayProjectCreationForm(forms.Form):
                 cleaned_data['query_sequence_text'] = proteins
             except Exception as e:
                 self.add_error("query_sequence_text","please provide valid protein identifiers")
-
-
-            #self.add_error('query_sequence_text','not available yet')
         else:
             self.add_error('query_sequence_text',
                            "please upload a fasta file containing your sequences or specify valid protein identifier")
@@ -145,7 +140,9 @@ class OneWayRemoteProjectCreationForm(forms.Form):
             'required':"Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
 
     r_query_sequence_text = forms.CharField(
-        label="Query Sequence IDs",max_length=800,required=False
+        label="Query Sequence IDs",
+        max_length=800,
+        required=False
     )
 
     r_project_database = forms.ChoiceField(
@@ -163,7 +160,7 @@ class OneWayRemoteProjectCreationForm(forms.Form):
     r_entrez_query = forms.CharField(
         max_length=200,
         required=False,
-        error_messages = {
+        error_messages={
             'required': "Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"}
     )
 
@@ -218,7 +215,7 @@ class OneWayRemoteProjectCreationForm(forms.Form):
                 self.add_error('r_query_sequence_file',
                                'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
         # protein identifier have been uploaded
-        elif query_sequences != '':
+        elif query_sequences != '' and query_file is None:
             # check string for invalid characters
             query_sequences = query_sequences.split(',')
             try:

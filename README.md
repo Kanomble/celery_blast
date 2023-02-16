@@ -23,6 +23,10 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [X] refactor protein identifier field in one way BLASTs
+- [ ] fix error handling during one way BLAST project setup
+- [ ] add automate redirection to one way BLAST page
+- [ ] add query sequence information to one way blast detail page - maybe also to table
 - [ ] fix plotting: /blast/reciprocal_blast/media/blast_projects/2/.snakemake/scripts/tmp0ybykovj.build_folders_with_hit_info_for_each_qseqid.py:89: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
   fig, ax = plt.subplots(2, 2)
 - [ ] refactor one way blast rules

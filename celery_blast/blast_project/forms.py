@@ -45,10 +45,9 @@ class CreateTaxonomicFileForm(forms.Form):
 
 '''CreateTaxonomicFileForMultipleScientificNames
 
-    This form replaces the old CreateTaxonomicFileForm. 
-    In addition to all attributes from the previous form, this form
-    inherits a filename field, which will be used as the actual filename,
-     thus several species names will end up in too long names.
+    This form replaces the old CreateTaxonomicFileForm.  In addition to all attributes from the previous form, this form
+    inherits a filename field, which will be used as the actual filename, thus several species names will end up in too
+    long names. This form can replace the CreateTaxonomicFileForm. 
 
 '''
 class CreateTaxonomicFileForMultipleScientificNames(forms.Form):
@@ -93,7 +92,11 @@ class CreateUserForm(UserCreationForm):
     fields | types:
         - project_title | charfield
         - search_strategy | choicefield --> currently disabled
+        
+        # The user has to provide data for at least one of these fields.
         - query_sequence_file | filefield
+        - query_sequence_text | charfield
+        
         - project_forward_database | BlastDatabaseModelChoiceField
         - project_backward_database | BlastDatabaseModelChoiceField
         - species_name_for_backward_blast | charfield
@@ -151,6 +154,22 @@ class ProjectCreationForm(forms.Form):
         self.fields['user_email'].charfield = user.email
         self.fields['user_email'].initial = user.email
 
+    ''' Validation of user input.
+    
+        species_name_for_backward_blast: The provided species name must be a valid scientific name, that can get trans-
+        lated into taxonomic identifier, which will be used for database filtering. This taxonomic identifier (taxid) 
+        has to reside in the backward database. This may cause problems as there is another taxid called species taxid.
+        Organism names are validated with biopython.
+        
+            functions: get_species_taxid_by_name, check_if_taxid_is_in_database
+        
+        query_sequence_file and/or query_sequence_text: One of those fields have to be filled by the user, even if both
+        fields have the required=False setting. The filename has to consist of ascii_letters or "_", "-" signs. It has 
+        to end with .faa, .fasta or .fa. Currently there are no restrictions for the number of provided sequences.
+        Query sequences have to reside in the backward database, this is validated by combaring query sequence identifiers.
+        
+            functions: fetch_protein_records, check_if_sequences_are_in_database
+    '''
     def clean(self):
         try:
             cleaned_data = super().clean()
@@ -186,7 +205,7 @@ class ProjectCreationForm(forms.Form):
             query_sequences = cleaned_data['query_sequence_text']
 
             # upload a query file or specify valid protein identifiers
-            if query_file == None and query_sequences == '':
+            if query_file is None and query_sequences == '':
                 self.add_error('query_sequence_file',
                                "please upload a fasta file containing your sequences or specify valid protein identifier")
 
@@ -239,9 +258,9 @@ class ProjectCreationForm(forms.Form):
                     self.add_error('query_sequence_file',
                                    'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
             # protein identifier have been uploaded
-            elif query_sequences != '':
+            elif query_sequences != '' and query_file is None:
                 # check string for invalid characters
-                query_sequences = query_sequences.split(',')
+                query_sequences = query_sequences.replace(" ","").split(",")
                 try:
                     valid = check_if_sequences_are_in_database(backward_db.id, query_sequences)
                     if valid != True:
@@ -265,7 +284,12 @@ class ProjectCreationForm(forms.Form):
                      e))
         return cleaned_data
 
-#TODO documentation
+'''BlastSettingsFormForward
+    
+    Form for the BlastProject. During project creation, a snakemake configuration file is written into the project dir-
+    ectory. This form contains the fields for the forward BLAST settings, that are written into this configuration file.
+    
+'''
 class BlastSettingsFormForward(forms.Form):
     fw_e_value = forms.FloatField(
         label="FW E-Value", initial=0.001)
@@ -281,7 +305,12 @@ class BlastSettingsFormForward(forms.Form):
         label='FW max hsps', initial=500
     )
 
-#TODO documentation
+'''BlastSettingsFormBackward
+
+    Form for the BlastProject. During project creation, a snakemake configuration file is written into the project dir-
+    ectory. This form contains the fields for the backward BLAST settings, that are written into this configuration file.
+    
+'''
 class BlastSettingsFormBackward(forms.Form):
     bw_e_value = forms.FloatField(
         label="BW E-Value", initial=0.001)
@@ -297,7 +326,26 @@ class BlastSettingsFormBackward(forms.Form):
         label='BW max hsps', initial=500
     )
 
-#TODO documentation
+'''UploadGenomeForm
+
+    Form for uploading a single (concatenated) fasta file. Several metadata information are necessary to format this file
+    into a BlastDatabase. Those information are reflected by this form fields. Validation is done via a longer clean 
+    function:
+    
+    taxonomic_node: The user has to provide a taxonomic_node or a file containing a mapping between taxonomic_nodes and
+    sequence identifier (taxmap_file). Taxonomic nodes are validated with biopython.
+        
+        functions: check_given_taxonomic_node
+    
+    If the user uploads a concatenated fastafile, all metadata have toget uploaded via files. Those files should contain
+    information separated by newlines, e.g. each organism name has to reside in their one line. The length of those files
+    have to be the same. If the user provides 9 different organism names we can assume, that there must be 9 different
+    assemblies in the uploaded fasta file. Organism names are validated with biopython.
+    
+        functions: get_species_taxid_by_name
+    
+           
+'''
 class UploadGenomeForm(forms.Form):
     genome_fasta_file = forms.FileField(
         error_messages={
@@ -432,6 +480,12 @@ class UploadGenomeForm(forms.Form):
                     self.add_error('assembly_level_file','the amount of assembly levels: {} does not match the amount of provided organisms: {}'.format(amount_of_levels,organisms))
         return cleaned_data
 
+'''UploadMultipleFilesGenomeForm
+
+    Form for uploading multiple fasta files. The user has to provide a valid organism name, that can get translated into
+    a taxonomic identifier. This form can replace the UploadGenomeForm, as it has a similar functionality. 
+
+'''
 class UploadMultipleFilesGenomeForm(forms.Form):
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
