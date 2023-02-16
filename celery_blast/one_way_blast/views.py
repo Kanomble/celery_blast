@@ -33,7 +33,7 @@ def one_way_blast_project_creation_view(request):
                 project_creation_form = OneWayProjectCreationForm(
                     request.user, request.POST, request.FILES)
                 blast_settings_form = BlastSettingsForm(request.POST)
-                # remote_project_creation_form = OneWayRemoteProjectCreationForm(request.user)
+                remote_project_creation_form = OneWayRemoteProjectCreationForm(request.user)
 
                 if project_creation_form.is_valid() and blast_settings_form.is_valid():
                     blast_project = create_one_way_blast_project(
@@ -42,8 +42,16 @@ def one_way_blast_project_creation_view(request):
                         settings_form=blast_settings_form)
 
                     return redirect('one_way_project_details', project_id=blast_project.id)
+                else:
+                    context = {'OneWayProjectCreationForm': project_creation_form,
+                               'BlastSettingsForm': blast_settings_form,
+                               'OneWayRemoteProjectCreationForm': remote_project_creation_form,
+                               'BlastRemoteSettingsForm': blast_settings_form
+                               }
+                    return render(request, 'one_way_blast/one_way_blast_creation_dashboard.html', context)
+
             elif request.POST['project_type'] == 'remote':
-                # project_creation_form = OneWayProjectCreationForm(request.user)
+                project_creation_form = OneWayProjectCreationForm(request.user)
                 remote_project_creation_form = OneWayRemoteProjectCreationForm(
                     request.user, request.POST, request.FILES)
                 blast_settings_form = BlastSettingsForm(request.POST)
@@ -54,6 +62,13 @@ def one_way_blast_project_creation_view(request):
                         blast_settings_form)
 
                     return redirect('one_way_remote_project_details', project_id=blast_project.id)
+                else:
+                    context = {'OneWayProjectCreationForm': project_creation_form,
+                               'BlastSettingsForm': blast_settings_form,
+                               'OneWayRemoteProjectCreationForm': remote_project_creation_form,
+                               'BlastRemoteSettingsForm': blast_settings_form
+                               }
+                    return render(request, 'one_way_blast/one_way_blast_creation_dashboard.html', context)
         else:
             project_creation_form = OneWayProjectCreationForm(request.user)
             blast_settings_form = BlastSettingsForm()
@@ -107,7 +122,6 @@ def one_way_remote_project_details_view(request, project_id):
         return failure_view(request, e)
 
 
-# TODO documentation
 @login_required(login_url='login')
 def one_way_project_delete_view(request, project_id):
     try:
@@ -117,7 +131,6 @@ def one_way_project_delete_view(request, project_id):
         return failure_view(request, e)
 
 
-# TODO documentation
 @login_required(login_url='login')
 def one_way_remote_project_delete_view(request, project_id):
     try:

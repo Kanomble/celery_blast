@@ -770,7 +770,13 @@ try:
         unique_taxids = list(df["staxids"].unique())
 
         tax_df = add_taxonomic_information_to_db(snakemake.params['user_email'], logfile, unique_taxids)
+
+        # normalize taxonomic identifier
+        slice_taxids = lambda taxids: taxids.split(";")[0]
+        tax_df['staxids'] = tax_df['staxids'].apply(slice_taxids)
+        df['staxids'] = df['staxids'].apply(slice_taxids)
         tax_df['staxids'] = tax_df['staxids'].astype('int64')
+        df['staxids'] = df['staxids'].astype('int64')
         result_df = df.merge(tax_df, on='staxids')
 
 

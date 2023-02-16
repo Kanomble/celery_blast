@@ -23,6 +23,9 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 ## TODO
+- [ ] refactor one-way-remote BLAST bokeh plot^s
+  - [ ] download button
+  - [ ] annotations in plot
 - [X] refactor protein identifier field in one way BLASTs
 - [ ] fix error handling during one way BLAST project setup
 - [ ] add automate redirection to one way BLAST page
@@ -91,10 +94,9 @@ The web container will automatically try to restart if the startup fails, unless
   - [ ] update taxdb option!
 - [ ] input fasta query file headers have to be separated by a space, not by a pipe symbol (|) or others
   - [ ] reformat input sequences during upload
-- [ ] clinker like synteny plots (basic plot with x axis scaling depending on biggest genome size ..) just for filtered organisms
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [ ] write documentation for added functions
-- [ ] refactor the create_blastdatabase_table_and_directory function (too long)
+- [X] refactor the create_blastdatabase_table_and_directory function (too long)
 - [x] extract subject sequences from database (with blastdbcmd and orthologous sequence id list)
     - [x] integrate docker container for mafft and fasttree 
     - [x] perform msa with orthologous subject sequences
@@ -103,7 +105,7 @@ The web container will automatically try to restart if the startup fails, unless
 - [x] check if backward organism is in database
   - [X] check if query sequences are in backward database
 - [X] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
-- [ ] add more options to BlastSettings - Alter BlastSettings model and forms
+- [X] add more options to BlastSettings - Alter BlastSettings model and forms
 - [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
     - [X] think about multiple species_name inputs ... --> not possible
 - [X] add configuration environment variables for SNAKEMAKE - settings.py
@@ -128,8 +130,8 @@ The web container will automatically try to restart if the startup fails, unless
 - [X] check out the .pal files from BLAST databases
 
 ## TODO Database Models
-- [ ] add validation
-- [ ] write tests
+- [X] add validation
+- [X] write tests
 - [X] wrap database transactions inside `with transactions.atomic()` blocks
 - [X] create models:
     - [X] BlastProject
