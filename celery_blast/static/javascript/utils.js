@@ -10,7 +10,7 @@ function showLoader(idLoadingDiv,idHidingDiv) {
 
 function displayDivElement(divElement) {
   var settingsForm = document.getElementById(divElement);
-  if (settingsForm.style.display == "none") {
+  if (settingsForm.style.display === "none") {
     settingsForm.style.display = "block";
   } else {
     settingsForm.style.display = "none";
@@ -19,28 +19,31 @@ function displayDivElement(divElement) {
 
 function loadRemoteOrLocal(project_type) {
     document.getElementById('project_creation_' + project_type).style.display = "block";
-    if (project_type == 'remote') {
-        document.getElementById('project_creation_local').style.display = 'none'
-        document.getElementById('local').checked = false
-
-    } else if (project_type == 'local') {
-        document.getElementById('project_creation_remote').style.display = 'none'
-        document.getElementById('remote').checked = false
+    if (project_type === 'remote') {
+        document.getElementById('project_creation_local').style.display = 'none';
+        document.getElementById('local').checked = false;
+        document.getElementById('remote').checked = true;
+    } else if (project_type === 'local') {
+        document.getElementById('project_creation_remote').style.display = 'none';
+        document.getElementById('remote').checked = false;
+        document.getElementById('local').checked = true;
     }
 }
 
 function loadMultipleOrSingleFileUpload(file_upload_type) {
-    if (document.getElementById('upload_form_master_div').style.display == 'none') {
+    if (document.getElementById('upload_form_master_div').style.display === 'none') {
         document.getElementById('upload_form_master_div').style.display = "block";
     }
 
     document.getElementById('post_form_' + file_upload_type + '_container').style.display = "block";
-    if (file_upload_type == 'single') {
-        document.getElementById('post_form_multiple_container').style.display = 'none'
-        document.getElementById('multiple').checked = false
-    } else if (file_upload_type == 'multiple') {
-        document.getElementById('post_form_single_container').style.display = 'none'
-        document.getElementById('single').checked = false
+    if (file_upload_type === 'single') {
+        document.getElementById('post_form_multiple_container').style.display = 'none';
+        document.getElementById('multiple').checked = false;
+        document.getElementById('single').checked = true;
+    } else if (file_upload_type === 'multiple') {
+        document.getElementById('post_form_single_container').style.display = 'none';
+        document.getElementById('single').checked = false;
+        document.getElementById('multiple').checked = true;
     }
 }
 

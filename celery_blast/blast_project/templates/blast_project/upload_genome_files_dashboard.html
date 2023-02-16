@@ -16,6 +16,7 @@ Upload your own FASTA files and format them to BLAST databases.
 {% block header %}
 {% block page_header %}{% endblock %}
 {% endblock %}
+{% block extend_body %} {% if UploadGenomeForm.errors %} onload="loadMultipleOrSingleFileUpload('single')" {% endif %} {% if MultipleFileUploadGenomeForm.errors %} onload="loadMultipleOrSingleFileUpload('multiple')" {% endif %} {% endblock %}
 {% block content %}
 <div class="dashboard_project_list_col text-center" style="font-size: large">
     <form name="database_upload_menu" action="javascript:void(0)" id="upload_genome_files_dashboard_load_forms">

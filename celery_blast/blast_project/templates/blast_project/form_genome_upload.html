@@ -37,13 +37,9 @@
         </div>
 
          <div class="form-group">
-            <label for="genome_fasta_file">Genome FASTA File Upload</label>
-            <input type="file" class="form-control-file" id="genome_fasta_file" name="genome_fasta_file">
-            {% if UploadGenomeForm.genome_fasta_file.errors %}
-            <div class="alert alert-danger">
-                <strong>{{ UploadGenomeForm.genome_fasta_file.errors }}</strong>
-            </div>
-            {% endif %}
+            <label for="genome_fasta_file"> Upload a Genome Fasta File </label>
+            <br>
+            {{ UploadGenomeForm.genome_fasta_file }}
         </div>
         <br>
     <div style="display: none">

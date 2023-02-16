@@ -29,7 +29,7 @@
 <!-- Welcome to your one way BLAST project dashboard, request.user!-->
 {% block header %}
 {%  endblock %}
-{%  block extend_body %} {% if OneWayRemoteProjectCreationForm.errors %} onload="loadTemplate('remote')" {% endif %} {% if OneWayProjectCreationForm.errors %} onload="loadTemplate('local')" {% endif %} {% endblock %}
+{%  block extend_body %} {% if OneWayRemoteProjectCreationForm.errors %} onload="loadRemoteOrLocal('remote')" {% endif %} {% if OneWayProjectCreationForm.errors %} onload="loadRemoteOrLocal('local')" {% endif %} {% endblock %}
 {% block content %}
 
 <div class="container-fluid text-center dashboard_project_list_col">

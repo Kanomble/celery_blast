@@ -347,15 +347,9 @@ class BlastSettingsFormBackward(forms.Form):
            
 '''
 class UploadGenomeForm(forms.Form):
-    genome_fasta_file = forms.FileField(
-        error_messages={
-                'required':"Upload a genome FASTA file with protein sequences, that can get formatted to a BLAST database."}
-    )
-
     database_title = forms.CharField(max_length=200, required=True)
     database_description = forms.CharField(max_length=200, required=True)
     assembly_entries = forms.IntegerField(min_value=1,required=True)
-
     #obsolete due to multiple genome form for just one genome file
     #TODO remove fields and fix associated view/form functions
     ###### OBSOLETE ######
@@ -389,22 +383,19 @@ class UploadGenomeForm(forms.Form):
         required=False
     )
 
+    genome_fasta_file = forms.FileField(required=True)
+
     user_email = forms.CharField(max_length=200,required=False)
+
 
     def __init__(self,user,*args,**kwargs):
         super(UploadGenomeForm,self).__init__(*args,**kwargs)
         self.fields['user_email'].charfield = user.email
         self.fields['user_email'].initial = user.email
 
-    def clean_genome_fasta_file(self):
-        genome_fasta_file = self.cleaned_data['genome_fasta_file']
-        if genome_fasta_file.name.endswith('.faa') != True and genome_fasta_file.name.endswith('.fasta') != True:
-            raise ValidationError('specify a valid fasta file (with .faa or .fasta file name extension)')
-        else:
-            return genome_fasta_file
-
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = super(UploadGenomeForm, self).clean()
+        print(cleaned_data)
         genome_fasta_file = cleaned_data['genome_fasta_file']
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
@@ -413,23 +404,23 @@ class UploadGenomeForm(forms.Form):
         assembly_level_file = cleaned_data['assembly_level_file']
         user_email = cleaned_data['user_email']
 
-        if taxonomic_node != None:
+        if taxonomic_node is not None:
             try:
                 check_given_taxonomic_node(user_email,taxonomic_node)
             except Exception as e:
                 self.add_error('taxonomic_node','there is no organism with your specified taxonomic node, exception : {}'.format(e))
 
-        if taxmap_file == None and taxonomic_node == None:
+        if taxmap_file is None and taxonomic_node is None:
            self.add_error('taxonomic_node','specify a taxonomic node for the formatting procedure')
            self.add_error('taxmap_file','specify a taxmap file for the formatting procedure')
 
-        if taxmap_file != None:
+        if taxmap_file is not None:
 
-            if taxonomic_node != None:
+            if taxonomic_node is not None:
                 self.add_error('taxonomic_node', 'just specify one, a taxonomic node or a taxmap file')
                 self.add_error('taxmap_file', 'just specify one, a taxonomic node or a taxmap file')
 
-            if organism_file == None:
+            if organism_file is None:
                 self.add_error('organism_name_file','if you upload a taxmap file you should also upload a file that contains the organism names of target genomes, separated by lines')
 
             protein_ids = 0
@@ -461,7 +452,7 @@ class UploadGenomeForm(forms.Form):
                 self.add_error('taxmap_file','the amount of provided acc_ids: {} does not match the provided amount of protein_ids: {}'.format(taxmap_ids,protein_ids))
 
 
-            if assembly_accessions_file != None:
+            if assembly_accessions_file is not None:
                 amount_of_assemblies = 0
                 for chunk in assembly_accessions_file.chunks():
                     lines = chunk.decode().split('\n')
@@ -472,7 +463,7 @@ class UploadGenomeForm(forms.Form):
                 if amount_of_assemblies != organisms:
                     self.add_error('assembly_accessions_file','the amount of assemblies: {} does not match the amount of provided organisms: {}'.format(amount_of_assemblies,organisms))
 
-            if assembly_level_file != None:
+            if assembly_level_file is not None:
                 amount_of_levels = 0
                 for chunk in assembly_level_file.chunks():
                     amount_of_levels += chunk.decode().count('\n')

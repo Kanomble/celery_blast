@@ -334,6 +334,7 @@ def upload_genome_view(request):
             #belong to one template, the upload_genome_files_dashboard.html
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
             upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
+
             if upload_genome_form.is_valid():
                 with transaction.atomic():
                     new_db = save_uploaded_genomes_into_database(
@@ -378,6 +379,7 @@ def upload_genome_view(request):
 
         return render(request,'blast_project/upload_genome_files_dashboard.html',context)
     except Exception as e:
+        return render(request, 'blast_project/upload_genome_files_dashboard.html', context)
         #deletes all failed or unknown subdirectories within the database directories
         #all directories without a corresponding database id
         returncode = delete_failed_or_unknown_databases()
@@ -428,7 +430,6 @@ def upload_multiple_genomes_view(request):
     user needs to authenticate otherwise they will get redirected to this login page
 
 '''
-#login user
 @unauthenticated_user #you dont need an account to trigger this view
 def login_user(request):
 
@@ -453,14 +454,14 @@ def logout_user(request):
 #registration view
 @unauthenticated_user
 def registration_view(request):
-    userForm = CreateUserForm()
+    user_form = CreateUserForm()
     if request.method == 'POST':
-        userForm = CreateUserForm(request.POST,initial={'last_login':timezone.now()})
-        if userForm.is_valid():
+        user_form = CreateUserForm(request.POST,initial={'last_login':timezone.now()})
+        if user_form.is_valid():
             try:
-                username = userForm.cleaned_data.get('username')
-                password = userForm.cleaned_data.get('password1')
-                email = userForm.cleaned_data.get('email')
+                username = user_form.cleaned_data.get('username')
+                password = user_form.cleaned_data.get('password1')
+                email = user_form.cleaned_data.get('email')
                 user = User.objects.create_user(username, email, password=password, last_login=timezone.now())
 
                 #group = Group.objects.get(name='customer')
@@ -469,7 +470,7 @@ def registration_view(request):
                 return redirect('login')
             except Exception as e:
                 return failure_view(request,e)
-    context = {'form': userForm, }
+    context = {'form': user_form, }
     return render(request,'blast_project/register.html',context)
 
 ''' failure view
