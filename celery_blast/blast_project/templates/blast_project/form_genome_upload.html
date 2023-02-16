@@ -40,6 +40,11 @@
             <label for="genome_fasta_file"> Upload a Genome Fasta File </label>
             <br>
             {{ UploadGenomeForm.genome_fasta_file }}
+            {% if UploadGenomeForm.genome_fasta_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ UploadGenomeForm.genome_fasta_file.errors }}</strong>
+            </div>
+            {% endif %}
         </div>
         <br>
     <div style="display: none">

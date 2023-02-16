@@ -379,7 +379,6 @@ def upload_genome_view(request):
 
         return render(request,'blast_project/upload_genome_files_dashboard.html',context)
     except Exception as e:
-        return render(request, 'blast_project/upload_genome_files_dashboard.html', context)
         #deletes all failed or unknown subdirectories within the database directories
         #all directories without a corresponding database id
         returncode = delete_failed_or_unknown_databases()

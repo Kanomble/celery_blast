@@ -395,7 +395,6 @@ class UploadGenomeForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(UploadGenomeForm, self).clean()
-        print(cleaned_data)
         genome_fasta_file = cleaned_data['genome_fasta_file']
         taxmap_file = cleaned_data['taxmap_file']
         taxonomic_node = cleaned_data['taxonomic_node']
@@ -403,6 +402,9 @@ class UploadGenomeForm(forms.Form):
         assembly_accessions_file = cleaned_data['assembly_accessions_file']
         assembly_level_file = cleaned_data['assembly_level_file']
         user_email = cleaned_data['user_email']
+
+        if genome_fasta_file.name.endswith('.faa') is not True and genome_fasta_file.name.endswith('.fasta') is not True:
+            self.add_error('genome_fasta_file', 'specify a valid fasta file (with .faa or .fasta file name extension)')
 
         if taxonomic_node is not None:
             try:
