@@ -1,7 +1,7 @@
 # celery_blast
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct, BLAST, Snakemake and Panoptes.
 ## Content
-- [BLAST Database creation](#BLAST Databases)
+- [BLAST Database creation](#blast_database)
 ## Installation
 The application can get installed by submitting the `docker-compose up` command in a terminal window which points to the applications working directory (directory with `docker-compose.yml`). The docker client will pull remotely available images, the base image for this application, an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
 All images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
@@ -160,6 +160,7 @@ The backward BLAST database has to contain the genome file from which the query 
 data is validated before the user can start the pipeline. Accurate error messages are displayed within the input fields, if
 something is incorrect. This ensures a smooth execution of the pipeline.
 
+<a name="blast_database"></a>
 ## BLAST Databases
 ## BLAST database preparation
 Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command.
