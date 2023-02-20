@@ -286,10 +286,8 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
                                             sc.data['color'].push(color_dict[source.data[color_menu.value][i]])
                                             sc.data['x'].push(source.data[xaxis_menu.value][i])
                                             sc.data['y'].push(source.data[yaxis_menu.value][i])
-                                            //tab_dict[call_back_object[j]]+=1
                                             for(var l = 0;l<tax_dict[color_menu.value].length;l++){
                                                 if(source.data[color_menu.value][i] == tax_dict[color_menu.value][l]){
-                                                    //hier muss ich wissen ob color_menu.value zu source.data[tax_unit][i] gehört
                                                     if(taxid_arr.includes(source.data['staxids'][i]) == false){
                                                         taxid_arr.push(source.data['staxids'][i])
                                                     }                                           
@@ -332,8 +330,7 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
 
 def create_color_palette_selection():
     try:
-
-        palettes = Spectral
+        # palettes = Spectral
         options = [(str(val), "Spectral" + str(val)) for val in range(3, 12)]
         color_palette_menu = Select(options=options,
                                     value=str(3),
@@ -346,55 +343,51 @@ def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: 
                                             taxonomy_table_callback_dict: dict) -> CustomJS:
     try:
         palettes = Spectral
-        c_palette_callback = CustomJS(
-            args=dict(sc=curr, color_menu=color_menu, tax_menu=taxonomy_table_callback_dict, pals=palettes), code="""
-                                    // the callback value is a number 3,4,5,6,7,8,9,10,11,12
-                                    var call_back_object = cb_obj.value
+        c_palette_callback = CustomJS(args=dict(sc=curr, color_menu=color_menu, tax_menu=taxonomy_table_callback_dict, pals=palettes), code="""
+        // the callback value is a number 3,4,5,6,7,8,9,10,11,12
+        var call_back_object = cb_obj.value
 
-                                    var unique_organisms = []
+        var unique_organisms = []
 
 
-                                    for(var i = 0; i<sc.get_length(); i++){
-                                        if(unique_organisms.includes(sc.data[color_menu.value][i]) == false){
-                                            unique_organisms.push(sc.data[color_menu.value][i])
-                                        }
-                                    }
+        for(var i = 0; i<sc.get_length(); i++){
+            if(unique_organisms.includes(sc.data[color_menu.value][i]) == false){
+                unique_organisms.push(sc.data[color_menu.value][i])
+            }
+        }
 
-                                    if(unique_organisms.length <= pals[call_back_object].length){
-                                        var color_dict = {}
-                                        for(var i = 0; i < unique_organisms.length; i++){
-                                            if(i == pals[call_back_object].length){
-                                                i = 0
-                                            }
-                                            color_dict[unique_organisms[i]] = pals[call_back_object][i]
-                                        }
-                                        sc.data['color'] = []
-                                        for(var i = 0; i<sc.data[color_menu.value].length; i++){
-                                            sc.data['color'].push(color_dict[sc.data[color_menu.value][i]])
-                                        }
-                                     sc.change.emit();
-                                     }
-
+        if(unique_organisms.length <= pals[call_back_object].length){
+            var color_dict = {}
+            for(var i = 0; i < unique_organisms.length; i++){
+                if(i == pals[call_back_object].length){
+                    i = 0
+                }
+                color_dict[unique_organisms[i]] = pals[call_back_object][i]
+            }
+            sc.data['color'] = []
+            for(var i = 0; i<sc.data[color_menu.value].length; i++){
+                sc.data['color'].push(color_dict[sc.data[color_menu.value][i]])
+            }
+         sc.change.emit();
+         }
         """)
         return c_palette_callback
     except Exception as e:
-        raise Exception("[-] ERROR couldnt create color palette selection callback")
+        raise Exception("[-] ERROR couldnt create color palette selection callback with exception: {}".format(e))
 
 
 def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSource,
-                                taxonomic_unit: str, tax_menu: MultiSelect, xaxis_menu: MultiSelect,
-                                yaxis_menu: MultiSelect,
+                                xaxis_menu: Select, yaxis_menu: Select,
                                 color_menu: Select, color_dict: dict, taxonomy_menus: list) -> CustomJS:
     try:
         menu_qseqid_callback = CustomJS(args=dict(source=Overall, sc=Curr,
-                                                  tax_unit=taxonomic_unit,
                                                   xaxis_menu=xaxis_menu, yaxis_menu=yaxis_menu,
                                                   color_menu=color_menu, color_dict=color_dict,
                                                   taxonomy_menus=taxonomy_menus), code="""
 
-        var call_back_object = cb_obj.value
-
-
+        var tax_unit = color_menu.value;
+        var call_back_object = cb_obj.value;
+        
         let keys = Object.keys(sc.data)
         for(var i = 0; i < keys.length; i++){
             sc.data[keys[i]] = []
@@ -444,9 +437,25 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
     except Exception as e:
         raise Exception("[-] ERROR creating the custom js callback for the qseqid menu with exception: {}".format(e))
 
+'''create_unlinked_bokeh_plot
+    
+    For documentation view the function definition for create_linked_bokeh_plot in the blast_project module
+    py_database_statistics.py function.
 
+'''
 def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -> int:
     try:
+        # change unknown entries to their corresponding higher taxonomic nodes
+        result_data = result_data.copy()
+        result_data.loc[result_data[result_data['class'] == "unknown"].index, 'class'] = \
+            result_data[result_data['class'] == "unknown"]['phylum']
+        result_data.loc[result_data[result_data['order'] == "unknown"].index, 'order'] = \
+            result_data[result_data['order'] == "unknown"]['class']
+        result_data.loc[result_data[result_data['family'] == "unknown"].index, 'family'] = \
+            result_data[result_data['family'] == "unknown"]['order']
+        result_data.loc[result_data[result_data['genus'] == "unknown"].index, 'genus'] = \
+            result_data[result_data['genus'] == "unknown"]['family']
+
         # create bokeh dataframes for plot
         data_all, color_dict = create_initial_bokeh_result_data(result_data, taxonomic_unit)
         # selection subset for initial plot data
@@ -471,12 +480,6 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
 
         menu_qseqids = MultiSelect(options=unique_qseqids, value=qseq_values,
                                    title='Select target query sequence')  # drop down menu
-
-        # menu_callback = create_taxonomy_menu_callback(Overall,
-        #                                     Curr,
-        #                                     DbData,
-        #                                     taxonomic_unit
-        #                                     ,menu_qseqids)
 
         TOOLTIPS = [
             ("stitle", "@stitle"),
@@ -565,8 +568,6 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
 
         menu_qseqid_callback = create_qseqid_menu_callback(Overall,
                                                            Curr,
-                                                           taxonomic_unit,
-                                                           phylum_menu,
                                                            x_axis_menu, y_axis_menu,
                                                            color_menu, color_dict, tax_menus)
 
