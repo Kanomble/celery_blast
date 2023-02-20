@@ -729,8 +729,8 @@ def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: 
     
     This function is used to pass the number of colored items to the custom javascript callback function for the
     colorpalette. The options are hardcoded based on the "Spectral" color palette. Spectral3 will color the circles in
-    three different colors. The acutal coloring is done via changing the color column values in the curr ColumnDataSource via
-    the create_color_palette_selection_callback function.
+    three different colors. The actual coloring is done via changing the color column values in Curr, the
+    ColumnDataSource, via the create_color_palette_selection_callback function.
     
     :returns color_palette_menu
         :type bokeh.models.Select
@@ -787,6 +787,12 @@ def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str) -> M
     This function produces the custom javascript callback function for the taxonomy. It is similar to the 
     build_json_callback_for_taxonomy function in external_tools.py_cdd_domain_search.py but slightly more complex
     as there are more connected data sources.
+    
+    TableData entries refer to the copied pandas dataframes in the create_linked_bokeh_plot function. The displayed data
+    might differ from the data within the result html files, because unknown taxonomy entries are renamed based
+    on higher taxonomic ranks. E.g. there is no real class for cyanobacteria, thus all cyanobacterial classes that
+    have unknown in their class column will be ranamed to Cyanobacteria.
+    
     Based on this callback function the parameters column_dat and table_dat are getting changed.
     
     :param column_dat - represents the selected data
@@ -957,7 +963,18 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
 
 '''create_y_axis_menu
     
+    This function creates the selection menu for the y_axis.
+    It directly creates the appropriate CustomJS and adds it to the menu.
     
+    :param circle
+        :type bokeh class
+    :param axis
+        :type bokeh class
+    :param data_column
+        :type ColumnDataSource
+    
+    :returns y_axis_menu
+        :type bokeh class
 '''
 
 
@@ -971,7 +988,6 @@ def create_y_axis_menu(circle, axis, data_column):
            data.data['y'] = data.data[call_back_object]
            plot[1].axis_label = call_back_object;
            data.change.emit();
-
     ''')
 
     y_axis_menu.js_on_change('value', y_axis_menu_callback)
@@ -980,6 +996,18 @@ def create_y_axis_menu(circle, axis, data_column):
 
 '''create_x_axis_menu
 
+    This function creates the selection menu for the x_axis.
+    It directly creates the appropriate CustomJS and adds it to the menu.
+    
+    :param circle
+        :type bokeh class
+    :param axis
+        :type bokeh class
+    :param data_column
+        :type ColumnDataSource
+    
+    :returns y_axis_menu
+        :type bokeh class
 '''
 
 
@@ -1001,7 +1029,22 @@ def create_x_axis_menu(circle, axis, data_column):
 
 
 '''create_color_and_marker_dictionaries_for_bokeh_dataframe
-
+    
+    This function creates dictionaries of different colors and markers based on the reciprocal BLAST result dataframe.
+    The colors are based on taxonomic units, markers are based on query sequences.
+    A maximum of 256 distinct colors are allowed for a seaborn color palette. If more different taxonomic units are 
+    present within result_data[tax_unit] duplicate colors may occur.
+    You may change clrs = sns.color_palette('pastel', n_colors=num_colors) to another list, holding values for colors.
+    
+    Markers are based on a Bokeh MarkerType list. Following markers are not included: "x", "y", "dot", "dash", 
+    "cross", "asterisk". Markers are assigned to the query sequences randomly. If too much query sequences are present, 
+    duplicate markers with the same symbol may occur. 
+    
+    :param result_data - pandas dataframe holding the reciprocal BLAST result data
+        :type pd.DataFrame
+    
+    :returns color_dict, marker_dict
+        :type tuple(dict, dict)
 '''
 
 
@@ -1009,18 +1052,12 @@ def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.Dat
     try:
         # prepare distinct colors for the specified taxonomic unit
         color_dict = {}
+
         for tax_unit in ['phylum', 'order', 'class', 'family', 'genus']:
             num_colors = len(result_data[tax_unit].unique())
-
-            if num_colors > 256:
-                clrs = sns.color_palette('pastel', n_colors=num_colors)
-                clrs = clrs.as_hex()
-                color_dict.update(dict(zip(result_data[tax_unit].unique(), clrs)))
-
-            else:
-                clrs = sns.color_palette('pastel', n_colors=num_colors)
-                clrs = clrs.as_hex()
-                color_dict.update(dict(zip(result_data[tax_unit].unique(), clrs)))  # magma(n)
+            clrs = sns.color_palette('pastel', n_colors=num_colors)
+            clrs = clrs.as_hex()
+            color_dict.update(dict(zip(result_data[tax_unit].unique(), clrs)))  # magma(n)
 
         # prepare custom marker for each query sequence
         marker_dict = {}
@@ -1133,20 +1170,28 @@ def create_color_callback(legend_items, Curr:ColumnDataSource, Overall:ColumnDat
 
 '''create_qseqid_menu_callback
     
-    This function filters the displayed data based on a selection of query sequences. 
+    This function filters the displayed data based on a selection of query sequences. Based on the current 
+    taxonomic selection, defined within taxonomy_menu and the selected query sequences the plot data gets updated.
+    
+    :param Overall
+        :type ColumnDataSource
+    :param Curr
+        :type ColumnDataSource
+    :param DbData
+        :type ColumnDataSource
+
     
 '''
 
 def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSource, DbData: ColumnDataSource,
-                                taxonomic_unit: str, xaxis_menu: MultiSelect,
-                                yaxis_menu: MultiSelect,
+                                xaxis_menu: Select, yaxis_menu: Select,
                                 color_menu: Select, color_dict: dict, taxonomy_menus: list) -> CustomJS:
     try:
         menu_qseqid_callback = CustomJS(args=dict(source=Overall, sc=Curr, table_data=DbData,
-                                                  tax_unit=taxonomic_unit,
                                                   xaxis_menu=xaxis_menu, yaxis_menu=yaxis_menu,
                                                   color_menu=color_menu, color_dict=color_dict,
                                                   taxonomy_menus=taxonomy_menus), code="""
+        var tax_unit = color_menu.value;
         var tab_dict = {};
         var tab_dict_static = {};
         var tab_dict_org_count = {};
@@ -1232,6 +1277,24 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
 
 '''create_initial_bokeh_database_data
     
+    This function creates the bokeh ColumnDataSource data for the interactive table, which is attached to the 
+    interactive bokeh plot. Based on the copied database dataframe (copied within the
+    create_linked_bokeh_plot function), the data_selection for the initial display and the taxcount dataframe,
+    produced within the function: create_initial_bokeh_data_selection, the initial data table. The taxcount_df is 
+    responsible for the correct display of the RBH amount within the plot. The other data columns are filled by 
+    the database and data_selection dataframes. 
+    
+    :param database
+        :type pd.DataFrame
+    :param data_selection - produced by create_initial_bokeh_data_selection
+        :type pd.DataFrame
+    :param taxcount_df - produced by create_initial_bokeh_data_selection
+        :type pd.DataFrame
+    :param taxonomic_unit
+        :type str
+        
+    :returns db_df - used for the initial table data view
+        :type pd.DataFrame
 '''
 
 
@@ -1266,7 +1329,20 @@ def create_initial_bokeh_database_data(database: pd.DataFrame, data_selection: p
 
 
 '''create_initial_bokeh_result_data
-
+    
+    This function creates the dataframe that is used as ColumnDataSource for the interactive bokeh plot.
+    Color and marker assignment are done within this function by calling the appropriate helper functions and retrieving
+    the color and marker information that resides in the created dictionaries (duplicates may occur, s. above for more
+    information for create_color_and_marker_dictionaries_for_bokeh_dataframe function).
+    For further coloring, the function also returns the color dictionary.
+    
+    :param result_data
+        :type pd.DataFrame
+    :param taxonomic_unit - default: "phylum"
+        :type str
+    
+    :returns result_data, color_dict
+        :type tuple(pd.DataFrame, dict)
 '''
 
 
@@ -1562,9 +1638,9 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             menu_qseqid_callback = create_qseqid_menu_callback(Overall,
                                                                Curr,
                                                                DbData,
-                                                               taxonomic_unit,
                                                                x_axis_menu, y_axis_menu,
-                                                               color_menu, color_dict, tax_menus)
+                                                               color_menu, color_dict,
+                                                               tax_menus)
 
             menu_qseqids.js_on_change('value', menu_qseqid_callback)
 
