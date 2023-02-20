@@ -30,6 +30,7 @@ function loadRemoteOrLocal(project_type) {
     }
 }
 
+// function to switch between the two different input forms for uploading custom protein fasta files
 function loadMultipleOrSingleFileUpload(file_upload_type) {
     if (document.getElementById('upload_form_master_div').style.display === 'none') {
         document.getElementById('upload_form_master_div').style.display = "block";
@@ -46,7 +47,7 @@ function loadMultipleOrSingleFileUpload(file_upload_type) {
         document.getElementById('multiple').checked = true;
     }
 }
-
+// function for creating interactive elements within the progress bar of the reciprocal blast project detail page
 function ajax_call_to_project_details(data, static_url, reciprocal_results_url, query_sequence_info_url) { // check if available
     var progress_bar = document.getElementById('progress_bar');
     var progress_container = document.getElementsByClassName('progress')[0];
@@ -113,8 +114,6 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url, 
             query_info_log_link.target = "_blank"
             blast_tables_to_plot_link.target = "_blank"
 
-
-            //recblast_result_link.classList.add("btn")
             query_info_dropdown_menu.classList.add("dropdown_content")
             query_info_dropdown_menu.appendChild(query_info_link)
             query_info_dropdown_menu.appendChild(query_info_log_link)

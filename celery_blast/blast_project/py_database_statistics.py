@@ -183,7 +183,7 @@ def add_taxonomic_information_to_db(user_email: str, logfile: str, taxids: list)
     This function loops over the queries in the reciprocal result dataframe. 
     Each query specific result dataframe is getting merged with the dataframe of the database that inherits the taxonomic information.
     The function filters the dataframe for unique entries within the specified taxonomic_unit and it returns a list with pandas series 
-    as entries. The pandas series contains the number of unique occurrences of the specified taxonomic node and the respective query sequences.
+    as entries. The pandas series contain the number of unique occurrences of the specified taxonomic node and the respective query sequences.
 
     :param logfile
         :type str
@@ -266,7 +266,9 @@ def extract_taxonomic_information(logfile: str, uploaded: bool, rbh_df: pd.core.
     It writes two CSV files in the relevant project directory.
     The first file inherits all hits for the specified taxonomic unit and the query sequences, the second
     dataframe inherits normalized values of the first table. Normalization is based on the number of 
-    entries with the specified taxonomic unit within the database table.
+    entries with the specified taxonomic unit within the database table. The formula for normalization is:
+    100/y * x, where y is the number of the specified taxonomic unit within the database and x the number of
+    RBHs.
     
     :param logfile
         :type str
@@ -307,7 +309,7 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
 
                 # normalization based on number of entries in the database
                 log.write("INFO:trying to normalize values\n")
-                f = lambda x, y: (100 / y) * x
+                f = lambda x, y: (100 / y) * x  # y number of taxonomic clade in database, x number of RBHs
                 normalizing_results = tax_counts
                 normalizing_results.append(percentage)
                 normalized_df = pd.DataFrame(normalizing_results)
@@ -1262,6 +1264,17 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             path_to_project_dir = BLAST_PROJECT_DIR + str(project_id) + '/' + "interactive_bokeh_plot.html"
 
             # create bokeh dataframes for plots and tables
+            # change unknown entries to their corresponding higher taxonomic nodes
+            result_data = result_data.copy()
+            result_data.loc[result_data[result_data['class'] == "unknown"].index, 'class'] = \
+                result_data[result_data['class'] == "unknown"]['phylum']
+            result_data.loc[result_data[result_data['order'] == "unknown"].index, 'order'] = \
+                result_data[result_data['order'] == "unknown"]['class']
+            result_data.loc[result_data[result_data['family'] == "unknown"].index, 'family'] = \
+                result_data[result_data['family'] == "unknown"]['order']
+            result_data.loc[result_data[result_data['genus'] == "unknown"].index, 'genus'] = \
+                result_data[result_data['genus'] == "unknown"]['family']
+
             data_all, color_dict = create_initial_bokeh_result_data(result_data, taxonomic_unit)
             # selection subset for initial plot data
             data_selection, taxcount_df = create_initial_bokeh_data_selection(data_all, taxonomic_unit)
