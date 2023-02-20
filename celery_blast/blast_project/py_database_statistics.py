@@ -4,6 +4,7 @@ from os.path import isfile, isdir
 
 import altair as alt
 # output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
+import bokeh.models
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -1038,61 +1039,90 @@ def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.Dat
 
 
 '''create_color_callback
-
+    
+    This function is triggered by selecting a taxonomic unit from the "Select Legend Color" selection menu. 
+    It changes the color based on the specified taxonomic unit, it adds or removes LegendItems.
+    
+    :param legend_items - legend of the current graph
+        :type bokeh.models.annotations.LegendItem
+    :param Curr - current selection
+        :type ColumnDataSource
+    :param Overall - static result dataframe
+        :type ColumnDataSource
+    :param color_dict
+        :type dict
+    :param DbData - database dataframe that holds the selected data for the table
+        :type ColumnDataSource
+    :param table_data_dict - static data with count info from all database entries sorted by taxonomy (e.g. phylum, class)
+        :type dict[str] = pd.DataFrame
+    :param menu_qseqids - current selection of query sequences
+        :type MultiSelect
+        
+    :returns color_callback
+        :type CustomJS
 '''
 
 
-def create_color_callback(legend_items, Curr, Overall, color_dict, DbData, table_data_dict, menu_qseqids) -> CustomJS:
+def create_color_callback(legend_items, Curr:ColumnDataSource, Overall:ColumnDataSource, color_dict:dict,
+                          DbData:ColumnDataSource, table_data_dict:dict, menu_qseqids:MultiSelect) -> CustomJS:
     try:
         color_callback = CustomJS(args=dict(legend=legend_items, sc=Curr, source=Overall, color_dict=color_dict,
                                             table_data=DbData, table_data_dict=table_data_dict,
                                             menu_qseqids=menu_qseqids), code='''
 
-                            var tax_unit = cb_obj.value
-
-                            var tab_dict = {};
-                            var tab_dict_org_count = {}
-                            var tab_dict_static = {}; //numbers dont change
+                            var tax_unit = cb_obj.value;
+                            
+                            //table changes preparation
+                            var tab_dict = {}; //number of reciprocal best hits
+                            var tab_dict_org_count = {}; //number of organisms in the current selection
+                            var tab_dict_static = {}; //numbers dont change and originate from database dataframe
+                            
                             for(var i = 0;i<table_data_dict[tax_unit].get_length();i++){
-                                tab_dict[table_data_dict[tax_unit].data['# TaxName'][i]] = 0
-                                tab_dict_org_count[table_data_dict[tax_unit].data['# TaxName'][i]] = 0
-                                tab_dict_static[table_data_dict[tax_unit].data['# TaxName'][i]] = table_data_dict[tax_unit].data['# Different Organisms In DB'][i]
+                                tab_dict[table_data_dict[tax_unit].data['# TaxName'][i]] = 0;
+                                tab_dict_org_count[table_data_dict[tax_unit].data['# TaxName'][i]] = 0;
+                                tab_dict_static[table_data_dict[tax_unit].data['# TaxName'][i]] = table_data_dict[tax_unit].data['# Different Organisms In DB'][i];
                             }
 
-                            legend.label = {'field':tax_unit}
-                            var length = sc.get_length()
-                            sc.data['color']=[]
+                            //setting up new colors for the selected taxonomic unit
+                            //colors are based on the color_dict variable
+                            legend.label = {'field':tax_unit};
+                            var length = sc.get_length();
+                            sc.data['color']=[];
                             for(var i = 0; i < length; i++){
-                                sc.data['color'].push(color_dict[sc.data[tax_unit][i]])
+                                sc.data['color'].push(color_dict[sc.data[tax_unit][i]]);
                             }
-
-                            var taxid_arr = []
+                            
+                            //table changes
+                            //filling dictionaries based on the current selection and the specified taxonomic unit
+                            var taxid_arr = [];
                             for(var i = 0; i < length; i++){
                                 for(var k = 0; k < menu_qseqids.value.length; k++){
                                     if(sc.data['qseqid'][i] == menu_qseqids.value[k]){
                                         if(taxid_arr.includes(sc.data['staxids'][i]) == false){
-                                            taxid_arr.push(sc.data['staxids'][i])
-                                            tab_dict_org_count[sc.data[tax_unit][i]]+=1
+                                            taxid_arr.push(sc.data['staxids'][i]);
+                                            tab_dict_org_count[sc.data[tax_unit][i]]+=1;
                                         }
-                                        tab_dict[sc.data[tax_unit][i]]+=1
+                                        tab_dict[sc.data[tax_unit][i]]+=1;
                                     }
                                 }
                             }
 
-                            table_data.data['#RBHs'] = []
-                            table_data.data['# Different Organisms In DB'] = []
-                            table_data.data['# TaxName'] = []
-                            table_data.data['# Different Organisms In Selection'] = []
-                            table_data.data['index'] = []
-                            var counter = 1
+                            table_data.data['#RBHs'] = [];
+                            table_data.data['# Different Organisms In DB'] = [];
+                            table_data.data['# TaxName'] = [];
+                            table_data.data['# Different Organisms In Selection'] = [];
+                            table_data.data['index'] = [];
+                            var counter = 1;
                             for(let key in tab_dict){
-                                table_data.data['#RBHs'].push(tab_dict[key])
-                                table_data.data['# Different Organisms In DB'].push(tab_dict_static[key])
-                                table_data.data['# TaxName'].push(key)
-                                table_data.data['# Different Organisms In Selection'].push(tab_dict_org_count[key])
+                                table_data.data['#RBHs'].push(tab_dict[key]);
+                                table_data.data['# Different Organisms In DB'].push(tab_dict_static[key]);
+                                table_data.data['# TaxName'].push(key);
+                                table_data.data['# Different Organisms In Selection'].push(tab_dict_org_count[key]);
                                 table_data.data['index'].push(counter)
-                                counter += 1
+                                counter += 1 
                             }
+                            
+                            //using the special bokeh emit function for updating the dataframes
                             table_data.change.emit();
                             sc.change.emit();
         ''')
@@ -1102,12 +1132,13 @@ def create_color_callback(legend_items, Curr, Overall, color_dict, DbData, table
 
 
 '''create_qseqid_menu_callback
-
+    
+    This function filters the displayed data based on a selection of query sequences. 
+    
 '''
 
-
 def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSource, DbData: ColumnDataSource,
-                                taxonomic_unit: str, tax_menu: MultiSelect, xaxis_menu: MultiSelect,
+                                taxonomic_unit: str, xaxis_menu: MultiSelect,
                                 yaxis_menu: MultiSelect,
                                 color_menu: Select, color_dict: dict, taxonomy_menus: list) -> CustomJS:
     try:
@@ -1124,6 +1155,8 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
             tab_dict_org_count[table_data.data['# TaxName'][i]] = 0
             tab_dict_static[table_data.data['# TaxName'][i]] = table_data.data['# Different Organisms In DB'][i]
         }
+        
+        //selected query sequences
         var call_back_object = cb_obj.value
 
 
@@ -1136,23 +1169,28 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
         for(var i = 0; i < source.get_length(); i++){
             for(var j = 0; j < call_back_object.length; j++){
 
-
+                //filter based on query sequence id and taxonomy, taxonomic filtering is based on a list of the 
+                //taxonomy menu entries
+                
                 if(source.data['qseqid'][i] == call_back_object[j]){
-
                      if(taxonomy_menus[0].value.includes(source.data['phylum'][i]) == true){
                         if(taxonomy_menus[1].value.includes(source.data['class'][i]) == true){
                             if(taxonomy_menus[2].value.includes(source.data['order'][i]) == true){
                                 if(taxonomy_menus[3].value.includes(source.data['family'][i]) == true){
                                      if(taxonomy_menus[4].value.includes(source.data['genus'][i]) == true){
-                                       for(var x = 0; x < keys.length; x++){
+                                     
+                                        // fill all columns except color, y and x 
+                                        for(var x = 0; x < keys.length; x++){
                                             if((keys[x] != 'x') && (keys[x] != 'y') && (keys[x] != 'color')){
                                                 sc.data[keys[x]].push(source.data[keys[x]][i])
                                             }
                                         }
-
+                                        
                                         sc.data['color'].push(color_dict[source.data[color_menu.value][i]])
                                         sc.data['x'].push(source.data[xaxis_menu.value][i])
                                         sc.data['y'].push(source.data[yaxis_menu.value][i])
+                                        
+                                        //fill table data
                                         tab_dict[source.data[tax_unit][i]]+=1
                                         if(taxid_arr.includes(source.data['staxids'][i]) == false){
                                             taxid_arr.push(source.data['staxids'][i])
@@ -1163,33 +1201,27 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
                             }
                         }
                      }
-
-
-
-
-
                 }
             }
         }
+        
         table_data.data['#RBHs'] = []
         table_data.data['# Different Organisms In DB'] = []
         table_data.data['# TaxName'] = []
         table_data.data['# Different Organisms In Selection'] = []
         table_data.data['index'] = []
-        var counter = 1
+        var counter = 1;
         for(let key in tab_dict){
-            console.log(key)
             if(key != '# TaxName'){
                 table_data.data['#RBHs'].push(tab_dict[key])
                 table_data.data['# Different Organisms In DB'].push(tab_dict_static[key])
                 table_data.data['# TaxName'].push(key)
                 table_data.data['# Different Organisms In Selection'].push(tab_dict_org_count[key])
                 table_data.data['index'].push(counter)
-                counter += 1            
+                counter += 1 
             }
         }
 
-        console.log(table_data.data)
         table_data.change.emit();
         sc.change.emit();
         """)
@@ -1265,11 +1297,23 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
 
 
 '''create_initial_bokeh_data_selection
-
+    
+    This function creates the initial data that is displayed within the interactive bokeh plot. 
+    This initial data is based on the first two (or one if only one) taxonomic units, that reside in the result_data
+    dataframe (reciprocal result dataframe). The taxonomic unit is "phylum" per default.
+    
+    :param result_data
+        :type pd.DataFrame
+    :param taxonomic_unit
+        :type str
+        
+    :returns tuple(data_selection, taxcount_df)
+        :type tuple(pd.DataFrame, pd.DataFrame)
+    
 '''
 
 
-def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_unit: str):
+def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_unit: str) -> tuple:
     try:
         unique_tax = list(result_data[taxonomic_unit].unique())
         unique_qseqids = list(result_data['qseqid'].unique())
@@ -1310,8 +1354,26 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
 
 '''create_linked_bokeh_plot
 
-    Main function for the interactive bokeh reciprocal result plots.
-
+    Main function for the interactive bokeh reciprocal result plots. This function produces the interactive bokeh
+    plot. The function calls several other functions, residing in this python script file, that help building the
+    interactive plot. The basis for the plot are pandas dataframes, which are loaded by the celery database statistics
+    task. Before working on these dataframes, they get copied and all "unknown" taxonomic units are translated
+    to their "known" higher taxonomic ranks. This ensures a normal behaviour during the selection of taxonomic units.
+    The produced bokeh plot is a single HTML file, specified by the variable path_to_project_dir.
+    
+    :param logfile
+        :type str
+    :param result_data - loaded in the celery database statistics task
+        :type pd.DataFrame
+    :param database - loaded in the celery database statistics task
+        :type pd.DataFrame
+    :param taxonomic_unit - first taxonomic_unit that is used for displaying the initial data (default = "phylum")
+        :type str
+    :param project_id
+        :type int
+    
+    :returns returncode - 0 if successful
+        :type int
 '''
 
 
@@ -1349,18 +1411,26 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 database[database['genus'] == "unknown"]['family']
 
             data_all, color_dict = create_initial_bokeh_result_data(result_data, taxonomic_unit)
+
             # selection subset for initial plot data
             data_selection, taxcount_df = create_initial_bokeh_data_selection(data_all, taxonomic_unit)
             db_df = create_initial_bokeh_database_data(database, data_selection, taxcount_df, taxonomic_unit)
 
+            # these function are just important for filling the table_data_dict, which is used for correct
+            # assignment of the data, that is displayed within the table
+            # TODO refactor holding the variables "data_selection_phylum ..."
             data_selection_phylum, taxcount_df_phylum = create_initial_bokeh_data_selection(data_all, 'phylum')
             db_df_phylum = create_initial_bokeh_database_data(database, data_selection, taxcount_df_phylum, 'phylum')
+
             data_selection_class, taxcount_df_class = create_initial_bokeh_data_selection(data_all, 'class')
             db_df_class = create_initial_bokeh_database_data(database, data_selection, taxcount_df_class, 'class')
+
             data_selection_order, taxcount_df_order = create_initial_bokeh_data_selection(data_all, 'order')
             db_df_order = create_initial_bokeh_database_data(database, data_selection, taxcount_df_order, 'order')
+
             data_selection_family, taxcount_df_family = create_initial_bokeh_data_selection(data_all, 'family')
             db_df_family = create_initial_bokeh_database_data(database, data_selection, taxcount_df_family, 'family')
+
             data_selection_genus, taxcount_df_genus = create_initial_bokeh_data_selection(data_all, 'genus')
             db_df_genus = create_initial_bokeh_database_data(database, data_selection, taxcount_df_genus, 'genus')
 
@@ -1381,7 +1451,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             unique_qseqids = list(data_all['qseqid'].unique())
 
             # selection subset for initial plot data
-
             table = DataTable(source=DbData, width=390, height=275,
                               sizing_mode="scale_both", reorderable=True, sortable=True, fit_columns=True,
                               columns=[
@@ -1401,12 +1470,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
 
             menu_qseqids = MultiSelect(options=unique_qseqids, value=qseq_values,
                                        title='Select target query sequence')  # drop down menu
-
-            # menu_callback = create_taxonomy_menu_callback(Overall,
-            #                                     Curr,
-            #                                     DbData,
-            #                                     taxonomic_unit
-            #                                     ,menu_qseqids)
 
             TOOLTIPS = [
                 ("stitle", "@stitle"),
@@ -1500,7 +1563,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                                                                Curr,
                                                                DbData,
                                                                taxonomic_unit,
-                                                               phylum_menu,
                                                                x_axis_menu, y_axis_menu,
                                                                color_menu, color_dict, tax_menus)
 
