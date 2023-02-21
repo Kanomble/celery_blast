@@ -2,11 +2,18 @@
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct, BLAST, Snakemake and Panoptes.
 ## Content
 - [Installation](#installation)
+- [Project Setup](#project_setup)
 - [BLAST Database creation](#blast_database)
+- 
 <a name="installation"></a>
 ## Installation
-The application can get installed by submitting the `docker-compose up` command in a terminal window which points to the applications working directory (directory with `docker-compose.yml`). The docker client will pull remotely available images, the base image for this application, an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
+The application can get installed by submitting the `docker-compose up` command in a terminal window,
+which points to the applications working directory (directory with `docker-compose.yml`). 
+The docker client will pull remotely available images, the base image for this application, 
+an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
 All images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
+
+Installation may require 
 
 The base image has been build by using the Dockerfile of this repository, a local build process
 for the base image can get triggered by using the `docker-compose up -f installation_with_dockerfile_docker-compose.yml` command. 
@@ -27,16 +34,27 @@ cd ../edirect && sh ./setup.sh
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 
+<a name="project_setup"></a>
 ## Project setup
 In order to execute the integrated reciprocal BLAST pipeline (the SymBLAST core pipeline), the user has to
-set up some essential data: the query sequences from one particular organism/genome file, a forward BLAST database, a
+set up some essential data: the query sequences from one particular organism/genome file 
+(the sequences for which orthologous sequences should be found), a forward BLAST database, that will serve as the search space, a
 backward BLAST database, the scientific name of the organism from which the query sequences were obtained and a project title. 
 In addition, the user may change some BLAST settings, e.g. the number of output sequences per query sequence (`num_alignments`),
 or the `e-value` cut-off. The BLAST databases can be selected via a special drop-down menu.
-The Forward BLAST database serves as a search space where putative orthologous sequences can be found.
+The Forward BLAST database serves as a search space in which putative orthologous sequences can be found.
 The backward BLAST database has to contain the genome file from which the query sequences were obtained. The user provided
-data is validated before the user can start the pipeline. Accurate error messages are displayed within the input fields, if
-something is incorrect. This ensures a smooth execution of the pipeline.
+data is validated before a project is saved into the database and before possible pipeline execution.
+If any validation fails, accurate error messages are display within the relevant form fields. This ensures a smooth execution of the pipeline.
+
+### Best practices for project settings
+Use appropriate BLAST databases. If you want to search in more complete genomes, create a database that contains genome sequences
+with a completeness level of `Chromosome` or `Complete Genome`. The `e-value` is more accurate for bigger databases, adjust the 
+`e-value` according to your needs, this may have a huge effect on your inferred RBHs. Adjust the `num_alignments` parameter if
+you work with huge databases, especially if you are working with more common sequences. 
+
+The backward BLAST database should contain only one genome that corresponds to the taxonomic unit translated provided scientific name.
+
 
 <a name="blast_database"></a>
 ## BLAST Databases
