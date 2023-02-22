@@ -33,7 +33,7 @@ def get_species_taxid_by_name(user_email: str, scientific_name: str) -> list:
         return taxids
     except Exception as e:
         raise Exception(
-            "there is no taxonomic node defined by your specified scientific name: {} : {}".format(scientific_name, e))
+            "ERROR fetching information for: {} with Exception: {}".format(scientific_name, e))
 
 
 '''check_if_protein_identifier_correspond_to_backward_taxid

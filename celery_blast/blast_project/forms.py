@@ -193,7 +193,8 @@ class ProjectCreationForm(forms.Form):
                 taxonomic_nodes = get_species_taxid_by_name(user_email, species_name)
             except Exception as e:
                 self.add_error('species_name_for_backward_blast',
-                               'your provided species has no taxonomic node - check on NCBI'.format(species_name))
+                               'ERROR during fetching the taxonomic node of {}\n. There might be a entrez server error,'
+                               ' try again later. Exception: {}.'.format(species_name, e))
 
             backward_db = cleaned_data['project_backward_database']
             try:

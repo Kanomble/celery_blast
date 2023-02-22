@@ -625,6 +625,17 @@ def produce_bokeh_pca_plot(project_id: int, qseqid: str,
         result_df_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/reciprocal_results_with_taxonomy.csv'
         result_df = pd.read_csv(result_df_path, index_col=0)
 
+        # change unknown entries to their corresponding higher taxonomic nodes
+        result_df = result_df.copy()
+        result_df.loc[result_df[result_df['class'] == "unknown"].index, 'class'] = \
+            result_df[result_df['class'] == "unknown"]['phylum']
+        result_df.loc[result_df[result_df['order'] == "unknown"].index, 'order'] = \
+            result_df[result_df['order'] == "unknown"]['class']
+        result_df.loc[result_df[result_df['family'] == "unknown"].index, 'family'] = \
+            result_df[result_df['family'] == "unknown"]['order']
+        result_df.loc[result_df[result_df['genus'] == "unknown"].index, 'genus'] = \
+            result_df[result_df['genus'] == "unknown"]['family']
+
         # add color column to result_df
         result_df, color_dict = add_color_column_to_dataframe(result_df, taxonomic_unit)
 
