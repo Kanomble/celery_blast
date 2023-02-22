@@ -2,7 +2,6 @@ version: "3.8"
 
 services:
 
-
   web:
     image: kanomble/rec_blast_base_image:2.0 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
     deploy:
@@ -13,12 +12,12 @@ services:
     command:  sh -c "./wait-for rabbitmq:5672 && ./wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
-     && python manage.py runserver 0.0.0.0:8080"
+     && gunicorn celery_blast.wsgi:application --bind 0.0.0.0:8000"
     networks:
       - main
     restart: unless-stopped
     env_file:
-      - ./.env.dev
+      - ./.env.prod
     depends_on:
       - rabbitmq
       - postgres
@@ -26,12 +25,12 @@ services:
       - ./data:/blast/reciprocal_blast/media
       - ./tmp:/blast/reciprocal_blast/tmp
       - ./celery_blast:/blast/reciprocal_blast
-    ports:
-      - "8080:8080"
+    expose:
+      - 8000
 
   celery_worker:
     image: kanomble/rec_blast_base_image:2.0
-    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery worker -A celery_blast -l INFO"
+    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8000 -- celery worker -A celery_blast -l INFO"
     depends_on:
       - web
       - postgres
@@ -46,7 +45,7 @@ services:
 
   flower:
     image: kanomble/rec_blast_base_image:2.0
-    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- flower -A celery_blast --port=5555"
+    command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8000 -- flower -A celery_blast --port=5555"
     networks:
       - main
     environment:
@@ -65,7 +64,7 @@ services:
 
   panoptes:
     image: kanomble/rec_blast_base_image:2.0
-    command: sh -c "./wait-for web:8080 -- panoptes"
+    command: sh -c "./wait-for web:8000 -- panoptes"
     depends_on:
       - web
       - postgres
@@ -75,6 +74,18 @@ services:
     networks:
       - main
     restart: unless-stopped
+
+  nginx:
+    build: ./nginx
+    volumes:
+      - ./celery_blast/static:/blast/reciprocal_blast/static
+      - ./data:/blast/reciprocal_blast/media
+    ports:
+      - 1337:80
+    depends_on:
+      - web
+    networks:
+      - main
 
   rabbitmq:
     hostname: rabbitmq

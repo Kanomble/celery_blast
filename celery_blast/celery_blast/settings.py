@@ -11,6 +11,7 @@
 """
 
 import os
+from decouple import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,12 +20,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '=0@uu%q3xsu%w+$h)p7(f*5&1fxgw8#x+n^(t)kt$17!(n1*-y'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=0)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS').split(" ")
 
 # Application definition
 INSTALLED_APPS = [
@@ -79,12 +80,12 @@ WSGI_APPLICATION = 'celery_blast.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'postgres',
-        'PORT': '5432',
+        'ENGINE': config('SQL_ENGINE', default="django.db.backends.sqlite3"),#'django.db.backends.postgresql_psycopg2',
+        'NAME': config('SQL_DATABASE', default=BASE_DIR+'/db.sqlite3'),#'postgres',
+        'USER': config('SQL_USER',default='user'),#'postgres',
+        'PASSWORD': config('SQL_PASSWORD', default='password'),#'postgres',
+        'HOST': config('SQL_HOST',default='localhost'),#'postgres',
+        'PORT': config('SQL_PORT',default='5432')#'5432',
     }
 }
 
