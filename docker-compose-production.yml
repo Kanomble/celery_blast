@@ -9,7 +9,7 @@ services:
         limits:
           memory: 42G
 
-    command:  sh -c "./wait-for rabbitmq:5672 && ./wait-for postgres:5432
+    command:  sh -c "chmod u+x wait-for && ./wait-for rabbitmq:5672 && ./wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
      && gunicorn celery_blast.wsgi:application --bind 0.0.0.0:8000"

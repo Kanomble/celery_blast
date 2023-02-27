@@ -45,7 +45,7 @@
                 {% elif BlastProject.project_execution_task_result.status == 'FAILURE' %}
                     Re-Execute your Snakemake Run for this BLAST project or delete the project.
                 {% elif BlastProject.project_execution_task_result.status == 'PROGRESS' %}
-                    Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
+                    Your BLAST analysis is still in progress.
                 {% else %}
                     Execute your BLAST project by pressing the Execute Snakemake button.
                 {% endif %}
@@ -86,10 +86,6 @@
                                 <input type="submit" value="Execute Snakemake" class="btn btn-dark">
                             </form>
                         </td>
-                        {% if OneWayRemoteBlastProject.r_project_execution_task_result %}
-                            <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES
-                                MONITORING </a></td>
-                        {% endif %}
                         {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
                             <td><a class="btn btn-dark"
                                    href="{% url 'one_way_html_results' project_id=OneWayRemoteBlastProject.id remote=1 %}">

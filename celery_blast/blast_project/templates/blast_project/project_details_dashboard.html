@@ -78,9 +78,6 @@
                                 <input type="submit" value="Execute Snakemake" class="btn btn-dark">
                             </form>
                         </td>
-                        {% if BlastProject.project_execution_snakemake_task %}
-                            <td><a class="btn btn-primary" href="http://127.0.0.1:5000/workflows/"> PANOPTES MONITORING </a></td>
-                        {% endif %}
                         {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
                             <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}"> External Tools</a></td>
