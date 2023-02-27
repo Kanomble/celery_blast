@@ -4,13 +4,13 @@ services:
 
 
   web:
-    image: kanomble/rec_blast_base_image:2.0 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
+    image: kanomble/rec_blast_base_image:2.2 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
     deploy:
       resources:
         limits:
           memory: 42G
 
-    command:  sh -c "./wait-for rabbitmq:5672 && ./wait-for postgres:5432
+    command:  sh -c "chmod u+x wait-for && ./wait-for rabbitmq:5672 && ./wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
      && python manage.py runserver 0.0.0.0:8080"
@@ -30,8 +30,10 @@ services:
       - "8080:8080"
 
   celery_worker:
-    image: kanomble/rec_blast_base_image:2.0
+    image: kanomble/rec_blast_base_image:2.2
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- celery worker -A celery_blast -l INFO"
+    env_file:
+      - ./.env.dev
     depends_on:
       - web
       - postgres
@@ -45,13 +47,12 @@ services:
     restart: unless-stopped
 
   flower:
-    image: kanomble/rec_blast_base_image:2.0
+    image: kanomble/rec_blast_base_image:2.2
     command: sh -c "./wait-for rabbitmq:5672 && ./wait-for web:8080 -- flower -A celery_blast --port=5555"
     networks:
       - main
-    environment:
-      AMQP_HOST: 'rabbitmq.local'
-      AMQP_ADMIN_HOST: 'rabbitmq.local'
+    env_file:
+      - ./.env.dev
     depends_on:
       - web
       - postgres
@@ -61,19 +62,6 @@ services:
         - ./celery_blast:/blast/reciprocal_blast
     ports:
       - "5555:5555"
-    restart: unless-stopped
-
-  panoptes:
-    image: kanomble/rec_blast_base_image:2.0
-    command: sh -c "./wait-for web:8080 -- panoptes"
-    depends_on:
-      - web
-      - postgres
-      - rabbitmq
-    ports:
-      - "5000:5000"
-    networks:
-      - main
     restart: unless-stopped
 
   rabbitmq:

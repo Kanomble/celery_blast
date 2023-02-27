@@ -168,10 +168,10 @@ def execute_reciprocal_blast_project(self, project_id):
             )       
             '''
 
+            # '--wms-monitor', settings.PANOPTES_IP,
             reciprocal_blast_snakemake = Popen(
                 ['snakemake',
                  '--snakefile', snakefile_dir,
-                 '--wms-monitor', settings.PANOPTES_IP,
                  '--cores', '1',
                  '--configfile', snakemake_config_file,
                  '--directory', snakemake_working_dir,

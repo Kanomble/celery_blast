@@ -15,4 +15,5 @@ seaborn==0.12.0
 bokeh==2.4.3
 python-decouple==3.7
 gunicorn==20.1.0
-
+django_extensions
+scikit-learn

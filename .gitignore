@@ -129,21 +129,15 @@ dmypy.json
 .pyre/
 
 # repository files
-flask_api_bioinformatic_tools/.idea/*
-flask_api_bioinformatic_tools/instance/*
-flask_api_bioinformatic_tools/flask_api_bioinformatic_tools/__pycache__/*
+celery_blast/assets/*
 data/*
 .idea/*
 celery_blast/refseq_transactions/migrations/*
 celery_blast/blast_project/migrations/*
 celery_blast/one_way_blast/migrations/*
 celery_blast/external_tools/migrations/*
-celery_blast/static/images/result_images/6/plot_evalue_distribution.png
-celery_blast/static/images/result_images/5/plot_amount_hits_of_target_taxon.png
-celery_blast/static/images/result_images/5/plot_evalue_distribution.png
-celery_blast/static/images/result_images/6/plot_amount_hits_of_target_taxon.png
-celery_blast/static/images/result_images/7/plot_amount_hits_of_target_taxon.png
-celery_blast/static/images/result_images/7/plot_evalue_distribution.png
+celery_blast/static/images/result_images/*
+
 celery_blast/.idea/workspace.xml
 celery_blast/.idea/vcs.xml
 celery_blast/.idea/modules.xml
@@ -152,11 +146,4 @@ celery_blast/.idea/inspectionProfiles/Project_Default.xml
 celery_blast/.idea/inspectionProfiles/profiles_settings.xml
 celery_blast/.idea/celery_blast.iml
 celery_blast/.idea
-celery_blast/static/images/result_images
-celery_blast/comamonadaceae.faa
-celery_blast/curvibacter_synechococcus_gene_candidates.faa
-celery_blast/e_coli_mg1655.faa
-celery_blast/entrez_bash
-celery_blast/synechococcus_elongatus.faa
-celery_blast/b_proteobacteria_1.faa
-celery_blast/b_proteobacteria.faa
+

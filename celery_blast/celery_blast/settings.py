@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=0)
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS').split(" ")
 
@@ -123,11 +123,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 STATIC_URL = '/static/'
+STATIC_ROOT = '/blast/reciprocal_blast/assets'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/media/'
+
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
-    '/blast_project/static/',
 )
 
 FILE_UPLOAD_TEMP_DIR = '/tmp'
@@ -151,6 +153,10 @@ CACHES = {
     }
 }
 '''
+
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5000000000
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5000000000
 
 PANOPTES_IP = 'http://panoptes:5000'
 STATIC_RESULT_IMAGES = STATIC_URL + 'images/result_images/'

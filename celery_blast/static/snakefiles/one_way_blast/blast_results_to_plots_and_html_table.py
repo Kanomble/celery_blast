@@ -773,11 +773,16 @@ try:
         tax_df = add_taxonomic_information_to_db(snakemake.params['user_email'], logfile, unique_taxids)
 
         # normalize taxonomic identifier
+        # in remote BLAST searches multiple taxids may occur, just take the first one
         slice_taxids = lambda taxids: taxids.split(";")[0]
-        tax_df['staxids'] = tax_df['staxids'].apply(slice_taxids)
-        df['staxids'] = df['staxids'].apply(slice_taxids)
-        tax_df['staxids'] = tax_df['staxids'].astype('int64')
-        df['staxids'] = df['staxids'].astype('int64')
+
+        if tax_df['staxids'].dtype != 'int':
+            tax_df['staxids'] = tax_df['staxids'].apply(slice_taxids)
+            tax_df['staxids'] = tax_df['staxids'].astype('int64')
+
+        if df['staxids'].dtype != 'int':
+            df['staxids'] = df['staxids'].apply(slice_taxids)
+            df['staxids'] = df['staxids'].astype('int64')
         result_df = df.merge(tax_df, on='staxids')
 
 
