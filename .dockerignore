@@ -1,0 +1,4 @@
+# files not included in the build process
+# files and directories listed here are not send to the docker daemon by the docker CLI
+./venv/*
+./data/*
