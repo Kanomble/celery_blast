@@ -241,6 +241,8 @@ def format_blast_databases(path_to_database: str, chunks: list, progress_recorde
 @shared_task()
 def create_chunks_of_databases(df: pd.DataFrame, path_to_database: str, progress_recorder: ProgressRecorder) -> list:
     try:
+        chunk_logfile = open(path_to_database+'create_chunks_of_databases.log','w')
+
         total_formatted = 0
         chunk = 1
         chunks = []
@@ -290,13 +292,13 @@ def create_chunks_of_databases(df: pd.DataFrame, path_to_database: str, progress
                     genome_file.close()
 
                     try:
-
                         remove(path_to_database + assembly_name)
                     except:
+                        chunk_logfile.write("failed to remove file: {}\n".format(path_to_database + assembly_name))
                         logger.warning("[-] couldnt remove file: {}".format(path_to_database + assembly_name))
 
                     for line in lines:
-                        # transformes accession id and adds additional informations
+                        # transformes accession id and adds additional information
                         if line[0] == ">":
                             split = line.split(" ")
                             header = ' '.join(split[1:])
@@ -316,6 +318,7 @@ def create_chunks_of_databases(df: pd.DataFrame, path_to_database: str, progress
                 chunk += 1
                 acc_to_tax.close()
 
+        chunk_logfile.close()
         return chunks
     except SoftTimeLimitExceeded:
         logger.warning("ERROR soft time limit exceeded for creation of database chunks")
