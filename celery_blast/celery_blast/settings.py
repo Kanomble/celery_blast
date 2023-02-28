@@ -154,7 +154,6 @@ CACHES = {
 }
 '''
 
-
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5000000000
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5000000000
 
@@ -165,3 +164,5 @@ ONE_WAY_BLAST_PROJECT_DIR = 'media/one_way_blast/'
 BLAST_DATABASE_DIR = 'media/databases/'
 CDD_DIR = 'media/databases/CDD/Cdd'
 ESEARCH_OUTPUT = 'media/esearch_output/'
+CDD_DATABASE_URL = "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/little_endian/Cdd_LE.tar.gz"
+TAXDB_URL = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"

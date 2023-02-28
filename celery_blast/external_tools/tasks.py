@@ -1,4 +1,4 @@
-from subprocess import Popen, SubprocessError, TimeoutExpired
+from subprocess import Popen, SubprocessError, TimeoutExpired, check_output
 
 import psutil
 from blast_project.py_django_db_services import update_external_tool_with_cdd_search
@@ -15,10 +15,81 @@ from .models import ExternalTools
 from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, \
     create_html_output_for_newicktree
-
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
+from os.path import isdir
+from os import listdir, mkdir, remove
 # logger for celery worker instances
 logger = get_task_logger(__name__)
 
+'''check_database_integrity
+
+    This function uses the blastdbcheck program to verify the database integrity.
+    
+    :param path_to_database
+        :type str
+'''
+@shared_task(bind=True)
+def check_database_integrity(self, path_to_database:str):
+    try:
+        verification = check_output(['blastdbcheck','-db', path_to_database])
+        verification = str(verification)
+        if "Result=SUCCESS" in verification and "No errors reported" in verification:
+            valid = True
+        else:
+            valid = False
+        return valid
+    except Exception as e:
+        raise Exception("[-] ERROR during BLAST database integrity check with exception: {}".format(e))
+
+'''download_cdd_database
+
+    Function for downloading the cdd database. The function checks if a directory exists and 
+    removes previously downloaded files. It then downloads the CDD database from: CDD_DATABASE_URL
+
+'''
+
+
+@shared_task(bind=True)
+def download_cdd_database(self):
+    try:
+        cdd_path = BLAST_DATABASE_DIR + 'CDD/'
+        if isdir(cdd_path) == False:
+            logger.info("creating cdd directory in: {}".format(cdd_path))
+            mkdir(cdd_path)
+        else:
+            logger.info("cdd directory exists")
+
+        # cleaning up cdd directory
+        for file in listdir(cdd_path):
+            file_to_remove = cdd_path + file
+            remove(file_to_remove)
+
+        cdd_ftp_path = CDD_DATABASE_URL
+        path_to_cdd_location = BLAST_DATABASE_DIR
+        path_to_cdd_location = path_to_cdd_location + 'Cdd_LE.tar.gz'
+        download_directory = BLAST_DATABASE_DIR + 'CDD'
+        logger.info("downloading CDD into {}".format(download_directory))
+        proc = Popen(["wget", cdd_ftp_path, "-q", "-O", path_to_cdd_location], shell=False)
+        returncode = proc.wait(timeout=2000)
+        if returncode != 0:
+            logger.warning("error during donwload of the cdd database")
+            raise SubprocessError
+        logger.info("successfully downloaded the cdd database")
+        proc = Popen(
+            ["tar", "-zxvf", path_to_cdd_location, "-C", download_directory + '/'],
+            shell=False)
+        returncode = proc.wait(timeout=800)
+        if returncode != 0:
+            logger.warning("error during extraction of the cdd database")
+            raise SubprocessError
+        logger.info("successfully extracted the cdd database")
+        remove(path_to_cdd_location)
+    except TimeoutExpired as e:
+        logger.warning("error during downloading the cdd database, timeout expired with exception: {}".format(e))
+        raise Exception("[-] ERROR timeout expired for downloading the cdd database ...")
+
+    except Exception as e:
+        raise Exception("[-] ERROR during downloading and decompressing the CDD database with exception: {}".format(e))
 
 @shared_task(bind=True)
 def download_entrez_search_associated_protein_sequences(self, search_id: int):

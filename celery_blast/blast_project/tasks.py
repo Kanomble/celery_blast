@@ -13,7 +13,7 @@ from .py_django_db_services import update_blast_project_with_task_result_model, 
     update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
     update_blast_project_with_database_statistics_task_result_model, get_all_blast_databases
 from .py_database_statistics import calculate_database_statistics
-from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR
+from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -35,16 +35,15 @@ logger = get_task_logger(__name__)
 @shared_task(bind=True)
 def download_and_format_taxdb(self):
     logger.info("INFO:NO TAXONOMY DATABASE")
-    if os.path.isfile("media/databases/taxdb.tar.gz"):
-        os.remove("media/databases/taxdb.tar.gz")
-    if os.path.isfile("media/databases/taxdb.tar"):
-        os.remove("media/databases/taxdb.tar")
+    if os.path.isfile(BLAST_DATABASE_DIR + "taxdb.tar.gz"):
+        os.remove(BLAST_DATABASE_DIR + "taxdb.tar.gz")
+    if os.path.isfile(BLAST_DATABASE_DIR + "taxdb.tar"):
+        os.remove(BLAST_DATABASE_DIR + "taxdb.tar")
     logger.info("INFO:STARTING TO DOWNLOAD TAXONOMY DATABASE")
 
     try:
-        taxdb_ftp_path = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
-        current_working_directory = os.getcwd()  # /blast/reciprocal_blast
-        path_to_taxdb_location = current_working_directory + '/' + BLAST_DATABASE_DIR
+        taxdb_ftp_path = TAXDB_URL
+        path_to_taxdb_location = BLAST_DATABASE_DIR
         path_to_taxdb_location = path_to_taxdb_location + 'taxdb.tar.gz'
 
         proc = Popen(["wget", taxdb_ftp_path, "-q", "-O", path_to_taxdb_location], shell=False)
@@ -53,7 +52,7 @@ def download_and_format_taxdb(self):
             raise SubprocessError
         logger.info("INFO:TRYING TO DECOMPRESS THE TAXONOMY DATABASE")
 
-        proc = Popen(["tar", "-zxvf", path_to_taxdb_location, "-C", "/blast/reciprocal_blast/media/databases/"],
+        proc = Popen(["tar", "-zxvf", path_to_taxdb_location, "-C", BLAST_DATABASE_DIR],
                      shell=False)
         returncode = proc.wait(timeout=600)
         if returncode != 0:

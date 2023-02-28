@@ -9,7 +9,7 @@ from os.path import isfile, isdir
 from os import remove, getcwd, mkdir, listdir
 import subprocess
 import psutil
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, TAXDB_URL, CDD_DATABASE_URL
 def run():
     if len(AssemblyLevels.objects.all()) != 4:
         print("INFO:Inserting Assembly Levels")
@@ -34,7 +34,7 @@ def run():
         print("INFO:STARTING TO DOWNLOAD TAXONOMY DATABASE")
 
         try:
-            taxdb_ftp_path = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
+            taxdb_ftp_path = TAXDB_URL
             current_working_directory = getcwd()  # /blast/reciprocal_blast
             path_to_taxdb_location = current_working_directory + BLAST_DATABASE_DIR
             path_to_taxdb_location = path_to_taxdb_location + 'taxdb.tar.gz'
@@ -104,9 +104,9 @@ def run():
             print("INFO: CONTINUING DOWNLOADING AND EXTRACTING CDD DB ...")
 
         try:
-            cdd_ftp_path = "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/little_endian/Cdd_LE.tar.gz"
+            cdd_ftp_path = CDD_DATABASE_URL
             current_working_directory = getcwd()  # /blast/reciprocal_blast
-            path_to_cdd_location = current_working_directory + '/media/databases/'
+            path_to_cdd_location = current_working_directory + BLAST_DATABASE_DIR
             path_to_cdd_location = path_to_cdd_location + 'Cdd_LE.tar.gz'
             print("INFO:DOWNLOADING CONSVERED DOMAIN DATABASE INTO /media/databases/CDD")
             proc = subprocess.Popen(["wget", cdd_ftp_path, "-q", "-O", path_to_cdd_location], shell=False)

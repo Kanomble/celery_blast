@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from django.conf import settings
 
-
+#TODO obsolete static directory
 def create_html_output_for_newicktree(path_to_fasttree_output, project_id, query_accession):
     try:
         if os.path.isfile(path_to_fasttree_output):
