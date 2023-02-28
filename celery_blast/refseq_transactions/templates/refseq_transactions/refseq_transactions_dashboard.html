@@ -52,7 +52,11 @@
                 {% include "refseq_transactions/table_unactive_blast_databases.html" %}
             </div>
         {% endif %}
-
+        {% if FailedDatabases.count > 0 %}
+            <div class="dashboard_project_list_col" style="margin-bottom: 30px">
+                {% include "refseq_transactions/table_failed_blast_databases.html" %}
+            </div>
+        {% endif %}
     </div>
 
 {% endblock %}
@@ -62,6 +66,7 @@
         $(document).ready(function () {
             $('#activeDatabasesTable').DataTable();
             $('#unactiveDatabasesTable').DataTable();
+            $('#failedDatabasesTable').DataTable();
             $('[data-toggle="tooltip"]').tooltip();
         });
     </script>

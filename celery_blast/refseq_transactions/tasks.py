@@ -1,6 +1,6 @@
 import math
 import os
-from os import getcwd, mkdir, remove
+from os import getcwd, mkdir, remove, chmod
 from os.path import isdir, isfile
 from subprocess import Popen, SubprocessError, TimeoutExpired
 
@@ -288,7 +288,12 @@ def create_chunks_of_databases(df: pd.DataFrame, path_to_database: str, progress
 
                     lines = genome_file.readlines()
                     genome_file.close()
-                    remove(path_to_database + assembly_name)
+
+                    try:
+
+                        remove(path_to_database + assembly_name)
+                    except:
+                        logger.warning("[-] couldnt remove file: {}".format(path_to_database + assembly_name))
 
                     for line in lines:
                         # transformes accession id and adds additional informations
@@ -375,7 +380,7 @@ def download_wget_ftp_paths(path_to_database: str, dictionary_ftp_paths_taxids: 
                             raise Exception
                         # downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
                         # logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
-
+                        chmod(path_to_database + gunzip_output, 0o777)
                     # catch exception raised if the subproccess failed e.g. gzip failure due to invalid download
                     except Exception as e:
                         logger.warning("download exception : {}".format(e))

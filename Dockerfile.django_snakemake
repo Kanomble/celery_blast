@@ -46,18 +46,20 @@ ENV PATH /blast/ncbi-blast-2.11.0+/bin:$PATH
 # Update path environment variable
 ENV PATH /blast/miniconda3/bin:$PATH
 
-# Update miniconda
-RUN conda update conda
-RUN conda update --all
-
 # Add bioconda as channel
 RUN conda config --add channels defaults
 RUN conda config --add channels bioconda
 RUN conda config --add channels conda-forge
 
-# Download and install snakemake via the bioconda channel; version: 5.32.2
-# This step takes a while and consumes a lot of RAM
+# Update miniconda
+RUN conda update conda
+RUN conda update --all
+
+# Download and install snakemake via the bioconda channel
 RUN conda install -c bioconda snakemake
+# Fixing the error: module 'lib' has no attribute 'OpenSSL_add_all_algorithms'
+# Downgrade the cryptography module
+RUN python3 -m pip install cryptography==38.0.4
 RUN conda install -c conda-forge notebook
 
 # Set-up django and postgres packages
@@ -79,9 +81,11 @@ RUN gunzip -cd taxdb.tar.gz | (cd $BLASTDB; tar xvf - )
 RUN apt-get update && (apt-get install -t buster-backports -y mafft fasttree || apt-get install -y mafft fasttree)
 
 # wait-for script to make the web-app and celery worker waiting for the services to finish
-# RUN apt-get update -y && apt-get install -y netcat
-# RUN wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for
+RUN wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for
 RUN chmod u+x wait-for
+RUN mkdir /blast/utilities/
+RUN mv wait-for /blast/utilities/
+ENV PATH /blast/utilities:$PATH
 
 # Download requirements for ete3
 # PyQt5 in requirements

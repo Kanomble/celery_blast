@@ -2,3 +2,4 @@
 # files and directories listed here are not send to the docker daemon by the docker CLI
 ./venv/*
 ./data/*
+./celery_blast/assets/*

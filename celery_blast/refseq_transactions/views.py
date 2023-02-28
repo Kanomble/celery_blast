@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import RefseqDatabaseForm
 from .py_refseq_transactions import get_downloaded_databases, get_databases_in_progress, \
     get_databases_without_tasks, create_blastdatabase_table_and_directory, \
-    read_database_table_by_database_id_and_return_json
+    read_database_table_by_database_id_and_return_json, get_failed_tasks
 from .py_services import refseq_file_exists, get_database_download_and_formatting_task_result_progress
 from .tasks import download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
 
@@ -37,11 +37,13 @@ def dashboard(request):
         executed_databases = get_downloaded_databases()
         not_executed_databases = get_databases_without_tasks()
         download_in_progress_databases = get_databases_in_progress()
+        failed_databases = get_failed_tasks()
 
         context['RefseqDatabaseForm'] = refseq_database_form
         context['ActiveBlastDatabases'] = executed_databases
         context['DownloadInProgressBlastDatabases'] = download_in_progress_databases
         context['UnactiveBlastDatabases'] = not_executed_databases
+        context['FailedDatabases'] = failed_databases
 
         return render(request, 'refseq_transactions/refseq_transactions_dashboard.html', context)
     except Exception as e:
