@@ -28,15 +28,20 @@ logger = get_task_logger(__name__)
     :param path_to_database
         :type str
 '''
+
+
 @shared_task(bind=True)
 def check_database_integrity(self, path_to_database:str):
     try:
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
         verification = check_output(['blastdbcheck','-db', path_to_database])
         verification = str(verification)
         if "Result=SUCCESS" in verification and "No errors reported" in verification:
             valid = True
         else:
             valid = False
+        progress_recorder.set_progress(99, 100, "PROGRESS")
         return valid
     except Exception as e:
         raise Exception("[-] ERROR during BLAST database integrity check with exception: {}".format(e))
@@ -52,6 +57,8 @@ def check_database_integrity(self, path_to_database:str):
 @shared_task(bind=True)
 def download_cdd_database(self):
     try:
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
         cdd_path = BLAST_DATABASE_DIR + 'CDD/'
         if isdir(cdd_path) == False:
             logger.info("creating cdd directory in: {}".format(cdd_path))
@@ -71,6 +78,7 @@ def download_cdd_database(self):
         logger.info("downloading CDD into {}".format(download_directory))
         proc = Popen(["wget", cdd_ftp_path, "-q", "-O", path_to_cdd_location], shell=False)
         returncode = proc.wait(timeout=2000)
+        progress_recorder.set_progress(80, 100, "PROGRESS")
         if returncode != 0:
             logger.warning("error during donwload of the cdd database")
             raise SubprocessError
@@ -79,6 +87,7 @@ def download_cdd_database(self):
             ["tar", "-zxvf", path_to_cdd_location, "-C", download_directory + '/'],
             shell=False)
         returncode = proc.wait(timeout=800)
+        progress_recorder.set_progress(99, 100, "PROGRESS")
         if returncode != 0:
             logger.warning("error during extraction of the cdd database")
             raise SubprocessError
