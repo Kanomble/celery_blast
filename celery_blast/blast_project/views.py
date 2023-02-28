@@ -16,7 +16,7 @@ from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_proj
     calculate_database_statistics_task
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
-    read_task_logs_summary_table
+    read_task_logs_summary_table, download_project_directory
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json
@@ -732,5 +732,32 @@ def send_query_sequence_information_view(request, project_id: int) -> HttpRespon
     try:
         # BLAST_PROJECT_DIR+
         return render(request, str(project_id) + '/query_sequence_information.html')
+    except Exception as e:
+        return failure_view(request, e)
+
+'''download_project_as_zip_archive_view
+    
+    This view function compresses the specified directory and creates a HttpResponse with the zipped data directory.
+    The directory is simply specified by the project_id.
+    
+    :param project_id
+        :type int
+        
+    :return response
+        :type HttpResponse - with the zipped directory as attachment
+'''
+
+
+@login_required(login_url='login')
+def download_project_as_zip_archive_view(request, project_id:int) -> HttpResponse:
+    try:
+        project_dir = BLAST_PROJECT_DIR + str(project_id)
+        blast_project = get_project_by_id(project_id)
+        file_wrapper = download_project_directory(project_dir)
+        response = HttpResponse(file_wrapper, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="{filename}.zip"'.format(
+            filename = blast_project.project_title.replace(" ", "_")
+        )
+        return response
     except Exception as e:
         return failure_view(request, e)

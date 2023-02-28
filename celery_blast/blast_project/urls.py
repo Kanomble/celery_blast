@@ -20,7 +20,10 @@ service_urls = [
     path('<int:project_id>/project_details',views.project_details_view,name='project_details'),
     path('<int:project_id>/project_deletion',views.project_delete_view,name='project_deletion'),
     path('<int:project_id>/project_execution',views.execute_reciprocal_blast_project_view,name='project_execution'),
-    path('<int:project_id>/project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results')
+    path('<int:project_id>/project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results'),
+    path('<int:project_id>/download_archive', views.download_project_as_zip_archive_view,
+         name='download_archive')
+
 ]
 
 # this ajax call is currently not used - it has been replaced by the snakemake pipeline script

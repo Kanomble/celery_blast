@@ -4,9 +4,30 @@ from .models import BlastProject
 from refseq_transactions.models import BlastDatabase
 from os.path import isdir, isfile
 from os import mkdir, listdir
-from shutil import rmtree
+from shutil import rmtree, make_archive
+from wsgiref.util import FileWrapper
 from django.db import IntegrityError, transaction
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+
+'''download_project_directory
+    
+    This function compresses the specified directory into a .zip file and creates the 
+    class FileWrapper.
+    
+    :param directory
+        :type str
+    
+    :returns file_wrapper_archive
+        :type FileWrapper
+'''
+
+
+def download_project_directory(directory:str)->FileWrapper:
+    try:
+        path_to_zip = make_archive(directory,"zip",directory)
+        return FileWrapper(open(path_to_zip, 'rb'))
+    except Exception as e:
+        raise Exception("[-] ERROR creating zip directory: {} with exception: {}".format(directory, e))
 
 '''read_task_logs_summary_table
     
@@ -24,7 +45,6 @@ def read_task_logs_summary_table() -> pd.DataFrame:
         logfiles_table = pd.read_table(data_path, sep="\t", header=0)
         return logfiles_table
     except Exception as e:
-        print(e)
         raise Exception("[-] ERROR reading task_logfile.txt file in {} with exception: {}".format(data_path, e))
 
 
