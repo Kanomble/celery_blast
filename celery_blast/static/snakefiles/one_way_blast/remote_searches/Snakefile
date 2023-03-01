@@ -48,14 +48,6 @@ rule blast:
 			" -remote"
 			shell(cmd_string)
 
-'''
-rule blast_table_to_html:
-	input: res="blast_results.table"
-	output: html_table="blast_results.html"
-	script:
-		"../../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
-'''
-
 #RULE 2
 rule blast_results_to_plots_and_html_table:
 	input: blast_results="blast_results.table", query_file=config['query_sequence']
@@ -122,10 +114,7 @@ rule update_tree_with_taxid:
 
 rule ete3_tree_to_png:
     input: tree="{qseqid}/target_sequences.tree"
-    params:
-        static_pic="../../../../static/images/result_images/one_way_blast/remote_searches/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
     output: pic="{qseqid}/target_sequences.svg"
     log: log= "log/{qseqid}/ete3_tree_to_png.log"
     script:
         "../../../../static/snakefiles/one_way_blast/remote_searches/ete3_tree_to_png.py"
-

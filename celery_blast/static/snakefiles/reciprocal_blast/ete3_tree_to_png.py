@@ -1,7 +1,7 @@
 import ete3
 from os import environ
 from sys import exit
-import shutil
+from shutil import copyfile
 environ['QT_QPA_PLATFORM'] = 'offscreen'
 environ['XDG_RUNTIME_DIR'] = '../../../tmp'
 
@@ -18,8 +18,7 @@ with open(snakemake.log['log'],'w') as logfile:
         if len(tree) < 1:
             with open(snakemake.log['log'], 'w') as log_f:
                 log_f.write('ERROR: The Newick file used in this command has no content.')
-            shutil.copyfile('../../../static/images/no_results.svg', snakemake.params['static_pic'])
-            shutil.copyfile('../../../static/images/no_results.svg', snakemake.output['pic'])
+            copyfile('../../../static/images/no_results.svg', snakemake.output['pic'])
         else:
             tree = tree[0].replace("'","")
             logfile.write("INFO:converting tree to ete3 object\n")
@@ -28,7 +27,6 @@ with open(snakemake.log['log'],'w') as logfile:
             ts.show_branch_length = True
             ts.title.add_face(ete3.TextFace('Phylogenetic tree of '+ str(query),fsize=20),column=0)
             logfile.write("INFO:generating png image\n")
-            tree.render(snakemake.params['static_pic'], tree_style=ts)
             tree.render(snakemake.output['pic'], tree_style=ts)
         logfile.write("DONE\n")
     except Exception as e:
@@ -37,8 +35,7 @@ with open(snakemake.log['log'],'w') as logfile:
                 tree = t.readlines()
             if len(tree) < 1:
                 logfile.write('WARNING:newick file: {} has no content\n'.format(filename))
-                shutil.copyfile('../../../static/images/no_results.svg', snakemake.params['static_pic'])
-                shutil.copyfile('../../../static/images/no_results.svg', snakemake.output['pic'])
+                copyfile('../../../static/images/no_results.svg', snakemake.output['pic'])
                 logfile.write("WARNING:copied old images to static directory ...\n")
             else:
                 tree = tree[0].replace("'", "")
@@ -48,8 +45,7 @@ with open(snakemake.log['log'],'w') as logfile:
                 ts.show_branch_length = True
                 ts.title.add_face(ete3.TextFace('Phylogenetic tree of ' + str(query), fsize=20), column=0)
                 logfile.write("INFO:generating png image\n")
-                tree.render(snakemake.params['static_pic'], tree_style=ts)
                 tree.render(snakemake.output['pic'], tree_style=ts)
         except Exception as e:
-            logfile.write("ERROR:treefile couldn't get converted to png image - {}\n".format(e))
+            logfile.write("ERROR:treefile couldn't get converted to png image with exception: {}\n".format(e))
             exit(ERRORCODE)

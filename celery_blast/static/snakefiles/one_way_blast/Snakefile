@@ -84,35 +84,9 @@ rule conduct_phylogeny_fast_tree:
 
 rule ete3_tree_to_png:
     input: tree="{qseqid}/target_sequences.tree"
-    params:
-        static_pic="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
     output: pic="{qseqid}/target_sequences.svg"
     log: log="{qseqid}/ete3_tree_to_png.log"
     script:
         "../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"
-'''
-rule update_tree_with_taxid:
-    input: nw="{qseqid}/target_sequences.tree",
-            df= "{qseqid}/blast_results_with_tax.table"
-    output: "{qseqid}/transformed_treefile.nwk"
-    log: log="log/{qseqid}/update_tree_with_taxid.log"
-    script:
-        "../../../static/snakefiles/one_way_blast/update_seq_id_taxinfo.py"
 
-rule ete3_tree_to_png:
-    input: tree="{qseqid}/transformed_treefile.nwk"
-    params:
-        static_pic="../../../static/images/result_images/one_way_blast/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
-    output: pic="{qseqid}/target_sequences.svg"
-    log: "{qseqid}/ete3_tree_to_png.log"
-    script:
-        "../../../static/snakefiles/one_way_blast/ete3_tree_to_png.py"
-'''
-'''
-rule blast_table_to_html:
-	input: res="blast_results.table"
-	output: html_table="blast_results.html"
-	script:
-		"../../../static/snakefiles/one_way_blast/blast_tables_to_html.py"
-'''
 

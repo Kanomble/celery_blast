@@ -2,15 +2,15 @@ import os
 import random
 import shutil
 import string
-import subprocess
 
+
+from subprocess import Popen, TimeoutExpired, SubprocessError
 import psutil
 from Bio import Entrez
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction, IntegrityError
 from django_celery_results.models import TaskResult
-
 from .models import EntrezSearch
 
 
@@ -28,7 +28,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         cmd = 'esearch -db {} -query "{}" | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
             database, entrez_query, xtract_format[database], output_filepath)
 
-        process = subprocess.Popen(cmd, shell=True)
+        process = Popen(cmd, shell=True)
         try:
             returncode = process.wait(timeout=20000)
 
@@ -39,7 +39,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
                     entrez_search.delete()
 
             return returncode
-        except subprocess.TimeoutExpired as e:
+        except TimeoutExpired as e:
             process.kill()
             returncode = 'searchtime expired {}'.format(e)
             return returncode
@@ -50,6 +50,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
 def download_by_organism(search_id: int, organism_download: str, email: str) -> int:
     # uses biopython entrez tool to download fasta files of a selected organism in an entrezsearch paper and saves it in a file
     try:
+        logfile = open("media/esearch_output/download_by_organism.log", 'w')
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
 
         organism_target_df = entrez_search.get_pandas_table()
@@ -80,8 +81,7 @@ def download_by_organism(search_id: int, organism_download: str, email: str) -> 
                 except Exception as e:
                     if attempt == 9:
                         logfile.write(
-                            "ERROR:inference of taxonomic informations failed for query sequence dataframe of {} with exception {}\n".format(
-                                query, e))
+                            "ERROR:biopython inference of proteins failed with exception {}\n".format(e))
                 else:
                     for rec in record:
                         output.write('>' + rec['GBSeq_locus'] + ' ' + rec['GBSeq_definition'] + "\n")
@@ -128,7 +128,7 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
 
             cmd = 'efetch -db protein -format fasta -input {} > {}'.format(sequence_list_file_path,
                                                                            target_fasta_file_path)
-            process = subprocess.Popen(cmd, shell=True)
+            process = Popen(cmd, shell=True)
             returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
 
             with transaction.atomic():
@@ -139,7 +139,7 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
         if database == "pubmed":
             cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efetch -format fasta > {}'.format(
                 entrez_query, target_fasta_file_path)
-            process = subprocess.Popen(cmd, shell=True)
+            process = Popen(cmd, shell=True)
             returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
 
             with transaction.atomic():
@@ -147,8 +147,8 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
                 entrez_search.save()
             return returncode
 
-    # catch either subprocess
-    except subprocess.TimeoutExpired:
+    # catch subprocess exceptions
+    except TimeoutExpired:
         # delete all child processes
         if 'process' in locals():
             pid = process.pid
@@ -161,7 +161,7 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
             return pid
         else:
             return 1
-    except subprocess.SubprocessError as e:
+    except SubprocessError as e:
         raise Exception(
             "[-] Couldnt download protein fasta files for esearch {} on protein database and exception: {}".format(
                 search_id, e))
@@ -208,12 +208,12 @@ def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_f
             )
         else:
             raise Exception
-        process = subprocess.Popen(cmd, shell=True)
+        process = Popen(cmd, shell=True)
 
         returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
         return returncode
 
-    except subprocess.TimeoutExpired as e:
+    except TimeoutExpired as e:
         if 'process' in locals():
             pid = process.pid
             parent = psutil.Process(pid)
@@ -250,7 +250,7 @@ def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
 
 
 def delete_esearch_by_id(search_id: int):
-    # deletes en entrazsearch assoiciated files and taskresult entry based on a search_id
+    # deletes entrezsearch associated files and taskresult entries based on a search_id
     # returns 0 if it worked or 1 if it did not
     try:
         with transaction.atomic():

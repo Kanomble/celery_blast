@@ -602,7 +602,7 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
             var csvFileData = []
             for(var i = 0; i < sc.selected.indices.length; i++){
                 temp = [sc.data['qseqid'][sc.selected.indices[i]],
-                        sc.data['sacc_transformed'][sc.selected.indices[i]],
+                        sc.data['sacc'][sc.selected.indices[i]],
                         sc.data['staxids'][sc.selected.indices[i]]]
                 csvFileData.push(temp)
             }

@@ -164,7 +164,6 @@ rule build_folders_with_hit_info_for_each_qseqid:
 		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
 		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
 	params:	project_id=config['project_id'],
-			result_statistics_static=expand("../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_statistics.png",qseqid=QSEQIDS)
 	log: log="log/build_folders_with_hit_info_for_each_qseqid.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
@@ -193,9 +192,6 @@ rule check_if_query_sequence_is_in_target_sequences_faa:
 #creates plots for the visualization of pipeline results
 rule blast_tables_to_plots:
 	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt",query_file=config['query_sequence'], check_qseqid_in_targets_log="log/check_if_query_sequence_is_in_target_sequences_faa.log"
-	params:
-		plot_hits_organisms_png="../../../static/images/result_images/" + str(config['project_id']) + '/plot_amount_hits_of_target_taxon.png',
-		plot_evalues="../../../static/images/result_images/" + str(config['project_id']) + '/plot_evalue_distribution.png'
 	output: taxids_hits_plot="plot_amount_hits_of_target_taxon.png",evalue_plot="plot_evalue_distribution.png"
 	log: log="log/blast_tables_to_plots.log"
 	script:
@@ -285,7 +281,6 @@ rule update_tree_with_taxid:
 #RULE 15
 rule ete3_tree_to_png:
 	input: tree="{qseqid}/transformed_treefile.nwk", nw="{qseqid}/target_sequences.tree", update_tree_with_taxid_log="log/{qseqid}/update_tree_with_taxid.log"
-	params: static_pic="../../../static/images/result_images/" + str(config['project_id']) + "/{qseqid}_target_sequences.svg"
 	output: pic="{qseqid}/target_sequences.svg"
 	log: log="log/{qseqid}/ete3_tree_to_png.log"
 	script:

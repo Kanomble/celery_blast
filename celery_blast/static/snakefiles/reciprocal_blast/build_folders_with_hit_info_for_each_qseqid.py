@@ -100,9 +100,7 @@ with open(snakemake.log['log'],'w') as logfile:
 
             logfile.write("\tINFO:saving plots to project directory\n")
             result_statistics=str(query)+ "/basic_statistics.png"
-            result_statistics_static='../../../static/images/result_images/' + str(snakemake.params['project_id']) + "/" +str(query)+"_statistics.png"
             plt.savefig(result_statistics, dpi=400)
-            plt.savefig(result_statistics_static, dpi=400)
 
             logfile.write("\tINFO:writing target ids into textfile\n")
             output_file_path = query + '/' + 'target_sequence_ids.txt'
