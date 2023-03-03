@@ -1721,9 +1721,10 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                         csv += `\n`;  
                 });  
                 var json = JSON.stringify(csv);
-                var blob = new Blob([csv], {type: "octet/stream"});
-                var url  = window.URL.createObjectURL(blob);
+                var file = new File([csv], "selection.csv" ,{type: "octet/stream"});
+                var url = URL.createObjectURL(file);
                 window.location.assign(url);
+                URL.revokeObjectUrl(url);
             """)
 
             download_selection_button = Button(label="Download Selection")

@@ -23,24 +23,34 @@ logger = get_task_logger(__name__)
 
 '''check_database_integrity
 
-    This function uses the blastdbcheck program to verify the database integrity.
+    This function uses the blastdbcheck program to verify the database integrity. Before it starts
+    verification it checks if the database directory exists. The database that has to be checked is specified
+    by following code: path_to_database + database_name (e.g.: 'media/databases/1/' + 'high_quality_db.database').
     
     :param path_to_database
         :type str
+    :param database_name
+        :type str
+    :returns valid
+        :type boolean
 '''
 
 
 @shared_task(bind=True)
-def check_database_integrity(self, path_to_database:str):
+def check_database_integrity(self, path_to_database:str, database_name:str):
     try:
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
-        verification = check_output(['blastdbcheck','-db', path_to_database])
-        verification = str(verification)
-        if "Result=SUCCESS" in verification and "No errors reported" in verification:
-            valid = True
-        else:
+        if isdir(path_to_database) == False:
             valid = False
+        else:
+            database_to_check = path_to_database + database_name
+            verification = check_output(['blastdbcheck','-db', database_to_check])
+            verification = str(verification)
+            if "Result=SUCCESS" in verification and "No errors reported" in verification:
+                valid = True
+            else:
+                valid = False
         progress_recorder.set_progress(99, 100, "PROGRESS")
         return valid
     except Exception as e:
