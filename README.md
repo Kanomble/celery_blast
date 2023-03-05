@@ -2,6 +2,7 @@
 Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct, BLAST, Snakemake and Panoptes.
 ## Content
 - [Installation](#installation)
+- [Container network and configuration](#configuration_notes)
 - [Project Setup](#project_setup)
 - [BLAST Database creation](#blast_database)
 - 
@@ -11,32 +12,37 @@ The application can get installed by submitting the `docker-compose up` command 
 which points to the applications working directory (directory with `docker-compose.yml`). 
 The docker client will pull remotely available images, the base image for this application, 
 an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
-All images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
+The SymBLAST base image is pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
+All required software tools are loaded and installed automatically, there is no need for other third party software.
 
-Installation may require 
-
-The base image has been build by using the Dockerfile of this repository, a local build process
-for the base image can get triggered by using the `docker-compose up -f installation_with_dockerfile_docker-compose.yml` command. 
-All required software tools are loaded and installed automatically into this third image.
-However, due to changes to some particular packages, the local build process can run into errors, especially the installation of `snakemake` will take some time and consume a lot of memory. 
+The base image has been build by using the Dockerfile of this repository.
+Due to changes to some particular packages, the local build process may vary.
 It is recommended to install the application with the remotely available images.
 
-Next, docker creates six containers named: `celery_blast_X_1` where `X` is a synonym for `panoptes, worker, flower, web, postgres and rabbitmq`.
-
-If you run into any error during `docker-compose up` or if you recreate the container you need to activate the E-Direct tool. This can be achieved by submitting following command inside the docker container:
-```` Bash
-docker exec -it celery_blast /bin/bash
-#in the docker shell:
-cd ../edirect && sh ./setup.sh
-#answer with y
-````
+Next, docker creates seven containers named: `celery_blast_X_1` where `X` is a synonym for 
+`nginx, worker, flower, web, postgres and rabbitmq`.
 
 If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
 The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 
+<a name="configuration_notes"></a>
+### Notes on SymBLAST containers and possible configurations
+SymBLAST is a server site tool, by starting the container network, your local computer will be used as a web
+server. `Django` is the underlying web-framework and `gunicorn` serves as the WSGI HTTP Server. Both applications reside
+in the SymBLAST base image. `Nginx` is used as a reverse proxy server, it directs client requests to `gunicorn`.
+The long-running background tasks are managed by `rabbitmq` and `celery`, thus triggered processes are picked up by 
+the message broker `rabbitmq` and passed to a queue, if a `celery-worker` is free, the process is executed. The task progress
+is saved within the `postgresql` database within the `django_celery_results_taskresult` table, which enables task monitoring.
+The `flower` container can be used to monitor the `celery-worker`. The reciprocal BLAST pipeline and the normal 
+one-way BLAST pipelines are integrated into a Snakefile, which is used by the workflow management system `snakemake`.
+Customization of Snakefiles enables user defined post-processing. In addtion, a `jupyter-notebook` container is 
+integrated into the SymBLAST container network. Configuration is done within the `.env.prod` file. 
+All important environment variables are defined within this file 
+(e.g. the `DJANGO_ALLOWED_HOSTS` and the `SECRET_KEY` variables).
+
 <a name="project_setup"></a>
 ## Project setup
-In order to execute the integrated reciprocal BLAST pipeline (the SymBLAST core pipeline), the user has to
+In order to execute the integrated reciprocal BLAST pipeline (SymBLAST's core pipeline), the user has to
 set up some essential data: the query sequences from one particular organism/genome file 
 (the sequences for which orthologous sequences should be found), a forward BLAST database, that will serve as the search space, a
 backward BLAST database, the scientific name of the organism from which the query sequences were obtained and a project title. 
@@ -46,6 +52,31 @@ The Forward BLAST database serves as a search space in which putative orthologou
 The backward BLAST database has to contain the genome file from which the query sequences were obtained. The user provided
 data is validated before a project is saved into the database and before possible pipeline execution.
 If any validation fails, accurate error messages are display within the relevant form fields. This ensures a smooth execution of the pipeline.
+The pipeline is composed of following steps:
+
+1. Forward BLAST (default BLAST settings: e-value=0.001, word-size=3, threads=1, num_alignments=10000, max_hsps=500)
+2. Backward BLAST preparation (extracting homologous target sequences of the forward BLAST)
+3. Backward BLAST (BLAST search of the homologous target sequences against the genome of the query sequences)
+4. Extracting Reciprocal Best Hits (RBHs, this is done via pandas merging tools)
+5. Post-processing of RBHs (inference of taxonomic information, statistics, HTML and CSV tables, basic result plots)
+6. Extraction of RBH-sequences separated by query sequences
+7. Multiple sequence alignment of each set of RBHs with MAFFT
+8. Phylogenetic inference of each set of RBHs with FastTree
+9. Post-processing of the phylogenetic tree with ete3
+10. CDD domain search of target sequences
+
+Further SymBLAST post-processing procedures outside the scope of this pipeline involves:
+
+1. Combining taxonomic information of the underlying database with the RBH result table
+2. Building an interactive bokeh plot, that enables intuitive result interpretation
+   1. Filter RBHs based on taxonomy, e-value, bitscore, sequence length and percent identity
+   2. Download a selection of protein identifier
+3. Refined phylogenetic inference with CDD domains of the RBHs
+   1. Conducting RPS-BLAST with a specified set of RBHs
+   2. Conducting a principal component analysis (PCA) based on the percent identity of the inferred domains with respect to the query sequence domains
+   3. Building an interactive bokeh plot with the first two principal components and the taxonomic information within the RBH result table
+   4. Refine the 
+
 
 ### Best practices for project settings
 Use appropriate BLAST databases. If you want to search in more complete genomes, create a database that contains genome sequences
@@ -136,6 +167,7 @@ metadata file fields such as a taxmap file, which holds taxonomic information, a
 an assembly accession file. Most of these files are not mandatory, except for the taxmap_file when no taxonomic node is 
 is present. The other form allows uploading of single genome files together with their valid scientific organism names.
 
+<a name="snakemake"></a>
 ## Snakemake pipeline with celery
 In order to enable reproducability and an easy-to-use workflow execution, the workflow engine snakemake is used.
 Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/`. 
