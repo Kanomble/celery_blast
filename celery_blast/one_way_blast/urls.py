@@ -24,14 +24,14 @@ service_urls = [
          name='one_way_html_results'),
     path('<int:project_id>/<str:filename>/<str:project_type>/target_sequences', views.one_way_download_target_sequences,
          name='one_way_target_sequence_download')
-    # path('<int:project_id>/one_way_project_execution',views.execute_reciprocal_blast_project_view,
-    # name='project_execution'), path('<int:project_id>/one_way_project_resulttable',
-    # views.load_reciprocal_result_html_table_view,name='reciprocal_results')
 ]
 
 ajax_urls = [
     path('<int:remote>/<int:project_id>/ajax_one_way_wp_to_links', views.ajax_one_way_wp_to_links,
-         name='ajax_one_way_wp_to_links')
+         name='ajax_one_way_wp_to_links'),
+    path('<int:remote>/<int:project_id>/ajax_call_to_snakemake_logfiles',
+         views.ajax_call_to_snakemake_logfiles, name='ajax_call_to_snakemake_logfiles')
+
 ]
 urlpatterns = [
     path('', include(service_urls)),

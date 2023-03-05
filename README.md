@@ -202,6 +202,8 @@ Those functions can be used to trigger side effect during initialization of the 
 E.g. creation of blast project directories or file settings...
 
 ## TODO
+- [ ] if no genome level is defined take all
+- [ ] snakemake --unlock ? 
 - [ ] refactor website structures
 - [ ] add a production environment
   - [ ] follow this [guide](https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/)

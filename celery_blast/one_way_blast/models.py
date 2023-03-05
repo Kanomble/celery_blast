@@ -9,7 +9,7 @@ from django.db import IntegrityError
 from django.db import models
 from django_celery_results.models import TaskResult
 from refseq_transactions.models import BlastDatabase
-
+from celery_blast.settings import ONE_WAY_BLAST_PROJECT_DIR
 from .managers import OneWayBlastProjectManager, OneWayRemoteBlastProjectManager
 
 
@@ -70,19 +70,17 @@ class OneWayBlastProject(models.Model):
 
     def initialize_project_directory(self):
         # check if blast_project was previously created / check if media/blast_project directory exists
-        if (isdir('media/one_way_blast/' + str(self.id)) or isdir('media/one_way_blast/') == False):
+        if (isdir(ONE_WAY_BLAST_PROJECT_DIR + str(self.id)) or isdir(ONE_WAY_BLAST_PROJECT_DIR) == False):
             raise IntegrityError("project directory exists")
         else:
             try:
-                mkdir('media/one_way_blast/' + str(self.id))
-                if (isdir('static/images/result_images/one_way_blast/' + str(self.id)) == False):
-                    mkdir('static/images/result_images/one_way_blast/' + str(self.id))
+                mkdir(ONE_WAY_BLAST_PROJECT_DIR+ str(self.id))
             except Exception as e:
                 raise IntegrityError("couldnt create project directory : {}".format(e))
 
     def write_snakemake_configuration_file(self):
         try:
-            snk_config_file = open('media/one_way_blast/' + str(self.id) + '/snakefile_config', 'w')
+            snk_config_file = open(ONE_WAY_BLAST_PROJECT_DIR + str(self.id) + '/snakefile_config', 'w')
             # database path from media/blast_projects/project_id as working directory for snakemake
             snk_config_file.write('project_id: ' + str(self.id) + "\n")
             snk_config_file.write('blastdb: ' + "\"" + "../../databases/" + str(
@@ -108,7 +106,7 @@ class OneWayBlastProject(models.Model):
 
     '''
 
-    def read_query_information_table(self, filepath='media/one_way_blast/'):
+    def read_query_information_table(self, filepath=ONE_WAY_BLAST_PROJECT_DIR):
         def clean_feature_column(features):
             new_feature_column = []
             try:
@@ -207,24 +205,22 @@ class OneWayRemoteBlastProject(models.Model):
         return self.r_project_user.email
 
     def get_project_dir(self):
-        return 'media/one_way_blast/remote_searches/' + str(self.id)
+        return ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/' + str(self.id)
 
     def initialize_project_directory(self):
         # check if blast_project was previously created / check if media/blast_project directory exists
-        if (isdir('media/one_way_blast/remote_searches/' + str(self.id)) or isdir(
-                'media/one_way_blast/remote_searches/') == False):
+        if (isdir(ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/' + str(self.id)) or isdir(
+                ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/') == False):
             raise IntegrityError("project directory exists")
         else:
             try:
-                mkdir('media/one_way_blast/remote_searches/' + str(self.id))
-                if (isdir('static/images/result_images/one_way_blast/remote_searches/' + str(self.id)) == False):
-                    mkdir('static/images/result_images/one_way_blast/remote_searches/' + str(self.id))
+                mkdir(ONE_WAY_BLAST_PROJECT_DIR+ 'remote_searches/' + str(self.id))
             except Exception as e:
                 raise IntegrityError("couldnt create project directory : {}".format(e))
 
     def write_snakemake_configuration_file(self):
         try:
-            snk_config_file = open('media/one_way_blast/remote_searches/' + str(self.id) + '/snakefile_config', 'w')
+            snk_config_file = open(ONE_WAY_BLAST_PROJECT_DIR+'remote_searches/' + str(self.id) + '/snakefile_config', 'w')
             # database path from media/blast_projects/project_id as working directory for snakemake
             snk_config_file.write('project_id: ' + str(self.id) + "\n")
             snk_config_file.write('blastdb: ' + str(self.r_project_database) + "\n")
@@ -251,7 +247,7 @@ class OneWayRemoteBlastProject(models.Model):
 
     '''
 
-    def read_query_information_table(self, filepath='media/one_way_blast/remote_searches/'):
+    def read_query_information_table(self, filepath=ONE_WAY_BLAST_PROJECT_DIR+'remote_searches/'):
         def clean_feature_column(features):
             new_feature_column = []
             try:

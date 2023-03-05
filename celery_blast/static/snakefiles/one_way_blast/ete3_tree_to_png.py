@@ -38,7 +38,7 @@ with open(snakemake.log['log'], 'w') as logfile:
     # exception is often thrown due to characters in the sequence ids that dont fit newick specifications
     except Exception as e:
         try:
-            with open(snakemake.input['nw'], 'r') as t:
+            with open(snakemake.input['tree'], 'r') as t:
                 tree = t.readlines()
             if len(tree) < 1:
                 with open(snakemake.log['log'], 'w') as log_f:

@@ -89,6 +89,7 @@
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
                             <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
                         {% endif %}
+                        {% if BlastProject.project_execution_snakemake_task.status != 'POGRESS' %}
                         <td>
                             <form class="col"
                                    action="{% url 'project_deletion' project_id=BlastProject.id %}"
@@ -97,6 +98,10 @@
                                 <input type="submit" value="Delete Blast Project" class="btn btn-danger">
                             </form>
                         </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td><a class="btn btn-dark" href="{% url 'database_details' database_id=Database.id %}">Reciprocal Results Table</a></td>
                     </tr>
                 </tbody>
             </table>
@@ -242,6 +247,7 @@
             });
     } );
     </script>
+
     <script>
     $(document).ready(function(){
         var result_table = document.getElementById('myTable');

@@ -1,4 +1,5 @@
 from os.path import isdir
+from os import listdir, path
 from shutil import rmtree
 
 import pandas as pd
@@ -6,51 +7,97 @@ from django.db import IntegrityError, transaction
 
 from .models import OneWayBlastProject, OneWayRemoteBlastProject
 from .py_django_db_services import get_one_way_remote_project_by_id, get_one_way_project_by_id
+from celery_blast.settings import ONE_WAY_BLAST_PROJECT_DIR
 
+'''read_snakemake_logfile
 
-# TODO documentation
-def delete_one_way_blast_project_and_associated_directories_by_id(project_id):
+    This function reads the current status of the snakemake run for remote and local one way BLAST searches.
+    
+    :param project_id
+        :type int
+    :param remote
+        :type boolean 
+    
+    :returns progress
+        :type int
+
+'''
+def read_snakemake_logfile(project_id:int, remote=False)->int:
+    try:
+        # this function returns the newest file in the specified path
+        def newest(path_):
+            files = listdir(path_)
+            paths = [path.join(path_, basename) for basename in files]
+            return max(paths, key=path.getctime)
+        if remote == False:
+            logfile_path = ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/.snakemake/log'
+        else:
+            logfile_path = ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/' + str(project_id) + '/.snakemake/log'
+        with open(newest(logfile_path), 'r') as logfile:
+            lines = logfile.readlines()
+
+        progress = []
+        for line in lines:
+            if 'steps' in line:
+                prog = int(line.split(" ")[4].replace("(", "").replace(")", "").replace("%", ""))
+                progress.append(prog)
+        return max(progress)
+    except Exception as e:
+        raise Exception("[-] ERROR reading snakemake logfiles with exception: {}".format(e))
+
+'''delete_one_way_blast_project_and_associated_directories_by_id
+    
+    This function deletes the OneWayBlast model instance in the database and the associated directory.
+    
+    :param project_id
+        :type int
+        
+'''
+def delete_one_way_blast_project_and_associated_directories_by_id(project_id:int):
     try:
         with transaction.atomic():
             project = OneWayBlastProject.objects.get(id=project_id)
-            if isdir('media/one_way_blast/' + str(project_id)):
-                rmtree('media/one_way_blast/' + str(project_id))
-            if isdir('static/images/result_images/one_way_blast/' + str(project_id)):
-                rmtree('static/images/result_images/one_way_blast/' + str(project_id))
+            if path.isdir(ONE_WAY_BLAST_PROJECT_DIR + str(project_id)):
+                rmtree(ONE_WAY_BLAST_PROJECT_DIR + str(project_id))
             project.delete()
     except Exception as e:
         raise IntegrityError("couldnt delete one way blast project entry : {}".format(e))
 
 
-# TODO documentation
-def delete_one_way_remote_blast_project_and_associated_directories_by_id(project_id):
+'''delete_one_way_remote_blast_project_and_associated_directories_by_id
+
+    This function deletes the OneWayRemoteBlast model instance in the database and the associated directory.
+
+    :param project_id
+        :type int
+
+'''
+def delete_one_way_remote_blast_project_and_associated_directories_by_id(project_id:int):
     try:
         with transaction.atomic():
             project = OneWayRemoteBlastProject.objects.get(id=project_id)
-            if isdir('media/one_way_blast/remote_searches/' + str(project_id)):
-                rmtree('media/one_way_blast/remote_searches/' + str(project_id))
-            if isdir('static/images/result_images/one_way_blast/remote_searches/' + str(project_id)):
-                rmtree('static/images/result_images/one_way_blast/remote_searches/' + str(project_id))
+            if path.isdir(ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/' + str(project_id)):
+                rmtree(ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/' + str(project_id))
             project.delete()
     except Exception as e:
         raise IntegrityError("couldnt delete one way blast project entry : {}".format(e))
 
 
-# TODO documentation
 # loads the reciprocal results table that is written with one of the last rules in the snakefiles
 def get_one_way_html_results(project_id, filename, remote):
     try:
         if remote == 0:
-            with open("media/one_way_blast/" + str(project_id) + "/" + filename) as res:
+            with open(ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + "/" + filename) as res:
                 data = res.readlines()
         elif remote == 1:
-            with open("media/one_way_blast/remote_searches/" + str(project_id) + "/" + filename) as res:
+            with open(ONE_WAY_BLAST_PROJECT_DIR+"remote_searches/" + str(project_id) + "/" + filename) as res:
                 data = res.readlines()
         return data
     except Exception as e:
-        raise FileNotFoundError("Couldn't read file {} with Exception: {}".format(e))
+        raise FileNotFoundError("Couldn't read file {} with Exception: {}".format(filename,e))
 
 
+# TODO following function are obsolete
 def filter_blast_table_by_genus(path_to_blast_table, genus):
     result_data = pd.read_table(path_to_blast_table, header=None)
     result_data.columns = ["qseqid", "sseqid", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids", "sscinames",

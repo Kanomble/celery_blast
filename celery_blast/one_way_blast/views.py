@@ -12,7 +12,8 @@ from .py_biopython import calculate_pfam_and_protein_links_from_one_way_queries
 from .py_django_db_services import get_one_way_project_by_id, get_one_way_remote_project_by_id
 from .py_project_creation import create_one_way_blast_project, create_one_way_remote_blast_project
 from .py_services import delete_one_way_blast_project_and_associated_directories_by_id, \
-    delete_one_way_remote_blast_project_and_associated_directories_by_id, get_one_way_html_results
+    delete_one_way_remote_blast_project_and_associated_directories_by_id, get_one_way_html_results,\
+    read_snakemake_logfile
 from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_project
 
 '''one_way_blast_project_creation_view
@@ -217,3 +218,25 @@ def one_way_download_target_sequences(request, project_id, project_type, filenam
 
     except Exception as e:
         return failure_view(request, e)
+
+
+'''ajax_call_to_snakemake_logfiles
+
+    This function sends task progress data based on available logfiles to the template.
+
+    :param project_id
+        :type int
+    :param remote - 0 = OneWayBlast 1 = OneWayRemoteBlast
+        :type int
+        
+'''
+
+
+def ajax_call_to_snakemake_logfiles(request, project_id: int, remote: int):
+    try:
+        if request.is_ajax and request.method == "GET":
+            progress = read_snakemake_logfile(project_id, remote)
+            return JsonResponse({"progress": progress}, status=200)
+        return JsonResponse({"ERROR": "NOT OK"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)

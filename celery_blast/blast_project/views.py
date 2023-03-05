@@ -692,7 +692,7 @@ def ajax_call_to_logfiles(request, project_id: int):
                     if len(progress) == 1:
                         progress_without_subtasks.append(progress[0])
             progress_without_subtasks.sort()
-            print(max(progress_without_subtasks))
+            # print(max(progress_without_subtasks))
             return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:

@@ -3,11 +3,11 @@ version: "3.8"
 services:
 
   web:
-    image: kanomble/rec_blast_base_image:2.3 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
+    image: kanomble/rec_blast_base_image:2.3
     deploy:
       resources:
         limits:
-          memory: 42G
+          memory: 8G
 
     command:  sh -c "wait-for rabbitmq:5672 && wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate

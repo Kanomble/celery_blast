@@ -772,9 +772,16 @@ try:
 
         # normalize taxonomic identifier
         # in remote BLAST searches multiple taxids may occur, just take the first one
-        slice_taxids = lambda taxids: taxids.split(";")[0]
-        df['staxids'] = df['staxids'].apply(slice_taxids)
+        try:
+            logfile.write("INFO:trying to adjust taxonomic identifier ... \n")
+            slice_taxids = lambda taxids: taxids.split(";")[0]
+            df['staxids'] = df['staxids'].apply(slice_taxids)
+        except:
+            logfile.write("INFO:staxids column is fine, proceeding ... \n")
+
+
         if df['staxids'].dtype != 'int':
+            logfile.write("INFO:changing staxids column datatype to int64 ... \n")
             df['staxids'] = df['staxids'].astype('int64')
 
         unique_taxids = list(df["staxids"].unique())
@@ -857,5 +864,4 @@ try:
             f.write(html_string.format(table=result_df.to_html(classes='mystyle')))
         logfile.write("DONE\n")
 except Exception as e:
-    logfile.write("ERROR:exception: {}\n".format(e))
     sys.exit(RETURNCODE)

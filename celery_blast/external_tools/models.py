@@ -287,7 +287,7 @@ class EntrezSearch(models.Model):
         pandas_header['cdd'] = ["Id", "Title: Subtitle", "Abstract"]
         pandas_header['protfam'] = ["Id", "DispMethod", "DispReviewLevel", "string"]
 
-        paper = pd.read_table(self.file_name, names=pandas_header[self.database])
+        paper = pd.read_table(self.file_name, names=pandas_header[self.database], error_bad_lines=False, warn_bad_lines=False)
         if self.database == "assembly":
             self.get_plot(paper)
         return paper
@@ -318,7 +318,7 @@ class EntrezSearch(models.Model):
         return paper
 
     def get_stat_columns_length(self):
-        paper = pd.read_table(self.file_name, header=None)
+        paper = pd.read_table(self.file_name, header=None, error_bad_lines=False, warn_bad_lines=False)
         stat_col_lst = ["Slen"]
         if paper.columns.isin(stat_col_lst).any() == True:
             cols = paper.columns.isin(cols)
@@ -329,7 +329,7 @@ class EntrezSearch(models.Model):
         return stat_cols
 
     def get_paper_number(self):
-        return len(pd.read_table(self.file_name, header=None))
+        return len(pd.read_table(self.file_name, header=None, error_bad_lines=False, warn_bad_lines=False))
 
     def get_organisms(self):
         paper = self.get_pandas_table()
@@ -340,7 +340,7 @@ class EntrezSearch(models.Model):
         return oragnism_list
 
     def update_paper_entries(self):
-        paper_entries = len(pd.read_table(self.file_name, header=None))
+        paper_entries = len(pd.read_table(self.file_name, header=None, error_bad_lines=False, warn_bad_lines=False))
         self.paper_entries = paper_entries
         self.save()
         return paper_entries
