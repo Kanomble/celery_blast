@@ -59,7 +59,6 @@ def get_databases_in_progress():
 
 def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
     try:
-        print(valid_blastdatabase_form.cleaned_data.get('taxid_text_field', False))
         with transaction.atomic():
             database_name = valid_blastdatabase_form.cleaned_data['database_name']
             database_description = valid_blastdatabase_form.cleaned_data['database_description']

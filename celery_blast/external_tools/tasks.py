@@ -397,6 +397,8 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
 
 '''cdd_domain_search_with_rbhs_task
         
+    This function executes a rpsblast for searching in the CDD database. Settings for the rpsblast are user specific 
+    and derive from the underlying form instance.
     
     :param self
         :type TaskResult

@@ -254,6 +254,8 @@ def create_chunks_of_databases(df: pd.DataFrame, path_to_database: str, progress
         progress_recorder.set_progress(progress, 100, "concatenate available fasta assemblies")
 
         iteration_steps = 500  # chunks --> 500 fasta files build "one" database chunk
+        # the following two lines ensure that there are no more than 35 different databases in the pal file,
+        # thus the iteration_steps will be adjusted to fit the 35 database files ...
         if round(len(df['ftp_path']) / iteration_steps) > 35:
             iteration_steps = math.ceil(len(df['ftp_path']) / 35)
 

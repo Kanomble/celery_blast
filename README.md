@@ -1,5 +1,7 @@
 # celery_blast
-Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct, BLAST, Snakemake and Panoptes.
+Symmetrical BLAST and target sequence search web interface with Django, Gunicorn, Ngninx, PostgreSQL, Celery, RabbitMQ, 
+E-Direct, BLAST, Snakemake and Miniconda.
+
 ## Content
 - [Installation](#installation)
 - [Container network and configuration](#configuration_notes)
@@ -8,7 +10,7 @@ Reciprocal BLAST web-interface with Django, Celery, Flower, RabbitMQ, E-Direct, 
 - 
 <a name="installation"></a>
 ## Installation
-The application can get installed by submitting the `docker-compose up` command in a terminal window,
+The application can get installed by submitting the `docker-compose up` or `docker compose up` command in a terminal window,
 which points to the applications working directory (directory with `docker-compose.yml`). 
 The docker client will pull remotely available images, the base image for this application, 
 an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
@@ -90,27 +92,25 @@ The backward BLAST database should contain only one genome that corresponds to t
 <a name="blast_database"></a>
 ## BLAST Databases
 ## BLAST database preparation
-Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command.
-First the software downloads the refseq assembly summary file from the
+First, you need to tell SymBLAST to download the refseq assembly summary file from the
 refseq [FTP](ftp://ftp.ncbi.nih.gov/genomes/refseq/) directory.
 The application loads the summary file into a pandas dataframe, 
 that is processed according to the user specifications. BLAST database user specifications are
 the level of assembly completeness (e.g. 'Complete Genome', 'Chromosome', 'Contig' and 'Scaffold') 
 and taxonomic information.
-For example, the user could specify the assembly levels 
-of the new database as `Complete Genome` and `Chromosome` and the `apes.taxids`
-file as basis for taxonomic limitation. 
-According to this setup, the summary file gets filtered by the provided 
-taxids (which reside in the `apes.taxids` file) and the assembly levels,
-which results into a table with 6 entries (20.04.2021). Files for the taxonomic limitations can get uploaded by the user
-or directly created with the SymBLAST tool. 
+
+E.g. if you want to create a high quality database containing only species from the phylum `Cyanobacteriota`, you have to specify 
+this during database creation. This can be done by typing `Cyanobacteriota` into the field "Scientific Names (sep. by ",")" and by
+checking the assembly levels `Complete Genome` and `Chromosome`. 
 
 If the user submits the form, a `BlastDatabase` model instance and a 
-database directory with a file, that contains the filtered table, is created.
+database directory, with a csv file containing the database table, is created.
 The model is saved into the database, the database is not downloaded and formatted directly. 
 The download and formatting procedure has to be started separately, which enables the user to validate database entries.
 The download and format process progression is visualized on the database dashboard.
 Available databases are shared between users.
+
+Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command. Every 
 
 ## Download and formatting procedure of genome assemblies
 If the user presses the download button, a celery asynchronous task is executed. 
@@ -202,6 +202,7 @@ Those functions can be used to trigger side effect during initialization of the 
 E.g. creation of blast project directories or file settings...
 
 ## TODO
+- [ ] update BLAST databases
 - [ ] if no genome level is defined take all
 - [ ] snakemake --unlock ? 
 - [ ] refactor website structures
