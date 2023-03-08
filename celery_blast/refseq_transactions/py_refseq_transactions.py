@@ -12,7 +12,7 @@ from django.db import IntegrityError, transaction
 from .models import BlastDatabase
 from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict, \
     filter_duplicates_by_ftp_path
-
+from celery_blast.settings import REFSEQ_ASSEMBLY_FILE, TAXONOMIC_NODES
 ''' 
 transactions with models (manager)
 '''
@@ -53,7 +53,9 @@ def get_databases_in_progress():
     
     :param valid_blastdatabase_form
         :django.form.is_valid() == True
-    :returns None
+        
+    :returns returncode - 0
+        :type int - 0
 '''
 
 
@@ -64,10 +66,13 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
             database_description = valid_blastdatabase_form.cleaned_data['database_description']
             assembly_levels = valid_blastdatabase_form.cleaned_data['assembly_levels']
 
+            if len(assembly_levels) == 0:
+                assembly_levels = ['Chromosome','Scaffold','Complete Genome','Contig']
+
             if valid_blastdatabase_form.cleaned_data.get('taxid_file', False):
                 # upload taxonomic information file
                 taxid_file = valid_blastdatabase_form.cleaned_data['taxid_file']
-                taxid_file_path = 'media/' + 'taxonomic_node_files/' + taxid_file.name
+                taxid_file_path = TAXONOMIC_NODES + taxid_file.name
                 upload_file(taxid_file, taxid_file_path)
 
                 # get data from refseq_summary_file and limit by assembly_levels
@@ -98,7 +103,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
 
             elif valid_blastdatabase_form.cleaned_data.get('taxid_uploaded_file', False):
                 taxid_file = valid_blastdatabase_form.cleaned_data['taxid_uploaded_file']
-                taxid_file_path = 'media/' + 'taxonomic_node_files/' + taxid_file
+                taxid_file_path = TAXONOMIC_NODES + taxid_file
 
                 refseq_table = read_current_assembly_summary_with_pandas(assembly_levels)
                 taxonomy_table = read_taxonomy_table(taxid_file)
@@ -125,6 +130,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                 taxid_list = valid_blastdatabase_form.cleaned_data['taxid_text_field']
                 randomly_generated_filename = ''.join(choices(ascii_uppercase + digits, k=10))
                 taxid_filename = taxid_list[0].lower() + '_' + randomly_generated_filename + '_node_file.taxids'
+                taxid_file_path = TAXONOMIC_NODES + taxid_filename
                 # biopython does not translate higher taxonomic nodes into genus/species level nodes
                 try:
                     write_species_taxids_into_file(taxid_list, taxid_filename)
@@ -141,13 +147,14 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                 if len(filtered_table) == 0:
                     raise IntegrityError("the database doesnt contain any entries, pls apply an other filter method!")
 
-                    # create new refseq database model and save it into the database
+                # create new refseq database model and save it into the database
                 new_blastdb = create_and_save_refseq_database_model(
                     database_name=database_name,
                     database_description=database_description,
                     assembly_levels=assembly_levels,
-                    assembly_entries=len(filtered_table))
-                # create directory in media/databases
+                    assembly_entries=len(filtered_table),
+                    attached_taxonomic_file=taxid_file_path)
+                # create directory in BLAST_DATABASE_DIR
                 refseq_database_table_path = create_blastdatabase_directory(new_blastdb.id)
 
                 write_pandas_table_to_project_dir(refseq_database_table_path,
@@ -167,6 +174,8 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                 write_pandas_table_to_project_dir(refseq_database_table_path,
                                                   filtered_table,
                                                   database_name)
+
+        return 0
     except Exception as e:
         raise IntegrityError('couldnt create blastdatabase : {}'.format(e))
 
@@ -187,7 +196,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
 
 
 def read_current_assembly_summary_with_pandas(assembly_levels: list) -> pd.DataFrame:
-    summary_file_path = 'media/databases/refseq_summary_file/assembly_summary_refseq.txt'
+    summary_file_path = REFSEQ_ASSEMBLY_FILE
     if (isfile(summary_file_path) == False):
         raise ValueError('assembly summary file does not exist!')
 
@@ -257,11 +266,11 @@ def read_current_assembly_summary_with_pandas(assembly_levels: list) -> pd.DataF
 
 
 def read_taxonomy_table(taxfilename: str) -> pd.DataFrame:
-    filepath = 'media/taxonomic_node_files/' + taxfilename
+    filepath = TAXONOMIC_NODES + taxfilename
     if (isfile(filepath) == False):
         raise ValueError("there is no taxonomy file called: {}".format(filepath))
     taxonomy_file = pd.read_table(filepath, header=None)
-    # species_taxid and taxid should normally be interchangeable, the species_taxid may inherit more informations
+    # species_taxid and taxid should normally be interchangeable, the species_taxid may inherit more information
     # to current strain (have a look at the README description of the refseq summary file)
     taxonomy_file.columns = ['taxid']
     taxonomy_file = taxonomy_file.astype({"taxid": str})
@@ -323,3 +332,30 @@ def read_database_table_by_database_id_and_return_json(database_id):
     table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name, header=0, index_col=0)
     json = transform_data_table_to_json_dict(table)
     return json
+
+
+'''check_for_db_updates
+
+    This function searches for BLAST database updates if the previous download and formatting task 
+    finished successfully.
+    
+    :param blast_database_id
+        :type int
+'''
+
+
+def check_for_db_updates(blast_database_id:int):
+    # retrieve database model
+    blast_db = get_database_by_id(blast_database_id)
+    # check if previous task finished
+    if blast_db.database_download_and_format_task.status == 'SUCCESS':
+        # retrieving assembly level information
+        ass_levels = []
+        for level in blast_db.assembly_levels.all():
+            ass_levels.append(level.assembly_level)
+        # retrieve taxonomic information
+        assembly_summary = read_current_assembly_summary_with_pandas(assembly_levels=ass_levels)
+    # download and format task: progress or failure -> return 1
+    else:
+        return 1
+    return 0

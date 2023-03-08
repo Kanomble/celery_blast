@@ -143,7 +143,6 @@ def delete_blast_database_model_and_directory(request, database_id):
         if request.method == "POST":
             delete_blastdb_and_associated_directories_by_id(database_id)
             return redirect('refseq_transactions_dashboard')
-        # should never been executed
         else:
             return failure_view(request, "error deleting this database, request method is not a POST method.")
     except Exception as e:

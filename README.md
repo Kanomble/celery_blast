@@ -7,7 +7,11 @@ E-Direct, BLAST, Snakemake and Miniconda.
 - [Container network and configuration](#configuration_notes)
 - [Project Setup](#project_setup)
 - [BLAST Database creation](#blast_database)
-- 
+  - [Notes on the download procedure](#download_process)
+  - [Notes on the BLAST database formatting procedure](#makeblastdb)
+- [Upload your own genome files](#genome_upload)
+- [Result Dashboard](#result_dashboard)
+- [Technical Details](#technical_details)
 <a name="installation"></a>
 ## Installation
 The application can get installed by submitting the `docker-compose up` or `docker compose up` command in a terminal window,
@@ -112,6 +116,7 @@ Available databases are shared between users.
 
 Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command. Every 
 
+<a name="download_process"></a>
 ## Download and formatting procedure of genome assemblies
 If the user presses the download button, a celery asynchronous task is executed. 
 This task is composed of multiple subtasks, that perform the relevant database creation steps.
@@ -126,8 +131,9 @@ This is done with following command: `wget -qO- ftp_path | gzip -d > assembly_fi
 If there is no positive returncode after ten tries, the assembly file is skipped and the FTP-path that points to the file is written into a logfile.
 In the next step `makeblastdb` is used to format the downloaded and decompressed assembly files.
 
+<a name="makeblastdb"></a>
 #### Notes on the `makeblastdb` program and BLAST database formatting
-With the `makeblastdb` module custom BLAST databases are builded. Per default it will create a database for the input sequences, e.g. if you submit following cmd:
+With the `makeblastdb` module custom BLAST databases are builded. Per default, it will create a database for the input sequences, e.g. if you submit following cmd:
 `makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5` you will create a database for the `bw_prot_db.faa`.
 The `-taxid` parameter is used to assign the taxonomic node 1140 (*Synechococcus elongatus* 7492) to all sequences that reside in the `bw_prot_db.faa` fasta file.
 If you have mutliple fasta files that needs to get formatted with the `makeblastdb` program, there are two options. First, you can pass multiple fasta files to the `-in` parameter. 
@@ -159,32 +165,40 @@ This is useful for databases with duplicate sequences, they normally have an ide
 During execution the underlying database (e.g. `BlastDatabase` or `BlastProject`) model OneToOne field gets updated with the appropriate celery `TaskResult` model.
 This allows interaction with the associated celery task and can be used for displaying the progress of the task.
 
+<a name="genome_upload"></a>
 ## Uploading genomes for BLAST database creation
 The second option to obtain BLAST databases is to upload your own genomes. 
 Currently, only genomes with protein sequences are supported. There are two different forms that can be used 
-for the uploading your own genome files. The first form allows uploading a concatenated genome FASTA files with 
+for uploading your own genome files.
+1. The first form allows uploading a concatenated genome FASTA files with 
 metadata file fields such as a taxmap file, which holds taxonomic information, an organism file, an assembly level file and
-an assembly accession file. Most of these files are not mandatory, except for the taxmap_file when no taxonomic node is 
-is present. The other form allows uploading of single genome files together with their valid scientific organism names.
+an assembly accession file. Most of these files are not mandatory. 
+2. The other form allows uploading of multiple, single genome files together with their valid scientific organism names.
+
+<a name="result_dashboard"></a>
+## Result Dashboard
+After successfully pipeline execution, results are displayed within an project details page.
 
 <a name="snakemake"></a>
 ## Snakemake pipeline with celery
-In order to enable reproducability and an easy-to-use workflow execution, the workflow engine snakemake is used.
-Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/`. 
+In order to enable reproducibility and an easy-to-use workflow execution, the workflow engine snakemake is used.
+Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/snakefiles`. 
 They can be used outside this application, e.g. if the researcher needs to use additional settings or want to implement own post-processing procedures.
-Different snakefiles are designed to execute the desired workflows. Currently, there are Snakefiles for the One-Way BLAST remote and local searches and the reciprocal BLAST analysis.
+Different snakefiles are designed to execute the desired workflows. 
+Currently, there are Snakefiles for the One-Way BLAST remote and local searches and the reciprocal BLAST analysis.
 Execution of snakemake is wrapped in functions within the `tasks.py` files,
 which are decorated with the celery `@shared_task` decorator. Those functions are queued up by rabbitmq and are processed by the celery worker.
-Snakemake is executed with the `subprocess.Popen` interface which spawns a child process for every Snakemake workflow.
+Snakemake is executed with the `subprocess.Popen` interface which spawns a child process for every Snakemake workflow. 
+Snakemake's working directory is the current project directory, e.g. if you executed the snakemake pipeline for a reciprocal BLAST
+project, the `CWD` of snakemake is the path that points to this project. Default project paths are defined in the `celery_blast/settings.py` file.
 
-Furthermore, snakemake is executed with the `--wms-monitor` parameter, that enables snakemake communication with [Panoptes](https://github.com/panoptes-organization/monitor-schema). In addition [Flower](https://flower.readthedocs.io/en/latest/) can be used to monitor the celery tasks.
 Detailed information about Snakemake can be found on the [project documentation page](https://snakemake.readthedocs.io/en/stable/).
 
+<a name="technical_details"></a>
 ## Technical Details
 ### Docker
-All necessary software packages that are deployed within docker container. Those container are wrapped into a network
-using the docker-compose. Compose is a tool for running multiple container applications. In this project, it is used
-to build a container-network composed of a web-server container, a database container and a task management container.
+All necessary software packages are deployed within docker container. Those containers are wrapped into a network
+using docker-compose.
 ### Django
 ### Gunicorn and Nginx
 ### POSTGRESQL database models
@@ -192,16 +206,19 @@ Django models reside inside project specific `models.py` files. Models are trans
 Documentation about the django.db.models package can be found [here](https://docs.djangoproject.com/en/2.2/topics/db/models/).
 Relationships between models are managed with django model functions.
 The `models.ForeignKey()` function is used for OneToMany / ManyToOne relations.
-Additionally there are the `models.OneToOneField()` and `models.ManyToManyField()` functions.
-Relationships can get further described with `related_name` and `related_query_name` parameters, described in this
+Additionally, there are the `models.OneToOneField()` and `models.ManyToManyField()` functions.
+Relationships can get further described with `related_name` and `related_query_name` parameters, described in
 [this](https://docs.djangoproject.com/en/2.2/ref/models/fields/#django.db.models.ForeignKey.related_query_name) Django documentation section.
 
 Model managers reside inside project specific `managers.py` files.
-Manager classes are responsible for specific creation functions, such as ``create_blast_project(fields=values ...)``.
-Those functions can be used to trigger side effect during initialization of the database entry.
-E.g. creation of blast project directories or file settings...
+Manager classes are responsible for the initial creation of the database models, such as `create_blast_project(fields=values ...)`.
+Those functions can be used to trigger side effects during initialization of the database entry.
+E.g. creation of blast project directories or specific setting files, such as the snakemake configuration file.
 
 ## TODO
+- [ ] fasttree, mafft timeout setting: 4000s not appropriate
+- [ ] gunicorn --timeout setting
+- [ ] section for each database statistic table
 - [ ] update BLAST databases
 - [ ] if no genome level is defined take all
 - [ ] snakemake --unlock ? 
@@ -224,7 +241,6 @@ E.g. creation of blast project directories or file settings...
 - [ ] failure BLAST database task
 - [X] delete .gitkeep in postgres folder and fix wait-for script line ending
   - [X] wait-for script checking - LF / CLRF
-  - [ ] alternatively write own .sh script file that checks if database/rabbitmq is loaded
 - [ ] allow stopping database downloading and formatting tasks, allow deletion of paused/stopped database download/format procedures
 - [ ] include taxonomic information in BLAST database tables
 - [ ] esearch output into subfolders for each user

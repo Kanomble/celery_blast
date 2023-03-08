@@ -13,7 +13,7 @@ from .py_django_db_services import update_blast_project_with_task_result_model, 
     update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
     update_blast_project_with_database_statistics_task_result_model, get_all_blast_databases
 from .py_database_statistics import calculate_database_statistics
-from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL
+from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -100,7 +100,7 @@ it can be used to create a taxonomic node file in the project media folder
 @shared_task
 def write_species_taxids_into_file(taxonomic_node, taxids_filename):
     # full path in docker: blast/reciprocal_blast/celery_blast/media/taxonomic_node_files/
-    filepath_species_taxids = os.getcwd() + '/media/taxonomic_node_files/' + taxids_filename
+    filepath_species_taxids = os.getcwd() + '/' + TAXONOMIC_NODES + taxids_filename
     logger.info('invoking get_spexies_taxids.sh script (e-direct tool) with parameter -t and input node {},'
                 'output is redirected into {}'.format(taxonomic_node, filepath_species_taxids))
     # invoke the get_species_taxids.sh script and redirect ouput into file
