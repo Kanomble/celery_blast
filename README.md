@@ -216,7 +216,8 @@ Those functions can be used to trigger side effects during initialization of the
 E.g. creation of blast project directories or specific setting files, such as the snakemake configuration file.
 
 ## TODO
-- [ ] fasttree, mafft timeout setting: 4000s not appropriate
+- [ ] database statistics progress bar
+- [ ] duplicate entries in CDD result dataframe for bokeh plot - due to different assemblies - maybe too much info
 - [ ] gunicorn --timeout setting
 - [ ] section for each database statistic table
 - [ ] update BLAST databases
@@ -266,6 +267,7 @@ E.g. creation of blast project directories or specific setting files, such as th
 - [ ] exclude not downloaded and formatted assemblies from summary table
 - [ ] write documentation for added functions
 - [ ] blastn one way searches can't display query sequence information (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
+- [X] fasttree, mafft timeout setting: 4000s not appropriate: 40.000s
 - [X] fix javascript download button for the protein database in the entrez search
 - [X] add taxonomic information processing to database creation or database statistics calculation
 - [X] refactor the external project information dashboard

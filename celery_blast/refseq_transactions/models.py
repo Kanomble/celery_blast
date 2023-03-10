@@ -64,7 +64,6 @@ class BlastDatabase(models.Model):
     def get_pandas_table_name(self):
         return self.database_name.replace(' ', '_').upper()
 
-    # can be deleted?
-    # TODO deprecated
+    # used for updating
     def get_database_palfile_for_snakemake_config(self):
         return self.path_to_database_file + '/' + self.database_name.replace(' ', '_').upper() + '.database.pal'

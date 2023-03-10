@@ -4,13 +4,13 @@ from sys import exit
 ERRORCODE=17
 with open(snakemake.log['log'] ,'w') as logfile:
     try:
-        logfile.write("INFO:transforming query domain file into html tables\n")
+        logfile.write("INFO:transforming query domain file into html table\n")
         result_data = pd.read_table(snakemake.input['query_domains'] ,header=None)
         columns = 'qseqid qlen sacc slen qstart qend sstart send qseq sseq bitscore evalue pident stitle'.split(" ")
         result_data.columns = columns
         result_data = result_data["qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident stitle".split(" ")]
 
-        logfile.write("INFO:preparing html string ...\n")
+        logfile.write("INFO:preparing html string with DataTable CNNs ...\n")
 
         pd.set_option('colheader_justify', 'left')
         html_string = '''

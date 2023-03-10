@@ -9,12 +9,11 @@ ERRORCODE=16
 
 with open(snakemake.log['log'],'w') as logfile:
     try:
-        logfile.write("INFO:starting to check if query sequence resides in target sequence file\n")
+        logfile.write("INFO:check if query sequences reside in target sequence files\n")
         qseqids=snakemake.params['qseqs']
         logfile.write("INFO:working with {} qseqids\n".format(len(qseqids)))
         logfile.write("INFO:parsing query file and building id to sequence dictionary\n")
-        query_dict={}
-
+        query_dict = {}
         with open(snakemake.input['query_file'],'r') as queryfile:
             for line in queryfile.readlines():
                 if line.startswith(">"):
@@ -44,8 +43,8 @@ with open(snakemake.log['log'],'w') as logfile:
                         else:
                             new_targetfile.write(line)
                     if qseq_id not in target_ids:
-                        logfile.write("INFO:query sequence {} does not reside in target fasta file\n".format(qseq_id))
-                        logfile.write("INFO:trying to attach query sequence to target_sequences.faa\n")
+                        logfile.write("\tINFO:query sequence {} does not reside in target fasta file\n".format(qseq_id))
+                        logfile.write("\tINFO:trying to attach query sequence to target_sequences.faa\n")
                         new_targetfile.write(query_dict[qseq_id])
 
         logfile.write("DONE\n")

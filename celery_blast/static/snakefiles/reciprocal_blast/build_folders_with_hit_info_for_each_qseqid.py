@@ -28,7 +28,7 @@ with open(snakemake.log['log'],'w') as logfile:
             logfile.write("\tINFO:working with:{}\n".format(query))
             target_df = result_df[result_df['qseqid'] == query]
 
-
+            logfile.write("\t\tINFO:constructing DataTable CNN html string for pandas html table ...\n")
             pd.set_option('colheader_justify', 'left')
             html_string = '''
             <html>
@@ -77,14 +77,14 @@ with open(snakemake.log['log'],'w') as logfile:
 
             </html>
             '''
-            logfile.write("\tINFO:writing result_rbhs.html file for {}\n".format(query))
+            logfile.write("\t\tINFO:writing result_rbhs.html file for {}\n".format(query))
 
-            resulst_rbhs_html_filepath = query + '/' + "results_rbhs.html"
-            with open(resulst_rbhs_html_filepath, 'w') as f:
+            result_rbh_html_filepath = query + '/' + "results_rbhs.html"
+            with open(result_rbh_html_filepath, 'w') as f:
                 f.write(html_string.format(table=target_df[['sacc_transformed','scomnames','staxids','pident','bitscore','evalue',"slen",'stitle']].to_html(classes='mystyle')))
 
 
-            logfile.write("\tINFO:producing statistic plot for query sequence results\n")
+            logfile.write("\t\tINFO:producing statistic plot for query sequence results\n")
             fig, ax = plt.subplots(2, 2)
             ax[0, 0].hist(target_df['pident'], edgecolor="black", color='yellow')
             ax[0, 0].set_title("percent identity")
@@ -98,11 +98,11 @@ with open(snakemake.log['log'],'w') as logfile:
             ax[1, 1].set_xticklabels(target_df.groupby('scomnames').size().index[0:12], rotation=90)
             plt.tight_layout()
 
-            logfile.write("\tINFO:saving plots to project directory\n")
+            logfile.write("\t\tINFO:saving plots to project directory\n")
             result_statistics=str(query)+ "/basic_statistics.png"
             plt.savefig(result_statistics, dpi=400)
 
-            logfile.write("\tINFO:writing target ids into textfile\n")
+            logfile.write("\t\tINFO:writing target ids into target_sequence_ids.txt\n")
             output_file_path = query + '/' + 'target_sequence_ids.txt'
             with open(output_file_path,'w') as output:
                 sacc_list = list(target_df['sacc'].unique())

@@ -6,7 +6,7 @@ The inference is based on the pandas merge function.
 The columns for the qseqid and targetid as well as the corresponding taxid column are used for the merge comparison.
 '''
 import pandas as pd
-import sys
+from sys import exit
 ERRORCODE=5
 try:
     with open(snakemake.log['log'],'w') as logfile:
@@ -39,8 +39,8 @@ try:
         #returncode for no reciprocal hits
         if len(result_df['targetid']) == 0:
             logfile.write("ERROR:there are no reciprocal best hits for the provided query sequences\n")
-            sys.exit(ERRORCODE)
-        logfile.write("INFO:starting to produce RBH output file\n")
+            exit(ERRORCODE)
+        logfile.write("INFO:generating RBH output table with following headers, separated by a tab: forward_genome_id\tbackward_genome_id\tstaxids\n")
         with open(snakemake.output['rec_best_hits'],'w') as recfile:
             recfile.write("forward_genome_id\tbackward_genome_id\tstaxids\n")
             for targetid, qseqid,taxid in zip(result_df['targetid'],result_df['qseqid'],result_df['taxid_y']):
@@ -48,6 +48,6 @@ try:
         logfile.write("DONE\n")
 except Exception as e:
     logfile.write("ERROR:something unexpected happened - exception {}\n".format(e))
-    sys.exit(ERRORCODE)
+    exit(ERRORCODE)
 
 

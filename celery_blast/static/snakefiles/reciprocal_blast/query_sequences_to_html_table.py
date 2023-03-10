@@ -105,7 +105,7 @@ def parse_entrez_xml(records) -> dict:
             pfam = 'http://pfam.xfam.org/family/'
             jvci = 'https://www.ncbi.nlm.nih.gov/genome/annotation_prok/evidence/'
             cdd = 'https://www.ncbi.nlm.nih.gov/Structure/sparcle/archview.html?archid='
-            refseq = 'https://www.ncbi.nlm.nih.gov/protein/' + accession
+            # refseq = 'https://www.ncbi.nlm.nih.gov/protein/' + accession
 
             protein_informations['links'][accession] = {'pfam': '', 'jvci': '', 'cdd': '', 'refseq': ''}
             if "Domain architecture ID" in record['GBSeq_comment']:
@@ -154,7 +154,7 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
                 jvci = protein_informations['links'][protein]['jvci']
                 cdd = protein_informations['links'][protein]['cdd']
                 pfam = protein_informations['links'][protein]['pfam']
-                refseq = protein_informations['links'][protein]['refseq']
+                # refseq = protein_informations['links'][protein]['refseq']
 
                 features = []
                 for feature in protein_informations['features'][protein]:
@@ -285,9 +285,9 @@ with open(snakemake.log['log'],'w') as logfile:
         proteins = get_target_header(snakemake.input['target_file'])
         logfile.write("INFO:fetching protein records with biopython\n")
         records = fetch_protein_records(proteins,snakemake.params['email'])
-        logfile.write("INFO:parsing records and extracting informations\n")
+        logfile.write("INFO:parsing records and extracting information\n")
         protein_informations = parse_entrez_xml(records)
-        logfile.write("INFO:writing html file with pandas\n")
+        logfile.write("INFO:writing html file with pandas (DataTable CNNs included)\n")
         create_pandas_df_and_html_table(proteins,protein_informations,snakemake.output['output_html'],snakemake.output['output_csv'])
         logfile.write("DONE\n")
     except Exception as e:

@@ -13,6 +13,7 @@ from .models import BlastDatabase
 from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict, \
     filter_duplicates_by_ftp_path
 from celery_blast.settings import REFSEQ_ASSEMBLY_FILE, TAXONOMIC_NODES
+
 ''' 
 transactions with models (manager)
 '''
@@ -38,7 +39,6 @@ def get_databases_in_progress():
     return BlastDatabase.objects.get_databases_with_task_on_progress()
 
 
-# TODO this function needs to get refactored maybe put some functionality in the form and model for BlastDatabase
 ''' create_blastdatabase_table_and_directory
     
     Processes the form data of the create_blast_database_model_and_directory view POST request.
@@ -67,7 +67,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
             assembly_levels = valid_blastdatabase_form.cleaned_data['assembly_levels']
 
             if len(assembly_levels) == 0:
-                assembly_levels = ['Chromosome','Scaffold','Complete Genome','Contig']
+                assembly_levels = ['Chromosome', 'Scaffold', 'Complete Genome', 'Contig']
 
             if valid_blastdatabase_form.cleaned_data.get('taxid_file', False):
                 # upload taxonomic information file
@@ -344,18 +344,29 @@ def read_database_table_by_database_id_and_return_json(database_id):
 '''
 
 
-def check_for_db_updates(blast_database_id:int):
-    # retrieve database model
-    blast_db = get_database_by_id(blast_database_id)
-    # check if previous task finished
-    if blast_db.database_download_and_format_task.status == 'SUCCESS':
-        # retrieving assembly level information
-        ass_levels = []
-        for level in blast_db.assembly_levels.all():
-            ass_levels.append(level.assembly_level)
-        # retrieve taxonomic information
-        assembly_summary = read_current_assembly_summary_with_pandas(assembly_levels=ass_levels)
-    # download and format task: progress or failure -> return 1
-    else:
-        return 1
-    return 0
+def check_for_db_updates(blast_database_id: int):
+    try:
+        # retrieve database model
+        blast_db = get_database_by_id(blast_database_id)
+        # check if previous task finished
+        if blast_db.database_download_and_format_task.status == 'SUCCESS' and blast_db.uploaded_files == False:
+            # retrieve taxonomic node file
+            taxid_filepath = blast_db.attached_taxonomic_node_file
+            taxonomic_nodes = read_taxonomy_table(taxid_filepath)
+            # retrieving assembly level information
+            ass_levels = []
+            for level in blast_db.assembly_levels.all():
+                ass_levels.append(level.assembly_level)
+            # retrieve taxonomic information
+            assembly_summary = read_current_assembly_summary_with_pandas(assembly_levels=ass_levels)
+            # filter assembly summary with taxonomic information
+            filtered_table = filter_table_by_taxonomy(assembly_summary, taxonomic_nodes)
+            # reading current blast_db table
+            blast_db_table_path = blast_db.path_to_database_file + '/' + blast_db.get_pandas_table_name()
+
+        # download and format task: progress or failure -> return 1
+        else:
+            return 1
+        return 0
+    except Exception as e:
+        raise Exception("[-] ERROR updating blast database with exception: {}".format(e))

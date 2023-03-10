@@ -10,7 +10,7 @@ overlap.remove("lightgrey")
 ERRORCODE=10
 with open(snakemake.log[0],'w') as logfile:
     try:
-        logfile.write("INFO:starting to produce plots for the results of the reciprocal BLAST pipeline\n")
+        logfile.write("INFO:generating plots for the results of the reciprocal BLAST pipeline\n")
         logfile.write("INFO:loading reciprocal result dataframe into pandas\n")
         rec_prot=pd.read_table(snakemake.input['rec_res'])
         logfile.write("INFO:loading forward BLAST results dataframe into pandas\n")
@@ -52,7 +52,7 @@ with open(snakemake.log[0],'w') as logfile:
         if rows * columns < len(queries):
             rows += 1
 
-        logfile.write("INFO:starting to produce e-value figure\n")
+        logfile.write("INFO:generating e-value figure\n")
         fig, axs = plt.subplots(rows, columns, figsize=(15, 6),
                                 facecolor='w', edgecolor='k', constrained_layout=True)
         # fig.subplots_adjust(hspace = .5, wspace=.001)
@@ -90,11 +90,9 @@ with open(snakemake.log[0],'w') as logfile:
             cl = overlap[random.randint(0, len(overlap) - 1)]
             axs.scatter(list(accid_taxids[queries[0]]['evalue']), range(len(accid_taxids[queries[0]]['evalue'])), color=cl)
             axs.set_title(str(queries[0]))
-            # axs.get_xaxis().set_visible(False)
-            # axs.get_yaxis().set_visible(False)
             plt.savefig(snakemake.output['evalue_plot'],dpi=300)
 
-        logfile.write("INFO:starting to produce taxids to hit figure\n")
+        logfile.write("INFO:generating taxids to hit figure\n")
         fig, axs = plt.subplots(rows, columns, figsize=(15, 6),
                                 facecolor='w', edgecolor='k', constrained_layout=True)
 

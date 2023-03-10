@@ -3,7 +3,7 @@ This script extracts information for the RBHs from the forward BLAST result tabl
 Taxonomy information are added by querying the taxonomy database with the provided taxonomic identifier.
 '''
 import pandas as pd
-import sys
+from sys import exit
 from Bio import Entrez
 
 ERRORCODE=6
@@ -13,7 +13,7 @@ with open(snakemake.log['log'], 'w') as logfile:
         Entrez.email = snakemake.config['user_email']
         rec_prot = pd.read_table(snakemake.input['rec_res'], index_col=False)
         fw_res = pd.read_table(snakemake.input['fw_res'], header=None)
-        logfile.write("\tINFO:done loading result files\n")
+        logfile.write("\tINFO:done loading forward BLAST and RBH inference result files\n")
         fw_res.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore", "qgi", "sgi", "sacc", "staxids",
                           "sscinames", "scomnames",
                           "stitle","slen"]
@@ -29,7 +29,7 @@ with open(snakemake.log['log'], 'w') as logfile:
         # filtering reciprocal best hits
         result_data = result_data.drop_duplicates(['sacc_transformed', 'staxids'], keep='first')
         result_data = result_data.reset_index(drop=True)
-        logfile.write("INFO:done merging result files and construction of RBH result dataframe\n")
+        logfile.write("INFO:done with merging result files and construction of RBH result dataframe\n")
 
         # Adds taxonomic information to pandas dataframe.
         # In order to retrieve the taxonomic information biopython calls are conducted with the query accession ids in the pandas dataframe.
@@ -52,7 +52,7 @@ with open(snakemake.log['log'], 'w') as logfile:
             begin = 0
             step = 500
             steps = 500
-            logfile.write("INFO:inference of taxonomic informations for all {} taxids\n".format(len(taxids)))
+            logfile.write("INFO:inference of taxonomic information for all {} taxids\n".format(len(taxids)))
             while begin < end:
                 if step >= end:
                     step = end
@@ -66,8 +66,8 @@ with open(snakemake.log['log'], 'w') as logfile:
                     except Exception as e:
                         if attempt == 9:
                             logfile.write(
-                                "ERROR:inference of taxonomic informations failed with exception {}\n".format(e))
-                            sys.exit(ERRORCODE)
+                                "ERROR:inference of taxonomic information failed with exception {}\n".format(e))
+                            exit(ERRORCODE)
                     else:
                         for i in range(len(record)):
                             taxonomy.append(record[i]['ScientificName'])
@@ -76,7 +76,7 @@ with open(snakemake.log['log'], 'w') as logfile:
                                 for akaid in record[i]['AkaTaxIds']:
                                     if int(akaid) in splitted_ids:
                                         taxid.append(akaid)
-                                        logfile.write("\tINFO:AkaTaxIds detected: {}\n".format(akaid))
+                                        logfile.write("\t\tINFO:AkaTaxIds detected: {}\n".format(akaid))
                                         break
                                 else:
                                     taxid.append(record[i]['TaxId'])
@@ -113,9 +113,9 @@ with open(snakemake.log['log'], 'w') as logfile:
                                 missing_ids = [m_taxid for m_taxid in splitted_ids if m_taxid not in taxid]
                                 for m_taxid in missing_ids:
                                     logfile.write(
-                                        "WARNING:problem during fetching of taxonomic information for: {}\n".format(
+                                        "\t\tWARNING:problem during fetching of taxonomic information for: {}\n".format(
                                             m_taxid))
-                                    logfile.write("WARNING:adding unknown string to pandas dataframe ...\n")
+                                    logfile.write("\t\tWARNING:adding unknown string to pandas dataframe ...\n")
                                     taxid.append(m_taxid)
                                     taxonomy.append('unknown')
                                     genus.append('unknown')
@@ -142,7 +142,7 @@ with open(snakemake.log['log'], 'w') as logfile:
                 logfile.write(
                     "ERROR:Information from biopython calls have not the same length as the dataframe,\
                                 dataframe cant get combined with taxonomic information'\n")
-                sys.exit(ERRORCODE)
+                exit(ERRORCODE)
 
 
         taxids_from_df = result_data['staxids'].unique()
@@ -152,12 +152,10 @@ with open(snakemake.log['log'], 'w') as logfile:
         taxonomy_dataframe['staxids'] = taxonomy_dataframe['staxids'].astype('int64')
         result_data = result_data.merge(taxonomy_dataframe, on='staxids')
         result_data['query_info'] = result_data['stitle']
-
         logfile.write("INFO:writing result dataframe with taxonomic information\n")
-
         result_data.to_csv(snakemake.output['taxonomy_result_csv'], header=list(result_data.columns))
         logfile.write("DONE\n")
 
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))
-        sys.exit(ERRORCODE)
+        exit(ERRORCODE)

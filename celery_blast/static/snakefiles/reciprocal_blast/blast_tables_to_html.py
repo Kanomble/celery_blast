@@ -1,19 +1,13 @@
 #this script writes the RBHs identified by the reciprocal BLAST pipeline into an html table
 import pandas as pd
-import sys
+from sys import exit
 
 ERRORCODE=7
 with open(snakemake.log['log'],'w') as logfile:
     try:
         logfile.write("INFO:transforming reciprocal results csv files into html tables\n")
         result_data = pd.read_csv(snakemake.input['rec_res'],header=0,index_col=0)
-        '''
-        for i in range(0, len(result_data), 1):
-            taxids = result_data.iat[i, 7]
-            scientific_names = result_data.iat[i, 8]
-            common_names = result_data.iat[i, 9]
-        '''
-        logfile.write("INFO:preparing html string ...\n")
+        logfile.write("INFO:preparing html string with DataTable CNNs for pandas html table ...\n")
 
         pd.set_option('colheader_justify', 'left')
         html_string = '''
@@ -65,7 +59,8 @@ with open(snakemake.log['log'],'w') as logfile:
         '''
         with open(snakemake.output['rec_html'], 'w') as f:
             f.write(html_string.format(table=result_data.to_html(classes='mystyle')))
+        logfile.write("INFO:Done writing html output table with pandas\n")
         logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))
-        sys.exit(ERRORCODE)
+        exit(ERRORCODE)

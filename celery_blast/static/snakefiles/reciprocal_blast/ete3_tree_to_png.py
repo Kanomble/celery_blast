@@ -9,15 +9,14 @@ ERRORCODE=15
 with open(snakemake.log['log'],'w') as logfile:
     try:
         logfile.write("INFO:setting up environment for ete3 ...\n")
-        logfile.write("INFO:starting to convert treefile to png  with ete3... \n")
+        logfile.write("INFO:starting to convert treefile to png with ete3... \n")
         logfile.write("INFO:loading treefile\n")
         filename= snakemake.input['tree']
         query= filename.split('/')[0]
         with open(snakemake.input['tree'], 'r') as t:
             tree = t.readlines()
         if len(tree) < 1:
-            with open(snakemake.log['log'], 'w') as log_f:
-                log_f.write('ERROR: The Newick file used in this command has no content.')
+            logfile.write('WARNING:The Newick file used in this command has no content')
             copyfile('../../../static/images/no_results.svg', snakemake.output['pic'])
         else:
             tree = tree[0].replace("'","")
@@ -36,7 +35,6 @@ with open(snakemake.log['log'],'w') as logfile:
             if len(tree) < 1:
                 logfile.write('WARNING:newick file: {} has no content\n'.format(filename))
                 copyfile('../../../static/images/no_results.svg', snakemake.output['pic'])
-                logfile.write("WARNING:copied old images to static directory ...\n")
             else:
                 tree = tree[0].replace("'", "")
                 logfile.write("INFO:using normal treefile\n")
