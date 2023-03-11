@@ -48,17 +48,20 @@ All important environment variables are defined within this file
 
 <a name="project_setup"></a>
 ## Project setup
-In order to execute the integrated reciprocal BLAST pipeline (SymBLAST's core pipeline), the user has to
-set up some essential data: the query sequences from one particular organism/genome file 
-(the sequences for which orthologous sequences should be found), a forward BLAST database, that will serve as the search space, a
-backward BLAST database, the scientific name of the organism from which the query sequences were obtained and a project title. 
-In addition, the user may change some BLAST settings, e.g. the number of output sequences per query sequence (`num_alignments`),
-or the `e-value` cut-off. The BLAST databases can be selected via a special drop-down menu.
-The Forward BLAST database serves as a search space in which putative orthologous sequences can be found.
-The backward BLAST database has to contain the genome file from which the query sequences were obtained. The user provided
-data is validated before a project is saved into the database and before possible pipeline execution.
-If any validation fails, accurate error messages are display within the relevant form fields. This ensures a smooth execution of the pipeline.
-The pipeline is composed of following steps:
+o execute the integrated reciprocal BLAST pipeline of SymBLAST, certain data must be set up by the user. 
+This includes the query sequences from a particular organism/genome file,
+a forward BLAST database that will serve as the search space, a backward BLAST database, the scientific name of the 
+organism from which the query sequences were obtained, and a project title. Additionally, the user can modify some BLAST
+settings, such as the number of output sequences per query sequence (num_alignments) or the e-value cut-off. 
+The BLAST databases can be selected from a special drop-down menu.
+
+The forward BLAST database acts as a search space in which putative orthologous sequences can be located, 
+while the backward BLAST database must contain the genome file from which the query sequences were obtained. 
+Prior to saving a project into the database or executing the pipeline, the user-provided data undergoes validation to 
+ensure that it meets the necessary criteria. If any of the validations fail,
+accurate error messages are displayed within the relevant form fields to ensure a smooth pipeline execution.
+
+The pipeline comprises the following steps:
 
 1. Forward BLAST (default BLAST settings: e-value=0.001, word-size=3, threads=1, num_alignments=10000, max_hsps=500)
 2. Backward BLAST preparation (extracting homologous target sequences of the forward BLAST)
@@ -83,6 +86,8 @@ Further SymBLAST post-processing procedures outside the scope of this pipeline i
    3. Building an interactive bokeh plot with the first two principal components and the taxonomic information within the RBH result table
    4. Refine the 
 
+### Interactive Bokeh Plot
+![Interactive Bokeh Plot](./celery_blast/static/images/example_bokeh_plot.png)
 
 ### Best practices for project settings
 Use appropriate BLAST databases. If you want to search in more complete genomes, create a database that contains genome sequences
@@ -118,27 +123,39 @@ Protein sequence files are downloaded from the NCBI FTP site and are passed to t
 
 <a name="download_process"></a>
 ## Download and formatting procedure of genome assemblies
-If the user presses the download button, a celery asynchronous task is executed. 
-This task is composed of multiple subtasks, that perform the relevant database creation steps.
-Celery allows task monitoring via a logger and with the `TaskResult` model of the [result backend](https://docs.celeryproject.org/en/stable/userguide/tasks.html#task-result-backends). 
-The name of the function and celery task, which is triggered by the button is `download_blast_databases_based_on_summary_file` resides in the `refseq_transactions/tasks.py` file. 
-This function has to process three main steps, first it tries to download and decompress all files that 
-reside in a table that has been created during `BlastDatabase` model creation (s. above section). 
-The celery task formats the downloaded protein fasta files to BLAST databases and writes an alias file similar to the file that is created with the `blastdb_aliastool`. 
-In all of these three main steps processes via the `subprocess.Popen` interface are executed. 
-As a first step, the unix command `wget` and `gzip` are used to download and simultaneous decompress genome assemblies from the NCBI FTP server.
-This is done with following command: `wget -qO- ftp_path | gzip -d > assembly_file.faa`. If this command results into any error (returncode != 0) it is retried with a maximum of ten tries. 
-If there is no positive returncode after ten tries, the assembly file is skipped and the FTP-path that points to the file is written into a logfile.
-In the next step `makeblastdb` is used to format the downloaded and decompressed assembly files.
+When the user clicks the download button, a celery asynchronous task is initiated. 
+This task consists of multiple subtasks, each responsible for performing specific steps in the database creation process. 
+Celery allows for task monitoring through a logger and the ``TaskResult`` model of the [result backend](https://docs.celeryproject.org/en/stable/userguide/tasks.html#task-result-backends).
+
+The task is triggered by a function called ``download_blast_databases_based_on_summary_file``
+in the ``refseq_transactions/tasks.py`` file, which has three main steps. Firstly, it attempts to download and decompress 
+all files stored in a table created during ``BlastDatabase`` model creation (as described in the above section). 
+The celery task then formats the downloaded protein fasta files into BLAST databases and generates
+an alias file similar to the one created with the ``blastdb_aliastool``. 
+All three main steps are performed using the ``subprocess.Popen`` interface.
+
+In the first step, the Unix commands ``wget`` and ``gzip`` are used to download and simultaneously 
+decompress genome assemblies from the NCBI FTP server. This is accomplished with the following command: 
+``wget -qO- ftp_path | gzip -d > assembly_file.faa``. 
+If this command produces an error (returncode != 0), it is retried up to a maximum of ten times. 
+If the command still fails after ten attempts, the assembly file is skipped, and the FTP path pointing to the file is written to a logfile.
+Finally, in the next step, ``makeblastdb`` is used to format the downloaded and decompressed assembly files into BLAST databases.
+
 
 <a name="makeblastdb"></a>
 #### Notes on the `makeblastdb` program and BLAST database formatting
-With the `makeblastdb` module custom BLAST databases are builded. Per default, it will create a database for the input sequences, e.g. if you submit following cmd:
-`makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5` you will create a database for the `bw_prot_db.faa`.
-The `-taxid` parameter is used to assign the taxonomic node 1140 (*Synechococcus elongatus* 7492) to all sequences that reside in the `bw_prot_db.faa` fasta file.
-If you have mutliple fasta files that needs to get formatted with the `makeblastdb` program, there are two options. First, you can pass multiple fasta files to the `-in` parameter. 
-Secondly, after formatting each fasta individually, you can create a `.pal` database alias file that lists all existing databases, 
-or you can use the `blastdb_aliastool` program to create this alias file for you. If they have the same taxonomic node you can pass the taxid with the `-taxid` parameter to the program, if not use the `-taxid_map` parameter.
+The ``makeblastdb`` module is a useful tool for building custom BLAST databases.
+By default, it creates a database based on the input sequences. 
+For example, if you submit the following command: ``makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5``,
+a database named bw_prot_db.faa will be created. 
+The ``-taxid`` parameter is used to assign the taxonomic node 1140 (corresponding to Synechococcus elongatus 7492) 
+to all sequences in the bw_prot_db.faa fasta file.
+If you need to format multiple fasta files using the ``makeblastdb`` program, there are two options available. 
+First, you can provide multiple fasta files to the ``-in`` parameter. 
+Alternatively, after formatting each fasta file individually, you can create a ``.pal`` database alias file that lists 
+all existing databases. The ``blastdb_aliastool`` program can also be used to create this alias file for you.
+If the sequences in the fasta files have the same taxonomic node, you can use the ``-taxid`` parameter to assign the taxid to the program. 
+However, if they have different taxonomic nodes, you should use the ``-taxid_map`` parameter instead.
 
 ```` Bash
 makeblastdb -in .\prot_1_db.faa -dbtype prot -taxid 1140 -blastdb_version 5
@@ -177,7 +194,7 @@ an assembly accession file. Most of these files are not mandatory.
 
 <a name="result_dashboard"></a>
 ## Result Dashboard
-After successfully pipeline execution, results are displayed within an project details page.
+After successfully pipeline execution, results are displayed within a project details page.
 
 <a name="snakemake"></a>
 ## Snakemake pipeline with celery
@@ -199,8 +216,19 @@ Detailed information about Snakemake can be found on the [project documentation 
 ### Docker
 All necessary software packages are deployed within docker container. Those containers are wrapped into a network
 using docker-compose.
-### Django
-### Gunicorn and Nginx
+
+### Django, Gunicorn and Nginx
+Django, Gunicorn, and Nginx are commonly used technologies for building and deploying web applications. 
+In a Docker network, these technologies can be used together to create a scalable and efficient web application stack.
+Django is a popular Python-based web framework used for building web applications. 
+Gunicorn is a Python WSGI HTTP server that can serve Django applications.
+Nginx is a high-performance web server that can act as a reverse proxy, load balancer, and serve static files.
+When using Django, Gunicorn, and Nginx in a Docker network, each technology can be run in a separate Docker container. 
+The Django application can be run using Gunicorn as a WSGI HTTP server, while Nginx can be used as a reverse proxy to direct traffic to the appropriate container.
+This setup can be scaled horizontally by adding more containers to handle increased traffic. 
+In addition, Docker's networking features can be used to ensure that traffic is properly directed to the appropriate container.
+Overall, using Django, Gunicorn, and Nginx in a Docker network can create a highly scalable and efficient web application stack.
+
 ### POSTGRESQL database models
 Django models reside inside project specific `models.py` files. Models are translated to database tables.
 Documentation about the django.db.models package can be found [here](https://docs.djangoproject.com/en/2.2/topics/db/models/).
@@ -216,6 +244,10 @@ Those functions can be used to trigger side effects during initialization of the
 E.g. creation of blast project directories or specific setting files, such as the snakemake configuration file.
 
 ## TODO
+- [ ] refactor entrez query for one way blast remote searches
+- [ ] deletion of taxonomic nodes
+- [ ] interface for the CDD domain search
+- [ ] separate download buttons for phylogenies and multiple sequence alignments within the external tools website
 - [ ] database statistics progress bar
 - [ ] duplicate entries in CDD result dataframe for bokeh plot - due to different assemblies - maybe too much info
 - [ ] gunicorn --timeout setting
@@ -224,13 +256,13 @@ E.g. creation of blast project directories or specific setting files, such as th
 - [ ] if no genome level is defined take all
 - [ ] snakemake --unlock ? 
 - [ ] refactor website structures
-- [ ] add a production environment
-  - [ ] follow this [guide](https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/)
-- [ ] add a development environment
-- [ ] refactor one-way-remote BLAST bokeh plots
-  - [ ] download button
-  - [ ] annotations in plot
-  - [ ] add progress bar
+- [X] add a production environment
+  - [X] follow this [guide](https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/)
+- [X] add a development environment
+- [X] refactor one-way-remote BLAST bokeh plots
+  - [X] download button
+  - [X] annotations in plot
+  - [X] add progress bar
 - [ ] add query sequence information to one way blast detail page - maybe also to table
 - [ ] fix plotting: /blast/reciprocal_blast/media/blast_projects/2/.snakemake/scripts/tmp0ybykovj.build_folders_with_hit_info_for_each_qseqid.py:89: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
   fig, ax = plt.subplots(2, 2)
