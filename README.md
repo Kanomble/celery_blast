@@ -1,6 +1,26 @@
-# celery_blast
+# SymBLAST Local Web-Server
 Symmetrical BLAST and target sequence search web interface with Django, Gunicorn, Ngninx, PostgreSQL, Celery, RabbitMQ, 
 E-Direct, BLAST, Snakemake and Miniconda.
+
+SymBLAST is a user-friendly bioinformatics tool that performs reciprocal BLAST searches, generates multiple sequence 
+alignments, and builds phylogenetic trees. It is integrated with the workflow management system snakemake, providing a 
+streamlined and efficient way to manage the entire bioinformatics pipeline. 
+Furthermore, SymBLAST offers additional features that make it a powerful and flexible solution
+for researchers across various fields. SymBLAST generates interactive plots and tables in standalone HTML documents, 
+which enables users to visualize and analyze complex biological data easily. SymBLAST integrates the ``entrez`` tool, 
+which allows for sequence and paper searches directly within the web interface. It also enables users to download 
+taxonomic-specific protein sequences based on the results of their ``entrez`` searches. 
+
+In addition, SymBLAST includes tools for managing local protein BLAST databases. Researchers can download and format custom 
+databases, providing greater control and flexibility over the data used in their analyses. SymBLAST also includes 
+a refined alignment and phylogenetic tree reconstruction process that leverages the protein domains of the CDD 
+database using the RPS-BLAST tool. 
+
+SymBLAST is highly sophisticated and powerful, offering a range of features and capabilities ideal for target sequence searches.
+It enables performing reciprocal and one-way BLAST searches within local and remote 
+databases, providing valuable insights into the evolutionary relationships and functional characteristics of sequences.
+SymBLAST's integration into a docker container network streamlines its installation process. 
+Overall, SymBLAST is a flexible and intuitive solution that can help researchers achieve their research goals.
 
 ## Content
 - [Installation](#installation)
@@ -12,6 +32,7 @@ E-Direct, BLAST, Snakemake and Miniconda.
 - [Upload your own genome files](#genome_upload)
 - [Result Dashboard](#result_dashboard)
 - [Technical Details](#technical_details)
+
 <a name="installation"></a>
 ## Installation
 The application can get installed by submitting the `docker-compose up` or `docker compose up` command in a terminal window,
