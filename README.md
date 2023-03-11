@@ -48,7 +48,7 @@ All important environment variables are defined within this file
 
 <a name="project_setup"></a>
 ## Project setup
-o execute the integrated reciprocal BLAST pipeline of SymBLAST, certain data must be set up by the user. 
+To execute the integrated reciprocal BLAST pipeline of SymBLAST, certain data must be set up by the user. 
 This includes the query sequences from a particular organism/genome file,
 a forward BLAST database that will serve as the search space, a backward BLAST database, the scientific name of the 
 organism from which the query sequences were obtained, and a project title. Additionally, the user can modify some BLAST
@@ -244,6 +244,7 @@ Those functions can be used to trigger side effects during initialization of the
 E.g. creation of blast project directories or specific setting files, such as the snakemake configuration file.
 
 ## TODO
+- [ ] check if uploaded genomes consist of protein sequences
 - [ ] refactor entrez query for one way blast remote searches
 - [ ] deletion of taxonomic nodes
 - [ ] interface for the CDD domain search
