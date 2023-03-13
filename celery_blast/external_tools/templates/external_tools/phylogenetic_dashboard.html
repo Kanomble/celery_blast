@@ -51,27 +51,28 @@
                 <p style="font-size: medium">some subtext</p>
             </div>
         </div>
-        <div class="row" style="text-align: center;">
-            <div class="col-sm dashboard_project_list_col" style="height: 600px;">
-                <h3 class="col_header"> Reciprocal Results </h3>
-                {{ html_results|safe }}
-            </div>
 
-            <div class="col-sm dashboard_project_list_col" style="height: 600px">
-                <h3 class="col_header"> Phylogenetic Tree</h3>
-                <p style="font-size: medium">Phylogenetic tree ceated with ete3</p>
-                {% load static %}
-
-                <img class="img-phylo"
-                     src="{% static '/images/result_images' %}/{{ project_id }}/{{ query_sequence_id }}_target_sequences.svg"
-                     alt="Phylogenetic Tree created with ete3"
-                     style='height: 80%; width: 80%; object-fit: contain'>
-
-
-                <p style="font-size: medium">Some cool information about the tree, such as what the bar means etc.</p>
-            </div>
+        <div class="dashboard_project_list_col" style="height: 600px;">
+            <h3 class="col_header"> Reciprocal Results </h3>
+            {{ html_results|safe }}
         </div>
 
+        <div class="dashboard_project_list_col">
+            <h3 class="col_header" style="justify-content: center; display: flex"> Phylogenetic Tree</h3>
+            <p style="font-size: medium">Phylogenetic tree ceated with ete3</p>
+
+            {{ phylogeny|safe }}
+
+            <p style="font-size: medium">Phylogeny standalone HTML document generated with shiptv.</p>
+        </div>
+
+        <div class="col-sm dashboard_project_list_col" style="height: 600px">
+            <h3 class="col_header"> Multiple Sequence alignment </h3>
+
+            {{ msa|safe }}
+
+            <p style="font-size: medium">MSA standalone HTML document generated with MView.</p>
+        </div>
     </div>
 
 {% endblock %}

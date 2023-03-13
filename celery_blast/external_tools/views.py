@@ -297,6 +297,9 @@ def phylogenetic_information(request, project_id, query_sequence_id):
         context['query_sequence_id'] = query_sequence_id
         context['project_id'] = project_id
         context['html_results'] = ''.join(get_html_results(project_id, str(query_sequence_id) + '/results_rbhs.html'))
+        context['phylogeny'] = ''.join(get_html_results(project_id, str(query_sequence_id) + '/target_sequences_tree.html'))
+        context['msa'] = ''.join(get_html_results(project_id, str(query_sequence_id) + '/target_sequences_trimmed.html'))
+
         return render(request, "external_tools/phylogenetic_dashboard.html", context)
     except Exception as e:
         return failure_view(request, e)
