@@ -123,17 +123,17 @@ class BlastSettingsForm(forms.Form):
 # TODO documentation
 class OneWayRemoteProjectCreationForm(forms.Form):
     BLAST_SEARCH_PROGRAMS = [('blastp', 'search against protein databases'),
-                             ('blastn', 'search against nucleotide databases')]
+                             ]
     BLAST_REMOTE_DATABASES = [
         ('nr', 'none redundant proteins'),
-        ('nt', 'none redundant dna'),
-        ('env_nr', 'nr for not yet known organisms (env_nr)'),
-        ('env_nt', 'nt for not yet known organisms (env_nt)'),
         ('refseq_protein', 'refseq protein database'),
-        ('refseq_rna', 'refseq rna database'),
         ('refseq_select_prot', 'refseq selected protein database'),
-        ('refseq_select_rna', 'refseq selected rna database'),
         ('swissprot', 'protein sequences from the swissprot database')]
+    #        ('refseq_rna', 'refseq rna database'), ('blastn', 'search against nucleotide databases')
+    #         ('refseq_select_rna', 'refseq selected rna database'),
+    #        ('nt', 'none redundant dna'),
+    #    ('env_nr', 'nr for not yet known organisms (env_nr)'),
+    #    ('env_nt', 'nt for not yet known organisms (env_nt)'),
 
     r_project_title = forms.CharField(
         label="Project title",
@@ -143,7 +143,7 @@ class OneWayRemoteProjectCreationForm(forms.Form):
     r_query_sequence_file = forms.FileField(
         required=False,
         error_messages={
-            'required': "Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
+            'required': "Upload a query sequence file, this file will serve as the -query parameter for the BLAST analysis"})
 
     r_query_sequence_text = forms.CharField(
         label="Query Sequence IDs",
@@ -166,8 +166,6 @@ class OneWayRemoteProjectCreationForm(forms.Form):
     r_entrez_query = forms.CharField(
         max_length=200,
         required=False,
-        error_messages={
-            'required': "Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"}
     )
 
     def __init__(self, user, *args, **kwargs):
@@ -233,7 +231,7 @@ class OneWayRemoteProjectCreationForm(forms.Form):
                     self.add_error('r_query_sequence_text', 'following sequences are unavailable: {}'.format(errors))
                 cleaned_data['r_query_sequence_text'] = proteins
             except Exception as e:
-                self.add_error("r_query_sequence_text", "please provide valid protein identifiers")
+                self.add_error("r_query_sequence_text", "please provide valid protein identifiers: exception: {}".format(e))
 
             # self.add_error('r_query_sequence_text','not available yet')
         else:
