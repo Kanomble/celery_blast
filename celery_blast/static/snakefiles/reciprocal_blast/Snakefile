@@ -25,7 +25,9 @@ rule all:
 		 "query_sequence_information.html",
 		"query_sequence_information.csv",
 		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
-		"query_domains.tsf","query_domains.html"
+		"query_domains.tsf","query_domains.html",
+		expand("{qseqid}/target_sequences_trimmed.html", qseqid=QSEQIDS),
+		expand("{qseqid}/target_sequences_tree.html", qseqid=QSEQIDS)
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -159,9 +161,9 @@ rule blast_tables_to_html:
 #RULE 8
 #outputs a summary for the RBH inference and constructs directories for each query sequence
 rule build_folders_with_hit_info_for_each_qseqid:
-	input: result_csv="reciprocal_results.csv", query_file=config['query_sequence'], blast_tables_to_html_log="log/blast_tables_to_html.log"
+	input: result_csv="reciprocal_results_with_taxonomy.csv", query_file=config['query_sequence'], blast_tables_to_html_log="log/blast_tables_to_html.log"
 	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
-		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
+		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),rec_res_table=expand("{qseqid}/rbh_table.tsf",qseqid=QSEQIDS),
 		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
 	params:	project_id=config['project_id'],
 	log: log="log/build_folders_with_hit_info_for_each_qseqid.log"
@@ -238,10 +240,26 @@ rule conduct_multiple_sequence_alignment_mafft:
 				lfile.write("ERROR: in mafft with exception: {}\n".format(e))
 				shell("touch {output}")
 
+#RULE 19
+rule trimal:
+	input: target_msa="{qseqid}/target_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
+	output: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
+	log: trimal_log="log/{qseqid}/trimal.log"
+	shell:
+		"trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}"
+
+#RULE 20
+rule display_alignment:
+	input: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
+	output: html_output="{qseqid}/target_sequences_trimmed.html"
+	log: display_alignment_log="log/{qseqid}/mview.log"
+	shell:
+		"mview -in fasta -html head -moltype aa -css on -coloring any -consensus on -sort cov {input.trimmed_sequences} > {output.html_output} 2> {log.display_alignment_log}"
+
 #RULE 13
 #this rule shouldn't throw exceptions, if an error occurs an empty file is created
 rule conduct_phylogeny_fast_tree:
-	input: target_msa="{qseqid}/target_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
+	input: target_msa="{qseqid}/target_sequences_trimmed.msa"
 	output: "{qseqid}/target_sequences.tree"
 	log: log="log/{qseqid}/phylogeny.log"
 	run:
@@ -269,6 +287,14 @@ rule conduct_phylogeny_fast_tree:
 			with open(log['log'],'w') as lfile:
 				lfile.write("ERROR: in fasttree with exception: {}\n".format(e))
 				shell("touch {output}")
+
+#RULE 21
+rule html_phylogenie:
+	input: newick_tree="{qseqid}/target_sequences.tree", blast_table="{qseqid}/rbh_table.tsf"
+	output: html_tree="{qseqid}/target_sequences_tree.html"
+	log: shiptv_log="log/{qseqid}/shiptv.log"
+	shell:
+		"shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}"
 
 #RULE 14
 rule update_tree_with_taxid:

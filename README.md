@@ -216,6 +216,7 @@ Those functions can be used to trigger side effects during initialization of the
 E.g. creation of blast project directories or specific setting files, such as the snakemake configuration file.
 
 ## TODO
+- [ ] project validation -> check if project title already exist!
 - [ ] database statistics progress bar
 - [ ] duplicate entries in CDD result dataframe for bokeh plot - due to different assemblies - maybe too much info
 - [ ] gunicorn --timeout setting

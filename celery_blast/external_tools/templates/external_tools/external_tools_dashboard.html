@@ -35,11 +35,9 @@
                 <thead>
                 <tr>
                     <th>Accession ID</th>
-                    <th>MSA</th>
-                    <th>Phylogeny</th>
                     <!-- <th>Timestamp</th> -->
-                    <th>Tree</th>
-                    <th></th>
+                    <th>View Tree</th>
+                    <th>Download Phylogeny</th>
                     <th>Phylogenetic information</th>
                 </tr>
                 </thead>
@@ -49,6 +47,7 @@
                         <td>
                             {{ qseq.query_accession_id }}
                         </td>
+                        <!--
                         <td>
                             <form id="msa_form_{{ qseq.id }}" style="display: block"
                                   action='{% url 'perform_simple_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}'
@@ -96,6 +95,7 @@
                                 </div>
                             {% endif %}
                         </td>
+                        -->
                         <td>
                             {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
                                 {% load static %}

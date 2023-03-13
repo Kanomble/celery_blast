@@ -28,6 +28,12 @@ with open(snakemake.log['log'],'w') as logfile:
             logfile.write("\tINFO:working with:{}\n".format(query))
             target_df = result_df[result_df['qseqid'] == query]
 
+            logfile.write("\t\tINFO:constructing tab separated file ...")
+            cols = ['sseqid', 'qseqid', 'bitscore', 'pident', 'evalue', 'slen', 'query_info', 'phylum', 'class',
+                    'order', 'family', 'genus']
+            target_df_to_tab = target_df.loc[:,cols]
+            target_df_to_tab.to_csv(query+'/rbh_table.tsf', index=False, sep="\t")
+
             logfile.write("\t\tINFO:constructing DataTable CNN html string for pandas html table ...\n")
             pd.set_option('colheader_justify', 'left')
             html_string = '''
