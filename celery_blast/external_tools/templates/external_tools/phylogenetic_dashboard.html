@@ -35,23 +35,6 @@
 {% block content %}
     <div class="container-fluid">
 
-        <div class="row" style="text-align: center;">
-            <div class="col-sm dashboard_project_list_col" style="height: 600px">
-
-                <h3 class="col_header"> Basic Information about {{ query_sequence_id }} </h3>
-                <p style="font-size: medium">Identification of Protein function (needs to be changed)</p>
-                {% load static %}
-                <img src="{% static '/images/result_images' %}/{{ project_id }}/{{ query_sequence_id }}_statistics.png"
-                     alt="Basic statistics of the reciprocal BLAST run."
-                     style='height: 80%; width: 80%; object-fit: contain'>
-            </div>
-
-            <div class="col-sm dashboard_project_list_col" style="height: 600px">
-                <h3 class="col_header"> Multiple Sequence alignment </h3>
-                <p style="font-size: medium">some subtext</p>
-            </div>
-        </div>
-
         <div class="dashboard_project_list_col" style="height: 600px;">
             <h3 class="col_header"> Reciprocal Results </h3>
             {{ html_results|safe }}
@@ -63,15 +46,15 @@
 
             {{ phylogeny|safe }}
 
-            <p style="font-size: medium">Phylogeny standalone HTML document generated with shiptv.</p>
+            <p style="font-size: medium;justify-content: center">Phylogeny standalone HTML document generated with shiptv.</p>
         </div>
 
-        <div class="col-sm dashboard_project_list_col" style="height: 600px">
+        <div class="dashboard_project_list_col" style="justify-content: center; display: flex">
             <h3 class="col_header"> Multiple Sequence alignment </h3>
 
             {{ msa|safe }}
 
-            <p style="font-size: medium">MSA standalone HTML document generated with MView.</p>
+            <p style="font-size: medium;justify-content: center">MSA standalone HTML document generated with MView.</p>
         </div>
     </div>
 
