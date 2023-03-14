@@ -33,7 +33,7 @@ with open(snakemake.log['log'],'w') as logfile:
                 snakemake.config['max_rbhs_for_phylo']
             ))
             target_df = target_df.sort_values(by='bitscore', ascending=False)[:int(snakemake.config['max_rbhs_for_phylo'])].sort_index().copy()
-            logfile.write("\t\tINFO:constructing tab separated file ...")
+            logfile.write("\t\tINFO:constructing tab separated file ... \n")
             cols = ['sseqid', 'qseqid', 'bitscore', 'pident', 'evalue', 'slen', 'query_info', 'phylum', 'class',
                     'order', 'family', 'genus']
             target_df_to_tab = target_df.loc[:,cols]
