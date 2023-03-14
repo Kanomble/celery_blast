@@ -92,6 +92,7 @@
                     </tr>
                     <tr>
                         {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+                            <td></td>
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
                             <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
                             <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
@@ -99,8 +100,8 @@
                             <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
 
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
-                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
-                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
+                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
+                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>
                         {% endif %}
                     </tr>
                 </tbody>
@@ -109,23 +110,26 @@
     </div>
     <br>
 
+    <div class="dashboard_project_list_col" style="height: 200px;overflow-y: hidden">
     {% if BlastProject.project_execution_snakemake_task.status == 'FAILURE' %}
-    <div class="dashboard_project_list_col">
-        <div class="alert alert-danger">
+        <div class="alert alert-danger" style="text-align: center">
             An error occurred during execution of the pipeline.
         </div>
         <div class="progress">
             <div id="progress_bar"> 0% </div>
         </div>
-    </div>
-    {% else %}
-        <div class="dashboard_project_list_col">
+    {% elif BlastProject.project_execution_snakemake_task.status == 'PROGRESS' %}
+            <p style="text-align: center"> Snakemake pipeline in progress ... </p>
             <div class="progress">
                 <div id="progress_bar"> 0% </div>
             </div>
-        </div>
+    {% else %}
+            <p style="text-align: center"> Snakemake pipeline finished! </p>
+            <div class="progress">
+                <div id="progress_bar"> 0% </div>
+            </div>
     {% endif %}
-
+    </div>
     <!-- <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
     </div> -->
 
@@ -164,11 +168,9 @@
             <!-- The slideshow -->
             <div class="carousel-inner">
             <div class="carousel-item active">
-                {% load static %}
                 <img src="/media/blast_projects/{{BlastProject.id}}/plot_amount_hits_of_target_taxon.png" alt="distribution of hits of target taxons" class="img-fluid" >
             </div>
             <div class="carousel-item">
-                {% load static %}
                 <img src="/media/blast_projects/{{BlastProject.id}}/plot_evalue_distribution.png" alt="evalues" class="img-fluid" >
             </div>
 
@@ -191,6 +193,8 @@
 
 
 {% block scripts %}
+{% load static %}
+
 <script src="{% static 'javascript/load_ajax_table.js' %}"></script>
     <script>
     $(document).ready(function() {

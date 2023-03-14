@@ -286,7 +286,7 @@ div.dashboard_project_list_col table th {
 div.progress {
     background: transparent;
     position: relative;
-    height: 400px;
+    height: 200px;
     padding: 20px;
     display: flex;
 }
@@ -299,7 +299,6 @@ div.progress #progress_bar {
     line-height: 30px;
     color: white;
     border: 2px solid white;
-    margin-top: 180px;
     animation: progress 5000ms ease 1;
 }
 
@@ -328,7 +327,7 @@ div.dropdown_content {
     box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
     overflow-x: hidden;
     overflow-y: auto;
-    max-height: 200px;
+    max-height: 100px;
 
 }
 

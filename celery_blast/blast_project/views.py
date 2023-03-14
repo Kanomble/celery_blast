@@ -13,10 +13,10 @@ from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesG
     CreateTaxonomicFileForMultipleScientificNames, SymBLASTProjectSettingsForm
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
     execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
-    calculate_database_statistics_task
+    calculate_database_statistics_task, download_and_decompress_cdd_database
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
-    read_task_logs_summary_table, download_project_directory
+    read_task_logs_summary_table, download_project_directory, check_if_cdd_database_exists
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json
@@ -31,6 +31,19 @@ from os.path import isfile
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+
+'''download_cdd_database_view
+
+    This function executes the celery_task download_and_decompress_cdd_database.
+
+'''
+@login_required(login_url='login')
+def download_cdd_database_view(request):
+    try:
+        download_and_decompress_cdd_database()
+        return redirect("blast_project_dashboard")
+    except Exception as e:
+        return failure_view(request, e)
 
 '''dashboard_view
 
@@ -50,6 +63,8 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 def dashboard_view(request):
     try:
         context = {}
+        context['cdd_database_exists'] = check_if_cdd_database_exists()
+
         if request.method == 'GET':
             users_blast_projects = get_users_blast_projects(request.user.id)
             available_blast_databases = get_downloaded_databases()
@@ -62,7 +77,6 @@ def dashboard_view(request):
         return render(request, 'blast_project/blast_project_dashboard.html', context)
     except Exception as e:
         return failure_view(request, e)
-
 
 '''project_creation_view
 

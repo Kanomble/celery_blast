@@ -7,7 +7,7 @@ from os import mkdir, listdir
 from shutil import rmtree, make_archive
 from wsgiref.util import FileWrapper
 from django.db import IntegrityError, transaction
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, TAXDB_URL
 
 '''download_project_directory
     
@@ -58,7 +58,7 @@ def read_task_logs_summary_table() -> pd.DataFrame:
 
 
 def check_if_taxdb_exists() -> bool:
-    if isfile('media/databases/taxdb.btd') and isfile('media/databases/taxdb.bti'):
+    if isfile(BLAST_DATABASE_DIR + 'taxdb.btd') and isfile(BLAST_DATABASE_DIR + 'taxdb.bti'):
         return True
     else:
         return False
@@ -136,8 +136,6 @@ def delete_project_and_associated_directories_by_id(project_id: int) -> None:
             project = BlastProject.objects.get(id=project_id)
             if isdir(BLAST_PROJECT_DIR + str(project_id)):
                 rmtree(BLAST_PROJECT_DIR + str(project_id))
-            if isdir('static/images/result_images/' + str(project_id)):
-                rmtree('static/images/result_images/' + str(project_id))
             project.delete()
     except Exception as e:
         raise IntegrityError("couldnt delete blast project entry : {}".format(e))
@@ -224,3 +222,16 @@ def concatenate_genome_fasta_files_in_db_dir(path_to_database, database_title, g
                         dbfile.write(line)
     except Exception as e:
         raise IntegrityError('couldnt concatenate database files : {}'.format(e))
+
+
+'''check_if_cdd_database_exists
+
+    This function checks if the Conserved Domain Database exists within the BLAST_DATABASE_DIR.
+    
+'''
+def check_if_cdd_database_exists():
+    try:
+        cdd_db_path = BLAST_DATABASE_DIR + "CDD/"
+        return isdir(cdd_db_path)
+    except Exception as e:
+        raise Exception("[-] Problem during checking if CDD database exists, exception: {}".format(e))

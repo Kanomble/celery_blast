@@ -33,7 +33,9 @@
     </ul>
 {% endblock %}
 
+
 {% block page_header %}
+{% if cdd_database_exists == True %}
 <div style="overflow-x: hidden; text-align: center;">
     SymBLAST Dashboard
     <br>
@@ -64,11 +66,16 @@
     </div>
 
 </div>
-
+{% else %}
+<div>
+    {% include "blast_project/form_download_cdd_database.html" %}
+</div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+{% if cdd_database_exists == True %}
+<div class="container-fluid" id="project_dashboard">
 
     <div class="row" style="text-align: center;">
           <div class="col-sm dashboard_project_list_col" style="height: 600px;">
@@ -100,8 +107,8 @@
                 {% include "blast_project/table_one_way_blast_projects.html" %}
             </div>
     </div>
-
 </div>
+{% endif %}
 {% endblock %}
 {% block scripts %}
 <script>

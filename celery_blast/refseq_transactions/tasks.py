@@ -9,7 +9,7 @@ from blast_project.py_django_db_services import update_blast_database_with_task_
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
-from celery_blast.settings import BLAST_DATABASE_DIR
+from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 
@@ -36,9 +36,9 @@ logger = get_task_logger(__name__)
 @shared_task()
 def download_refseq_assembly_summary():
     try:
-        refseq_url = "ftp://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
+        refseq_url = REFSEQ_URL
         current_working_directory = getcwd()  # /blast/reciprocal_blast
-        path_to_assembly_file_location = current_working_directory + '/media/databases/refseq_summary_file/'
+        path_to_assembly_file_location = REFSEQ_ASSEMBLY_FILE
         timeout = 300
 
         logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
@@ -48,7 +48,7 @@ def download_refseq_assembly_summary():
             logger.warning('path_to_assembly_file_location : {} does not exists, trying to create it with mkdir ...')
             mkdir(path_to_assembly_file_location)
 
-        path_to_assembly_file = path_to_assembly_file_location + 'assembly_summary_refseq.txt'
+        path_to_assembly_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
         if (isfile(path_to_assembly_file)):
             logger.warning('assembly_summary_refseq.txt exists deleting it in order to download a newer version')
             remove(path_to_assembly_file)
@@ -132,7 +132,7 @@ def write_alias_file(alias_filename: str, available_databases: list) -> int:
         if 'alias_file' in locals():
             if isfile(alias_file):
                 os.remove(alias_file)
-        raise Exception("ERROR wiritng alias file due to soft time limit")
+        raise Exception("ERROR writing alias file due to soft time limit")
 
     except Exception as e:
         logger.warning("error during creation of aliasfile with exception : {}".format(e))

@@ -166,5 +166,6 @@ CDD_DIR = 'media/databases/CDD/Cdd'
 ESEARCH_OUTPUT = 'media/esearch_output/'
 CDD_DATABASE_URL = "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/little_endian/Cdd_LE.tar.gz"
 TAXDB_URL = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
-REFSEQ_ASSEMBLY_FILE = 'media/databases/refseq_summary_file/assembly_summary_refseq.txt'
+REFSEQ_ASSEMBLY_FILE = 'media/databases/refseq_summary_file/'
+REFSEQ_URL = "ftp://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
 TAXONOMIC_NODES = 'media/taxonomic_node_files/'

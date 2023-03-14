@@ -1,0 +1,16 @@
+<form action="{% url 'download_cdd_database' %}" method="post"
+      onsubmit="showLoader('loading_div','project_dashboard')">
+    {% csrf_token %}
+    <div class="form-group">
+
+        <a href="#" data-toggle="tooltip"
+           title="You have to download the CDD database before you can create new projects!"
+        >
+
+            <input type="submit"
+                   value="Download CDD Database"
+                   class="btn btn-primary btn-dark">
+        </a>
+
+    </div>
+</form>

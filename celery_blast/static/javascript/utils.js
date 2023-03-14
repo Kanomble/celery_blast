@@ -62,11 +62,11 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url, 
       background-position: center; ";
 
     var new_div_big =  new_div_base_style +
-        "margin-top: 156px; height: 80px; width: 80px;" +
+        "margin-top: -20px; height: 80px; width: 80px;" +
         "background-size: 64px 64px;"
 
     var new_div_small = new_div_base_style +
-        "margin-top: 171px; height: 50px; width: 50px;"
+        "margin-top: -8px; height: 50px; width: 50px;"
         + "background-size: 32px 32px;";
 
     var new_link_style = "\

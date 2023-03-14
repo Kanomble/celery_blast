@@ -13,7 +13,7 @@ from .py_django_db_services import update_blast_project_with_task_result_model, 
     update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
     update_blast_project_with_database_statistics_task_result_model, get_all_blast_databases
 from .py_database_statistics import calculate_database_statistics
-from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES
+from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES, CDD_DATABASE_URL
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -71,7 +71,7 @@ def download_and_format_taxdb(self):
         for child in parent.children(recursive=True):
             child.kill()
         parent.kill()
-
+        raise TimeoutExpired(e)
     except SubprocessError as e:
         logger.warning("ERROR:WGET RESULTED IN AN ERROR: {}".format(e))
         logger.info("INFO:YOU CAN MANUALLY LOAD THE TAXONOMY DATABASE INTO THE DATABASE FOLDER")
@@ -82,7 +82,9 @@ def download_and_format_taxdb(self):
         for child in parent.children(recursive=True):
             child.kill()
         parent.kill()
-
+        raise SubprocessError(e)
+    except Exception as e:
+        raise Exception(e)
 
 ''' get_species_taxids_into_file
 
@@ -133,7 +135,7 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
     except SubprocessError as e:
         logger.info('subprocess throwed exception: {}'.format(e))
         raise Exception(
-            'exception occured during invokation of:\n\t get_species_taxids_into_file function : {}'.format(e))
+            'exception occured during invocation of:\n\t get_species_taxids_into_file function : {}'.format(e))
 
 
 # TODO documentation
@@ -362,3 +364,74 @@ def calculate_database_statistics_task(self, project_id: int, user_email: str, t
         raise Exception("ERROR:database statistics calculation reached Task Time Limit")
     except Exception as e:
         raise Exception("ERROR: unknown exception occurred: {}".format(e))
+
+
+'''download_and_decompress_cdd_database
+
+    This task can be used to refresh the CDD database which is per default loaded before
+    web server startup.
+
+'''
+
+
+@shared_task(bind=True)
+def download_and_decompress_cdd_database(self):
+    logger.info("INFO:NO CDD DATBASE\n"
+                "INFO:trying to download CDD database from: {}".format(CDD_DATABASE_URL))
+
+    try:
+        cdd_ftp_path = CDD_DATABASE_URL
+        if os.path.isdir(BLAST_DATABASE_DIR + "CDD/") == False:
+            os.mkdir(BLAST_DATABASE_DIR + "CDD/")
+        path_to_cdd_location = BLAST_DATABASE_DIR
+        path_to_cdd_location = path_to_cdd_location + 'Cdd_LE.tar.gz'
+        logger.info("INFO:DOWNLOADING CONSVERED DOMAIN DATABASE INTO {}".format(BLAST_DATABASE_DIR + "CDD/"))
+        proc = Popen(["wget", cdd_ftp_path, "-q", "-O", path_to_cdd_location], shell=False)
+        returncode = proc.wait(timeout=3000)
+        if returncode != 0:
+            raise SubprocessError
+        logger.info("INFO:EXTRACTING CONSERVED DOMAIN DATABASE")
+
+        proc = Popen(
+            ["tar", "-zxvf", path_to_cdd_location, "-C", "/blast/reciprocal_blast/media/databases/CDD/"],
+            shell=False)
+        returncode = proc.wait(timeout=800)
+        if returncode != 0:
+            raise SubprocessError
+        os.remove(path_to_cdd_location)  # remove the zip of cdd database
+        logger.info("INFO:DONE DOWNLOADING CONSERVED DOMAIN DATABASE")
+    except TimeoutExpired as e:
+        logger.warning("ERROR:TIMEOUT EXPIRED DURING DOWNLOAD OF CONSERVED DOMAIN DATABASE: {}".format(e))
+        logger.info(
+            "INFO:IF YOU HAVE NO STABLE INTERNET CONNECTION TRY TO RESTART THE WEBSERVER ONCE YOU HAVE A BETTER CONNECTION")
+        logger.info("INFO:YOU CAN MANUALLY LOAD THE DOMAIN DATABASE DATABASE INTO THE DATABASE/CDD FOLDER")
+
+        if 'proc' in locals():
+            pid = proc.pid
+            parent = psutil.Process(pid)
+
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()
+        else:
+            logger.warning("WARNING:CHECK FOR UNFINISHED PROCESSES OR RESTART THE WEB-SERVER")
+        raise TimeoutExpired(e)
+    except SubprocessError as e:
+        logger.warning("ERROR:WGET RESULTED IN AN ERROR: {}".format(e))
+        logger.info("INFO:YOU CAN MANUALLY LOAD THE CONSERVED DOMAIN DATABASE INTO THE DATABASE/CDD FOLDER")
+
+        if 'proc' in locals():
+            pid = proc.pid
+            parent = psutil.Process(pid)
+
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()
+        else:
+            logger.warning("WARNING:CHECK FOR UNFINISHED PROCESSES OR RESTART THE WEB-SERVER")
+        raise SubprocessError(e)
+    except Exception as e:
+        logger.warning("ERROR:UNSUSPECTED ERROR OCCURRED: {}".format(e))
+        logger.warning("WARNING:YOU CANT USE THE CDD EXTENSION")
+        logger.warning("INFO:YOU CAN MANUALLY LOAD THE CONSERVED DOMAIN DATABASE INTO THE DATABASE/CDD FOLDER")
+        raise Exception(e)

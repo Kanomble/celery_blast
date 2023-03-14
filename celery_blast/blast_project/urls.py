@@ -22,7 +22,8 @@ service_urls = [
     path('<int:project_id>/project_execution',views.execute_reciprocal_blast_project_view,name='project_execution'),
     path('<int:project_id>/project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results'),
     path('<int:project_id>/download_archive', views.download_project_as_zip_archive_view,
-         name='download_archive')
+         name='download_archive'),
+    path('download_cdd_database', views.download_cdd_database_view, name="download_cdd_database")
 
 ]
 
