@@ -15,7 +15,6 @@ rule all:
 		"bokeh_plot.html",
 		"query_sequence_information.html",
 		"query_sequence_information.csv",
-		expand("{qseqid}/target_sequences.svg",qseqid=QSEQIDS)
 
 #RULE 1
 rule blast:
@@ -91,8 +90,22 @@ rule conduct_multiple_sequence_alignment_mafft:
             else:
                 shell("touch {output} 2> {log}")
 
+rule trimal:
+	input: target_msa="{qseqid}/target_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
+	output: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
+	log: trimal_log="log/{qseqid}/trimal.log"
+	shell:
+		"trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}"
+
+rule display_alignment:
+	input: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
+	output: html_output="{qseqid}/target_sequences_trimmed.html"
+	log: display_alignment_log="log/{qseqid}/mview.log"
+	shell:
+		"mview -in fasta -html head -moltype aa -css on -coloring any -consensus on -sort cov {input.trimmed_sequences} > {output.html_output} 2> {log.display_alignment_log}"
+
 rule conduct_phylogeny_fast_tree:
-    input: "{qseqid}/target_sequences.msa"
+    input: "{qseqid}/target_sequences_trimmed.msa"
     output: "{qseqid}/target_sequences.tree"
     log: log="log/{qseqid}/conduct_phylogeny_fast_tree.log"
     run:
@@ -102,19 +115,9 @@ rule conduct_phylogeny_fast_tree:
             else:
                 shell("touch {output} 2> {log}")
 
-
-rule update_tree_with_taxid:
-    input: nw="{qseqid}/target_sequences.tree",
-            df= "{qseqid}/blast_results.table"
-    output: "{qseqid}/transformed_treefile.nwk"
-    log: log= "log/{qseqid}/update_tree_with_taxid.log"
-    script:
-        "../../../../static/snakefiles/one_way_blast/update_seq_id_taxinfo.py"
-
-
-rule ete3_tree_to_png:
-    input: tree="{qseqid}/target_sequences.tree"
-    output: pic="{qseqid}/target_sequences.svg"
-    log: log= "log/{qseqid}/ete3_tree_to_png.log"
-    script:
-        "../../../../static/snakefiles/one_way_blast/remote_searches/ete3_tree_to_png.py"
+rule html_phylogenie:
+	input: newick_tree="{qseqid}/target_sequences.tree", blast_table="{qseqid}/rbh_table.tsf"
+	output: html_tree="{qseqid}/target_sequences_tree.html"
+	log: shiptv_log="log/{qseqid}/shiptv.log"
+	shell:
+		"shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}"

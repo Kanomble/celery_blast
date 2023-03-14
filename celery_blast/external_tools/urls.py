@@ -66,6 +66,10 @@ phylogenetic_analysis_urls = [
          name='perform_fasttree_phylobuild_for_all_query_sequences'),
     path('<int:project_id>/<str:query_sequence_id>/phylogenetic_information',
          views.phylogenetic_information, name='phylogenetic_information'),
+    path('<int:project_id>/<str:query_sequence_id>/phylogenetic_tree',
+         views.load_phylogenetic_tree_view, name='load_phylogenetic_tree'),
+    path('<int:project_id>/<str:query_sequence_id>/multiple_sequence_alignment',
+         views.load_msa_view, name='load_msa')
 ]
 
 urlpatterns = [

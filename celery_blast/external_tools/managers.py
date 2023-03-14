@@ -159,10 +159,11 @@ class ExternalToolsManager(models.Manager):
 
 
 class QuerySequenceManager(models.Manager):
-    def create_query_sequence(self, query_sequence_id, external_tools):
+    def create_query_sequence(self, query_sequence_id, query_sequence_info, external_tools):
         try:
             query_sequence = self.create(
                 query_accession_id=query_sequence_id,
+                query_accession_information=query_sequence_info,
                 external_tool_for_query_sequence=external_tools)
             return query_sequence
         except Exception as e:

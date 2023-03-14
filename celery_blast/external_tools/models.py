@@ -22,12 +22,15 @@ class ExternalTools(models.Model):
         try:
             blast_project = self.associated_project
             query_sequence_id_list = blast_project.get_list_of_query_sequences()
-            for qseqid in query_sequence_id_list:
-                QuerySequences.objects.create_query_sequence(qseqid, external_tools=self)
+            query_sequence_information = blast_project.get_fasta_header_of_query_sequences()
+            if len(query_sequence_id_list) != len(query_sequence_information):
+                raise Exception("query sequences and query sequence information differ in their length")
+            for qseqid, qseqid_info in zip(query_sequence_id_list, query_sequence_information):
+                QuerySequences.objects.create_query_sequence(qseqid, qseqid_info, external_tools=self)
 
         except Exception as e:
             raise Exception(
-                "[-] couldnt extract query sequence ids from associated project with exception : {}".format(e))
+                "[-] couldnt extract query sequence ids and information from associated project with exception : {}".format(e))
 
     # TODO documentation
     def update_query_sequences_cdd_search_task(self, query_sequence_id: str, cdd_search_task: int):
@@ -125,6 +128,13 @@ class QuerySequences(models.Model):
         blank=False, unique=False,
         verbose_name="query sequence identifier"
     )
+
+    query_accession_information = models.CharField(
+        max_length=500,
+        blank=True, null=True,
+        unique=False
+    )
+
     multiple_sequence_alignment_task = models.ForeignKey(
         TaskResult,
         on_delete=models.CASCADE,

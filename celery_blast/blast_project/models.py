@@ -181,6 +181,35 @@ class BlastProject(models.Model):
                 "[-] couldnt extract query sequence ids from query sequence file : {} with exception : {}".format(
                     query_sequence_file_path, e))
 
+    '''get_fasta_header_of_query_sequences
+        
+        This function extract information of the protein fasta header.
+        
+        :param self
+            :type int
+        :param filepath
+            :type str
+    
+    '''
+
+    def get_fasta_header_of_query_sequences(self, filepath=BLAST_PROJECT_DIR):
+        try:
+            query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
+            query_file = open(query_sequence_file_path, 'r')
+            qseqids_info = []
+            for line in query_file.readlines():
+                if ">" in line:
+                    qseqid_info = ' '.join(line.split(">")[1].split(" ")[1:])
+                    qseqid_info = qseqid_info.rstrip()
+                    if len(qseqid_info) <= 1:
+                        qseqid_info = "no information provided"
+                    qseqids_info.append(qseqid_info)
+            return qseqids_info
+        except Exception as e:
+            raise IntegrityError(
+                "[-] couldnt extract query sequence ids from query sequence file : {} with exception : {}".format(
+                    query_sequence_file_path, e))
+
     def get_project_username(self):
         return self.project_user.name
 

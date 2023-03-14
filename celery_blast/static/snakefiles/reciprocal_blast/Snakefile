@@ -16,7 +16,6 @@ with open(config['query_sequence'],'r') as qseqfile:
 
 rule all:
 	input:
-		expand("{qseqid}/target_sequences.svg", qseqid=QSEQIDS),
 		"reciprocal_results.html",
 		 "plot_amount_hits_of_target_taxon.png",
 		 "plot_evalue_distribution.png",
@@ -295,22 +294,6 @@ rule html_phylogenie:
 	log: shiptv_log="log/{qseqid}/shiptv.log"
 	shell:
 		"shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}"
-
-#RULE 14
-rule update_tree_with_taxid:
-	input: nw="{qseqid}/target_sequences.tree", df="reciprocal_results_with_taxonomy.csv", phylogeny_log="log/{qseqid}/phylogeny.log"
-	output: "{qseqid}/transformed_treefile.nwk"
-	log: log="log/{qseqid}/update_tree_with_taxid.log"
-	script:
-		"../../../static/snakefiles/reciprocal_blast/update_seq_id_taxinfo.py"
-
-#RULE 15
-rule ete3_tree_to_png:
-	input: tree="{qseqid}/transformed_treefile.nwk", nw="{qseqid}/target_sequences.tree", update_tree_with_taxid_log="log/{qseqid}/update_tree_with_taxid.log"
-	output: pic="{qseqid}/target_sequences.svg"
-	log: log="log/{qseqid}/ete3_tree_to_png.log"
-	script:
-		"../../../static/snakefiles/reciprocal_blast/ete3_tree_to_png.py"
 
 #RULE 17
 rule cdd_domain_rpsblast:

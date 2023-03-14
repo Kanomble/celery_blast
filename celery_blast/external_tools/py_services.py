@@ -3,26 +3,6 @@ import os
 import pandas as pd
 from django.conf import settings
 
-#TODO obsolete static directory
-def create_html_output_for_newicktree(path_to_fasttree_output, project_id, query_accession):
-    try:
-        if os.path.isfile(path_to_fasttree_output):
-            path_to_html_phylogeny = path_to_fasttree_output.split(".nwk")[0] + '.html'
-            if os.path.isdir('static/images/result_images/' + str(project_id) + '/' + query_accession):
-                path_to_static_html_phylogeny = 'static/images/result_images/' + str(
-                    project_id) + '/' + query_accession + '/target_sequences.html'
-            else:
-                os.mkdir('static/images/result_images/' + str(project_id) + '/' + query_accession)
-                path_to_static_html_phylogeny = 'static/images/result_images/' + str(
-                    project_id) + '/' + query_accession + '/target_sequences.html'
-
-            return 0
-        else:
-            return 1
-    except Exception as e:
-        raise Exception("[-] couldnt create html table for the newick file: {}".format(path_to_fasttree_output))
-
-
 def get_list_of_query_sequence_folder(project_id):
     path_to_project = settings.BLAST_PROJECT_DIR + str(project_id)
     try:
@@ -165,3 +145,28 @@ def check_if_cdd_search_can_get_executed(query_sequence: str, project_id: int) -
     except Exception as e:
         raise Exception("[-] error checking if a PCA for the CDD search result "
                         "dataframe for: {} is practicable, with exception: {}".format(query_sequence, e))
+
+
+'''get_html_results
+    This function is used in the phylogenetic dashboard, it returns
+    the plain HTML as a string. 
+
+    :param project_id
+        :type int
+    :param filename - html result filename
+        :type str
+    :param html_result_path
+        :type str
+
+    :returns data - string representation of a pandas html table
+        :type list[str]
+'''
+
+
+def get_html_results(project_id: int, filename: str, html_result_path=settings.BLAST_PROJECT_DIR) -> list:
+    try:
+        with open(html_result_path + str(project_id) + "/" + filename) as res:
+            data = res.readlines()
+        return data
+    except Exception as e:
+        raise FileNotFoundError("[-] ERROR: Couldn't read file {} with Exception: {}".format(filename, e))

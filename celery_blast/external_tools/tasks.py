@@ -13,8 +13,7 @@ from .entrez_search_service import execute_entrez_search, create_random_filename
     update_entrezsearch_with_download_task_result, download_by_organism
 from .models import ExternalTools
 from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
-from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, \
-    create_html_output_for_newicktree
+from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
 from os.path import isdir
 from os import listdir, mkdir, remove
@@ -277,15 +276,12 @@ def execute_phylogenetic_tree_building(self, project_id, query_sequence_id):
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
-            returncode = create_html_output_for_newicktree(path_to_fasttree_output, project_id, query_sequence_id)
-            if returncode != 0:
-                raise Exception("HTML building hasnt succeeded, returncode != 0: {}".format(returncode))
-
-            else:
-                progress_recorder.set_progress(100, 100, "SUCCESS")
-                return 0
         elif msa_status == 1:
             raise FileNotFoundError("msa file does not exist!")
+
+        progress_recorder.set_progress(100, 100, "SUCCESS")
+
+        return 0
     except Exception as e:
         raise Exception("[-] Couldnt perform phylogenetic tree task with Exception: {}".format(e))
 
@@ -586,14 +582,8 @@ def execute_phylogenetic_tree_building_with_domains(project_id: int, query_seque
             returncode = phylo_task.wait(4000)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
-
-            returncode = create_html_output_for_newicktree(path_to_fasttree_output, project_id, query_sequence_id)
-            if returncode != 0:
-                raise Exception("HTML building hasnt succeeded, returncode != 0: {}".format(returncode))
-
-            else:
-                return 0
         elif msa_status == 1:
             raise FileNotFoundError("msa file does not exist!")
+        return 0
     except Exception as e:
         raise Exception("[-] Couldnt perform phylogenetic tree task with Exception: {}".format(e))

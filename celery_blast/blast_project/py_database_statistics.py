@@ -2,9 +2,7 @@ import json
 from os import remove, listdir
 from os.path import isfile, isdir
 
-import altair as alt
 # output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
-import bokeh.models
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -28,7 +26,7 @@ plt.rcParams['legend.fontsize'] = 10
 from bokeh.palettes import Spectral  # inferno, viridis, magma,
 # from matplotlib.ticker import MaxNLocator
 from random import shuffle
-from celery_blast.settings import BLAST_PROJECT_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
 '''get_project_by_id
 
@@ -425,12 +423,6 @@ def calculate_database_statistics(project_id: int, logfile: str, user_email: str
                     # df = pd.read_csv(df_filepath,index_col=0,header=0)
                     normalized_df = pd.read_csv(normalized_df_filepath, index_col=0, header=0)
 
-                # database_statistics_to_altair_plots(project_id: int, taxonomic_unit: str, full_df: pd.DataFrame, normalized_df: pd.DataFrame, logfile: str)
-                log.write("INFO:starting to produce altair plots for database statistics dataframes\n")
-                logfile_altair_plots = path_to_project + '/log/' + taxonomic_unit + '_database_statistics_to_altair_plots.log'
-                database_statistics_to_altair_plots(project_id, taxonomic_unit, result_data, normalized_df,
-                                                    logfile_altair_plots)
-
             log.write("INFO:starting to produce interactive bokeh result plot\n")
             create_bokeh_plots(result_df=result_data, database=db_df,
                                taxonomic_unit='phylum', project_id=project_id)
@@ -495,9 +487,9 @@ def delete_database_statistics_task_and_output(project_id: int, logfile: str) ->
             else:
                 raise Exception("ERROR there is no database statistics task for this project ...")
 
-            path_to_project = 'media/blast_projects/' + str(project_id)
+            path_to_project = BLAST_PROJECT_DIR + str(project_id)
             if isdir(path_to_project):
-                path_to_database_statistics = 'media/blast_projects/' + str(project_id) + '/database_statistics.csv'
+                path_to_database_statistics = BLAST_PROJECT_DIR + str(project_id) + '/database_statistics.csv'
                 if isfile(path_to_database_statistics):
                     remove(path_to_database_statistics)
                     log.write("INFO:removed: {}\n".format(path_to_database_statistics))
@@ -508,9 +500,6 @@ def delete_database_statistics_task_and_output(project_id: int, logfile: str) ->
                         if (isfile(path_to_database_statistics_image)):
                             remove(path_to_database_statistics_image)
                             log.write("INFO:removed: {}\n".format(path_to_database_statistics_image))
-
-            # path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
-            # path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
             log.write("DONE\n")
             return 0
     except IntegrityError as e:
@@ -553,89 +542,9 @@ def transform_normalized_database_table_to_json(project_id: int, taxonomic_unit:
         else:
             raise FileNotFoundError
     except FileNotFoundError:
-        raise Exception("[-] File {} does not exist!".format('media/blast_projects/' + str(df_path)))
+        raise Exception("[-] File {} does not exist!".format(BLAST_PROJECT_DIR + str(df_path)))
     except Exception as e:
         raise Exception("[-] Couldnt transform normalized database statistics to json with exception: {}".format(e))
-
-
-'''database_statistics_to_altair_plots
-#OBSOLETE ??
-'''
-
-
-def database_statistics_to_altair_plots(project_id: int, taxonomic_unit: str, result_data: pd.DataFrame,
-                                        normalized_df: pd.DataFrame, logfile: str):
-    try:
-        with open(logfile, 'w') as log:
-            path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
-            log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
-            path_to_altair_plot = path_to_static_dir + taxonomic_unit + "_altair_plot_normalized.html"
-            if isdir(path_to_static_dir):
-                log.write("INFO:static directory exists, producing altair plots\n")
-                number_queries = len(normalized_df.index)
-                normalized_df = normalized_df.transpose()[(normalized_df == 0.0).sum() != number_queries]
-                normalized_df = normalized_df.transpose()
-
-                if len(normalized_df.columns) >= 2 and len(normalized_df.columns) < 10:
-
-                    brush = alt.selection(type='interval')
-                    bitscore = alt.Chart(result_data).mark_point().encode(
-                        x='bitscore',
-                        y='pident',
-                        tooltip=['qseqid', 'sacc_transformed', 'pident', 'bitscore'],
-                        color=alt.condition(brush, taxonomic_unit, alt.value('lightgray'))
-                    ).add_selection(
-                        brush
-                    )
-
-                    bar = alt.Chart(result_data).mark_bar().encode(
-                        y=taxonomic_unit,
-                        color=taxonomic_unit,
-                        x='count(' + taxonomic_unit + ')'
-                    ).transform_filter(
-                        brush
-                    )
-                    chart = bitscore & bar
-                    chart.save(path_to_altair_plot)
-                else:
-                    number_queries = len(normalized_df.index)
-                    normalized_df = normalized_df.transpose()[(normalized_df == 0.0).sum() != number_queries]
-                    normalized_df = normalized_df.transpose()
-                    # TODO this plot is wrong -> qseqid is not correctly integrated
-                    if len(normalized_df.columns) <= 15 and len(normalized_df.columns) >= 2:
-                        altair_df = pd.melt(normalized_df)
-                        altair_df.columns = [taxonomic_unit, "Relative # of RBHs"]
-                        chart = alt.Chart(altair_df).mark_bar().encode(
-                            x=taxonomic_unit,
-                            y="Relative # of RBHs",
-                            color=taxonomic_unit
-                        )
-                        chart.save(path_to_altair_plot)
-                    else:
-                        input_dropdown = alt.binding_select(options=list(normalized_df.columns), name=taxonomic_unit)
-                        selection = alt.selection_single(fields=[taxonomic_unit], bind=input_dropdown)
-                        color = alt.condition(selection,
-                                              alt.Color(taxonomic_unit + ':N', legend=None),
-                                              alt.value('lightgray'))
-
-                        chart = alt.Chart(result_data).mark_point().encode(
-                            x='bitscore',
-                            y='pident',
-                            tooltip=['qseqid', 'sacc_transformed', 'pident', 'bitscore', taxonomic_unit],
-                            color=color
-                        ).add_selection(
-                            selection
-                        ).interactive(
-                        )
-                        chart.save(path_to_altair_plot)
-
-                log.write(
-                    "INFO:done saving database statistic altair plot for taxonomic unit: {}\n".format(taxonomic_unit))
-            else:
-                log.write("ERROR:static directory does not exist\n")
-                raise IsADirectoryError(path_to_static_dir)
-    except Exception as e:
-        raise Exception("[-] ERROR in producing altair plots for database statistics with exception: {}".format(e))
 
 
 ################################## BOKEH INTERACTIVE RESULTS ###########################################################

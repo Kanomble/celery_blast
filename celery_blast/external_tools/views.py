@@ -13,17 +13,61 @@ from django_celery_results.models import TaskResult
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 from .forms import EntrezSearchForm, RpsBLASTSettingsForm
 from .models import ExternalTools, EntrezSearch, QuerySequences
-from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed
+from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building, \
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
     download_organism_protein_sequences_task, \
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
 
+'''load_phylogenetic_tree_view
+
+    This function is part of the phylogenetic dashboard. It is similar to the load_reciprocal_result_view view function
+    in blast_project/views.py. It loads the standalone HTML page for the phylogeny.
+    
+    :param request
+        :type WSGIRequest
+    :param project_id
+        :type int
+    :param query_sequence
+        :type int
+
+'''
+@login_required(login_url='login')
+def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_sequence_id: str):
+    try:
+        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_tree.html")
+        return HttpResponse(html_data)
+    except Exception as e:
+        return failure_view(request, e)
+
+
+'''load_phylogenetic_tree_view
+
+    This function is part of the phylogenetic dashboard. It is similar to the load_reciprocal_result_view view function
+    in blast_project/views.py. It loads the standalone HTML page for the mutliple sequence alignment.
+
+    :param request
+        :type WSGIRequest
+    :param project_id
+        :type int
+    :param query_sequence
+        :type int
+
+'''
+
+
+@login_required(login_url='login')
+def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str):
+    try:
+        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_trimmed.html")
+        return HttpResponse(html_data)
+    except Exception as e:
+        return failure_view(request, e)
 
 @login_required(login_url='login')
 def view_downloaded_sequences(request: WSGIRequest, search_id: int):
     # creates a file download button to the search_details.html to download the result file of the download_proteins_from_entrez_search view
-    # if the entrezsearch is of the protein or pubmed database
+    # if the entrezsearch is within the protein or pubmed database
     try:
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
         filepath = entrez_search.fasta_file_name
@@ -62,8 +106,8 @@ def view_downloaded_organism_sequences(request: WSGIRequest, search_id: int, org
 
 @login_required(login_url='login')
 def search_detail_view(request: WSGIRequest, search_id: int):
-    # get edirectpaper entry based on search_id (which is id of db object)
-    # get paper content and fill context object with edirectpaper and paper content
+    # get the edirect paper entry based on search_id (which is the id of the db object)
+    # get paper content and fill context object
     # return template with context
     try:
         sleep(0.5)
@@ -141,7 +185,7 @@ def delete_search_view(request: WSGIRequest, search_id: int):
         elif retcode == 1:
             return failure_view(request, "Couldnt delete esearch object")
         else:
-            return failure_view(request, "ERROR during deletion of edirectpaper with id: {}".format(search_id))
+            return failure_view(request, "ERROR during deletion of edirect object with id: {}".format(search_id))
 
     except Exception as e:
         return failure_view(request, e)

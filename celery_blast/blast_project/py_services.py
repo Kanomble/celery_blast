@@ -192,7 +192,6 @@ def upload_file(project_file, destination: str):
 '''
 
 
-# loads the reciprocal results table that is written with one of the last rules in the snakefiles
 def get_html_results(project_id: int, filename: str, html_result_path=BLAST_PROJECT_DIR) -> list:
     try:
         with open(html_result_path + str(project_id) + "/" + filename) as res:

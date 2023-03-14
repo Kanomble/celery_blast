@@ -78,17 +78,7 @@
                                 <input type="submit" value="Execute Snakemake" class="btn btn-dark">
                             </form>
                         </td>
-                        {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
-                            <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
-                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
-                            <td><a class="btn btn-dark" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
-                            <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
-
-                        {% elif BlastProject.check_for_reciprocal_result_table == True %}
-                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
-                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
-                        {% endif %}
+                        <td><a class="btn btn-dark" href="{% url 'database_details' database_id=Database.id %}">Database Details</a></td>
                         {% if BlastProject.project_execution_snakemake_task.status != 'POGRESS' %}
                         <td>
                             <form class="col"
@@ -101,7 +91,17 @@
                         {% endif %}
                     </tr>
                     <tr>
-                        <td><a class="btn btn-dark" href="{% url 'database_details' database_id=Database.id %}">Reciprocal Results Table</a></td>
+                        {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
+                            <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
+                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
+                            <td><a class="btn btn-dark" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
+                            <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
+
+                        {% elif BlastProject.check_for_reciprocal_result_table == True %}
+                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}"> Reciprocal Results Table </a></td>
+                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -130,31 +130,6 @@
     </div> -->
 
     <br>
-    <div class="dashboard_project_list_col">
-        <h2 style="text-align: center">Forward BLAST Database</h2>
-        <p style="font-size: medium; text-align: center"> Search Space - This database is used for identification of homologous protein sequences. </p>
-        <br>
-        <div class="container-fluid">
-            <table class="table table-hover" id="blastdatabase">
-                <thead>
-                 <tr>
-                    <th>Index</th>
-                     <th> Assembly Accession</th>
-                     <th> Organism Name</th>
-                     <th> Taxid </th>
-                     <th> Species Taxid </th>
-                     <th> Assembly Level </th>
-                     <th> FTP Path </th>
-                 </tr>
-                </thead>
-                <tbody>
-                 <tr>
-                 </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 
     {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
 

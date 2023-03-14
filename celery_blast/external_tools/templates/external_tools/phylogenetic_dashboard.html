@@ -34,28 +34,7 @@
 
 {% block content %}
     <div class="container-fluid">
-
-        <div class="dashboard_project_list_col" style="height: 600px;">
-            <h3 class="col_header"> Reciprocal Results </h3>
-            {{ html_results|safe }}
-        </div>
-
-        <div class="dashboard_project_list_col">
-            <h3 class="col_header" style="justify-content: center; display: flex"> Phylogenetic Tree</h3>
-            <p style="font-size: medium">Phylogenetic tree ceated with ete3</p>
-
-            {{ phylogeny|safe }}
-
-            <p style="font-size: medium;justify-content: center">Phylogeny standalone HTML document generated with shiptv.</p>
-        </div>
-
-        <div class="dashboard_project_list_col" style="justify-content: center; display: flex">
-            <h3 class="col_header"> Multiple Sequence alignment </h3>
-
-            {{ msa|safe }}
-
-            <p style="font-size: medium;justify-content: center">MSA standalone HTML document generated with MView.</p>
-        </div>
+        <p> Refine Your Phylogenetic Analysis </p>
     </div>
 
 {% endblock %}
