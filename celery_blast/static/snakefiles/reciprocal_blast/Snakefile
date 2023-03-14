@@ -140,7 +140,7 @@ rule reciprocal_best_hits:
 		"../../../static/snakefiles/reciprocal_blast/extract_reciprocal_best_hits.py"
 
 #RULE 6
-#transforms the forward blast and backward blast tables with the rbhs table to a result output table with additional taxonomic informations.
+#transforms the forward blast and backward blast tables with the rbhs table to a result output table with additional taxonomic information.
 rule blast_tables_to_csv:
 	input: fw_res="blastp_fw_out.table", rec_res="reciprocal_best_hits_protein_ids.txt", query_file=config['query_sequence'], reciprocal_best_hits_log="log/reciprocal_best_hits.log"
 	output: result_csv="reciprocal_results.csv", taxonomy_result_csv='reciprocal_results_with_taxonomy.csv'
@@ -164,7 +164,7 @@ rule build_folders_with_hit_info_for_each_qseqid:
 	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
 		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),rec_res_table=expand("{qseqid}/rbh_table.tsf",qseqid=QSEQIDS),
 		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
-	params:	project_id=config['project_id'],
+	params:	project_id=config['project_id']
 	log: log="log/build_folders_with_hit_info_for_each_qseqid.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
@@ -297,7 +297,7 @@ rule html_phylogenie:
 
 #RULE 17
 rule cdd_domain_rpsblast:
-	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/ete3_tree_to_png.log", qseqid=QSEQIDS)
+	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/shiptv.log", qseqid=QSEQIDS)
 	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
 	output: domain_df="query_domains.tsf"
 	log: log="log/cdd_domain_rpsblast.log"

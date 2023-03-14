@@ -346,6 +346,41 @@ class BlastSettingsFormBackward(forms.Form):
         label='BW max hsps', initial=500
     )
 
+'''SymBLASTProjectSettingsForm
+    
+    This form is used within the write_snakemake_configuration_file function in the models.py file.
+    It is used to set up additional options for the snakemake pipeline.
+
+'''
+class SymBLASTProjectSettingsForm(forms.Form):
+    bitscore_filter = forms.IntegerField(
+        label="Bitscore threshold", initial=50
+    )
+    max_amount_of_rbh_for_msa_and_phylogeny = forms.IntegerField(
+        label="Maximum number of sequences to use for phylogenetic inference", initial=10000
+    )
+    # documentation of trimal options: http://trimal.cgenomics.org/use_of_the_command_line_trimal_v1.2
+    trimal_gt = forms.FloatField(
+        label="1 - (fraction of sequences with a gap allowed)", initial=0.8,
+        min_value=0.0, max_value=1.0
+    )
+    trimal_st = forms.FloatField(
+        label="Minimum average similarity allowed.", initial=0.001,
+        min_value=0.0, max_value=1.0
+    )
+    trimal_cons = forms.IntegerField(
+        label="Minimum percentage of the positions in the original alignment to conserve.", initial=60,
+        min_value=0, max_value=100
+    )
+    # documentation of mview options: https://desmid.github.io/mview/manual/manual.html
+    mview_sort = forms.ChoiceField(
+        choices=(("coverage", "cov"), ("percent identity", "pid"), ("coverage then percent identity", "cov:pid"),
+                 ("percent identity then coverage", "pid:cov"))
+    )
+    mview_coloring = forms.ChoiceField(
+        choices=(("any","any"), ("identity","identity"), ("mismatch","mismatch"), ("consensus","consensus"),
+                 ("group","group"))
+    )
 
 '''UploadGenomeForm
 

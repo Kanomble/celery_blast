@@ -24,6 +24,11 @@ with open(snakemake.log['log'], 'w') as logfile:
         rec_prot = rec_prot.rename(columns={"backward_genome_id": "qseqid"})
 
         result_data = rec_prot.merge(fw_res, how='inner', on=['sacc_transformed', 'qseqid', 'staxids'])
+
+        # filter by provided bitscore cut-off
+        logfile.write("\tINFO:filter reciprocal BLAST table by bitscore cut-off: {}\n".format(snakemake.config['bitscore_filter']))
+        result_data = result_data[result_data.bitscore >= int(snakemake.config['bitscore_filter'])]
+
         # the backward blast is currently limited to output only the best match, but the best match can contain several hsps,
         # thus it is possible that there are multiple lines of one qseqid present, which gets loaded by reading the dictionary for
         # filtering reciprocal best hits

@@ -27,7 +27,12 @@ with open(snakemake.log['log'],'w') as logfile:
         for query in queries:
             logfile.write("\tINFO:working with:{}\n".format(query))
             target_df = result_df[result_df['qseqid'] == query]
+            hit_info_file.write("{}\t{}\n".format(query, len(target_df)))
 
+            logfile.write("\tINFO:slicing target RBH dataframe by defined maximum sequences for MSA and phylo task: {}\n".format(
+                snakemake.config['max_rbhs_for_phylo']
+            ))
+            target_df = target_df.sort_values(by='bitscore', ascending=False)[:int(snakemake.config['max_rbhs_for_phylo'])].sort_index().copy()
             logfile.write("\t\tINFO:constructing tab separated file ...")
             cols = ['sseqid', 'qseqid', 'bitscore', 'pident', 'evalue', 'slen', 'query_info', 'phylum', 'class',
                     'order', 'family', 'genus']
@@ -115,7 +120,6 @@ with open(snakemake.log['log'],'w') as logfile:
                 for sacc in sacc_list:
                     output.write(sacc+'\n')
 
-            hit_info_file.write("{}\t{}\n".format(query, len(target_df)))
             plt.close('all')
         hit_info_file.close()
         logfile.write("DONE\n")

@@ -213,6 +213,7 @@ the postgresql database. The input for this function is maintained by the py_pro
 
 
 def create_project_from_form(valid_project_form, user, fw_settings, bw_settings, query_sequence_filename,
+                             symblast_settings_form,
                              filepath='media/blast_projects/'):
     try:
         blast_project = BlastProject.objects.create_blast_project(
@@ -222,6 +223,7 @@ def create_project_from_form(valid_project_form, user, fw_settings, bw_settings,
             project_user=user,
             project_forward_settings=fw_settings,
             project_backward_settings=bw_settings,
+            project_settings=symblast_settings_form,
             project_forward_database=valid_project_form.cleaned_data['project_forward_database'],
             project_backward_database=valid_project_form.cleaned_data['project_backward_database'],
             species_name_for_backward_blast=valid_project_form.cleaned_data['species_name_for_backward_blast'],

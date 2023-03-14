@@ -17,6 +17,7 @@ class BlastProjectManager(models.Manager):
             project_query_sequences,
             project_user,
             project_forward_settings, project_backward_settings,
+            project_settings,
             project_forward_database, project_backward_database,
             species_name_for_backward_blast,
             filepath=BLAST_PROJECT_DIR):
@@ -31,7 +32,7 @@ class BlastProjectManager(models.Manager):
             species_name_for_backward_blast=species_name_for_backward_blast)
 
         blast_project.initialize_project_directory(filepath=filepath)
-        blast_project.write_snakemake_configuration_file(filepath=filepath)
+        blast_project.write_snakemake_configuration_file(project_settings, filepath=filepath)
 
         return blast_project
 

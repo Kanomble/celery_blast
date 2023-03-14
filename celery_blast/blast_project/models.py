@@ -251,8 +251,6 @@ class BlastProject(models.Model):
         else:
             try:
                 mkdir(filepath + str(self.id))
-                if (isdir('static/images/result_images/' + str(self.id)) == False):
-                    mkdir('static/images/result_images/' + str(self.id))
             except Exception as e:
                 raise IntegrityError("couldnt create project directory : {}".format(e))
 
@@ -266,7 +264,7 @@ class BlastProject(models.Model):
             :type str
     '''
 
-    def write_snakemake_configuration_file(self, filepath=BLAST_PROJECT_DIR):
+    def write_snakemake_configuration_file(self,project_settings, filepath=BLAST_PROJECT_DIR):
         try:
             with open(filepath + str(self.id) + '/snakefile_config', 'w') as snk_config_file:
                 # database path from media/blast_projects/project_id as working directory for snakemake
@@ -286,6 +284,14 @@ class BlastProject(models.Model):
 
                 for key_fw in fw_dict.keys():
                     snk_config_file.write(key_fw + ': ' + fw_dict[key_fw] + "\n")
+
+                snk_config_file.write("bitscore_filter: "+str(project_settings.cleaned_data['bitscore_filter']) + "\n")
+                snk_config_file.write("max_rbhs_for_phylo: "+str(project_settings.cleaned_data['max_amount_of_rbh_for_msa_and_phylogeny']) + "\n")
+                snk_config_file.write("trimal_gt: "+str(project_settings.cleaned_data['trimal_gt']) + "\n")
+                snk_config_file.write("trimal_st: "+str(project_settings.cleaned_data['trimal_st']) + "\n")
+                snk_config_file.write("trimal_cons: "+str(project_settings.cleaned_data['trimal_cons']) + "\n")
+                snk_config_file.write("mview_sort: "+str(project_settings.cleaned_data['mview_sort']) + "\n")
+                snk_config_file.write("mview_coloring: "+str(project_settings.cleaned_data['mview_coloring']) + "\n")
 
         except Exception as e:
             raise IntegrityError(

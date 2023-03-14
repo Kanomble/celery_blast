@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from .view_access_decorators import unauthenticated_user
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
     ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, \
-    CreateTaxonomicFileForMultipleScientificNames
+    CreateTaxonomicFileForMultipleScientificNames, SymBLASTProjectSettingsForm
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
     execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
     calculate_database_statistics_task
@@ -79,6 +79,7 @@ def dashboard_view(request):
             :ProjectCreationForm
             :BlastSettingsFormForward
             :BlastSettingsFormBackward
+            :SymBLASTProjectSettingsForm - additional settings for the MSA and phylogeny procedures
     
     If the POST data is valid the project gets created and the function redirects to the
     associated project_details page. If the POST data is not valid, the function returns the 
@@ -93,9 +94,10 @@ def project_creation_view(request):
             project_creation_form = ProjectCreationForm(request.user, request.POST, request.FILES)
             blast_settings_forward_form = BlastSettingsFormForward(request.POST)
             blast_settings_backward_form = BlastSettingsFormBackward(request.POST)
-
+            symblast_project_settings_form = SymBLASTProjectSettingsForm(request.POST)
             # RETURN PROJECT DETAILS VIEW
-            if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() and blast_settings_backward_form.is_valid():
+            if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() \
+                    and blast_settings_backward_form.is_valid() and symblast_project_settings_form.is_valid():
                 query_sequence_file = project_creation_form.cleaned_data['query_sequence_file']
                 query_sequences = project_creation_form.cleaned_data['query_sequence_text']
 
@@ -108,7 +110,9 @@ def project_creation_view(request):
                                 query_file_name=query_sequence_file.name,
                                 project_form=project_creation_form,
                                 fw_settings_form=blast_settings_forward_form,
-                                bw_settings_form=blast_settings_backward_form, filepath=BLAST_PROJECT_DIR)
+                                bw_settings_form=blast_settings_backward_form,
+                                symblast_settings_form=symblast_project_settings_form,
+                                filepath=BLAST_PROJECT_DIR)
                             path_to_query_file = BLAST_PROJECT_DIR + str(
                                 blast_project.id) + '/' + query_sequence_file.name
                             upload_file(query_sequence_file, path_to_query_file)
@@ -121,7 +125,9 @@ def project_creation_view(request):
                                 query_file_name=query_file_name,
                                 project_form=project_creation_form,
                                 fw_settings_form=blast_settings_forward_form,
-                                bw_settings_form=blast_settings_backward_form, filepath=BLAST_PROJECT_DIR)
+                                bw_settings_form=blast_settings_backward_form,
+                                symblast_settings_form=symblast_project_settings_form,
+                                filepath=BLAST_PROJECT_DIR)
 
                             path_to_query_file = BLAST_PROJECT_DIR + str(blast_project.id) + '/' + query_file_name
                             if type(query_sequences) != Entrez.Parser.ListElement:
@@ -151,6 +157,7 @@ def project_creation_view(request):
                 context = {'ProjectCreationForm': project_creation_form,
                            'BlastSettingsForwardForm': blast_settings_forward_form,
                            'BlastSettingsBackwardForm': blast_settings_backward_form,
+                           'SymBLASTProjectSettingsForm':symblast_project_settings_form,
                            'taxdb': taxdb}
 
         else:
@@ -158,10 +165,11 @@ def project_creation_view(request):
                 project_creation_form = ProjectCreationForm(request.user)
                 blast_settings_forward_form = BlastSettingsFormForward()
                 blast_settings_backward_form = BlastSettingsFormBackward()
-
+                symblast_project_settings_form = SymBLASTProjectSettingsForm()
                 context = {'ProjectCreationForm': project_creation_form,
                            'BlastSettingsForwardForm': blast_settings_forward_form,
                            'BlastSettingsBackwardForm': blast_settings_backward_form,
+                           'SymBLASTProjectSettingsForm': symblast_project_settings_form,
                            'taxdb': True}
 
             else:
@@ -171,7 +179,6 @@ def project_creation_view(request):
 
         return render(request, 'blast_project/project_creation_dashboard.html', context)
     except Exception as e:
-        print(project_creation_form.errors)
         return failure_view(request, e)
 
 

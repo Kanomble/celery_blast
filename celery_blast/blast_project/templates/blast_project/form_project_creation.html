@@ -196,7 +196,79 @@
                     </div>
                     {% endif %}
                 </div>
-        </div>
+            </div>
+            <hr>
+            <h3 style="font-family: 'Courier New';text-align: center;
+                margin-bottom: 5px;
+                font-weight: bold;">
+                Additional SymBLAST settings </h3>
+
+            <div class="col">
+                <div class="form-group">
+                    <label for="bitscore_filter">Bitscore filter</label>
+                    <input type="number" class="form-control" step=any id="bitscore_filter" name="bitscore_filter" value="50">
+                    {% if SymBLASTProjectSettingsForm.bitscore_filter.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.bitscore_filter.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="max_amount_of_rbh_for_msa_and_phylogeny">Maximal Amount of RBHs in MSA and Phylogeny </label>
+                    <input type="number" class="form-control"  id="max_amount_of_rbh_for_msa_and_phylogeny" name="max_amount_of_rbh_for_msa_and_phylogeny" value="10000">
+                    {% if SymBLASTProjectSettingsForm.max_amount_of_rbh_for_msa_and_phylogeny.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.max_amount_of_rbh_for_msa_and_phylogeny.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="trimal_gt">TrimAL - Fraction of Sequences With a Gap Allowed </label>
+                    <input type="number" class="form-control"  id="trimal_gt" name="trimal_gt" value="0.8">
+                    {% if SymBLASTProjectSettingsForm.trimal_gt.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.trimal_gt.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="trimal_st">TrimAL - Minimum Average Similarity </label>
+                    <input type="number" class="form-control"  id="trimal_st" name="trimal_st" value="0.001">
+                    {% if SymBLASTProjectSettingsForm.trimal_st.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.trimal_st.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="trimal_cons">TrimAL - Minimum Perc. of Position in Original Alignment to Conserve </label>
+                    <input type="number" class="form-control"  id="trimal_cons" name="trimal_cons" value="60">
+                    {% if SymBLASTProjectSettingsForm.trimal_cons.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.trimal_cons.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="mview_sort"> Select a Sorting Mechanism for the Multiple Sequence Alignment File </label>
+                    <select class="form-control" id="mview_sort" name="mview_sort">
+                        {% for sort in SymBLASTProjectSettingsForm.mview_sort %}
+                            {{sort}}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mview_coloring"> Select a Coloring Scheme for the Multiple Sequence Alignment File </label>
+                    <select class="form-control" id="mview_coloring" name="mview_coloring">
+                        {% for coloring in SymBLASTProjectSettingsForm.mview_coloring %}
+                            {{coloring}}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
     </div>
     <br>
     <input type="submit" value="Submit" class="btn btn-dark">
