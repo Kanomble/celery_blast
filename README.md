@@ -259,6 +259,7 @@ Those functions can be used to trigger side effects during initialization of the
 E.g. creation of blast project directories or specific setting files, such as the snakemake configuration file.
 
 ## TODO
+- [ ] strange error during database statistics task
 - [ ] after 100% reload refresh page
 - [ ] blastdbcheck in celery snakemake process for the cdd database and other databases?
 - [ ] check if uploaded genomes consist of protein sequences

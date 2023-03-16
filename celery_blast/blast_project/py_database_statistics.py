@@ -1258,10 +1258,10 @@ def create_initial_bokeh_database_data(database: pd.DataFrame, data_selection: p
 def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: str) -> tuple:
     try:
         # RBH result dataframe
-        result_data = result_data.loc[:,
+        result_data = result_data[
                       ['order', 'class', 'phylum', 'genus', 'family', 'bitscore', 'pident', 'stitle', 'scomnames',
                        'staxids', 'qseqid',
-                       'sacc_transformed', 'slen']]  # ,'slen'
+                       'sacc_transformed', 'slen']].copy() # ,'slen'
         result_data = result_data.sort_values(by=taxonomic_unit)
 
         color_dict, marker_dict = create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data)
@@ -1367,14 +1367,15 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
     try:
         with open(logfile, 'w') as log:
             # initializing output directories
-            path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
-            log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
+            #path_to_static_dir = "static/images/result_images/" + str(project_id) + "/"
+            #log.write("INFO:checking if static dir: {} exists\n".format(path_to_static_dir))
             # no static saving until now
-            path_to_static_bokeh_plot = path_to_static_dir + "interactive_bokeh_plot.html"
+            # path_to_static_bokeh_plot = path_to_static_dir + "interactive_bokeh_plot.html"
             path_to_project_dir = BLAST_PROJECT_DIR + str(project_id) + '/' + "interactive_bokeh_plot.html"
 
             # create bokeh dataframes for plots and tables
             # change unknown entries to their corresponding higher taxonomic nodes
+            log.write("INFO:trying to fix taxonomy classifications for unknown entries in result dataframe ...\n")
             result_data = result_data.copy()
             result_data.loc[result_data[result_data['class'] == "unknown"].index, 'class'] = \
                 result_data[result_data['class'] == "unknown"]['phylum']
@@ -1394,13 +1395,13 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 database[database['family'] == "unknown"]['order']
             database.loc[database[database['genus'] == "unknown"].index, 'genus'] = \
                 database[database['genus'] == "unknown"]['family']
-
+            log.write("INFO: trying to create initial bokeh dataframes ...\n")
             data_all, color_dict = create_initial_bokeh_result_data(result_data, taxonomic_unit)
 
             # selection subset for initial plot data
             data_selection, taxcount_df = create_initial_bokeh_data_selection(data_all, taxonomic_unit)
             db_df = create_initial_bokeh_database_data(database, data_selection, taxcount_df, taxonomic_unit)
-
+            log.write("INFO: trying to create initial bokeh database dataframes ...")
             # these function are just important for filling the table_data_dict, which is used for correct
             # assignment of the data, that is displayed within the table
             # TODO refactor holding the variables "data_selection_phylum ..."
@@ -1655,7 +1656,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                         title="Reciprocal BLAST Interactive Result Plot".format(
                             taxonomic_unit))
             save(grid)
-
+            log.write("DONE")
         return 0
     except Exception as e:
         raise Exception("ERROR in producing bokeh plots for database statistics with exception: {}".format(e))
