@@ -25,12 +25,11 @@ Overall, SymBLAST is a flexible and intuitive solution that can help researchers
 ## Content
 - [Installation](#installation)
 - [Container network and configuration](#configuration_notes)
-- [Project Setup](#project_setup)
+- [How To Use SymBLAST](#project_setup)
 - [BLAST Database creation](#blast_database)
   - [Notes on the download procedure](#download_process)
   - [Notes on the BLAST database formatting procedure](#makeblastdb)
 - [Upload your own genome files](#genome_upload)
-- [Result Dashboard](#result_dashboard)
 - [Technical Details](#technical_details)
 <a name="installation"></a>
 ## Installation

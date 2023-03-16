@@ -274,6 +274,7 @@ class ProjectCreationForm(forms.Form):
             elif query_sequences != '' and query_file is None:
                 # check string for invalid characters
                 query_sequences = query_sequences.replace(" ", "").split(",")
+                query_sequences = [qseq.split(".")[0] for qseq in query_sequences]
                 try:
                     valid = check_if_sequences_are_in_database(backward_db.id, query_sequences)
                     if valid != True:
