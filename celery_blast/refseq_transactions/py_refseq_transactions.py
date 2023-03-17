@@ -196,7 +196,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
 
 
 def read_current_assembly_summary_with_pandas(assembly_levels: list) -> pd.DataFrame:
-    summary_file_path = REFSEQ_ASSEMBLY_FILE
+    summary_file_path = REFSEQ_ASSEMBLY_FILE + "assembly_summary_refseq.txt"
     if (isfile(summary_file_path) == False):
         raise ValueError('assembly summary file does not exist!')
 
