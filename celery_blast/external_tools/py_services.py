@@ -1,7 +1,35 @@
 import os
-
 import pandas as pd
 from django.conf import settings
+import json
+
+'''read_query_sequence_tbh_table
+    
+    This function is executed after pressing the calculate synteny button within the synteny dashboard.
+    It loads the rbh table for the specified query sequence id as a json dictionary.
+    The json dictionary will be rendered by the DataTables library.
+    
+    :param project_id
+        :type int
+    :param qseqid 
+        :type str
+    
+    :returns json
+        :type json
+'''
+def read_query_sequence_rbh_table(project_id:int, qseqid:str):
+    try:
+        target_table_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/rbh_table.tsf'
+        if os.path.isfile(target_table_path) == False:
+            raise Exception("{} does not exist!".format(target_table_path))
+        else:
+            table = pd.read_csv(target_table_path, sep="\t", header=0)
+            json_records = table.reset_index().to_json(orient='records')
+            json_data = json.loads(json_records)
+            return json_data
+    except Exception as e:
+        raise Exception("[-] ERROR during reading of query sequence rbh table:"
+                        " {} - {} with exception: {}".format(project_id, qseqid, e))
 
 def get_list_of_query_sequence_folder(project_id):
     path_to_project = settings.BLAST_PROJECT_DIR + str(project_id)

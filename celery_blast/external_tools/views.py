@@ -9,15 +9,78 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, HttpResponse
 from django_celery_results.models import TaskResult
+from django.views.decorators.csrf import csrf_exempt
 
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 from .forms import EntrezSearchForm, RpsBLASTSettingsForm
 from .models import ExternalTools, EntrezSearch, QuerySequences
-from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results
+from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results, read_query_sequence_rbh_table
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building, \
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
     download_organism_protein_sequences_task, \
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
+
+
+'''synteny_dashboard_view
+    
+    This view function returns the synteny dashboard after successful pipeline execution.
+    
+'''
+@login_required(login_url='login')
+def synteny_dashboard_view(request:WSGIRequest, project_id:int):
+    try:
+        context = {}
+        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        context['qseqids'] = qseqids
+        context['project_id'] = project_id
+        return render(request, "external_tools/synteny_detection_dashboard.html", context)
+    except Exception as e:
+        return failure_view(request, e)
+
+
+'''synteny_calculation_dashboard_view
+    
+    This function is executed if the user presses the "Calculate Synteny" button within the synteny dashboard.
+    It returns the synteny_calculation.html file, that uses ajax call in combination with DataTables to render the 
+    result table. 
+
+'''
+@login_required(login_url='login')
+def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, query_sequence:str):
+    try:
+        context = {}
+        context['project_id'] = project_id
+        context['query_sequence'] = query_sequence
+        return render(request, 'external_tools/synteny_calculation.html', context)
+    except Exception as e:
+        raise failure_view(request, e)
+
+
+''' ajax_call_for_synteny_calculation
+
+'''
+@csrf_exempt
+def ajax_call_for_synteny_calculation(request:WSGIRequest, project_id:int, query_sequence:str):
+    try:
+        if request.is_ajax and request.method == "GET":
+            table_data = read_query_sequence_rbh_table(project_id, query_sequence)
+            return JsonResponse({"data": table_data}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
+
+''' calculate_synteny_form_submit_ajax
+
+'''
+@csrf_exempt
+def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, query_sequence:str):
+    try:
+        print("hello from ajax")
+        if request.is_ajax and request.method == "POST":
+            form_data = request.POST
+            print(form_data)
+        return redirect("synteny_dashboard")
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
 
 '''load_phylogenetic_tree_view
 

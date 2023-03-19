@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %} Synteny Detection Dashboard {% endblock %}
+
+{% block page_title %}  {% endblock %}
+
+{% block infoheader %} Synteny Inference {% endblock %}
+
+{% block page_header %}
+    <div style="overflow-x: hidden; text-align: center;">
+        Synteny Detection Dashboard
+        <p style="text-align: center;font-size: small"> Download GenBank
+            files for selected RBHs and search for syntenic regions, {{ request.user }}!</p>
+    </div>
+{% endblock %}
+
+{% block page_description %}
+    <h2> Synteny Detection Dashboard </h2>
+{% endblock %}
+{% block content %}
+    <div class="dashboard_project_list_col">
+        <div class="table-responsive">
+            <table class="table table-hover" id="externalTools">
+                <thead>
+                <tr>
+                    <th>Accession ID</th>
+                    <th>Calculate Synteny</th>
+                    <th>View Synteny</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for qseq in qseqids.query_sequences.get_queryset %}
+                    <tr>
+                        <td>
+                            {{ qseq.query_accession_id }} {{ qseq.query_accession_information }}
+                        </td>
+                        <td>
+                           <a class="btn btn-dark" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id query_sequence=qseq.query_accession_id %}">
+                               Calculate Synteny
+                            </a>
+                        </td>
+                        <td>
+                          <a class="btn btn-dark" href="#">
+                               View Synteny
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#synteny_dashboard').DataTable();
+    });
+</script>
+{% endblock %}

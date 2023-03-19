@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Calculate Synteny
+{% endblock %}
+
+
+{% block page_title %} Calculate Synteny {% endblock %}
+{% block infoheader %} Calculate Synteny {% endblock %}
+
+{% block header %}
+{% endblock %}
+
+{% block page_description %}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="dashboard_project_list_col">
+            <h2 style="text-align: center; font-family: 'Courier New'">
+                <b> Synteny Calculation Dashboard for {{ query_sequence }}</b>
+            </h2>
+        </div>
+
+    </div>
+    <div class="container-fluid">
+        <div class="dashboard_project_list_col">
+            <form action="#" method="POST" enctype="multipart/form-data" id="entriesSelected">
+                {% csrf_token %}
+                <table class="table table-hover" id="rbh_result_dataframe">
+                    <thead>
+                    <tr>
+                        <th>Index</th>
+                        <th>Subject Sequence</th>
+                        <th>Query Sequence</th>
+                        <th>Bitscore</th>
+                        <th>Identitiy</th>
+                        <th>E-Value</th>
+                        <th>Length</th>
+                        <th>Info</th>
+                        <th>Phylum</th>
+                        <th>Class</th>
+                        <th>Order</th>
+                        <th>Family</th>
+                        <th>Genus</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                    </tr>
+                    </tbody>
+                </table>
+            <br><br>
+            <button id="button">Download GenBank files and calculate synteny</button>
+            <br><br>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function () {
+            var table = $('#rbh_result_dataframe').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy',
+                    'csv',
+                    'selectAll',
+                    'selectNone',
+                    'selectRows'
+                ],
+                select: true,
+
+                "ajax": {
+                    "url": "{% url 'synteny_calculation_call_ajax' project_id=project_id query_sequence=query_sequence %}",
+                    "type": "GET",
+                    "dataSrc": "data",
+                },
+                "columns": [
+                    {"data": 'index'},
+                    {"data": 'sseqid'},
+                    {"data": 'qseqid'},
+                    {"data":"bitscore"},
+                    {"data": 'pident'},
+                    {"data": 'evalue'},
+                    {"data": 'slen'},
+                    {"data": 'query_info'},
+                    {"data": 'phylum'},
+                    {"data": 'class'},
+                    {"data": 'order'},
+                    {"data": 'family'},
+                    {"data": 'genus'}],
+                "deferRender": true
+            });
+
+            $('#rbh_result_dataframe tbody').on('click', 'tr', function () {
+                $(this).toggleClass('selected');
+            });
+
+            $('#button').click(function (e) {
+                e.preventDefault();
+                var selected_rows_length = table.rows('.selected').data().length;
+                if(selected_rows_length > 4){
+                    alert("The maximum number of RBH selection should not exceed 10 entries!")
+                    return 1
+                }
+                // var selectedRowInputs = table.rows('.selected').data();
+                console.log('serlialized inputs: ',JSON.stringify(table.rows('.selected')[0]));
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'calculate_synteny_form_submit_ajax' project_id=project_id query_sequence=query_sequence %}",
+                    data: JSON.stringify(table.rows('.selected')[0])
+                  });
+
+                console.log("DONE ajax call")
+                //window.location.reload();
+            });
+
+        });
+    </script>
+{% endblock %}

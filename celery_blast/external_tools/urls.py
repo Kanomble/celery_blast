@@ -72,7 +72,19 @@ phylogenetic_analysis_urls = [
          views.load_msa_view, name='load_msa')
 ]
 
+synteny_urls = [
+    path('<int:project_id>/synteny_dashboard', views.synteny_dashboard_view, name='synteny_dashboard'),
+    path('<int:project_id>/<str:query_sequence>/synteny_calculation_dashboard_ajax_call', views.ajax_call_for_synteny_calculation,
+         name="synteny_calculation_call_ajax"),
+    path('<int:project_id>/<str:query_sequence>/synteny_calculation_dashboard',
+         views.synteny_calculation_dashboard_view,
+         name="synteny_calculation_dashboard_view"),
+    path("<int:project_id>/<str:query_sequence>/calculate_synteny_form_submit_ajax", views.calculate_synteny_form_submit_ajax,
+         name="calculate_synteny_form_submit_ajax")
+]
+
 urlpatterns = [
+    path('', include(synteny_urls)),
     path('', include(cdd_search_urls)),
     path('', include(entrez_search_urls)),
     path('', include(ajax_calls)),
