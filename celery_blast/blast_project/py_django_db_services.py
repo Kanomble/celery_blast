@@ -455,7 +455,7 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
                                                       database_description=database_description,
                                                       assembly_entries=amount_of_entries,
                                                       uploaded_files=True)
-        # blast_database.path_to_database_file = 'media/databases/' + str(blast_database.id)
+        # automatically adds the chromosome status as assembly level
         assembly_levels = AssemblyLevels.objects.filter(assembly_level__contains="Chromosome")
         for assembly_lvl in assembly_levels:
             blast_database.assembly_levels.add(assembly_lvl)
@@ -497,7 +497,18 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
         raise IntegrityError('couldn save multiple files genome model into database with exception : {}'.format(e))
 
 
-# TODO documentation
+'''create_database_directory_and_upload_file
+
+    This function is used within the save_uploaded_genomes_into_database function within py_django_db_services.py.
+    It creates a directory based on the blast_database model instance id within the BLAST_DATABASE_DIR.
+    
+    :param blast_database
+        :type BlastDatabase model instance
+    :param genome_file
+        :type TemporaryUploadedFile
+    :param taxmap_file
+        :type TemporaryUploadedFile
+'''
 def create_database_directory_and_upload_files(blast_database, genome_file, taxmap_file=None):
     try:
 

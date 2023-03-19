@@ -51,7 +51,7 @@
                     </tbody>
                 </table>
             <br><br>
-            <button id="button">Download GenBank files and calculate synteny</button>
+            <button id="button" class="btn btn-dark">Download GenBank files and calculate synteny</button>
             <br><br>
             </form>
         </div>
@@ -74,7 +74,7 @@
                 select: true,
 
                 "ajax": {
-                    "url": "{% url 'synteny_calculation_call_ajax' project_id=project_id query_sequence=query_sequence %}",
+                    "url": "{% url 'ajax_call_for_synteny_calculation_selector_table' project_id=project_id query_sequence=query_sequence %}",
                     "type": "GET",
                     "dataSrc": "data",
                 },
@@ -102,22 +102,34 @@
             $('#button').click(function (e) {
                 e.preventDefault();
                 var selected_rows_length = table.rows('.selected').data().length;
-                if(selected_rows_length > 4){
-                    alert("The maximum number of RBH selection should not exceed 10 entries!")
-                    return 1
+                if(selected_rows_length > 10){
+                    alert("The maximum number of RBH selection should not exceed 10 entries!");
+                    return 1;
+                } else if (selected_rows_length <= 1){
+                    alert("Please select more than one target sequence for synteny analysis!");
+                    return 1;
+                } else {
+                    if(confirm("Please confirm for downloading genbank files and calculating synteny plot.")){
+                        var objects = table.rows('.selected').data();
+                        var jsonArr = {};
+                        for (var i = 0; i < selected_rows_length; i++) {
+                            jsonArr[objects[i].index] = objects[i].sseqid;
+                        }
+                        $.ajax({
+                            type: "POST",
+                            url: "{% url 'calculate_synteny_form_submit_ajax' project_id=project_id query_sequence=query_sequence %}",
+                            data: jsonArr,
+                            success: function (data){
+                                if (data.response === 'success'){
+                                    alert("Genbank files will be downloaded prior to synteny plot creation, this may take a while.\n" +
+                                        "Check the task progress in the synteny dashboard.")
+                                    window.location = "{% url 'synteny_dashboard' project_id=project_id %}";
+                                }
+                            },
+                          });
+                    }
                 }
-                // var selectedRowInputs = table.rows('.selected').data();
-                console.log('serlialized inputs: ',JSON.stringify(table.rows('.selected')[0]));
-                $.ajax({
-                    type: "POST",
-                    url: "{% url 'calculate_synteny_form_submit_ajax' project_id=project_id query_sequence=query_sequence %}",
-                    data: JSON.stringify(table.rows('.selected')[0])
-                  });
-
-                console.log("DONE ajax call")
-                //window.location.reload();
             });
-
         });
     </script>
 {% endblock %}

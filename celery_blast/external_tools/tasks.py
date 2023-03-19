@@ -1,7 +1,8 @@
+import os
 from subprocess import Popen, SubprocessError, TimeoutExpired, check_output
 
 import psutil
-from blast_project.py_django_db_services import update_external_tool_with_cdd_search
+from blast_project.py_django_db_services import update_external_tool_with_cdd_search, get_project_by_id
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
@@ -13,12 +14,65 @@ from .entrez_search_service import execute_entrez_search, create_random_filename
     update_entrezsearch_with_download_task_result, download_by_organism
 from .models import ExternalTools
 from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
+from .genbank_download_clinker_synteny import extract_assembly_ftp_paths_from_reciprocal_result_entries, \
+    download_genbank_files, write_new_genbank_file
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
 from os.path import isdir
 from os import listdir, mkdir, remove
 # logger for celery worker instances
 logger = get_task_logger(__name__)
+
+#TODO documentation + exception handling ...
+@shared_task(bind=True)
+def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:dict):
+    try:
+        logger.info("starting synteny calculation task for query sequence: {} in project {}".format(query_sequence, project_id))
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools.update_query_sequences_synteny_calculation_task(query_sequence, str(self.request.id))
+        blast_project = get_project_by_id(project_id)
+
+        result_data_path = blast_project.get_project_dir() + '/reciprocal_results.csv'
+        target_rbhs = []
+        for key in rbh_dict.keys():
+            target_rbhs.append(rbh_dict[key].split(".")[0])
+        forward_database = blast_project.project_forward_database
+        database_table_path = forward_database.path_to_database_file + '/'
+        database_table_path += forward_database.get_pandas_table_name()
+        sequence_id_to_ftp_path_dict = extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path,
+                                                                                                 result_data_path,
+                                                                                                 target_rbhs, project_id)
+        progress_recorder.set_progress(20, 100, "PROGRESS")
+        path_to_synteny_analysis = BLAST_PROJECT_DIR+str(project_id)+'/synteny_analysis'
+        if isdir(path_to_synteny_analysis) == False:
+            logger.info("creating synteny analysis folder in project: {}".format(project_id))
+            mkdir(BLAST_PROJECT_DIR+str(project_id)+'/synteny_analysis')
+        logger.info("starting download of genbank files ...")
+        returncode = download_genbank_files(sequence_id_to_ftp_path_dict,path_to_synteny_analysis, project_id)
+        progress_recorder.set_progress(75, 100, "PROGRESS")
+
+        logger.info("done downloading starting to slice genbank file entries for synteny analysis")
+        returncode = write_new_genbank_file(sequence_id_to_ftp_path_dict,
+                                            path_to_synteny_analysis, 6, query_sequence, project_id)
+
+        logger.info("trying to execute clinker")
+        working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
+        logger.info("executing clinker in working directory: {}".format(working_directory))
+        cmd = "clinker "+working_directory+'*.gbk'+" -p "+working_directory+'clinker_result_plot.html'
+        proc = Popen(cmd, shell=True)
+        returncode = proc.wait(timeout=2000)
+        progress_recorder.set_progress(99, 100, "PROGRESS")
+        if returncode != 0:
+            logger.warning("error during donwload of the cdd database")
+            raise SubprocessError
+
+        logger.info("done")
+        return 0
+    except Exception as e:
+        raise Exception("[-] ERROR during synteny calculation task with exception: {}".format(e))
+
 
 '''check_database_integrity
 

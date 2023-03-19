@@ -34,16 +34,30 @@
                         <td>
                             {{ qseq.query_accession_id }} {{ qseq.query_accession_information }}
                         </td>
-                        <td>
-                           <a class="btn btn-dark" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id query_sequence=qseq.query_accession_id %}">
-                               Calculate Synteny
-                            </a>
-                        </td>
-                        <td>
-                          <a class="btn btn-dark" href="#">
-                               View Synteny
-                            </a>
-                        </td>
+                        {% if qseq.check_if_synteny_calculation_task_is_complete == 'SUCCESS' %}
+
+                            <td>
+                               <a class="btn btn-dark" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id query_sequence=qseq.query_accession_id %}">
+                                   Calculate Synteny
+                                </a>
+                            </td>
+                            <td>
+                              <a class="btn btn-dark" href="#">
+                                   View Synteny
+                                </a>
+                            </td>
+                        {% elif qseq.check_if_synteny_calculation_task_is_complete == 'PROGRESS' %}
+                            <td>
+                                <a class="btn btn-dark disabled" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id query_sequence=qseq.query_accession_id %}">
+                                   Task in progress!
+                                </a>
+                            </td>
+                            <td>
+                                <a class="btn btn-dark disabled" href="#">
+                                   View Synteny
+                                </a>
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
                 </tbody>

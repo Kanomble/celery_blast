@@ -32,7 +32,7 @@ from celery_blast.settings import BLAST_PROJECT_DIR
 '''
 def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath: str, newfilename: str, project_id:int)->int:
     try:
-        logfile = BLAST_PROJECT_DIR + 'log/' + sequence + '_genbank_extraction.log'
+        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + sequence + '_genbank_extraction.log'
         with open(logfile, 'w') as log:
             try:
                 log.write("INFO:START parsing genbank file\n")
@@ -127,7 +127,7 @@ def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath:
                     feature.location = location
 
 
-                sequence = gb.seq[id_to_location[locus_tags[0]][0].start - 1:id_to_location[locus_tags[-1]][0].end]
+                new_sequence = gb.seq[id_to_location[locus_tags[0]][0].start - 1:id_to_location[locus_tags[-1]][0].end]
 
                 log.write("INFO:DONE with the extraction ...\n")
                 log.write("INFO:Writing new GenBank file ...\n")
@@ -136,7 +136,7 @@ def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath:
                                        description=gb.description,
                                        annotations=gb.annotations,
                                        letter_annotations=gb.letter_annotations,
-                                       seq=sequence)
+                                       seq=new_sequence)
 
                 for feature in relevant_features:
                     seq_record.features.append(feature)
@@ -158,23 +158,25 @@ def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath:
     The function returns a dictionary with sequence ids as key (those sequence ids are the respective RBHs) and 
     ftp_paths for the "_genomic.gbff.gz" file as values.
     
-    :param database_table - project forward database 
-        :type pd.DataFrame
-    :param result_table - reciprocal BLAST result table
-        :type pd.DataFrame
+    :param database_table_path - project forward database 
+        :type str
+    :param result_table_path - reciprocal BLAST result table
+        :type str
     :param: genome_assemblies - user specified genome assembly to download
         :type list
     
     :returns sequence_id_to_ftp_path
         :type dict
 '''
-def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table:pd.DataFrame,result_table:pd.DataFrame,genome_assemblies:list)->dict:
+def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path:str,result_data_path:str,genome_assemblies:list, project_id:int)->dict:
     try:
-        logfile = BLAST_PROJECT_DIR + 'log/' + 'genbank_ftp_path_extraction.log'
+        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_ftp_path_extraction.log'
         with open(logfile, 'w') as log:
             try:
                 log.write("INFO:Trying to extract assemblies from reciprocal result dataframe and database table\n")
                 log.write("INFO:Number of assemblies to download: {}\n".format(len(genome_assemblies)))
+                result_table = pd.read_csv(result_data_path, index_col=0)
+                database_table = pd.read_csv(database_table_path, index_col=0)
                 sequence_id_to_ftp_path = {}
                 database_table = database_table.rename(columns={"taxid":"staxids"})
                 log.write("INFO:merging database table with sliced result table\n")
@@ -192,7 +194,7 @@ def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table:pd.
             except Exception as e:
                 log.write("ERROR:Exception {}".format(e))
                 raise Exception(e)
-        log.write("DONE")
+            log.write("DONE")
         return sequence_id_to_ftp_path
     except Exception as e:
         raise Exception("[-] ERROR during extraction of genbank assembly ftp paths from database table with exception: {}".format(e))
@@ -213,16 +215,16 @@ def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table:pd.
     :returns downloaded_files
         :type list[str]
 '''
-def download_genbank_files(sequence_id_to_ftp_path: dict, output_filepath: str) -> list:
+def download_genbank_files(sequence_id_to_ftp_path: dict, output_filepath: str, project_id:int) -> list:
     try:
-        logfile = BLAST_PROJECT_DIR + 'log/' + "genbank_file_download.log"
+        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + "genbank_file_download.log"
         with open(logfile, 'w') as log:
             genbank_filelist = []
             try:
                 for seqid in sequence_id_to_ftp_path.keys():
                     ftp_path = sequence_id_to_ftp_path[seqid]
                     genbank_filename = sequence_id_to_ftp_path[seqid].split('/')[-1].split(".gz")[0]
-                    genbank_filename = output_filepath + genbank_filename
+                    genbank_filename = output_filepath + '/' + genbank_filename
                     if (isfile(genbank_filename) == True):
                         log.write("INFO:GenBank file already exist, skipping download ...\n")
                         genbank_filelist.append(genbank_filename)
@@ -256,3 +258,39 @@ def download_genbank_files(sequence_id_to_ftp_path: dict, output_filepath: str) 
         return genbank_filelist
     except Exception as e:
         raise Exception("[-] ERROR during download of genbank_files with exception: {}".format(e))
+
+'''write_new_genbank_file
+    
+    This function is executed within the associated celery task. It iterates over the sequence_id_to_ftp_path dictionary
+    to retrieve the downloaded genbank files in the project associated synteny directory. Then it
+    executes the extract_gene_cluster_by_one_sequence function. The sequence is the target rbh sequence of the 
+    dictionary. This function writes new sliced genbank files in the query sequence folder within the project folder.
+    
+    :param sequence_id_to_ftp_path - return from extract_assembly_ftp_paths_from_reciprocal_result_entries
+        :type dict
+    :param data_path - path to genbank assembly files
+        :type str
+    :param limit - sequences downstream and upstream to slice from genbank file
+        :type int
+    :param query_sequence - used to build file and directory paths
+        :type str
+'''
+def write_new_genbank_file(sequence_id_to_ftp_path:dict, data_path:str, limit:int, query_sequence:str, project_id:int)->dict:
+    try:
+        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + "genbank_file_writing.log"
+        with open(logfile, 'w') as log:
+            log.write("INFO:starting to parse genbank files\n")
+            for sequence in sequence_id_to_ftp_path.keys():
+                output_file = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/' + str(sequence) + '_sliced_gb_file.gbk'
+                genbank_file = data_path + '/' + sequence_id_to_ftp_path[sequence].split("/")[-1].split(".gz")[0]
+                log.write("INFO:trying to read genbank file at: {}\nINFO:write new genbank file into: {}\n"
+                          .format(genbank_file, output_file))
+                if isfile(genbank_file) == True and isfile(output_file) == False:
+                    retcode = extract_gene_cluster_by_one_sequence(sequence, limit, genbank_file, output_file, project_id)
+                    if retcode != 0:
+                        raise Exception("[-] ERROR during extraction of gene clusters retcode: {}".format(retcode))
+                else:
+                    log.write("WARNING:there is no genbank file for {}\n".format(output_file))
+        return 0
+    except Exception as e:
+        raise Exception("[-] ERROR during creation of sliced genbank files with exception: {}".format(e))

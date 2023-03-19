@@ -211,8 +211,18 @@ def html_table_exists(project_id, filename, html_result_path=BLAST_PROJECT_DIR):
         return False
 
 
-# TODO documentation
-def concatenate_genome_fasta_files_in_db_dir(path_to_database, database_title, genome_files):
+'''concatenate_genome_fasta_files_in_db_dir
+    This function is used during uploading of custom genome files.
+    It concatenates all genome files into a database file, that is used by makeblastdb.
+    
+    :param path_to_database
+        :type str
+    :param database_title
+        :type str
+    :param genome_files
+        :type list
+'''
+def concatenate_genome_fasta_files_in_db_dir(path_to_database:str, database_title:str, genome_files:list):
     try:
         database_name = database_title.replace(' ', '_').upper() + '.database'
         with open(path_to_database + database_name, 'w') as dbfile:

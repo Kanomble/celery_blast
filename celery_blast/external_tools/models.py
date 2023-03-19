@@ -45,6 +45,18 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
 
+    def update_query_sequences_synteny_calculation_task(self, query_sequence_id: str, synteny_calculation_task: int):
+        try:
+            if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
+                query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
+                taskresult = TaskResult.objects.get(task_id=synteny_calculation_task)
+                query_sequence.synteny_calculation_task = taskresult
+                query_sequence.save()
+            else:
+                raise Exception("[-] couldnt update query sequence with multiple sequence alignment taskresult object")
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
+
     def update_query_sequences_msa_task(self, query_sequence_id: str, msa_task_id: int):
         try:
             if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
@@ -169,11 +181,20 @@ class QuerySequences(models.Model):
         unique=False
     )
 
+    synteny_calculation_task = models.ForeignKey(
+        TaskResult,
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        verbose_name="celery task for downloading genbank files and calculating synteny",
+        related_name="synteny_task",
+        unique=False
+    )
+
     objects = QuerySequenceManager()
 
     '''check_if_cdd_search_is_complete
         
-        This function returns the associated CDD domain search task result object.
+        This function returns the associated CDD domain search task result object status field.
         
         :return status
             :type string -> SUCCESS FAILURE PROGRESS NOTEXEC
@@ -188,6 +209,34 @@ class QuerySequences(models.Model):
         except Exception as e:
             raise Exception(
                 "[-] ERROR couldnt fetch CDD domain search task status for target query with exception: {}".format(e))
+
+    '''check_if_synteny_calculation_task_is_complete
+
+        This function returns the associated synteny calculation task result object status field.
+
+        :return status
+            :type string -> SUCCESS FAILURE PROGRESS NOTEXEC
+    '''
+
+    def check_if_synteny_calculation_task_is_complete(self):
+        try:
+            if self.synteny_calculation_task:
+                return self.synteny_calculation_task.status
+            else:
+                return "NOTEXEC"
+        except Exception as e:
+            raise Exception(
+                "[-] ERROR couldnt fetch CDD domain search task status for target query with exception: {}".format(e))
+
+    def update_synteny_calculation_task(self, synteny_calculation_task_id: int):
+        try:
+            task_result = TaskResult.objects.get(task_id=synteny_calculation_task_id)
+            self.synteny_calculation_task = task_result
+            self.save()
+        except Exception as e:
+            raise Exception(
+                "[-] couldnt update query sequence with taskresult object for synteny calculation task with exception: {}".format(
+                    e))
 
     # TODO documentation
     def update_cdd_domain_search_task(self, cdd_search_task_id: int):

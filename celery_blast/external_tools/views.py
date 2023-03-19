@@ -1,3 +1,4 @@
+import json
 import os
 from json import loads
 from time import sleep
@@ -18,7 +19,8 @@ from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_e
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building, \
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
     download_organism_protein_sequences_task, \
-    entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task
+    entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task, \
+    synteny_calculation_task
 
 
 '''synteny_dashboard_view
@@ -56,11 +58,11 @@ def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, quer
         raise failure_view(request, e)
 
 
-''' ajax_call_for_synteny_calculation
+''' ajax_call_for_synteny_calculation_selector_table
 
 '''
 @csrf_exempt
-def ajax_call_for_synteny_calculation(request:WSGIRequest, project_id:int, query_sequence:str):
+def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, project_id:int, query_sequence:str):
     try:
         if request.is_ajax and request.method == "GET":
             table_data = read_query_sequence_rbh_table(project_id, query_sequence)
@@ -68,17 +70,21 @@ def ajax_call_for_synteny_calculation(request:WSGIRequest, project_id:int, query
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
-''' calculate_synteny_form_submit_ajax
-
+''' calculate_synteny_form_submit_ajax 
+    
+    This function receives json data from an ajax request that is submitted after pressing the button in the 
+    synteny calculation table dashboard. The received data is a json objects that gets translated into a dictionary.
+    The dictionary keys are integers indicating the number of the selected item and the id of the selected rbh.
+    Based on the RBH id the result dataframe and database table the ftp path for the corresponding genbank file is calculated.
 '''
 @csrf_exempt
 def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, query_sequence:str):
     try:
-        print("hello from ajax")
         if request.is_ajax and request.method == "POST":
             form_data = request.POST
-            print(form_data)
-        return redirect("synteny_dashboard")
+            data = form_data.dict()
+            synteny_calculation_task.delay(project_id, query_sequence, data)
+        return JsonResponse({"response": "success"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
