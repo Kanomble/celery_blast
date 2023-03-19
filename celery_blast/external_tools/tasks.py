@@ -272,7 +272,7 @@ def execute_phylogenetic_tree_building(self, project_id, query_sequence_id):
             logger.info(
                 'waiting for popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
                                                                                         40000))
-            returncode = phylo_task.wait(4000)
+            returncode = phylo_task.wait(40000)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
@@ -373,7 +373,7 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
                 logger.info(
                     'waiting for popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
                                                                                             40000))
-                returncode = phylo_task.wait(4000)
+                returncode = phylo_task.wait(40000)
 
                 progress = int(progress * counter)
                 if progress <= 80:
@@ -579,7 +579,7 @@ def execute_phylogenetic_tree_building_with_domains(project_id: int, query_seque
             logger.info(
                 'INFO: waiting for fasttree popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
                                                                                                        40000))
-            returncode = phylo_task.wait(4000)
+            returncode = phylo_task.wait(40000)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         elif msa_status == 1:

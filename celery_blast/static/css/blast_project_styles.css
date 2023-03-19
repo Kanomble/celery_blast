@@ -286,7 +286,7 @@ div.dashboard_project_list_col table th {
 div.progress {
     background: transparent;
     position: relative;
-    height: 200px;
+    height: 150px;
     padding: 20px;
     display: flex;
 }
