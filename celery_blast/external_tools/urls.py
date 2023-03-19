@@ -82,7 +82,9 @@ synteny_urls = [
          name="synteny_calculation_dashboard_view"),
     path("<int:project_id>/<str:query_sequence>/calculate_synteny_form_submit_ajax",
          views.calculate_synteny_form_submit_ajax,
-         name="calculate_synteny_form_submit_ajax")
+         name="calculate_synteny_form_submit_ajax"),
+    path('<int:project_id>/<str:query_sequence_id>/clinker_synteny_plot',
+         views.load_synteny_view, name='load_synteny')
 ]
 
 urlpatterns = [

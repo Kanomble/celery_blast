@@ -88,6 +88,15 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+@login_required(login_url='login')
+def load_synteny_view(request: WSGIRequest, project_id: int, query_sequence_id: str):
+    try:
+        html_data = get_html_results(project_id, query_sequence_id + '/' + "clinker_result_plot.html")
+        return HttpResponse(html_data)
+    except Exception as e:
+        return failure_view(request, e)
+
+
 '''load_phylogenetic_tree_view
 
     This function is part of the phylogenetic dashboard. It is similar to the load_reciprocal_result_view view function

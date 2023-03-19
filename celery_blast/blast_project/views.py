@@ -285,7 +285,11 @@ def ajax_wp_to_links(request, project_id: int):
 def execute_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
-            execute_reciprocal_blast_project.delay(project_id)
+            blast_project = get_project_by_id(project_id)
+            if blast_project.project_execution_snakemake_task:
+                return redirect('project_details', project_id=project_id)
+            else:
+                execute_reciprocal_blast_project.delay(project_id)
         return redirect('project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)

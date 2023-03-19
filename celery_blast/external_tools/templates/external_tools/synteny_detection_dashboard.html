@@ -42,7 +42,7 @@
                                 </a>
                             </td>
                             <td>
-                              <a class="btn btn-dark" href="#">
+                              <a class="btn btn-dark" rel="noreferrer noopener" target="_blank" href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id %}">
                                    View Synteny
                                 </a>
                             </td>
@@ -53,7 +53,18 @@
                                 </a>
                             </td>
                             <td>
-                                <a class="btn btn-dark disabled" href="#">
+                                <a class="btn btn-dark disabled" href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id %}">
+                                   View Synteny
+                                </a>
+                            </td>
+                        {% else %}
+                            <td>
+                               <a class="btn btn-dark" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id query_sequence=qseq.query_accession_id %}">
+                                   Calculate Synteny
+                                </a>
+                            </td>
+                            <td>
+                              <a class="btn btn-dark disabled" href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id %}">
                                    View Synteny
                                 </a>
                             </td>

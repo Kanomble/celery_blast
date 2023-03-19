@@ -259,13 +259,21 @@ Those functions can be used to trigger side effects during initialization of the
 E.g. creation of blast project directories or specific setting files, such as the snakemake configuration file.
 
 ## TODO
+- [ ] refactor synteny dashboard
+  - [X] synteny dashboard just for uploaded==False databases
+- [ ] refactor phylogenetic dashboard
+  - [ ] add custom msa and fasttree executions
+    - [ ] add options - e.g. bootstrap support etc.
+- [ ] disable execute snakemake button if task is in progress 
 - [ ] strange error during database statistics task
-- [ ] after 100% reload refresh page
+- [ ] after 100% reload refresh page 
+  - [ ] use window.location.reload()
 - [ ] blastdbcheck in celery snakemake process for the cdd database and other databases?
+  - [X] base functions are implemented
 - [ ] check if uploaded genomes consist of protein sequences
 - [ ] refactor entrez query for one way blast remote searches
 - [ ] deletion of taxonomic nodes
-- [ ] interface for the CDD domain search
+- [ ] refactor interface for the CDD domain search
 - [ ] separate download buttons for phylogenies and multiple sequence alignments within the external tools website
 - [ ] project validation -> check if project title already exist!
 - [ ] database statistics progress bar
@@ -276,6 +284,10 @@ E.g. creation of blast project directories or specific setting files, such as th
 - [ ] if no genome level is defined take all
 - [ ] snakemake --unlock ? 
 - [ ] refactor website structures
+  - [X] synteny dashboard
+  - [X] project details
+  - [X] fasttree and msa dashboard
+    - [ ] phylogenetic dashboard
 - [X] add a production environment
   - [X] follow this [guide](https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/)
 - [X] add a development environment

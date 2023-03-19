@@ -273,7 +273,7 @@ def download_genbank_files(sequence_id_to_ftp_path: dict, output_filepath: str, 
     :param limit - sequences downstream and upstream to slice from genbank file
         :type int
     :param query_sequence - used to build file and directory paths
-        :type str
+        :type str 
 '''
 def write_new_genbank_file(sequence_id_to_ftp_path:dict, data_path:str, limit:int, query_sequence:str, project_id:int)->dict:
     try:
@@ -294,3 +294,12 @@ def write_new_genbank_file(sequence_id_to_ftp_path:dict, data_path:str, limit:in
         return 0
     except Exception as e:
         raise Exception("[-] ERROR during creation of sliced genbank files with exception: {}".format(e))
+
+'''delete_sliced_genbank_files
+
+'''
+def delete_sliced_genbank_files():
+    try:
+        pass
+    except Exception as e:
+        raise Exception("[-] ERROR during deletion of sliced synteny genbank files with exception: {}".format(e))

@@ -24,6 +24,9 @@ from os import listdir, mkdir, remove
 logger = get_task_logger(__name__)
 
 #TODO documentation + exception handling ...
+'''synteny_calculation_task
+
+'''
 @shared_task(bind=True)
 def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:dict):
     try:
@@ -50,23 +53,26 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
             logger.info("creating synteny analysis folder in project: {}".format(project_id))
             mkdir(BLAST_PROJECT_DIR+str(project_id)+'/synteny_analysis')
         logger.info("starting download of genbank files ...")
-        returncode = download_genbank_files(sequence_id_to_ftp_path_dict,path_to_synteny_analysis, project_id)
-        progress_recorder.set_progress(75, 100, "PROGRESS")
+        genbank_filelist = download_genbank_files(sequence_id_to_ftp_path_dict,path_to_synteny_analysis, project_id)
+        if len(genbank_filelist) == 0:
+            logger.warning("there are genbank files left")
+        else:
+            progress_recorder.set_progress(75, 100, "PROGRESS")
 
-        logger.info("done downloading starting to slice genbank file entries for synteny analysis")
-        returncode = write_new_genbank_file(sequence_id_to_ftp_path_dict,
-                                            path_to_synteny_analysis, 6, query_sequence, project_id)
+            logger.info("done downloading starting to slice genbank file entries for synteny analysis")
+            returncode = write_new_genbank_file(sequence_id_to_ftp_path_dict,
+                                                path_to_synteny_analysis, 6, query_sequence, project_id)
 
-        logger.info("trying to execute clinker")
-        working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
-        logger.info("executing clinker in working directory: {}".format(working_directory))
-        cmd = "clinker "+working_directory+'*.gbk'+" -p "+working_directory+'clinker_result_plot.html'
-        proc = Popen(cmd, shell=True)
-        returncode = proc.wait(timeout=2000)
-        progress_recorder.set_progress(99, 100, "PROGRESS")
-        if returncode != 0:
-            logger.warning("error during donwload of the cdd database")
-            raise SubprocessError
+            logger.info("trying to execute clinker")
+            working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
+            logger.info("executing clinker in working directory: {}".format(working_directory))
+            cmd = "clinker "+working_directory+'*.gbk'+" -p "+working_directory+'clinker_result_plot.html'
+            proc = Popen(cmd, shell=True)
+            returncode = proc.wait(timeout=2000)
+            progress_recorder.set_progress(99, 100, "PROGRESS")
+            if returncode != 0:
+                logger.warning("error during donwload of the cdd database")
+                raise SubprocessError
 
         logger.info("done")
         return 0

@@ -71,8 +71,9 @@
                     'selectNone',
                     'selectRows'
                 ],
-                select: true,
-
+                select: {
+                    style: 'multi'
+                },
                 "ajax": {
                     "url": "{% url 'ajax_call_for_synteny_calculation_selector_table' project_id=project_id query_sequence=query_sequence %}",
                     "type": "GET",
