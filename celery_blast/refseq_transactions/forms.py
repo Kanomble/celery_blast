@@ -1,6 +1,7 @@
 from os import listdir
 
 from blast_project.py_biopython import get_list_of_species_taxids_by_list_of_scientific_names
+from blast_project.py_django_db_services import check_if_database_title_exists
 from django import forms
 from django.core.exceptions import ValidationError
 
@@ -108,6 +109,10 @@ class RefseqDatabaseForm(forms.Form):
             taxid_uploaded_file = cleaned_data['taxid_uploaded_file']
             taxid_text_field = cleaned_data['taxid_text_field']
             user_email = self.fields['user_email'].charfield
+            database_name = cleaned_data['database_name']
+
+            if check_if_database_title_exists(database_name):
+                self.add_error('database_name','This title is already in use, please specify another title.')
 
             # if taxid_file empty --> taxid_file == None
             # if taxid_uploaded_file empty --> taxid_uploaded_file == ''

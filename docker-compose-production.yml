@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   web:
-    image: kanomble/rec_blast_base_image:2.4
+    image: kanomble/rec_blast_base_image:2.5
     deploy:
       resources:
         limits:
@@ -12,7 +12,7 @@ services:
     command:  sh -c "wait-for rabbitmq:5672 && wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
-     && gunicorn celery_blast.wsgi:application --bind 0.0.0.0:8000"
+     && gunicorn celery_blast.wsgi:application --bind 0.0.0.0:8000 --timeout 240 --workers 4 --threads 2"
     networks:
       - main
     restart: unless-stopped
@@ -29,7 +29,7 @@ services:
       - 8000
 
   celery_worker:
-    image: kanomble/rec_blast_base_image:2.4
+    image: kanomble/rec_blast_base_image:2.5
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery worker -A celery_blast -l INFO"
     env_file:
       - ./.env.prod
@@ -47,7 +47,7 @@ services:
     restart: unless-stopped
 
   jupyter_notebook:
-    image: kanomble/rec_blast_base_image:2.4
+    image: kanomble/rec_blast_base_image:2.5
     command:  sh -c "cd media/ && jupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root"
     networks:
       - main
@@ -63,7 +63,7 @@ services:
       - "8888:8888"
 
   flower:
-    image: kanomble/rec_blast_base_image:2.4
+    image: kanomble/rec_blast_base_image:2.5
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- flower -A celery_blast --port=5555"
     networks:
       - main

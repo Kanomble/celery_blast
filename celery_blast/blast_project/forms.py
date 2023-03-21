@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
     get_list_of_species_taxids_by_list_of_scientific_names, fetch_protein_records
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, \
-    check_if_sequences_are_in_database
+    check_if_sequences_are_in_database, check_if_project_title_exists, check_if_database_title_exists
 from string import punctuation, ascii_letters
 
 ''' CreateTaxonomicFileForm
@@ -188,6 +188,9 @@ class ProjectCreationForm(forms.Form):
 
             species_name = cleaned_data['species_name_for_backward_blast']
             user_email = self.fields['user_email'].charfield
+
+            if check_if_project_title_exists(cleaned_data['project_title']):
+                self.add_error('project_title', 'This title is already in use, please specify another title.')
 
             try:
                 taxonomic_nodes = get_species_taxid_by_name(user_email, species_name)
@@ -461,6 +464,9 @@ class UploadGenomeForm(forms.Form):
         assembly_accessions_file = cleaned_data['assembly_accessions_file']
         assembly_level_file = cleaned_data['assembly_level_file']
         user_email = cleaned_data['user_email']
+        database_title = cleaned_data['database_title']
+        if check_if_database_title_exists(database_title):
+            self.add_error('database_title', 'This title is already in use, please specify another title.')
 
         if genome_fasta_file.name.endswith('.faa') is not True and genome_fasta_file.name.endswith(
                 '.fasta') is not True:
@@ -580,6 +586,10 @@ class UploadMultipleFilesGenomeForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         user_email = cleaned_data['user_email']
+        database_title = cleaned_data['database_title']
+        if check_if_database_title_exists(database_title):
+            self.add_error('database_title', 'This title is already in use, please specify another title.')
+
         for field in self.fields:
             if "genome_file" in field:
                 file = cleaned_data.get(field)

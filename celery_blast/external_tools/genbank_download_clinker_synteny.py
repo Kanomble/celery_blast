@@ -1,10 +1,9 @@
 from Bio import SeqIO
-from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 import pandas as pd
-from os.path import isfile
-from os import remove
+from os.path import isfile, isdir
+from os import remove, listdir
 import subprocess
 from celery_blast.settings import BLAST_PROJECT_DIR
 
@@ -32,7 +31,8 @@ from celery_blast.settings import BLAST_PROJECT_DIR
 '''
 def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath: str, newfilename: str, project_id:int)->int:
     try:
-        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + sequence + '_genbank_extraction.log'
+        filename = newfilename.split("/")[-1].split(".")[0]
+        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + filename + '.log'
         with open(logfile, 'w') as log:
             try:
                 log.write("INFO:START parsing genbank file\n")
@@ -66,36 +66,41 @@ def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath:
                     else:
                         record_counter += 1
 
-                log.write("INFO:Trying to extract features ... \n")
-                log.write("INFO:Setting up start and end features of the specified genbank record ... \n")
-                start = 0 if counter - limits < 0 else counter - limits
-                end = len(records[record_counter].features) if limits + counter >= len(
-                    records[record_counter].features) else limits + counter
-                gb = records[record_counter]
-                log.write("INFO:Selecting record number: {}, target sequence in feature: {}, slicing record features from: {} to {} ..\n".format(record_counter, counter, start, end))
-                locus_tags = []
-                relevant_features = []
-                id_to_location = {}
-                for feature in gb.features[start:end]:
-                    if feature.type == 'gene' or feature.type == 'CDS':
+                try:
+                    log.write("INFO:Trying to extract features ... \n")
+                    log.write("INFO:Setting up start and end features of the specified genbank record ... \n")
+                    log.write("INFO:Length of record features: {}\n".format(len(records[record_counter].features)))
+                    start = 0 if counter - limits < 0 else counter - limits
+                    end = len(records[record_counter].features) if limits + counter > len(
+                        records[record_counter].features) else limits + counter
+                    gb = records[record_counter]
+                    log.write("INFO:Selecting record number: {}, target sequence in feature: {}, slicing record features from: {} to {} ..\n".format(record_counter, counter, start, end))
+                    locus_tags = []
+                    relevant_features = []
+                    id_to_location = {}
+                    for feature in gb.features[start:end]:
+                        if feature.type == 'gene' or feature.type == 'CDS':
 
-                        if 'protein_id' in feature.qualifiers.keys():
-                            if feature.qualifiers['protein_id'][0] not in locus_tags:
-                                locus_tags.append(feature.qualifiers['protein_id'][0])
-                                relevant_features.append(feature)
-                                id_to_location[feature.qualifiers['protein_id'][0]] = [feature.location]
-                        else:
-                            if 'locus_tag' in feature.qualifiers.keys():
-                                if feature.qualifiers['locus_tag'][0] not in locus_tags:
-                                    locus_tags.append(feature.qualifiers['locus_tag'][0])
+                            if 'protein_id' in feature.qualifiers.keys():
+                                if feature.qualifiers['protein_id'][0] not in locus_tags:
+                                    locus_tags.append(feature.qualifiers['protein_id'][0])
                                     relevant_features.append(feature)
-                                    id_to_location[feature.qualifiers['locus_tag'][0]] = [feature.location]
+                                    id_to_location[feature.qualifiers['protein_id'][0]] = [feature.location]
+                            else:
+                                if 'locus_tag' in feature.qualifiers.keys():
+                                    if feature.qualifiers['locus_tag'][0] not in locus_tags:
+                                        locus_tags.append(feature.qualifiers['locus_tag'][0])
+                                        relevant_features.append(feature)
+                                        id_to_location[feature.qualifiers['locus_tag'][0]] = [feature.location]
+                except Exception:
+                    log.write("WARNING:{} does not reside in this genbank file, skipping this assembly\n".format(sequence))
+                    return 0
 
                 if len(locus_tags) <= 1:
                     log.write("WARNING:There are not enough sequences in the sliced GenBank file ...\n")
                     return 1
 
-                log.write("INFO:Number of GENES in new GenBankFile: {}".format(len(locus_tags)))
+                log.write("INFO:Number of GENES in new GenBankFile: {}\n".format(len(locus_tags)))
 
                 log.write("INFO:Extacting new sequence regions ...\n")
                 qseq_location_dict = {}
@@ -190,7 +195,12 @@ def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_pat
                 for seqid, ftp_path in zip(database_table.sacc_transformed, database_table.ftp_path):
                     genbank_path = '/'.join(ftp_path.split("/")[0:-1])
                     genbank_path += '/' + ftp_path.split("/")[-1].split("_protein.faa.gz")[0] + '_genomic.gbff.gz'
-                    sequence_id_to_ftp_path[seqid] = genbank_path
+                    # there may be multiple assembly entries for some organisms,
+                    # therefore download all assemblies and decide within the extract function which assembly is the right one
+                    if seqid not in sequence_id_to_ftp_path.keys():
+                        sequence_id_to_ftp_path[seqid] = [genbank_path]
+                    else:
+                        sequence_id_to_ftp_path[seqid].append(genbank_path)
             except Exception as e:
                 log.write("ERROR:Exception {}".format(e))
                 raise Exception(e)
@@ -222,34 +232,34 @@ def download_genbank_files(sequence_id_to_ftp_path: dict, output_filepath: str, 
             genbank_filelist = []
             try:
                 for seqid in sequence_id_to_ftp_path.keys():
-                    ftp_path = sequence_id_to_ftp_path[seqid]
-                    genbank_filename = sequence_id_to_ftp_path[seqid].split('/')[-1].split(".gz")[0]
-                    genbank_filename = output_filepath + '/' + genbank_filename
-                    if (isfile(genbank_filename) == True):
-                        log.write("INFO:GenBank file already exist, skipping download ...\n")
-                        genbank_filelist.append(genbank_filename)
-                    else:
-                        log.write("INFO:Try to download: {}\n".format(ftp_path))
-                        for attempt in range(10):
+                    for ftp_path in sequence_id_to_ftp_path[seqid]:
+                        genbank_filename = ftp_path.split('/')[-1].split(".gz")[0]
+                        genbank_filename = output_filepath + '/' + genbank_filename
+                        if (isfile(genbank_filename) == True):
+                            log.write("INFO:GenBank file already exist, skipping download ...\n")
+                            genbank_filelist.append(genbank_filename)
+                        else:
+                            log.write("INFO:Try to download: {}\n".format(ftp_path))
+                            for attempt in range(10):
 
-                            try:
-                                proc = subprocess.Popen("wget -qO- {} | gzip -d > {}".format(ftp_path, genbank_filename),
-                                                        shell=True)
-                                returncode = proc.wait(timeout=500)
-                                if (returncode != 0):
-                                    raise Exception
+                                try:
+                                    proc = subprocess.Popen("wget -qO- {} | gzip -d > {}".format(ftp_path, genbank_filename),
+                                                            shell=True)
+                                    returncode = proc.wait(timeout=500)
+                                    if (returncode != 0):
+                                        raise Exception
 
-                            except Exception as e:
-                                log.write("\tWARNING:error during download\n\tWARNING:next download try of {} with attempt {} and exception: {}\n".format(genbank_filename, attempt, e))
-                                if (attempt == 9):
-                                    if (isfile(genbank_filename)):
-                                        log.write("\tWARNING:removing file: {}\n".format(genbank_filename))
-                                        remove(genbank_filename)
-                                log.write("\tWARNING:skipped download of {}\n".format(genbank_filename))
-                            else:
-                                log.write("INFO:successfully downloaded file: {}\n".format(genbank_filename))
-                                genbank_filelist.append(genbank_filename)
-                                break
+                                except Exception as e:
+                                    log.write("\tWARNING:error during download\n\tWARNING:next download try of {} with attempt {} and exception: {}\n".format(genbank_filename, attempt, e))
+                                    if (attempt == 9):
+                                        if (isfile(genbank_filename)):
+                                            log.write("\tWARNING:removing file: {}\n".format(genbank_filename))
+                                            remove(genbank_filename)
+                                    log.write("\tWARNING:skipped download of {}\n".format(genbank_filename))
+                                else:
+                                    log.write("INFO:successfully downloaded file: {}\n".format(genbank_filename))
+                                    genbank_filelist.append(genbank_filename)
+                                    break
                     log.write("DONE\n")
             except Exception as e:
                 log.write("ERROR: Exception: {}\n".format(e))
@@ -281,25 +291,48 @@ def write_new_genbank_file(sequence_id_to_ftp_path:dict, data_path:str, limit:in
         with open(logfile, 'w') as log:
             log.write("INFO:starting to parse genbank files\n")
             for sequence in sequence_id_to_ftp_path.keys():
-                output_file = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/' + str(sequence) + '_sliced_gb_file.gbk'
-                genbank_file = data_path + '/' + sequence_id_to_ftp_path[sequence].split("/")[-1].split(".gz")[0]
-                log.write("INFO:trying to read genbank file at: {}\nINFO:write new genbank file into: {}\n"
-                          .format(genbank_file, output_file))
-                if isfile(genbank_file) == True and isfile(output_file) == False:
-                    retcode = extract_gene_cluster_by_one_sequence(sequence, limit, genbank_file, output_file, project_id)
-                    if retcode != 0:
-                        raise Exception("[-] ERROR during extraction of gene clusters retcode: {}".format(retcode))
-                else:
-                    log.write("WARNING:there is no genbank file for {}\n".format(output_file))
+                for ftp_path in sequence_id_to_ftp_path[sequence]:
+                    output_file = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/' + ftp_path.split("/")[-1].split(".gz")[0] + '_sliced_gb_file.gbk'
+                    genbank_file = data_path + '/' + ftp_path.split("/")[-1].split(".gz")[0]
+                    log.write("INFO:trying to read genbank file at: {}\nINFO:write new genbank file into: {}\n"
+                              .format(genbank_file, output_file))
+                    if isfile(genbank_file) == True and isfile(output_file) == False:
+                        retcode = extract_gene_cluster_by_one_sequence(sequence, limit, genbank_file, output_file, project_id)
+                        if retcode != 0:
+                            raise Exception("[-] ERROR during extraction of gene clusters retcode: {}".format(retcode))
+                    else:
+                        log.write("WARNING:there is no genbank file for {}\n".format(output_file))
         return 0
     except Exception as e:
         raise Exception("[-] ERROR during creation of sliced genbank files with exception: {}".format(e))
 
 '''delete_sliced_genbank_files
-
+    
+    This function deletes all previously sliced genbank files and the result standalone HTML file 
+    to create a new synteny plot with clinker. 
+    
+    :param project_id
+        :type int
+    :param query_sequence
+        :type str
+    
+    :returns returncode - 1 FAILURE, 0 SUCCESS
+        :type int
 '''
-def delete_sliced_genbank_files():
+def delete_sliced_genbank_files(project_id:int, query_sequence:str)->int:
     try:
-        pass
+        path_to_query_sequence = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence +'/'
+        if isdir(path_to_query_sequence) == True:
+            files = listdir(path_to_query_sequence)
+            for file in files:
+                if file.endswith('.gbk'):
+                    file = path_to_query_sequence + file
+                    remove(file)
+                elif file == "clinker_result_plot.html":
+                    file = path_to_query_sequence + file
+                    remove(file)
+        else:
+            return 1
+        return 0
     except Exception as e:
         raise Exception("[-] ERROR during deletion of sliced synteny genbank files with exception: {}".format(e))

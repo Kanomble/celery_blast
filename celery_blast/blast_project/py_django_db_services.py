@@ -33,6 +33,42 @@ def update_external_tool_with_cdd_search(project_id: int, query_sequence: str, t
         raise Exception(
             "[-] ERROR couldnt update query sequence model with cdd search task with exception: {}".format(e))
 
+'''check_if_project_title_exists
+    
+    This function is used within the BlastProject form validation.
+    
+    :param new_project_title
+        :type str
+    :returns True or False
+        :type bool
+'''
+def check_if_project_title_exists(new_project_title:str)->bool:
+    try:
+        for project in BlastProject.objects.all():
+            if project.project_title == new_project_title:
+                return True
+        return False
+    except Exception as e:
+        raise Exception("[-] couldnt check if project title exists with exception: {}".format(e))
+
+
+'''check_if_database_title_exists
+    
+    This function is used within the BlastDatabase form validation.
+    
+    :param new_database_title
+        :type str
+    :returns True or False
+        :type bool
+'''
+def check_if_database_title_exists(new_database_title:str)->bool:
+    try:
+        for database in BlastDatabase.objects.all():
+            if database.database_name == new_database_title:
+                return True
+        return False
+    except Exception as e:
+        raise Exception("[-] couldnt check if database title exists with exception: {}".format(e))
 
 '''get_query_sequence_of_external_tools
     

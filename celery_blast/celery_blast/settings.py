@@ -154,18 +154,17 @@ CACHES = {
 }
 '''
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5000000000
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5000000000
+DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=5000000000, cast=int)
+FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=5000000000, cast=int)
 
-PANOPTES_IP = 'http://panoptes:5000'
-STATIC_RESULT_IMAGES = STATIC_URL + 'images/result_images/'
-BLAST_PROJECT_DIR = 'media/blast_projects/'
-ONE_WAY_BLAST_PROJECT_DIR = 'media/one_way_blast/'
-BLAST_DATABASE_DIR = 'media/databases/'
-CDD_DIR = 'media/databases/CDD/Cdd'
-ESEARCH_OUTPUT = 'media/esearch_output/'
-CDD_DATABASE_URL = "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/little_endian/Cdd_LE.tar.gz"
-TAXDB_URL = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
-REFSEQ_ASSEMBLY_FILE = 'media/databases/refseq_summary_file/'
-REFSEQ_URL = "ftp://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
-TAXONOMIC_NODES = 'media/taxonomic_node_files/'
+STATIC_RESULT_IMAGES = config('STATIC_RESULT_IMAGES')
+BLAST_PROJECT_DIR = config('BLAST_PROJECT_DIR')
+ONE_WAY_BLAST_PROJECT_DIR = config('ONE_WAY_BLAST_PROJECT_DIR')
+BLAST_DATABASE_DIR = config('BLAST_DATABASE_DIR')
+CDD_DIR = config('CDD_DIR')
+ESEARCH_OUTPUT = config('ESEARCH_OUTPUT')
+CDD_DATABASE_URL = config("CDD_DATABASE_URL")
+TAXDB_URL = config("TAXDB_URL")
+REFSEQ_ASSEMBLY_FILE = config('REFSEQ_ASSEMBLY_FILE')
+REFSEQ_URL = config("REFSEQ_URL")
+TAXONOMIC_NODES = config('TAXONOMIC_NODES')

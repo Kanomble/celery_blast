@@ -456,6 +456,7 @@ def upload_multiple_genomes_view(request):
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user, request.POST, request.FILES,
                                                                        extra=extra_field_count)
             if multiple_files_genome_form.is_valid():
+                print("ITS VALID BITCH!")
                 with transaction.atomic():
 
                     new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,

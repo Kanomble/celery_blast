@@ -15,7 +15,7 @@ from .entrez_search_service import execute_entrez_search, create_random_filename
 from .models import ExternalTools
 from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
 from .genbank_download_clinker_synteny import extract_assembly_ftp_paths_from_reciprocal_result_entries, \
-    download_genbank_files, write_new_genbank_file
+    download_genbank_files, write_new_genbank_file, delete_sliced_genbank_files
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
 from os.path import isdir
@@ -33,6 +33,11 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
         logger.info("starting synteny calculation task for query sequence: {} in project {}".format(query_sequence, project_id))
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
+
+        returncode = delete_sliced_genbank_files(project_id, query_sequence)
+        if returncode == 1:
+            logger.warning("there is no directory for the given project_id: {} and query_sequence: {}".format(project_id,query_sequence))
+            return 1
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
         external_tools.update_query_sequences_synteny_calculation_task(query_sequence, str(self.request.id))
         blast_project = get_project_by_id(project_id)
@@ -61,7 +66,7 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
 
             logger.info("done downloading starting to slice genbank file entries for synteny analysis")
             returncode = write_new_genbank_file(sequence_id_to_ftp_path_dict,
-                                                path_to_synteny_analysis, 6, query_sequence, project_id)
+                                                path_to_synteny_analysis, 12, query_sequence, project_id)
 
             logger.info("trying to execute clinker")
             working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
