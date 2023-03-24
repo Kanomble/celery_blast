@@ -289,12 +289,19 @@ rule conduct_phylogeny_fast_tree:
 
 #RULE 21
 rule html_phylogenie:
-	input: newick_tree="{qseqid}/target_sequences.tree", blast_table="{qseqid}/rbh_table.tsf"
-	output: html_tree="{qseqid}/target_sequences_tree.html"
-	log: shiptv_log="log/{qseqid}/shiptv.log"
-	shell:
-		"shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}"
-
+    input: newick_tree="{qseqid}/target_sequences.tree", blast_table="{qseqid}/rbh_table.tsf",
+    output: html_tree="{qseqid}/target_sequences_tree.html",
+    log: shiptv_log="log/{qseqid}/shiptv.log",
+    run:
+        df = pd.read_table(input['blast_table'])
+        if len(df) > 0:
+            shell("shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}")
+        else:
+            with open(output['html_tree'], 'w') as html_output:
+                html_output.write("<p>No sequences to display</p>\n")
+            with open(log['shiptv_log'],'w') as logfile:
+                logfile.write("WARNING:There are no sequences in the tree file\n")
+                logfile.write("DONE")
 #RULE 17
 rule cdd_domain_rpsblast:
 	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/shiptv.log", qseqid=QSEQIDS)
