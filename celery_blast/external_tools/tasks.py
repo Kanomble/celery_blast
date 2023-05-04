@@ -49,16 +49,19 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
         forward_database = blast_project.project_forward_database
         database_table_path = forward_database.path_to_database_file + '/'
         database_table_path += forward_database.get_pandas_table_name()
+
+        database_genbank_file_path = forward_database.path_to_database_file + '/synteny_analysis'
         sequence_id_to_ftp_path_dict = extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path,
                                                                                                  result_data_path,
                                                                                                  target_rbhs, project_id)
         progress_recorder.set_progress(20, 100, "PROGRESS")
-        path_to_synteny_analysis = BLAST_PROJECT_DIR+str(project_id)+'/synteny_analysis'
-        if isdir(path_to_synteny_analysis) == False:
-            logger.info("creating synteny analysis folder in project: {}".format(project_id))
-            mkdir(BLAST_PROJECT_DIR+str(project_id)+'/synteny_analysis')
+
+        if isdir(database_genbank_file_path) == False:
+            logger.info("creating synteny analysis folder for forward database: {} with filepath: {}".format(forward_database.database_name, forward_database.path_to_database_file))
+            mkdir(database_genbank_file_path)
+
         logger.info("starting download of genbank files ...")
-        genbank_filelist = download_genbank_files(sequence_id_to_ftp_path_dict,path_to_synteny_analysis, project_id)
+        genbank_filelist = download_genbank_files(sequence_id_to_ftp_path_dict,database_genbank_file_path, project_id)
         if len(genbank_filelist) == 0:
             logger.warning("there are genbank files left")
         else:
@@ -66,7 +69,7 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
 
             logger.info("done downloading starting to slice genbank file entries for synteny analysis")
             returncode = write_new_genbank_file(sequence_id_to_ftp_path_dict,
-                                                path_to_synteny_analysis, 12, query_sequence, project_id)
+                                                database_genbank_file_path, 10, query_sequence, project_id)
 
             logger.info("trying to execute clinker")
             working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
