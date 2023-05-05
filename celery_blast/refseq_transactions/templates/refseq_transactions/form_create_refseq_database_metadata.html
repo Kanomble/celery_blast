@@ -43,6 +43,25 @@
                 {% endif %}
             </div>
         </div>
+
+        <div class="col">
+            <div class="form-group">
+                <label for="database_summary_file">Select a Public Database:</label>
+                <select class="form-control" id="database_summary_file" name="database_summary_file">
+                    <option value=""></option>
+                    {% for database_summary_file,option in  RefseqDatabaseForm.database_summary_file.field.choices %}
+                        <option value="{{ database_summary_file }}">{{ database_summary_file }}</option>
+                    {% endfor %}
+                </select>
+                {% if RefseqDatabaseForm.database_summary_file.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ RefseqDatabaseForm.database_summary_file.errors }}</strong>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+
         <div class="col">
             <div class="form-group">
                 <label for="taxid_file">Optional File For Limiting BLAST Databases By Taxonomy</label>

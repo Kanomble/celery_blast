@@ -10,6 +10,31 @@ from pandas import read_csv, Series
 from shutil import rmtree
 from celery_blast.settings import BLAST_DATABASE_DIR
 
+'''update_assembly_entries_in_database
+    
+    This function is used within the download process of RefSeq or GenBank databases, thus some proteoms may not exist
+    and cant get downloaded. THe previous function deletes all non-downlaoded files from the original BLAST database 
+    table.
+    
+    :param database_id
+        :type int
+    
+    :return returncode
+        :type int
+'''
+def update_assembly_entries_in_database(database_id: int):
+    try:
+        database = get_database_by_id(database_id)
+        path_to_database = database.path_to_database_file + '/'
+        pandas_table_file = path_to_database + database.get_pandas_table_name()
+        df = read_csv(pandas_table_file, header=0, index_col=0)
+        # length of updated dataframe determines number of database entries
+        database.assembly_entries = len(df)
+        database.save()
+        return 0
+    except Exception as e:
+        raise IntegrityError("[-] ERROR updating assembly entry number of BLAST database with exception: {}".format(e))
+
 '''update_external_tool_with_cdd_search
 
     This script uses model based functions of the ExternalTools model to update the QuerySequence model with 

@@ -65,6 +65,17 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
             database_name = valid_blastdatabase_form.cleaned_data['database_name']
             database_description = valid_blastdatabase_form.cleaned_data['database_description']
             assembly_levels = valid_blastdatabase_form.cleaned_data['assembly_levels']
+            assembly_summary_file = valid_blastdatabase_form.cleaned_data['database_summary_file']
+
+
+
+            if assembly_summary_file == "GenBank":
+                assembly_summary_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_genbank.txt'
+            elif assembly_summary_file == "RefSeq":
+                assembly_summary_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
+
+            if isfile(assembly_summary_file) == False:
+                raise Exception("[-] ERROR there is no assembly_summary_file for {} present".format(assembly_summary_file))
 
             if len(assembly_levels) == 0:
                 assembly_levels = ['Chromosome', 'Scaffold', 'Complete Genome', 'Contig']
@@ -76,7 +87,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                 upload_file(taxid_file, taxid_file_path)
 
                 # get data from refseq_summary_file and limit by assembly_levels
-                refseq_table = read_current_assembly_summary_with_pandas(assembly_levels)
+                refseq_table = read_current_assembly_summary_with_pandas(assembly_levels, assembly_summary_file)
                 # limit file by taxonomy
                 taxonomy_table = read_taxonomy_table(taxid_file.name)
                 filtered_table = filter_table_by_taxonomy(refseq_table, taxonomy_table)
@@ -105,7 +116,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                 taxid_file = valid_blastdatabase_form.cleaned_data['taxid_uploaded_file']
                 taxid_file_path = TAXONOMIC_NODES + taxid_file
 
-                refseq_table = read_current_assembly_summary_with_pandas(assembly_levels)
+                refseq_table = read_current_assembly_summary_with_pandas(assembly_levels, assembly_summary_file)
                 taxonomy_table = read_taxonomy_table(taxid_file)
                 filtered_table = filter_table_by_taxonomy(refseq_table, taxonomy_table)
                 filtered_table = filter_duplicates_by_ftp_path(filtered_table)
@@ -139,7 +150,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                         "[-] ERROR creating taxonomic_node file for pandas dataframe parsing with exception: {}".format(
                             e))
 
-                refseq_table = read_current_assembly_summary_with_pandas(assembly_levels)
+                refseq_table = read_current_assembly_summary_with_pandas(assembly_levels, assembly_summary_file)
                 taxonomy_table = read_taxonomy_table(taxid_filename)
                 filtered_table = filter_table_by_taxonomy(refseq_table, taxonomy_table)
                 filtered_table = filter_duplicates_by_ftp_path(filtered_table)
@@ -161,7 +172,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
                                                   filtered_table,
                                                   database_name)
             else:
-                filtered_table = read_current_assembly_summary_with_pandas(assembly_levels)
+                filtered_table = read_current_assembly_summary_with_pandas(assembly_levels, assembly_summary_file)
                 filtered_table = filter_duplicates_by_ftp_path(filtered_table)
                 new_blastdb = create_and_save_refseq_database_model(
                     database_name=database_name,
@@ -195,8 +206,9 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
 '''
 
 
-def read_current_assembly_summary_with_pandas(assembly_levels: list) -> pd.DataFrame:
-    summary_file_path = REFSEQ_ASSEMBLY_FILE + "assembly_summary_refseq.txt"
+def read_current_assembly_summary_with_pandas(assembly_levels: list,summary_file_path: str) -> pd.DataFrame:
+    # original filepath - delete
+    # summary_file_path = REFSEQ_ASSEMBLY_FILE + "assembly_summary_refseq.txt"
     if (isfile(summary_file_path) == False):
         raise ValueError('assembly summary file does not exist!')
 

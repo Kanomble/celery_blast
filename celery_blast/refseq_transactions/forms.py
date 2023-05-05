@@ -69,6 +69,13 @@ class RefseqDatabaseForm(forms.Form):
         widget=forms.CheckboxSelectMultiple()
     )
 
+    database_summary_file = forms.ChoiceField(
+        label="Select Public Database",
+        required=True,
+        choices=[("GenBank","GenBank"),("RefSeq","RefSeq")],
+        widget=forms.Select()
+    )
+
     database_name = forms.CharField(
         label="Database title",
         error_messages={'required': 'A database title is required!'},

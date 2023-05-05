@@ -7,6 +7,38 @@ from blast_project.py_django_db_services import get_database_by_id
 from celery_blast.settings import BLAST_DATABASE_DIR
 from django.db import IntegrityError
 
+# TODO implement deletion of files that do not start with: "GCF_XYZ." or "GCA_XYZ.".
+''' update_blast_database_table_and_model
+    
+    This function is executed during the download process of RefSeq or GenBank databases. Some protein files do not exist
+    those files are captured by the errorlist produced within the download_wget_ftp_paths function. Database entries
+    are deleted by transforming their ftp_path to the underlying assembly_entry, however, entries without "GCA_XYZ." 
+    will not get deleted.
+    
+    :param errorlist - files that havent been downloaded
+        :type list[str]
+        
+    :param database_path - path to pandas BLAST database dataframe
+        :type str
+        
+    :return returncode
+        :type int
+'''
+def update_blast_database_table(errorlist:list, database_path:str)->int:
+    try:
+        transform_ftp_path = lambda file: file.split('/')[-1].rstrip(file[-3:])
+        database = pd.read_csv(database_path, index_col=0)
+        idxs = []
+        for ftp_path in errorlist:
+            file = transform_ftp_path(ftp_path)
+            file = file.split(".")[0]
+            idxs.append(database.loc[database.assembly_accession.str.contains(file)].index[0])
+        database = database.drop(idxs).reset_index().drop(columns="index")
+        database.to_csv(database_path)
+        return 0
+    except Exception as e:
+        raise Exception("[-] ERROR during updating BLAST database table by removing not downloaded files with exception: {}".format(e))
+
 ''' refseq_file_exists
     
     checks if the refseq_summary_file exists in the desired media directory

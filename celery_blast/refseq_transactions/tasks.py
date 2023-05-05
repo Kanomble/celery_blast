@@ -5,7 +5,7 @@ from os.path import isdir, isfile
 from subprocess import Popen, SubprocessError, TimeoutExpired
 
 import pandas as pd
-from blast_project.py_django_db_services import update_blast_database_with_task_result_model
+from blast_project.py_django_db_services import update_blast_database_with_task_result_model, update_assembly_entries_in_database
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
@@ -13,7 +13,7 @@ from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBL
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 
-from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name
+from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name, update_blast_database_table
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -345,6 +345,8 @@ def create_chunks_of_databases(df: pd.DataFrame, path_to_database: str, progress
         
     :returns downloaded_files
         type: dict - dictionary of downloaded filenames and their corresponding taxids as values
+    :returns errorlist
+        type: list[str]
     
 '''
 
@@ -364,7 +366,7 @@ def download_wget_ftp_paths(path_to_database: str, dictionary_ftp_paths_taxids: 
         progress_steps = 100 / ((len(dictionary_ftp_paths_taxids.keys())) * 2)
         progress = 0
         progress_recorder.set_progress(progress, 100, "starting wget processes")
-
+        errorlist = []
         for file in dictionary_ftp_paths_taxids.keys():
 
             gunzip_output = transform_ftp_path(file)
@@ -400,6 +402,7 @@ def download_wget_ftp_paths(path_to_database: str, dictionary_ftp_paths_taxids: 
 
                             progress += progress_steps
                             progress_recorder.set_progress(progress, 100, "failed trying to download {}".format(file))
+                            errorlist.append(file)
                             # break
                     # fills the returned dictionary with successfully downloaded genome files
                     else:
@@ -411,7 +414,7 @@ def download_wget_ftp_paths(path_to_database: str, dictionary_ftp_paths_taxids: 
                         break
 
         error_log.close()
-        return downloaded_files
+        return downloaded_files, errorlist
     except Exception as e:
         logger.warning('couldnt download assemblies with exception : {}'.format(e))
         raise Exception('couldnt download assemblies with exception : {}'.format(e))
@@ -457,7 +460,7 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         update_blast_database_with_task_result_model(database_id, str(self.request.id))
 
         # download
-        dictionary_ftp_paths_taxids = download_wget_ftp_paths(path_to_database, dictionary_ftp_paths_taxids,
+        dictionary_ftp_paths_taxids, errorlist = download_wget_ftp_paths(path_to_database, dictionary_ftp_paths_taxids,
                                                               progress_recorder)
 
         # build pandas dataframe from dictionary that is returned by the download function
@@ -476,6 +479,12 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         logger.info('starting to write database alias file : {}'.format(alias_filename))
 
         returncode = write_alias_file(alias_filename, databases[0])
+
+        logger.info('delete unused assemblies from blast database table')
+        path_to_pandas_table = path_to_database + database_pandas_table_name
+        returncode = update_blast_database_table(errorlist, path_to_pandas_table)
+
+        returncode = update_assembly_entries_in_database(database_id)
         progress_recorder.set_progress(100, 100, "writing alias file")
         return returncode
     except Exception as e:

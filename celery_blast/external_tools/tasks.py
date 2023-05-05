@@ -69,7 +69,7 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
 
             logger.info("done downloading starting to slice genbank file entries for synteny analysis")
             returncode = write_new_genbank_file(sequence_id_to_ftp_path_dict,
-                                                database_genbank_file_path, 10, query_sequence, project_id)
+                                                database_genbank_file_path, 15, query_sequence, project_id)
 
             logger.info("trying to execute clinker")
             working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
