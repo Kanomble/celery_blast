@@ -15,30 +15,12 @@
                     </div>
                 {% endif %}
             </div>
-        </div>
-
-        <div class="col">
             <div class="form-group">
                 <label for="database_description">Database Description</label>
                 <input type="text" class="form-control" id="database_description" name="database_description">
                 {% if RefseqDatabaseForm.database_description.errors %}
                     <div class="alert alert-danger">
                         <strong>{{ RefseqDatabaseForm.database_description.errors }}</strong>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="col">
-            <div class="form-group" style="text-align: left">
-
-                <label for="assembly_levels"> Assembly Completness Level </label>
-
-                {{ RefseqDatabaseForm.assembly_levels }}
-
-                {% if RefseqDatabaseForm.assembly_levels.errors %}
-                    <div class="alert alert-danger">
-                        <strong>{{ RefseqDatabaseForm.assembly_levels.errors }}</strong>
                     </div>
                 {% endif %}
             </div>
@@ -61,7 +43,20 @@
             </div>
         </div>
 
+        <div class="col">
+            <div class="form-group" style="text-align: left">
 
+                <label for="assembly_levels"> Assembly Completness Level </label>
+
+                {{ RefseqDatabaseForm.assembly_levels }}
+
+                {% if RefseqDatabaseForm.assembly_levels.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ RefseqDatabaseForm.assembly_levels.errors }}</strong>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
         <div class="col">
             <div class="form-group">
                 <label for="taxid_file">Optional File For Limiting BLAST Databases By Taxonomy</label>

@@ -661,11 +661,13 @@ def produce_bokeh_pca_plot(project_id: int, qseqid: str,
         # perform principal component analysis
         if len(cdd_dataframe.columns) > 1:
             selection = pd.merge(selection, cdd_dataframe, left_index=True, right_index=True)
-
-            if len(selection.index) <= len(cdd_dataframe.columns):
-                pca_selection = PCA(n_components=len(selection.index), svd_solver='full')
-            else:
-                pca_selection = PCA(n_components=len(cdd_dataframe.columns) - 1, svd_solver='full')
+            # n_components = 7 mustbebetween 0 and min(n_samples, n_features) = 6
+            #if len(selection.index) <= len(cdd_dataframe.columns):
+            #    pca_selection = PCA(n_components=len(selection.index), svd_solver='full')
+            #else:
+            components = min(len(selection.index), len(cdd_dataframe.columns))
+            #len(cdd_dataframe.columns)
+            pca_selection = PCA(n_components= components - 1, svd_solver='full')
             # pca_selection = None
             cols = list(cdd_dataframe.columns)
             cols.remove('additional_domains')
