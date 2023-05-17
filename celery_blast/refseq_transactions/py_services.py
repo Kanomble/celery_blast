@@ -32,7 +32,12 @@ def update_blast_database_table(errorlist:list, database_path:str)->int:
         for ftp_path in errorlist:
             file = transform_ftp_path(ftp_path)
             file = file.split(".")[0]
-            idxs.append(database.loc[database.assembly_accession.str.contains(file)].index[0])
+            # TODO fix error:
+            # index 0 is out of bounds for axis 0 with size 0
+            try:
+                idxs.append(database.loc[database.assembly_accession.str.contains(file)].index[0])
+            except:
+                pass
         database = database.drop(idxs).reset_index().drop(columns="index")
         database.to_csv(database_path)
         return 0
