@@ -165,15 +165,17 @@ def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath:
     
     :param database_table_path - project forward database 
         :type str
-    :param result_table_path - reciprocal BLAST result table
+    :param result_data_path - project directory
         :type str
     :param: genome_assemblies - user specified genome assembly to download
         :type list
-    
+    :param query_sequence
+        :type str
+        
     :returns sequence_id_to_ftp_path
         :type dict
 '''
-def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path:str,result_data_path:str,genome_assemblies:list, project_id:int)->dict:
+def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path:str, result_data_path:str,genome_assemblies:list, project_id:int, query_sequence:str)->dict:
     try:
         logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_ftp_path_extraction.log'
         with open(logfile, 'w') as log:
@@ -181,18 +183,29 @@ def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_pat
                 log.write("INFO:Trying to extract assemblies from reciprocal result dataframe and database table\n")
                 log.write("INFO:Number of assemblies to download: {}\n".format(len(genome_assemblies)))
                 result_table = pd.read_csv(result_data_path, index_col=0)
+                result_table = result_table[result_table.qseqid == query_sequence]
                 database_table = pd.read_csv(database_table_path, index_col=0)
                 sequence_id_to_ftp_path = {}
                 database_table = database_table.rename(columns={"taxid":"staxids"})
                 log.write("INFO:merging database table with sliced result table\n")
-                result_selection = result_table[result_table.sacc_transformed.isin(genome_assemblies)]
-                database_table = database_table.merge(result_selection,on="staxids")
+                result_selection = result_table[result_table.sacc.isin(genome_assemblies)]
+                def check_assembly_column(x: str, assemblies: list) -> bool:
+                    for assembly in assemblies:
+                        if x in assembly:
+                            return True
+                    return False
+
+                database_table = database_table[
+                    database_table.assembly_accession.apply(lambda x: check_assembly_column(x, genome_assemblies))]
+                database_table = database_table.merge(result_selection, on="staxids")
                 database_table = database_table[['assembly_accession', 'staxids', 'organism_name', 'ftp_path', 'sacc_transformed']]
                 # this will drop potential paralogous sequences
                 # database_table = database_table.drop_duplicates(subset="ftp_path", keep="first")
                 log.write("INFO:done merging result tables ...\n")
                 log.write("INFO:building result dictionary for {} target sequences\n".format(len(database_table.sacc_transformed)))
+
                 for seqid, ftp_path in zip(database_table.sacc_transformed, database_table.ftp_path):
+                    log.write("INFO:ftp_path = {}\n".format(ftp_path))
                     genbank_path = '/'.join(ftp_path.split("/")[0:-1])
                     genbank_path += '/' + ftp_path.split("/")[-1].split("_protein.faa.gz")[0] + '_genomic.gbff.gz'
                     # there may be multiple assembly entries for some organisms,

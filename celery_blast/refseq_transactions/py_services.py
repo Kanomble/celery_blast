@@ -20,28 +20,47 @@ from django.db import IntegrityError
         
     :param database_path - path to pandas BLAST database dataframe
         :type str
+    
+    :param download_error_logfile - logfile for this function
+        :type str
         
     :return returncode
         :type int
 '''
-def update_blast_database_table(errorlist:list, database_path:str)->int:
+def update_blast_database_table(errorlist:list, database_path:str, download_error_logfile:str)->int:
     try:
-        transform_ftp_path = lambda file: file.split('/')[-1].rstrip(file[-3:])
-        database = pd.read_csv(database_path, index_col=0)
-        idxs = []
-        for ftp_path in errorlist:
-            file = transform_ftp_path(ftp_path)
-            file = file.split(".")[0]
-            # TODO fix error:
-            # index 0 is out of bounds for axis 0 with size 0
-            try:
-                idxs.append(database.loc[database.assembly_accession.str.contains(file)].index[0])
-            except:
-                pass
-        database = database.drop(idxs).reset_index().drop(columns="index")
-        database.to_csv(database_path)
+        with open(download_error_logfile,"w") as logfile:
+            logfile.write("INFO:starting to delete not downloaded entries from database details table\n")
+            transform_ftp_path = lambda file: file.split('/')[-1].rstrip(file[-3:])
+            database = pd.read_csv(database_path, index_col=0)
+            idxs = []
+            logfile.write("INFO:done reading database table\n")
+            for ftp_path in errorlist:
+                file = transform_ftp_path(ftp_path)
+                file = file.split(".")[0]
+                # TODO fix error:
+                # index 0 is out of bounds for axis 0 with size 0
+                try:
+                    logfile.write("INFO:working with {}\n".format(file))
+                    index = database.loc[database.assembly_accession.str.contains(file)].index[0]
+                    logfile.write("\tINFO:found index for row deletion\n")
+                    if index not in idxs:
+                        idxs.append(index)
+                except Exception as e:
+                    logfile.write("WARNING:error during index allocation for file: {} with ftp_path: {} and exception: {}\n".format(file, ftp_path, e))
+
+            if len(idxs) > 0:
+                logfile.write("INFO:dropping {} entries\n".format(len(idxs)))
+                try:
+                    database = database.drop(idxs).reset_index().drop(columns="index")
+                    database.to_csv(database_path)
+                except Exception as e:
+                    logfile.write("ERROR: error during dropping idxs from BLAST database table with exception: {}\n".format(e))
+                    return 1
+            logfile.write("DONE\n")
         return 0
     except Exception as e:
+        logfile.write("ERROR:error during updating BLAST database table with exception: {}\n".format(e))
         raise Exception("[-] ERROR during updating BLAST database table by removing not downloaded files with exception: {}".format(e))
 
 ''' refseq_file_exists

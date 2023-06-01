@@ -462,6 +462,13 @@ def download_blast_databases_based_on_summary_file(self, database_id):
         # download
         dictionary_ftp_paths_taxids, errorlist = download_wget_ftp_paths(path_to_database, dictionary_ftp_paths_taxids,
                                                               progress_recorder)
+        logger.info('delete unused assemblies from blast database table')
+        database_pandas_table_name = get_bdb_summary_table_name(database_id)
+        path_to_pandas_table = path_to_database + database_pandas_table_name
+        download_error_logfile = path_to_database + "update_blast_database_table.log"
+        returncode = update_blast_database_table(errorlist, path_to_pandas_table, download_error_logfile)
+
+
 
         # build pandas dataframe from dictionary that is returned by the download function
         pandas_ftp_paths_taxids_df = pd.DataFrame(dictionary_ftp_paths_taxids.items(), columns=['ftp_path', 'taxid'])
@@ -473,20 +480,17 @@ def download_blast_databases_based_on_summary_file(self, database_id):
 
         # database_files = format_available_databases(path_to_database,dictionary_ftp_paths_taxids,progress_recorder)
         progress_recorder.set_progress(99, 100, "writing alias file")
-        database_pandas_table_name = get_bdb_summary_table_name(database_id)
         alias_filename = BLAST_DATABASE_DIR + str(database_id) + '/' + database_pandas_table_name + '.database.pal'
 
         logger.info('starting to write database alias file : {}'.format(alias_filename))
 
         returncode = write_alias_file(alias_filename, databases[0])
 
-        logger.info('delete unused assemblies from blast database table')
-        path_to_pandas_table = path_to_database + database_pandas_table_name
-        returncode = update_blast_database_table(errorlist, path_to_pandas_table)
+
 
         returncode = update_assembly_entries_in_database(database_id)
         progress_recorder.set_progress(100, 100, "writing alias file")
         return returncode
     except Exception as e:
-        logger.warning('couldnt perform task because of exception : {}'.format(e))
-        raise Exception('couldnt perform compute ftp path task with exception {}'.format(e))
+        logger.warning('couldnt perform task with exception : {}'.format(e))
+        raise Exception('couldnt perform task with exception {}'.format(e))

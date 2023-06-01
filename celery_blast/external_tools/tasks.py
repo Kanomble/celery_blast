@@ -45,7 +45,7 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
         result_data_path = blast_project.get_project_dir() + '/reciprocal_results.csv'
         target_rbhs = []
         for key in rbh_dict.keys():
-            target_rbhs.append(rbh_dict[key].split(".")[0])
+            target_rbhs.append(rbh_dict[key])
         forward_database = blast_project.project_forward_database
         database_table_path = forward_database.path_to_database_file + '/'
         database_table_path += forward_database.get_pandas_table_name()
@@ -53,7 +53,8 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
         database_genbank_file_path = forward_database.path_to_database_file + '/synteny_analysis'
         sequence_id_to_ftp_path_dict = extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path,
                                                                                                  result_data_path,
-                                                                                                 target_rbhs, project_id)
+                                                                                                 target_rbhs, project_id,
+                                                                                                 query_sequence)
         progress_recorder.set_progress(20, 100, "PROGRESS")
 
         if isdir(database_genbank_file_path) == False:
