@@ -16,12 +16,69 @@ from .models import ExternalTools
 from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
 from .genbank_download_clinker_synteny import extract_assembly_ftp_paths_from_reciprocal_result_entries, \
     download_genbank_files, write_new_genbank_file, delete_sliced_genbank_files
-from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available
+from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, \
+    slice_cdd_domain_corrected_fasta_file
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
 from os.path import isdir
 from os import listdir, mkdir, remove
 # logger for celery worker instances
 logger = get_task_logger(__name__)
+
+@shared_task(bind=True)
+def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:str, accession_data:dict):
+    try:
+        logger.info("starting phylogenetic inference based on selected RBHs from the CDD domain plot")
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
+        logger.info("updating external tools with selection constrained cdd task")
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools.update_selection_constrained_CDD_phylogenetic_inference(query_sequence, str(self.request.id))
+        blast_project = get_project_by_id(project_id)
+        logger.info("working with post data ...")
+        accessions = []
+        for ind in accession_data.keys():
+            accessions.append(accession_data[ind])
+            logger.info(accession_data[ind])
+
+        path_to_query_subdir = blast_project.get_project_dir() + '/' + query_sequence
+        path_to_fasta_file = path_to_query_subdir + '/domain_corrected_target_sequences.faa'
+        logger.info("trying to slice domain_corrected_target_sequences.faa with accession list")
+        path_to_sliced_fasta_file = slice_cdd_domain_corrected_fasta_file(path_to_query_subdir, path_to_fasta_file, accessions)
+        logger.info("done slicing, created output: {}".format(path_to_sliced_fasta_file))
+        progress_recorder.set_progress(15,100,"PROGRESS")
+        logger.info("starting multiple sequence alignment")
+
+        path_to_mafft_output = path_to_query_subdir + "/selection_sliced_domain_mafft.msa"
+        cmd = "mafft {} > {}".format(path_to_sliced_fasta_file, path_to_mafft_output)
+        msa_task = Popen(cmd, shell=True)
+        logger.info(
+            'waiting for popen instance {} (mafft) to finish with timeout set to {}'.format(msa_task.pid,
+                                                                                    40000))
+        progress_recorder.set_progress(20, 100, "PROGRESS")
+
+        returncode = msa_task.wait(40000)
+        if returncode != 0:
+            raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+        progress_recorder.set_progress(70, 100, "SUCCESS")
+        logger.info("done calculating multiple sequence alignment with mafft")
+
+        logger.info("starting phylogenetic inference with fasttree")
+        path_to_fasttree_output = path_to_query_subdir + "/selection_sliced_domain_phylogeny.nwk"
+        cmd = "fasttree -lg {} > {}".format(path_to_mafft_output, path_to_fasttree_output)
+
+        phylo_task = Popen(cmd, shell=True)
+        progress_recorder.set_progress(71,100, "PROGRESS")
+        logger.info(
+            'waiting for popen instance {} (fasttree) to finish with timeout set to {}'.format(phylo_task.pid,
+                                                                                    40000))
+        returncode = phylo_task.wait(40000)
+        if returncode != 0:
+            raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+
+        progress_recorder.set_progress(99,100,"PROGRESS")
+    except Exception as e:
+        raise Exception("[-] ERROR during inference of selection constrained phylogenetic inference on CDD bokeh plot"
+                        " with exception: {}".format(e))
 
 #TODO documentation + exception handling ...
 '''synteny_calculation_task

@@ -1,4 +1,3 @@
-import json
 import os
 from json import loads
 from time import sleep
@@ -20,7 +19,7 @@ from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tre
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
     download_organism_protein_sequences_task, \
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task, \
-    synteny_calculation_task
+    synteny_calculation_task, calculate_phylogeny_based_on_selection
 
 
 '''synteny_dashboard_view
@@ -573,5 +572,29 @@ def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int):
             data = query_sequence.cdd_domain_search_task.result
             return JsonResponse({"data": loads(data)}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
+
+'''bokeh_task
+
+    This function sends data from the bokeh plot selected by the user to a server side function for 
+    calculating a multiple sequence alignment and phylogeny. It is triggered by button clicks on the bokeh plot.
+
+'''
+@csrf_exempt
+def bokeh_task(request:WSGIRequest):
+    try:
+        if request.is_ajax and request.method == "POST":
+            form_data = request.POST
+            data = form_data.dict()
+            data = data.keys()
+            data = list(data)[0]
+            data = loads(data)
+            url = data['url'].split("/")
+            project_id = int(url[4])
+            query_id = str(url[7])
+
+            calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0])
+        return JsonResponse({"response": "success"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)

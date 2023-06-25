@@ -57,6 +57,19 @@ class ExternalTools(models.Model):
         except Exception as e:
             raise Exception("[-] couldnt update query sequence object with exceptipon : {}".format(e))
 
+    def update_selection_constrained_CDD_phylogenetic_inference(self, query_sequence_id:str, cdd_selection_constrained_task: int):
+        try:
+            if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
+                query_sequence = self.query_sequences.get(query_accession_id=query_sequence_id)
+                taskresult = TaskResult.objects.get(task_id=cdd_selection_constrained_task)
+                query_sequence.selection_constrained_cdd_task = taskresult
+                query_sequence.save()
+            else:
+                raise Exception("[-] couldnt update query sequence with selection constrained CDD taskresult object")
+        except Exception as e:
+            raise Exception("[-] couldnt update query sequence with selection constrained CDD phylogenetic inference from"
+                            "bokeh plot with exception: {}".format(e))
+
     def update_query_sequences_msa_task(self, query_sequence_id: str, msa_task_id: int):
         try:
             if self.query_sequences.filter(query_accession_id=query_sequence_id).exists() == True:
@@ -147,19 +160,29 @@ class QuerySequences(models.Model):
         unique=False
     )
 
+    selection_constrained_cdd_task = models.ForeignKey(
+        TaskResult,
+        on_delete=models.CASCADE,
+        blank=True, null=True,
+        verbose_name="celery task for the selection constrained cdd task",
+        related_name="selection_constrained_cdd_task",
+        unique=False
+    )
+
     multiple_sequence_alignment_task = models.ForeignKey(
         TaskResult,
         on_delete=models.CASCADE,
         blank=True, null=True,
-        verbose_name="celery task for multiple sequence alignment performed by mafft in the bioinformatic tools container",
+        verbose_name="celery task for multiple sequence alignment performed by mafft",
         related_name="msa_task",
         unique=False
     )
+
     phylogenetic_tree_construction_task = models.ForeignKey(
         TaskResult,
         on_delete=models.CASCADE,
         blank=True, null=True,
-        verbose_name="celery task for constructing a phylogenetic tree performed by fasttree in the bioinformatic tools container",
+        verbose_name="celery task for constructing a phylogenetic tree performed by fasttree",
         related_name="tree_task",
         unique=False
     )

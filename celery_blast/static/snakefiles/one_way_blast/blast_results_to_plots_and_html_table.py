@@ -752,8 +752,9 @@ def add_taxonomic_information_to_db(user_email:str,log,taxids:list)->pd.DataFram
 ############################ MAIN SCRIPT ##############################
 
 RETURNCODE=4
-try:
-    with open(snakemake.log['log'],'w') as logfile:
+with open(snakemake.log['log'], 'w') as logfile:
+
+    try:
         logfile.write("INFO:starting to fetch taxonomic information...\n")
 
         #TODO obsolete?
@@ -765,10 +766,11 @@ try:
                 line = ' '.join(line.split(">")[1].split(' ')[1:]).rstrip()
                 queries[prot_id] = line
         queryfile.close()
-
+        print("INFO:trying to load blast dataframe ...\n")
         df = pd.read_table(snakemake.input['blast_results'], delimiter="\t", header=None)
         df.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore","slen", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
                       "stitle"]
+        logfile.write("INFO:loaded BLAST dataframe ...\n")
 
         # normalize taxonomic identifier
         # in remote BLAST searches multiple taxids may occur, just take the first one
@@ -863,5 +865,6 @@ try:
         with open(snakemake.output['html_table'], 'w') as f:
             f.write(html_string.format(table=result_df.to_html(classes='mystyle')))
         logfile.write("DONE\n")
-except Exception as e:
-    sys.exit(RETURNCODE)
+    except Exception as e:
+        logfile.write("ERROR:{}\n".format(e))
+        sys.exit(RETURNCODE)

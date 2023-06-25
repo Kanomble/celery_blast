@@ -95,4 +95,5 @@ urlpatterns = [
     path('', include(phylogenetic_analysis_urls)),
     path('<int:project_id>/external_project_information', views.project_informations,
          name='external_project_informations'),
+    path('bokeh_task', views.bokeh_task, name="bokeh_task")
 ]

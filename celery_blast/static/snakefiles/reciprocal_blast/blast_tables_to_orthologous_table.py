@@ -32,8 +32,15 @@ with open(snakemake.log['log'], 'w') as logfile:
         # the backward blast is currently limited to output only the best match, but the best match can contain several hsps,
         # thus it is possible that there are multiple lines of one qseqid present, which gets loaded by reading the dictionary for
         # filtering reciprocal best hits
+        logfile.write("INFO:deleting duplicate entries in result dataframe, current entries: {}\n".format(len(result_data)))
         result_data = result_data.drop_duplicates(['sacc_transformed', 'staxids'], keep='first')
         result_data = result_data.reset_index(drop=True)
+        logfile.write("INFO:amount of entries after deleting duplicate entries: {}\n".format(len(result_data)))
+
+        for query in result_data.qseqid.unique():
+            logfile.write("INFO:{} RBHs remain after applying the bitscore cut-off for query sequence {}\n".format(
+                len(result_data[result_data.qseqid == query]), query))
+
         logfile.write("INFO:done with merging result files and construction of RBH result dataframe\n")
 
         # Adds taxonomic information to pandas dataframe.

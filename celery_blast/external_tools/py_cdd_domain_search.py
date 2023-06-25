@@ -9,7 +9,7 @@ from bokeh.io import output_file, save
 # This is for creating layout
 from bokeh.layouts import column, gridplot
 # ColumnDataSource makes selection of the column easier and Select is used to create drop down
-from bokeh.models import ColumnDataSource, MultiSelect, DataTable, TableColumn, HTMLTemplateFormatter
+from bokeh.models import ColumnDataSource, MultiSelect, DataTable, TableColumn, HTMLTemplateFormatter, Button
 # To create intractive plot we need this to add callback method.
 from bokeh.models import CustomJS, Legend
 # Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
@@ -487,6 +487,102 @@ def build_table_columns(cdd_dataframe: pd.DataFrame) -> tuple:
         raise Exception("[-] ERROR creating table column for bokeh table with exception: {}".format(e))
 
 
+'''download_selection_callback
+
+    This function is similar to the download button callback function for 
+    the database statistics plot. It enables downloading the selected entries 
+    as a formatted CSV-File.
+
+    :param current_selection
+        :type ColumnDataSource
+    :returns download_selection_callback
+        :type CustomJS
+
+'''
+
+
+def download_selection_callback_creation(current_selection: ColumnDataSource) -> CustomJS:
+    download_selection_callback = CustomJS(args=dict(sc=current_selection), code="""
+        var temp = []
+        var csvFileData = []
+        for(var i = 0; i < sc.selected.indices.length; i++){
+            temp = [sc.data['sacc'][sc.selected.indices[i]],
+                    sc.data['pident'][sc.selected.indices[i]],
+                    sc.data['bitscore'][sc.selected.indices[i]],
+                    sc.data['stitle'][sc.selected.indices[i]],
+                    sc.data['genus'][sc.selected.indices[i]],
+                    sc.data['family'][sc.selected.indices[i]],
+                    sc.data['order'][sc.selected.indices[i]],
+                    sc.data['class'][sc.selected.indices[i]],
+                    sc.data['phylum'][sc.selected.indices[i]]
+                    ]
+            csvFileData.push(temp)
+        }
+        //define the heading for each row of the data  
+        var csv = `qseqid,sacc,staxids\n`;  
+        //merge the data with CSV  
+        csvFileData.forEach(function(row) {  
+                csv += row.join(',');  
+                csv += `\n`;  
+        });  
+        var json = JSON.stringify(csv);
+        var file = new File([csv], "selection.csv" ,{type: "octet/stream"});
+        var url = URL.createObjectURL(file);
+        window.location.assign(url);
+    """)
+    return download_selection_callback
+
+'''bokeh_django_task_button
+    
+    This function executes a celery task for the selection constrained calculation of phylogenies.
+    
+    :param current_selection
+        :type ColumnDataSource
+    :returns task_selection_callback
+        :type CustomJS
+
+'''
+
+
+def bokeh_django_task_button(current_selection: ColumnDataSource) -> CustomJS:
+    task_selection_callback = CustomJS(args=dict(sc=current_selection), code="""
+        var viewData = { 
+            accessions : [],
+            url : window.location.href
+        };
+        var jsonData = {};
+
+
+
+        for(var i = 0; i < sc.selected.indices.length; i++){
+            jsonData[i] = sc.data['sacc'][sc.selected.indices[i]]
+        }
+
+        viewData.accessions.push(jsonData);
+
+        var json = JSON.stringify(viewData);
+        
+        var base_url = window.location.href
+        base_url = base_url.split("/")[2]
+        base_url = "http://" + base_url + "/external_tools/bokeh_task"
+        
+        $.ajax({
+            type: "POST",
+            url: base_url,
+            data: json,
+            success: function(result){
+                console.log(result);
+                setTimeout(function(){
+                   window.location.reload();
+                }, 2000);
+            },
+            dataType: "json"
+        });
+
+
+    """)
+    return task_selection_callback
+
 '''build_bokeh_plot
 
     This function produces an interactive bokeh plot for the visualization of 
@@ -592,8 +688,16 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
                                                                'genus', {})
         genus_menu.js_on_change('value', genus_menu_callback)
 
+        download_selection_callback = download_selection_callback_creation(column_dat)
+        download_selection_button = Button(label="Download Selection")
+        download_selection_button.js_on_click(download_selection_callback)
+
+        task_selection_callback = bokeh_django_task_button(column_dat)
+        task_selection_button = Button(label="Calculate Domain Corrected Phylogeny")
+        task_selection_button.js_on_click(task_selection_callback)
+
         return gridplot(
-            [[column(p), column(table), column(phylum_menu, class_menu, order_menu, family_menu, genus_menu)]],
+            [[column(p), column(table, task_selection_button, download_selection_button), column(phylum_menu, class_menu, order_menu, family_menu, genus_menu)]],
             toolbar_location='right'), circle
     except Exception as e:
         raise Exception("[-] ERROR during creation of bokeh plots with exception: {}".format(e))

@@ -15,7 +15,6 @@ logger = get_task_logger(__name__)
 @shared_task(bind=True)
 def execute_one_way_blast_project(self, project_id):
     logger.info('snakemake one way blast workflow execution')
-    logger.info('setting panoptes ip to: {}'.format(settings.PANOPTES_IP))
     snakemake_working_dir = settings.ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/'
     snakemake_config_file = settings.ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/snakefile_config'
     snakefile_dir = 'static/snakefiles/one_way_blast/Snakefile'
@@ -67,7 +66,6 @@ def execute_one_way_blast_project(self, project_id):
 @shared_task(bind=True)
 def execute_one_way_remote_blast_project(self, project_id):
     logger.info('snakemake one way remote blast workflow execution')
-    logger.info('setting panoptes ip to: {}'.format(settings.PANOPTES_IP))
     snakemake_working_dir = settings.ONE_WAY_BLAST_PROJECT_DIR + '/remote_searches/' + str(project_id) + '/'
     snakemake_config_file = settings.ONE_WAY_BLAST_PROJECT_DIR + '/remote_searches/' + str(
         project_id) + '/snakefile_config'

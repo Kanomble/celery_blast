@@ -97,13 +97,11 @@ def create_blast_database_model_and_directory(request):
             refseq_database_form = RefseqDatabaseForm(request.user, request.POST, request.FILES)
             # validate form
             if refseq_database_form.is_valid():
-                print("VALID!")
                 create_blastdatabase_table_and_directory(refseq_database_form)
                 return redirect('refseq_transactions_dashboard')
 
             # validation error
             else:
-                print("NOT VALID")
                 print(refseq_database_form.errors)
                 if (refseq_file_exists()):
                     context['refseq_exists'] = True
