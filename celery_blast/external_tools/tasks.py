@@ -74,7 +74,17 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         returncode = phylo_task.wait(40000)
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
-
+        logger.info("done with phylogenetic tree inference")
+        logger.info("starting to generate html file with phylogeny ...")
+        path_to_rbh_table = path_to_query_subdir + '/rbh_table.tsf'
+        path_to_html_tree = path_to_query_subdir + '/selection_sliced_domain_phylogeny.html'
+        shiptv_task = "shiptv --newick {} --metadata {} --output-html {}".format(path_to_fasttree_output,
+                                                                                 path_to_rbh_table, path_to_html_tree)
+        shiptv_task = Popen(shiptv_task, shell=True)
+        returncode = shiptv_task.wait(40000)
+        if returncode != 0:
+            raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+        logger.info("DONE")
         progress_recorder.set_progress(99,100,"PROGRESS")
     except Exception as e:
         raise Exception("[-] ERROR during inference of selection constrained phylogenetic inference on CDD bokeh plot"
