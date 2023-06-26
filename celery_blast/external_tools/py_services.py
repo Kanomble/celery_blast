@@ -27,6 +27,7 @@ def slice_bw_query_fasta_file(path_to_query_subdir:str, path_to_fasta_file:str, 
         else:
             targets = 0
             output_file_path = path_to_query_subdir + '/sliced_fasta_file.faa'
+            output_accessions = []
             with open(path_to_fasta_file, 'r') as input_file:
                 with open(output_file_path, 'w') as output_file:
                     for line in input_file.readlines():
@@ -36,9 +37,16 @@ def slice_bw_query_fasta_file(path_to_query_subdir:str, path_to_fasta_file:str, 
                             else:
                                 header = line.split(">")[1].split(" ")[0].rstrip()
                             if header in accessions:
-                                output_file.write(">"+header+"\n")
-                                switch = True
-                                targets += 1
+                                # do not report multispecies proteins, they may disturb the alignment?
+                                if header not in output_accessions:
+                                    output_accessions.append(header)
+                                    output_file.write(">"+header+"\n")
+                                    switch = True
+                                    targets += 1
+                                else:
+                                    targets += 1
+                                    switch = False
+
                             else:
                                 switch = False
                         else:
