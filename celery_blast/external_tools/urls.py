@@ -14,7 +14,10 @@ cdd_search_urls = [
          name='cdd_domain_search_details'),
     path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:query_id>/delete_cdd_domain_search',
          views.delete_cdd_domain_search_view,
-         name='delete_cdd_domain_search')
+         name='delete_cdd_domain_search'),
+    path('<int:project_id>/<str:query_id>/selection_constrained_phylogeny',
+         views.load_selection_constrained_phylogeny,
+         name='load_selection_constrained_phylogeny'),
 ]
 
 entrez_search_urls = [
@@ -95,5 +98,6 @@ urlpatterns = [
     path('', include(phylogenetic_analysis_urls)),
     path('<int:project_id>/external_project_information', views.project_informations,
          name='external_project_informations'),
-    path('bokeh_task', views.bokeh_task, name="bokeh_task")
+    path('bokeh_task', views.bokeh_task, name="bokeh_task"),
+    path('bokeh_database_task', views.bokeh_database_task, name="bokeh_database_task")
 ]

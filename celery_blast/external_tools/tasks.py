@@ -1,8 +1,11 @@
 import os
 from subprocess import Popen, SubprocessError, TimeoutExpired, check_output
 
+import pandas as pd
+
 import psutil
-from blast_project.py_django_db_services import update_external_tool_with_cdd_search, get_project_by_id
+from blast_project.py_django_db_services import update_external_tool_with_cdd_search, get_project_by_id, \
+    update_blast_project_with_database_statistics_selection_task_result_model
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
@@ -17,12 +20,88 @@ from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected
 from .genbank_download_clinker_synteny import extract_assembly_ftp_paths_from_reciprocal_result_entries, \
     download_genbank_files, write_new_genbank_file, delete_sliced_genbank_files
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, \
-    slice_cdd_domain_corrected_fasta_file
+    slice_cdd_domain_corrected_fasta_file, slice_bw_query_fasta_file
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
 from os.path import isdir
 from os import listdir, mkdir, remove
 # logger for celery worker instances
 logger = get_task_logger(__name__)
+
+
+@shared_task(bind=True)
+def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:int, accession_data:dict):
+    try:
+        logger.info("starting phylogenetic inference based on selected RBHs from the database statistics plot")
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "PROGRESS")
+        logger.info("updating blast project with selection constrained cdd task")
+        blast_project = get_project_by_id(project_id)
+        update_blast_project_with_database_statistics_selection_task_result_model(project_id, str(self.request.id))
+        logger.info("working with post data ...")
+        accessions = []
+        for ind in accession_data.keys():
+            accessions.append(accession_data[ind])
+            logger.info(accession_data[ind])
+
+        path_to_query_subdir = blast_project.get_project_dir()
+        path_to_fasta_file = path_to_query_subdir + '/bw_queries.faa'
+        logger.info("trying to slice bw_queries.faa with accession list")
+        path_to_sliced_fasta_file = slice_bw_query_fasta_file(path_to_query_subdir, path_to_fasta_file, accessions)
+        logger.info("done slicing, created output: {}".format(path_to_sliced_fasta_file))
+        progress_recorder.set_progress(15,100,"PROGRESS")
+        logger.info("starting multiple sequence alignment")
+
+        path_to_mafft_output = path_to_query_subdir + "/selection_sliced_mafft.msa"
+        cmd = "mafft {} > {}".format(path_to_sliced_fasta_file, path_to_mafft_output)
+        msa_task = Popen(cmd, shell=True)
+        logger.info(
+            'waiting for popen instance {} (mafft) to finish with timeout set to {}'.format(msa_task.pid,
+                                                                                    40000))
+        progress_recorder.set_progress(20, 100, "PROGRESS")
+
+        returncode = msa_task.wait(40000)
+        if returncode != 0:
+            raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+        progress_recorder.set_progress(70, 100, "SUCCESS")
+        logger.info("done calculating multiple sequence alignment with mafft")
+
+        logger.info("starting phylogenetic inference with fasttree")
+        path_to_fasttree_output = path_to_query_subdir + "/selection_sliced_phylogeny.nwk"
+        cmd = "fasttree -lg {} > {}".format(path_to_mafft_output, path_to_fasttree_output)
+
+        phylo_task = Popen(cmd, shell=True)
+        progress_recorder.set_progress(71,100, "PROGRESS")
+        logger.info(
+            'waiting for popen instance {} (fasttree) to finish with timeout set to {}'.format(phylo_task.pid,
+                                                                                    40000))
+        returncode = phylo_task.wait(40000)
+        if returncode != 0:
+            raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+        logger.info("done with phylogenetic tree inference")
+        logger.info("starting to generate html file with phylogeny ...")
+
+        logger.info("generating table for shiptv metadata")
+
+        reciprocal_result_table = pd.read_csv(path_to_query_subdir + '/reciprocal_results_with_taxonomy.csv' , index_col=0)
+        reciprocal_result_table = reciprocal_result_table[reciprocal_result_table.sacc_transformed.isin(accessions)]
+        path_to_rbh_table = path_to_query_subdir + '/selection_sliced_rbh_table.tsf'
+        reciprocal_result_table.to_csv(path_to_rbh_table, sep="\t", index=None)
+
+        path_to_html_tree = path_to_query_subdir + '/selection_sliced_phylogeny.html'
+        shiptv_task = "shiptv --newick {} --metadata {} --output-html {}".format(path_to_fasttree_output,
+                                                                                 path_to_rbh_table,
+                                                                                 path_to_html_tree)
+        shiptv_task = Popen(shiptv_task, shell=True)
+        returncode = shiptv_task.wait(40000)
+        if returncode != 0:
+            raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+        logger.info("DONE")
+        progress_recorder.set_progress(99,100,"PROGRESS")
+    except Exception as e:
+        raise Exception("[-] ERROR during inference of selection constrained phylogenetic inference on CDD bokeh plot"
+                        " with exception: {}".format(e))
+
+
 
 @shared_task(bind=True)
 def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:str, accession_data:dict):

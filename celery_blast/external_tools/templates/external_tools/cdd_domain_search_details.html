@@ -26,9 +26,14 @@
     <div class="dashboard_project_list_col">
         {% include CDDSearchPCABokehPlot %}
 
-
     </div>
-
+    {% if CDDPhylogeny %}
+    <div class="dashboard_project_list_col">
+    <a href="{% url 'load_selection_constrained_phylogeny' project_id=project_id query_id=query_id %}">
+        <button class="btn btn-info">View Phylogeny</button>
+    </a>
+    </div>
+    {% endif %}
 {% endblock %}
 {% block scripts %}
 {% endblock %}

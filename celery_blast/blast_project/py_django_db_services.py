@@ -372,6 +372,28 @@ def update_blast_project_with_database_statistics_task_result_model(project_id: 
             'problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
 
+'''update_blast_project_with_database_statistics_selection_task_result_model
+
+    see above description. Similar to update_blast_project_with_database_statistics_task_result_model 
+    function but for the bokeh selection constrained phylogeny task.
+
+    :param project_id
+        :type int
+    :param task_id
+        :type int
+'''
+def update_blast_project_with_database_statistics_selection_task_result_model(project_id: int, task_id: int):
+    try:
+        blast_project = BlastProject.objects.get(id=project_id)
+        taskresult = TaskResult.objects.get(task_id=task_id)
+        blast_project.project_database_statistics_task_selection = taskresult
+        blast_project.save()
+    except Exception as e:
+        raise IntegrityError(
+            'problem during updating of blastproject model with task result instance exception : {}'.format(e))
+
+
+
 '''update_blast_database_with_task_result_model
 
 see above description. Similar to update_blast_project_with_task_result_model just for the celery database creation task, particularly the functions

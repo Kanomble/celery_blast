@@ -144,6 +144,14 @@ class BlastProject(models.Model):
         related_name="project_database_statistics_task",
         verbose_name="django_celery_results taskresult model for this projects database statistics")
 
+    project_database_statistics_task_selection = models.OneToOneField(
+        TaskResult,
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        related_name="project_database_statistics_task_selection",
+        verbose_name="django_celery_results taskresult model for this "
+                     "projects database statistics phylogenetic inference based on user selection task")
+
     # customized initialization can be added in BlastProjectManager (e.g. direct creation of project directory
     objects = BlastProjectManager()
 

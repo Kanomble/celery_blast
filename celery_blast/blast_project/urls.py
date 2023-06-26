@@ -48,6 +48,7 @@ py_optional_postprocessing = [
     path('<int:project_id>/project_details/database_statisitcs_details/<str:taxonomic_unit>', views.database_statistics_details,name='database_statistics_details'),
     path('<int:project_id>/project_details/delete_database_statistics_task_and_output', views.delete_database_statistics,name='delete_database_statistics'),
     path('<int:project_id>/project_details/<str:taxonomic_unit>/taxonomic_unit_ajax_call', views.load_database_statistics_for_taxonomic_unit_ajax, name='ajax_call_for_taxonomic_unit'),
+    path('<int:project_id>/project_details/database_statistics/selection_contrained_phylogeny', views.view_selection_phylogeny, name="view_selection_phylogeny")
 ]
 
 success_failure_urls = [

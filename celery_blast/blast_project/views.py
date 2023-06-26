@@ -19,7 +19,7 @@ from .py_services import list_taxonomic_files, upload_file, check_if_file_exists
     read_task_logs_summary_table, download_project_directory, check_if_cdd_database_exists
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
-    transform_normalized_database_table_to_json
+    transform_normalized_database_table_to_json, get_database_selection_task_status
 from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
     save_uploaded_multiple_file_genomes_into_database, delete_failed_or_unknown_databases
 from one_way_blast.py_django_db_services import get_users_one_way_blast_projects, \
@@ -576,6 +576,9 @@ def success_view(request):
 def database_statistics_dashboard(request, project_id):
     try:
         task_status = get_database_statistics_task_status(project_id)
+        selection_task_status = get_database_selection_task_status(project_id)
+
+        print(selection_task_status)
         context = {'project_id': project_id, 'task_status': task_status}
 
         if task_status == 'SUCCESS':
@@ -598,14 +601,16 @@ def database_statistics_dashboard(request, project_id):
                     key = unit + "_number"
                     error_phrase = "table does not exist, please recompute the database statistics by pressing the button"
                     context[key] = error_phrase
-
+        context['selection_task'] = selection_task_status
         # calculate_database_statistics(project_id)
         return render(request, 'blast_project/database_statistics_dashboard.html', context)
     except Exception as e:
         return failure_view(request, e)
 
 
-'''database_statistics_details
+
+
+'''database_statistics_details - DEPRECATED
     
     Details page for the database statistics. Within this page the user can view
     the interactive Bokeh plot. By interacting with the plot, the user can download
@@ -624,6 +629,7 @@ def database_statistics_details(request, project_id: int, taxonomic_unit: str):
             context[context_key_altair] = str(project_id) + "/" + taxonomic_unit + "_altair_plot_normalized.html"
             context[context_key_bokeh] = str(project_id) + "/" + taxonomic_unit + "_bokeh_plot.html"
             context['taxonomic_unit'] = taxonomic_unit
+
         return render(request, 'blast_project/database_statistics_details.html', context)
     except Exception as e:
         return failure_view(request, e)
@@ -695,8 +701,6 @@ def delete_database_statistics(request, project_id):
         :type int
 
 '''
-
-
 def ajax_call_to_logfiles(request, project_id: int):
     try:
         if request.is_ajax and request.method == "GET":
@@ -739,8 +743,6 @@ def ajax_call_to_logfiles(request, project_id: int):
         :type str
     
 '''
-
-
 @login_required(login_url='login')
 def send_logfile_content_view(request, project_id: int, logfile: str) -> HttpResponse:
     try:
@@ -775,8 +777,6 @@ def send_query_sequence_information_view(request, project_id: int) -> HttpRespon
     :return response
         :type HttpResponse - with the zipped directory as attachment
 '''
-
-
 @login_required(login_url='login')
 def download_project_as_zip_archive_view(request, project_id:int) -> HttpResponse:
     try:
@@ -788,5 +788,26 @@ def download_project_as_zip_archive_view(request, project_id:int) -> HttpRespons
             filename = blast_project.project_title.replace(" ", "_")
         )
         return response
+    except Exception as e:
+        return failure_view(request, e)
+
+'''view_selection_phylogeny
+
+    This function is part of the database statistics bokeh plot dashboard. It is similar to the load_reciprocal_result_view view function
+    in blast_project/views.py. It loads the standalone HTML page for the phylogeny.
+
+    :param request
+        :type WSGIRequest
+    :param project_id
+        :type int
+    :param query_id
+        :type str
+
+'''
+@login_required(login_url='login')
+def view_selection_phylogeny(request, project_id: int):
+    try:
+        html_data = get_html_results(project_id, "selection_sliced_phylogeny.html")
+        return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)

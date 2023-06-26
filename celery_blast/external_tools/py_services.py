@@ -3,6 +3,54 @@ import pandas as pd
 from django.conf import settings
 import json
 
+'''slice_bw_query_fasta_file
+    
+    This function is part of the selection constrained phylogenetic inference task that is triggered by a button click
+    on the bokeh database statistics plot.
+    
+    
+    :param path_to_fasta_file
+        :type str
+    :param accessions
+        :type list[str]
+    
+    :returns sliced_fasta_file
+        :type str
+    
+'''
+def slice_bw_query_fasta_file(path_to_query_subdir:str, path_to_fasta_file:str, accessions:list)->str:
+    try:
+        if os.path.isdir(path_to_query_subdir) == False:
+            raise NotADirectoryError("{} is not a directory".format(path_to_query_subdir))
+        elif os.path.isfile(path_to_fasta_file) == False:
+            raise FileNotFoundError("{} is not a file".format(path_to_fasta_file))
+        else:
+            targets = 0
+            output_file_path = path_to_query_subdir + '/sliced_fasta_file.faa'
+            with open(path_to_fasta_file, 'r') as input_file:
+                with open(output_file_path, 'w') as output_file:
+                    for line in input_file.readlines():
+                        if line.startswith(">"):
+                            if "." in line:
+                                header = line.split(">")[1].split(" ")[0].split(".")[0].rstrip()
+                            else:
+                                header = line.split(">")[1].split(" ")[0].rstrip()
+                            if header in accessions:
+                                output_file.write(">"+header+"\n")
+                                switch = True
+                                targets += 1
+                            else:
+                                switch = False
+                        else:
+                            if switch == True:
+                                output_file.write(line.rstrip()+"\n")
+            if targets < len(accessions):
+                raise Exception("some accessions are missing in the target file ... ")
+            return output_file_path
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt slice domain corrected fasta file with Exception: {}".format(e))
+
+
 '''slice_cdd_domain_corrected_fasta_file
     
     This function is part of the selection constrained CDD phylogenetic inference task pipeline.

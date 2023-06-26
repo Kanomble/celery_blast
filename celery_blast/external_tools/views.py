@@ -19,7 +19,7 @@ from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tre
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
     download_organism_protein_sequences_task, \
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task, \
-    synteny_calculation_task, calculate_phylogeny_based_on_selection
+    synteny_calculation_task, calculate_phylogeny_based_on_selection, calculate_phylogeny_based_on_database_statistics_selection
 
 
 '''synteny_dashboard_view
@@ -95,7 +95,6 @@ def load_synteny_view(request: WSGIRequest, project_id: int, query_sequence_id: 
     except Exception as e:
         return failure_view(request, e)
 
-
 '''load_phylogenetic_tree_view
 
     This function is part of the phylogenetic dashboard. It is similar to the load_reciprocal_result_view view function
@@ -118,7 +117,7 @@ def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_seq
         return failure_view(request, e)
 
 
-'''load_phylogenetic_tree_view
+'''load_msa_view
 
     This function is part of the phylogenetic dashboard. It is similar to the load_reciprocal_result_view view function
     in blast_project/views.py. It loads the standalone HTML page for the mutliple sequence alignment.
@@ -491,6 +490,29 @@ def execute_cdd_domain_search_for_target_query(request, project_id: int):
         return failure_view(request, e)
 
 
+'''load_selection_constrained_phylogeny
+
+    This function is part of the CDD bokeh plot dashboard. It is similar to the load_reciprocal_result_view view function
+    in blast_project/views.py. It loads the standalone HTML page for the phylogeny.
+
+    :param request
+        :type WSGIRequest
+    :param project_id
+        :type int
+    :param query_id
+        :type str
+
+'''
+
+
+@login_required(login_url='login')
+def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, query_id: str):
+    try:
+        html_data = get_html_results(project_id, query_id + '/' + "selection_sliced_domain_phylogeny.html")
+        return HttpResponse(html_data)
+    except Exception as e:
+        return failure_view(request, e)
+
 '''cdd_domain_search_details_view
     
     Function for loading the output of the cdd domain search task. Detail result page for each
@@ -513,6 +535,11 @@ def cdd_domain_search_details_view(request, query_id: str, project_id: int):
         context['query_id'] = query_id
         context['project_id'] = project_id
         context['CDDSearchPCABokehPlot'] = str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id)
+        if query_sequence[0].selection_constrained_cdd_task != None:
+            if query_sequence[0].selection_constrained_cdd_task.status == 'SUCCESS':
+                context['CDDPhylogeny'] = True
+        #external_tools.update_selection_constrained_CDD_phylogenetic_inference(query_sequence, str(self.request.id))
         return render(request, "external_tools/cdd_domain_search_details.html", context)
     except Exception as e:
         return failure_view(request, e)
@@ -595,6 +622,28 @@ def bokeh_task(request:WSGIRequest):
             query_id = str(url[7])
 
             calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0])
+        return JsonResponse({"response": "success"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
+
+'''bokeh_database_task
+
+    This function sends data from the bokeh plot selected by the user to a server side function for 
+    calculating a multiple sequence alignment and phylogeny. It is triggered by button clicks on the bokeh plot.
+
+'''
+@csrf_exempt
+def bokeh_database_task(request:WSGIRequest):
+    try:
+        if request.is_ajax and request.method == "POST":
+            form_data = request.POST
+            data = form_data.dict()
+            data = data.keys()
+            data = list(data)[0]
+            data = loads(data)
+            url = data['url'].split("/")
+            project_id = int(url[4])
+            calculate_phylogeny_based_on_database_statistics_selection.delay(project_id, data['accessions'][0])
         return JsonResponse({"response": "success"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)

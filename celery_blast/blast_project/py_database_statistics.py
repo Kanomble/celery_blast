@@ -434,6 +434,34 @@ def calculate_database_statistics(project_id: int, logfile: str, user_email: str
             raise Exception("ERROR during calculation of database statistics with exception: {}".format(e))
 
 
+'''get_database_selection_task_status
+
+    This function returns the status of the database statistic bokeh selection task.
+    Status not executed: NOTEXEC
+    Status ongoing: PROGRESS
+    Status finished: SUCCESS
+    Status failed: FAILURE
+
+    :param project_id
+        :type int
+
+    :return status
+        :type str
+'''
+
+
+def get_database_selection_task_status(project_id: int) -> str:
+    try:
+        project = get_project_by_id(project_id)
+        if (project.project_database_statistics_task_selection):
+            task_status = str(project.project_database_statistics_task_selection.status)
+        else:
+            task_status = "NOTEXEC"
+        return task_status
+    except Exception as e:
+        raise Exception("ERROR during database statistics task status query with exception: {}".format(e))
+
+
 '''get_database_statistics_task_status
     
     This function returns the status of the database statistic task.
@@ -1337,6 +1365,56 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
                 e))
 
 
+'''bokeh_database_statistics_django_task_button
+
+    This function executes a celery task for the selection constrained calculation of phylogenies.
+
+    :param current_selection
+        :type ColumnDataSource
+    :returns task_selection_callback
+        :type CustomJS
+
+'''
+
+
+def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSource) -> CustomJS:
+    task_selection_callback = CustomJS(args=dict(sc=current_selection), code="""
+        var viewData = { 
+            accessions : [],
+            url : window.location.href
+        };
+        var jsonData = {};
+        
+        for(var i = 0; i < sc.selected.indices.length; i++){
+            jsonData[i] = sc.data['sacc_transformed'][sc.selected.indices[i]]
+        }
+
+        viewData.accessions.push(jsonData);
+
+        var json = JSON.stringify(viewData);
+
+        var base_url = window.location.href
+        base_url = base_url.split("/")[2]
+        base_url = "http://" + base_url + "/external_tools/bokeh_database_task"
+        console.log(base_url)
+        $.ajax({
+            type: "POST",
+            url: base_url,
+            data: json,
+            success: function(result){
+                console.log(result);
+                setTimeout(function(){
+                   window.location.reload();
+                }, 2000);
+            },
+            dataType: "json"
+        });
+
+
+    """)
+    return task_selection_callback
+
+
 '''create_linked_bokeh_plot
 
     Main function for the interactive bokeh reciprocal result plots. This function produces the interactive bokeh
@@ -1640,6 +1718,10 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             download_selection_button = Button(label="Download Selection")
             download_selection_button.js_on_click(download_selection_callback)
 
+            bokeh_task_button_callback = bokeh_database_statistics_django_task_button(Curr)
+            bokeh_task_button = Button(label="Selection Constrained Phylogeny")
+            bokeh_task_button.js_on_click(bokeh_task_button_callback)
+
             color_palette = create_color_palette_selection()
             color_palette_callback = create_color_palette_selection_callback(Curr, color_menu,
                                                                              taxonomy_table_callback_dict)
@@ -1647,7 +1729,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
 
             grid = gridplot([[column(p),
                               column(menu_qseqids, row(circle_size_spinner, line_size_spinner),
-                                     range_slider, download_selection_button, table, x_axis_menu, y_axis_menu),
+                                     range_slider, download_selection_button, bokeh_task_button, table, x_axis_menu, y_axis_menu),
                               column(phylum_menu, class_menu, order_menu, family_menu, genus_menu, color_menu,
                                      color_palette)]],
                             toolbar_location='right')

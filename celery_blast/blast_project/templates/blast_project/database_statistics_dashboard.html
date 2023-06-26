@@ -33,6 +33,13 @@
             </a>
         </div>
         {% endif %}
+        {% if selection_task == 'SUCCESS' %}
+        <div>
+            <a href="{% url 'view_selection_phylogeny' project_id=project_id %}">
+                <button class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Selection Constrained Phylogeny </button>
+            </a>
+        </div>
+        {% endif %}
     </div>
 
 </div>
