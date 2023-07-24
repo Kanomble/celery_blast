@@ -36,8 +36,15 @@
         {% if selection_task == 'SUCCESS' %}
         <div>
             <a href="{% url 'view_selection_phylogeny' project_id=project_id %}">
-                <button class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Selection Constrained Phylogeny </button>
+                <button id="sucess_button" class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Selection Constrained Phylogeny </button>
             </a>
+        </div>
+        {% elif selection_task == 'PROGRESS' %}
+        <div>
+             <button class="btn btn-info" disabled>
+                <span class="spinner-grow spinner-grow-sm"></span>
+                <p><span class="progress-{{ project_id }}"></span></p>
+            </button>
         </div>
         {% endif %}
     </div>
@@ -96,10 +103,14 @@
         <table id="class_table" class="table table-responsive table-hover"> </table>
     </div>
     {% endif %}
+
+
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
+//this may provoke an TypeError: $(...).ready(...) is not a function
+//check: https://stackoverflow.com/questions/21755397/typeerror-jquery-ready-is-not-a-function
 $(document).ready(function() {
 
     var url = '{% url 'ajax_call_for_taxonomic_unit' project_id=project_id taxonomic_unit="class" %}'
@@ -142,64 +153,37 @@ $(document).ready(function() {
     }
 })
 </script>
+<script>
+(function () {
+    var status = $('.progress-{{project_id}}'),
+    poll = function () {
+        jQuery.ajax({
+            url: "{% url 'ajax_selection_constrained_phylogeny' project_id=project_id %}",
+            dataType: 'json',
+            type: 'get',
+            success: function (data) { // check if available#
+                if (data) { // get and check data value
+                    console.log(data.data)
+                    status.text('Processing ...'); // get and print data string
+                    if (data.data == 'SUCCESS') {
+                        status.text("DONE")
+                        clearInterval(pollInterval); // optional: stop poll function
+                        window.alert("Selection constrained phylogenetic inference has finished, reload the current page to view the phylogeny.");
+                    } else if (data.data == "ERROR") {
+                        status.text("ERROR")
+                        clearInterval(pollInterval);
+                    }
+                }
+            },
+            error: function () { // error logging
+                status.text("error polling progress data")
+            }
+        });
+    },
+    pollInterval = setInterval(function () { // run function every 5000 ms
+        poll();
+    }, 5000);
+    poll(); // also run function on init
+})();
+</script>
 {% endblock %}
-
-<!--
-    <div class="dashboard_project_list_col">
-        <form name="database_statistics_selector" action="javascript:void(0)" id="database_statistics_dashboard_selector">
-                <div class="custom-control custom-radio custom-control-inline">
-                    <input class="custom-control-input" type="radio" id="genus" name="genus_button" value="genus" onchange="loadDBStatistic(this.value)">
-                    <label class="custom-control-label" for="genus">Genus DB Statistic</label>
-                </div>
-
-                <div class="custom-control custom-radio custom-control-inline">
-                    <input class="custom-control-input" type="radio" id="family" name="family_button" value="family" onchange="loadDBStatistic(this.value)">
-                    <label class="custom-control-label" for="family">Family DB Statistic</label>
-                </div>
-
-                <div class="custom-control custom-radio custom-control-inline">
-                    <input class="custom-control-input" type="radio" id="class" name="class_button" value="class" onchange="loadDBStatistic(this.value)">
-                    <label class="custom-control-label" for="class">Class DB Statistic</label>
-                </div>
-        </form>
-    </div>
-    <div id="genus_datatable" style="display: none">
-         <div class="dashboard_project_list_col">
-            <table id="genus_table" class="table table-responsive table-hover"> </table>
-        </div>
-    </div>
-    <div  id="family_datatable" style="display: none">
-        <div class="dashboard_project_list_col">
-            <table id="family_table" class="table table-responsive table-hover"> </table>
-        </div>
-    </div>
-    <div id="class_datatable" style="display: none">
-        <div class="dashboard_project_list_col">
-            <table id="class_table" class="table table-responsive table-hover"> </table>
-        </div>
-        <hr>
-    </div>
-
-        if (tax_unit == 'genus') {
-            document.getElementById('genus_datatable').style.display = 'block'
-
-            document.getElementById('class_datatable').style.display = 'none'
-            document.getElementById('family_datatable').style.display = 'none'
-            document.getElementById('family').checked = false
-            document.getElementById('class').checked = false
-        } else if (tax_unit == 'family') {
-            document.getElementById('family_datatable').style.display = 'block'
-
-            document.getElementById('class_datatable').style.display = 'none'
-            document.getElementById('genus_datatable').style.display = 'none'
-            document.getElementById('genus').checked = false
-            document.getElementById('class').checked = false
-        } else if (tax_unit == 'class') {
-            document.getElementById('class_datatable').style.display = 'block'
-            document.getElementById('genus_datatable').style.display = 'none'
-            document.getElementById('family_datatable').style.display = 'none'
-            document.getElementById('family').checked = false
-            document.getElementById('genus').checked = false
-        }
--->
-

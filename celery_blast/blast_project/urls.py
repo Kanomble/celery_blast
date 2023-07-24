@@ -31,7 +31,9 @@ service_urls = [
 # query_sequences_to_html_table
 ajax_urls = [
     path('<int:project_id>/ajax_wp_to_links',views.ajax_wp_to_links,name='ajax_wp_to_links'),
-    path('<int:project_id>/ajax_call_to_logfiles',views.ajax_call_to_logfiles,name='ajax_call_to_logfiles')
+    path('<int:project_id>/ajax_call_to_logfiles',views.ajax_call_to_logfiles,name='ajax_call_to_logfiles'),
+    path('<int:project_id>/project_details/database_statistics/ajax_call_to_selection_task',
+         views.database_selection_phylogeny_task_status,name='ajax_selection_constrained_phylogeny')
 ]
 
 progress_urls = [
@@ -45,7 +47,6 @@ progress_urls = [
 py_optional_postprocessing = [
     path('<int:project_id>/project_details/database_statistics', views.database_statistics_dashboard, name='database_statistics'),
     path('<int:project_id>/project_details/execute_database_statistics_task', views.execute_database_statistics_task,name='execute_database_statistics_task'),
-    path('<int:project_id>/project_details/database_statisitcs_details/<str:taxonomic_unit>', views.database_statistics_details,name='database_statistics_details'),
     path('<int:project_id>/project_details/delete_database_statistics_task_and_output', views.delete_database_statistics,name='delete_database_statistics'),
     path('<int:project_id>/project_details/<str:taxonomic_unit>/taxonomic_unit_ajax_call', views.load_database_statistics_for_taxonomic_unit_ajax, name='ajax_call_for_taxonomic_unit'),
     path('<int:project_id>/project_details/database_statistics/selection_contrained_phylogeny', views.view_selection_phylogeny, name="view_selection_phylogeny")

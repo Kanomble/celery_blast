@@ -578,7 +578,6 @@ def database_statistics_dashboard(request, project_id):
         task_status = get_database_statistics_task_status(project_id)
         selection_task_status = get_database_selection_task_status(project_id)
 
-        print(selection_task_status)
         context = {'project_id': project_id, 'task_status': task_status}
 
         if task_status == 'SUCCESS':
@@ -608,31 +607,29 @@ def database_statistics_dashboard(request, project_id):
         return failure_view(request, e)
 
 
+'''database_selection_phylogeny_task_status
 
+    Asynchronous ajax call for the status of the selection constrained phylogenetic inference within the database
+    statistics interactive bokeh plot.
+    
+    Status not executed: NOTEXEC
+    Status ongoing: PROGRESS
+    Status finished: SUCCESS
+    Status failed: FAILURE
+    
+    :param project id
+        :type int
 
-'''database_statistics_details - DEPRECATED
-    
-    Details page for the database statistics. Within this page the user can view
-    the interactive Bokeh plot. By interacting with the plot, the user can download
-    subsets of target proteins for further analysis.
-    
 '''
-
-
-def database_statistics_details(request, project_id: int, taxonomic_unit: str):
+@login_required(login_url='login')
+def database_selection_phylogeny_task_status(request, project_id):
     try:
-        task_status = get_database_statistics_task_status(project_id)
-        context = {'project_id': project_id, 'task_status': task_status}
-        if task_status == 'SUCCESS':
-            context_key_altair = 'DatabaseStatisticsAltairPlot'
-            context_key_bokeh = 'DatabaseStatisticsBokehPlot'
-            context[context_key_altair] = str(project_id) + "/" + taxonomic_unit + "_altair_plot_normalized.html"
-            context[context_key_bokeh] = str(project_id) + "/" + taxonomic_unit + "_bokeh_plot.html"
-            context['taxonomic_unit'] = taxonomic_unit
-
-        return render(request, 'blast_project/database_statistics_details.html', context)
+        if request.is_ajax and request.method == "GET":
+            data = get_database_selection_task_status(project_id)
+            return JsonResponse({"data": data}, status=200)
+        return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
-        return failure_view(request, e)
+        return JsonResponse({"error": "{}".format(e)}, status=400)
 
 
 '''load_database_statistics_for_class_ajax
