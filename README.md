@@ -1,4 +1,4 @@
-# celery_blast
+# SymBLAST - Symmetric BLAST phylogenetic and functional protein analysis
 Symmetrical BLAST and target sequence search web interface with Django, Gunicorn, Ngninx, PostgreSQL, Celery, RabbitMQ, 
 E-Direct, BLAST, Snakemake and Miniconda.
 
@@ -33,22 +33,35 @@ Overall, SymBLAST is a flexible and intuitive solution that can help researchers
 - [Technical Details](#technical_details)
 <a name="installation"></a>
 ## Installation
+Download and decompress this repository via the `Download ZIP` button of the `<> Code` tab or with `git clone git@github.com:Kanomble/celery_blast.git`.
+Open a terminal and use the `cd` command to point to the local version of the SymBLAST project repository (e.g., if you have downloaded and decompressed SymBLAST
+in the directory: `C:\Users\Test\Documents\SymBLAST`, open your powershell and execute the command `cd "C:\Users\Test\Documents\SymBLAST"`.
+Use the `ls` command to confirm that your terminal/powershell points to the correct directory, the output of `ls` should include following files and directories:
+`celery_blast  data  docker-compose-production.yml  docker-compose.yml  Dockerfile  LICENSE  nginx  README.md  requirements.txt  tmp`.
+
+```` Bash
+git clone git@github.com:Kanomble/celery_blast.git
+cd celery_blast
+docker compose up
+````
+
 The application can get installed by submitting the `docker-compose up` or `docker compose up` command in a terminal window,
 which points to the applications working directory (directory with `docker-compose.yml`). 
-The docker client will pull remotely available images, the base image for this application, 
+The docker client will pull remotely available images, including the base image for this application,
 an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
-The SymBLAST base image is pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
+Docker images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
 All required software tools are loaded and installed automatically, there is no need for other third party software.
+The installation procedure can take up to 30 minutes, depending on your available RAM and internet connection. 
+During installation process, a local copy of the CDD database is downloaded.
+It is recommended to install the application with the remotely available images and the `docker compose up` command. 
 
-The base image has been build by using the Dockerfile of this repository.
-Due to changes to some particular packages, the local build process may vary.
-It is recommended to install the application with the remotely available images.
+## Advanced Installation
 
-Next, docker creates seven containers named: `celery_blast_X_1` where `X` is a synonym for 
+It is possible to build the necessary images from the Dockerfile of this repository. You can change and adapt the dockerfile according to the software 
+tools you need, keep in mind to adapt the `docker-compose.yml` or the `docker-compose-production.yml` files if you want to use local Docker images of this tool.
+
+Docker creates seven containers named: `celery_blast_X_1` where `X` is a synonym for 
 `nginx, worker, flower, web, postgres and rabbitmq`.
-
-If you want to rebuild your docker images due to some (maybe fixed) error consider the cmd `docker-compose up --build` which will trigger a rebuild process (based on the context).
-The web container will automatically try to restart if the startup fails, unless it is stopped manually (e.g. with Docker Desktop).
 
 <a name="configuration_notes"></a>
 ### Notes on SymBLAST containers and possible configurations
@@ -105,7 +118,7 @@ Further SymBLAST post-processing procedures outside the scope of this pipeline i
    3. Building an interactive bokeh plot with the first two principal components and the taxonomic information within the RBH result table
    4. Refine the 
 
-### Interactive Bokeh Plot
+### SymBLAST example output
 ![Interactive Bokeh Plot](./celery_blast/static/images/example_bokeh_plot.png)
 
 ### Best practices for project settings
@@ -119,14 +132,15 @@ The backward BLAST database should contain only one genome that corresponds to t
 
 <a name="blast_database"></a>
 ## BLAST Databases
-## BLAST database preparation
-First, you need to tell SymBLAST to download the refseq assembly summary file from the
-refseq [FTP](ftp://ftp.ncbi.nih.gov/genomes/refseq/) directory.
-The application loads the summary file into a pandas dataframe, 
-that is processed according to the user specifications. BLAST database user specifications are
+## BLAST database preparation from GenBank or RefSeq assemblies
+First, you need to tell SymBLAST to download the refseq or genbank assembly summary file from the
+refseq [FTP](ftp://ftp.ncbi.nih.gov/genomes/refseq/) or genbank [FTP](https://ftp.ncbi.nlm.nih.gov/genomes/genbank/) directories.
+The application loads the processed entries of the summary file into a pandas dataframe, 
+that is displayed in the BLAST database transaction dashboard after pressing the submit button. Possible BLAST database user specifications are
 the level of assembly completeness (e.g. 'Complete Genome', 'Chromosome', 'Contig' and 'Scaffold') 
-and taxonomic information.
+and (multiple) taxonomic information (e.g. 'Cnidaria, Mammalia').
 
+### Example database creation
 E.g. if you want to create a high quality database containing only species from the phylum `Cyanobacteriota`, you have to specify 
 this during database creation. This can be done by typing `Cyanobacteriota` into the field "Scientific Names (sep. by ",")" and by
 checking the assembly levels `Complete Genome` and `Chromosome`. 
@@ -138,10 +152,8 @@ The download and formatting procedure has to be started separately, which enable
 The download and format process progression is visualized on the database dashboard.
 Available databases are shared between users.
 
-Protein sequence files are downloaded from the NCBI FTP site and are passed to the `makeblastdb` command. Every 
-
 <a name="download_process"></a>
-## Download and formatting procedure of genome assemblies
+### Download and formatting procedure of genome assemblies - automatically done by SymBLAST
 When the user clicks the download button, a celery asynchronous task is initiated. 
 This task consists of multiple subtasks, each responsible for performing specific steps in the database creation process. 
 Celery allows for task monitoring through a logger and the ``TaskResult`` model of the [result backend](https://docs.celeryproject.org/en/stable/userguide/tasks.html#task-result-backends).
@@ -211,20 +223,6 @@ metadata file fields such as a taxmap file, which holds taxonomic information, a
 an assembly accession file. Most of these files are not mandatory. 
 2. The other form allows uploading of multiple, single genome files together with their valid scientific organism names.
 
-<a name="snakemake"></a>
-## Snakemake pipeline with celery
-In order to enable reproducibility and an easy-to-use workflow execution, the workflow engine snakemake is used.
-Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/snakefiles`. 
-They can be used outside this application, e.g. if the researcher needs to use additional settings or want to implement own post-processing procedures.
-Different snakefiles are designed to execute the desired workflows. 
-Currently, there are Snakefiles for the One-Way BLAST remote and local searches and the reciprocal BLAST analysis.
-Execution of snakemake is wrapped in functions within the `tasks.py` files,
-which are decorated with the celery `@shared_task` decorator. Those functions are queued up by rabbitmq and are processed by the celery worker.
-Snakemake is executed with the `subprocess.Popen` interface which spawns a child process for every Snakemake workflow. 
-Snakemake's working directory is the current project directory, e.g. if you executed the snakemake pipeline for a reciprocal BLAST
-project, the `CWD` of snakemake is the path that points to this project. Default project paths are defined in the `celery_blast/settings.py` file.
-
-Detailed information about Snakemake can be found on the [project documentation page](https://snakemake.readthedocs.io/en/stable/).
 
 <a name="technical_details"></a>
 ## Technical Details
@@ -244,7 +242,30 @@ This setup can be scaled horizontally by adding more containers to handle increa
 In addition, Docker's networking features can be used to ensure that traffic is properly directed to the appropriate container.
 Overall, using Django, Gunicorn, and Nginx in a Docker network can create a highly scalable and efficient web application stack.
 
-### POSTGRESQL database models
+### Distribution of background tasks with Celery
+The open source tool celery is used to integrate a task queuing system within the django container. All background tasks are 
+wrapped into celery tasks. Celery enables task distribution across threads which enables the simultaneous processing of various reciprocal or one-way BLAST
+projects. The celery worker process is triggered in the `celery_worker` container, tasks can be monitored via dedicated web-interfaces or within this
+container. Accurate log-messages are displayed within the terminal window of the `celery_worker` container. Celery tasks are saved 
+in the `PostgreSQL` database by using the `TaskResult` model instance of the `django_celery_results` django application 
+(installed via the python package `django-celery-results`). Detailed information about Celery can be found on the official 
+[project documenation page](https://docs.celeryq.dev/en/stable/index.html).
+
+### Snakemake pipeline
+In order to enable reproducibility and an easy-to-use workflow execution, the workflow engine snakemake is used.
+Snakemake associated snakefiles reside in a static directory `celery_blast/celery_blast/static/snakefiles`. 
+They can be used outside this application, e.g. if the researcher needs to use additional settings or want to implement own post-processing procedures.
+Different snakefiles are designed to execute the desired workflows. 
+Currently, there are Snakefiles for the One-Way BLAST remote and local searches and the reciprocal BLAST analysis.
+Execution of snakemake is wrapped in functions within the `tasks.py` files,
+which are decorated with the celery `@shared_task` decorator. Those functions are queued up by rabbitmq and are processed by the celery worker.
+Snakemake is executed with the `subprocess.Popen` interface which spawns a child process for every Snakemake workflow. 
+Snakemake's working directory is the current project directory, e.g. if you executed the snakemake pipeline for a reciprocal BLAST
+project, the `CWD` of snakemake is the path that points to this project. Default project paths are defined in the `celery_blast/settings.py` file.
+
+Detailed information about Snakemake can be found on the [project documentation page](https://snakemake.readthedocs.io/en/stable/).
+
+### PostgreSQL database models
 Django models reside inside project specific `models.py` files. Models are translated to database tables.
 Documentation about the django.db.models package can be found [here](https://docs.djangoproject.com/en/2.2/topics/db/models/).
 Relationships between models are managed with django model functions.
@@ -394,22 +415,6 @@ E.g. creation of blast project directories or specific setting files, such as th
 - [X] use [celery-progress](https://github.com/czue/celery-progress) for monitoring the celery tasks execution process in the backend
 - [X] check out the .pal files from BLAST databases
 
-## TODO Database Models
-- [X] add validation
-- [X] write tests
-- [X] wrap database transactions inside `with transactions.atomic()` blocks
-- [X] create models:
-    - [X] BlastProject
-        - [X] add backward BlastDatabase
-    - [X] [BlastProjectManager](https://docs.djangoproject.com/en/2.2/ref/models/instances/)
-    - [X] BlastDatabase
-    - [X] BlastDatabaseManager
-    - [X] BlastSettings
-    - [X] AssemblyLevels
-    - [X] UploadedGenomes
-    - [X] ExternalTools --> Connected to BlastProjects
-    - [X] QuerySequences --> Connected to ExternalTools
-
 
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
@@ -417,4 +422,4 @@ E.g. creation of blast project directories or specific setting files, such as th
 - Documentation for [snakemake](https://snakemake.readthedocs.io/en/stable/index.html)
 - Documentation for [celery-progress](https://github.com/czue/celery-progress) - youtube tutorial [celery-progress](https://www.youtube.com/watch?v=BbPswIqn2VI)
 - [BLAST DB](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html) FTP server description
-- [E-Direct](https://www.ncbi.nlm.nih.gov/books/NBK179288/)
+- Documentation for the [E-Direct](https://www.ncbi.nlm.nih.gov/books/NBK179288/) tool

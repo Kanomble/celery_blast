@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %} RecBlast Project Details {% endblock %}
+{% block title %} SymBlast Core Pipeline Project Details {% endblock %}
 
 {% block page_title %} Reciprocal Blast Project Details {% endblock %}
 
@@ -12,14 +12,14 @@
 {% block page_description %}
 <h2> Project Details </h2>
 <br>
-    <h4> What to do if an error occures during Snakemake execution? </h4>
+    <h4> What to do if an error occurs during Snakemake execution? </h4>
     <ul>
         <li> Monitor your current Snakemake run via Panoptes and check if the workflow has thrown an error or is still running </li>
         <li> If an error occurred during Snakemake execution you might think about deleting this project and starting a new one with different query sequences, databases or BLAST settings </li>
         <li> If your server machine lost internet connection during execution of the last Snakemake rules, just restart the execution process </li>
     </ul>
 
-    <h4> Basic Informations </h4>
+    <h4> Basic Information </h4>
     <ul>
         <li> Click on the "Execute Snakemake" Button if you haven't started your reciprocal BLAST analysis </li>
         <li> Monitor your current Snakemake run via Panoptes by clicking on the "Panoptes Monitoring" button </li>
@@ -210,133 +210,47 @@
 {% load static %}
 
 <script src="{% static 'javascript/load_ajax_table.js' %}"></script>
-    <script>
-    $(document).ready(function() {
-        $('#blastdatabase').DataTable({
-            dom: 'Bfrtip',
-            buttons: [
-                'copy',
-                'csv',
-                'selectAll',
-                'selectNone',
-                'selectRows'
-            ],
-            select: true,
-
-            "ajax": {
-                "url": "{% url 'ajax_call' database_id=Database.id %}",
-                "type": "GET",
-                "dataSrc": "data",
-            },
-            "columns": [
-                {"data":'index'},
-                {"data":'assembly_accession'},
-                {"data":'organism_name'},
-                {"data":'taxid'},
-                {"data":'species_taxid'},
-                {"data":'assembly_level'},
-                {"data":'ftp_path'}],
-            "deferRender": true
-            });
-    } );
-    </script>
-
-    <script>
-    $(document).ready(function(){
-        var result_table = document.getElementById('myTable');
-        result_table.setAttribute("class","display")
-        $('#myTable').DataTable(
-            {
-                dom: 'Bfrtip',
-                "lengthMenu": [ 10 ],
-                buttons: [
-                    'copy',
-                    'csv',
-                    'selectAll',
-                    'selectNone',
-                    'selectRows'
-                ],
-                select: true,
-                "columns":[
-                    {"data":"index"},
-                    {"data":"Accession ID"},
-                    {"data":"Organism"},
-                    {"data":"Sequence Length"},
-                    {"data":"Sequence Definition"},
-                    {"data":"Features"},
-                    {"data":"PFAM",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                            if(oData.PFAM){
-                                $(nTd).html("<a href='"+oData.PFAM+"'>"+oData.PFAM+"</a>");
-                            } else {
-                                $(nTd).html("<p>no link available</p>");
-                            }
-                        }},
-                    {"data":"CDD",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                            if(oData.CDD) {
-                                $(nTd).html("<a href='"+oData.CDD+"'>"+oData.CDD+"</a>");
-                            } else {
-                                $(nTd).html("<p>no link available</p>");
-                            }
-                        }
-                    },
-                    {"data":"TIGR",fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                            if(oData.TIGR) {
-                                $(nTd).html("<a href='"+oData.TIGR+"'>"+oData.TIGR+"</a>");
-                            } else {
-                                $(nTd).html("<p>no link available</p>");
-                            }
-                        }
-                    }
-                ],
-                "deferRender": true,
-            }
-        );
-
-    });
-    </script>
-
     <!-- ajax call for snakemake pipeline progress_bar -->
-    <script>
-        (function() {
-            var status = $('.progress_bar'),
-            poll = function() {
-                jQuery.ajax({
-                    url: "{% url 'ajax_call_to_logfiles' project_id=BlastProject.id %}",
-                    dataType: 'json',
-                    type: 'get',
-                    success: function(data) { // check if available
-                        console.log(data)
-                        if(data){
-                            var static_url = '{% static 'images/' %}';
-                            var reciprocal_results_url = "{% url 'reciprocal_results' project_id=BlastProject.id %}";
-                            var query_sequence_info_url = "{% url 'send_query_sequence_information' project_id=BlastProject.id %}"
-                            ajax_call_to_project_details(
-                                data,
-                                static_url,
-                                reciprocal_results_url,
-                                query_sequence_info_url
-                            )
+<script>
+    (function() {
+        var status = $('.progress_bar'),
+        poll = function() {
+            jQuery.ajax({
+                url: "{% url 'ajax_call_to_logfiles' project_id=BlastProject.id %}",
+                dataType: 'json',
+                type: 'get',
+                success: function(data) { // check if available
+                    console.log(data)
+                    if(data){
+                        var static_url = '{% static 'images/' %}';
+                        var reciprocal_results_url = "{% url 'reciprocal_results' project_id=BlastProject.id %}";
+                        var query_sequence_info_url = "{% url 'send_query_sequence_information' project_id=BlastProject.id %}"
+                        ajax_call_to_project_details(
+                            data,
+                            static_url,
+                            reciprocal_results_url,
+                            query_sequence_info_url
+                        )
 
-                            if(data.progress >= 100){
-                                clearInterval(pollInterval); // optional: stop poll function
-                            } else if(data.progress == "ERROR"){
-                                clearInterval(pollInterval);
-                            }
-                        } else {
-                           clearInterval(pollInterval);
+                        if(data.progress >= 100){
+                            clearInterval(pollInterval); // optional: stop poll function
+                        } else if(data.progress == "ERROR"){
+                            clearInterval(pollInterval);
                         }
-                     },
-                    error: function() { // error logging
-                        console.log("ERROR")
-                        status.text("error polling progress data")
-                }
-            });
-        },
-        pollInterval = setInterval(function() { // run function every 5000 ms
-            poll();
-          }, 20000);
-            poll(); // also run function on init
-        })();
-    </script>
-
+                    } else {
+                       clearInterval(pollInterval);
+                    }
+                 },
+                error: function() { // error logging
+                    console.log("ERROR")
+                    status.text("error polling progress data")
+            }
+        });
+    },
+    pollInterval = setInterval(function() { // run function every 5000 ms
+        poll();
+      }, 20000);
+        poll(); // also run function on init
+    })();
+</script>
 {% endblock %}
