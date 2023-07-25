@@ -200,11 +200,21 @@ def get_html_results(project_id: int, filename: str, html_result_path=BLAST_PROJ
 
 
 '''html_table_exists
-    Checks if the html table exists.
+    Checks if the specified file exists.
+    
+    :param project_id
+        :type int
+    :param filename
+        :type str
+    :param html_result_path
+        :type str
+        
+    :returns True/False
+        :type bool
 '''
 
 
-def html_table_exists(project_id, filename, html_result_path=BLAST_PROJECT_DIR):
+def html_table_exists(project_id:int, filename:str, html_result_path=BLAST_PROJECT_DIR)->bool:
     if (isfile(html_result_path + str(project_id) + "/" + filename)):
         return True
     else:
@@ -237,6 +247,7 @@ def concatenate_genome_fasta_files_in_db_dir(path_to_database:str, database_titl
 '''check_if_cdd_database_exists
 
     This function checks if the Conserved Domain Database exists within the BLAST_DATABASE_DIR.
+    The function is executed in the dashboard_view view.py function.
     
 '''
 def check_if_cdd_database_exists():

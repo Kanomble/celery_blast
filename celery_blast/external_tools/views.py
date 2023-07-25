@@ -58,7 +58,18 @@ def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, quer
 
 
 ''' ajax_call_for_synteny_calculation_selector_table
-
+    
+    This ajax call is part of the synteny_calculation.html webpage. It is used by DataTables to load the RBH entries of 
+    the target query sequence. It is executed if the user presses the "Calcualte Synteny" Button of the 
+    synteny_detection_dashboard.html webpage.
+    
+    :param project_id
+        :type int
+    :param query_sequence
+        :type str
+    
+    :returns table_data (as json_data)
+        :type Json
 '''
 @csrf_exempt
 def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, project_id:int, query_sequence:str):
@@ -87,6 +98,10 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+'''load_synteny_view
+
+    This function returns the clinker result plot as an standalone html document.
+'''
 @login_required(login_url='login')
 def load_synteny_view(request: WSGIRequest, project_id: int, query_sequence_id: str):
     try:

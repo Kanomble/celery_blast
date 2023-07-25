@@ -1,18 +1,12 @@
 import random
-
 import bokeh.models
 import pandas as pd
-# module to parse fasta files
+
 from Bio import SeqIO
-# output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
 from bokeh.io import output_file, save
-# This is for creating layout
 from bokeh.layouts import column, gridplot
-# ColumnDataSource makes selection of the column easier and Select is used to create drop down
 from bokeh.models import ColumnDataSource, MultiSelect, DataTable, TableColumn, HTMLTemplateFormatter, Button
-# To create intractive plot we need this to add callback method.
 from bokeh.models import CustomJS, Legend
-# Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
 from bokeh.plotting import figure
 from django.conf import settings
 from sklearn.decomposition import PCA

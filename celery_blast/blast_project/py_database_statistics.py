@@ -2,29 +2,22 @@ import json
 from os import remove, listdir
 from os.path import isfile, isdir
 
-# output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from Bio import Entrez
 from blast_project.models import BlastProject
 from bokeh.core.enums import MarkerType
-# output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
 from bokeh.io import output_file, save
-# This is for creating layout
 from bokeh.layouts import column, gridplot, row
-# ColumnDataSource makes selection of the column easier and Select is used to create drop down
 from bokeh.models import ColumnDataSource, Select, Spinner, MultiSelect, ColorPicker, RangeSlider, DataTable, \
     TableColumn
-# To create intractive plot we need this to add callback method.
 from bokeh.models import CustomJS, Legend, Button
-# Figure objects have many glyph methods that can be used to draw vectorized graphical glyphs. example of glyphs-circle, line, scattter etc.
 from bokeh.plotting import figure
 from django.db import IntegrityError
 
 plt.rcParams['legend.fontsize'] = 10
 from bokeh.palettes import Spectral  # inferno, viridis, magma,
-# from matplotlib.ticker import MaxNLocator
 from random import shuffle
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
