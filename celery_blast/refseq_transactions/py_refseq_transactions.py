@@ -345,7 +345,7 @@ def read_database_table_by_database_id_and_return_json(database_id):
     json = transform_data_table_to_json_dict(table)
     return json
 
-
+# TODO not in use
 '''check_for_db_updates
 
     This function searches for BLAST database updates if the previous download and formatting task 

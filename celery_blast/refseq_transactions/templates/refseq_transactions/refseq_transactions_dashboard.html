@@ -7,30 +7,40 @@
 {% block page_title %} Refseq Transaction Dashboard {% endblock %}
 {% block infoheader %} Refseq Transaction Dashboard {% endblock %}
 
-{% block page_header %}
-    Welcome to your Refseq Transaction dashboard, {{ request.user }}!
+{% block header %}
 {% endblock %}
 
 {% block page_description %}
-    Manage your refseq databases. This website allows transactions with the
-    <a href="https://ftp.ncbi.nih.gov/genomes/refseq/">refseq database</a>.
-    Particularly, the functions triggered by the form submit either interact with a previously downloaded
-    <a href="https://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt">assembly_summary_refseq.txt</a>
-    to create BLAST databases with the makeblastdb script, or they refresh the assembly_summary_refseq.txt file.
+    Welcome to the BLAST database management interface, where you can oversee your BLAST databases essential for
+    both your reciprocal and one-way BLAST initiatives.
+    At present, you have the option to select assemblies from two distinct databases: the Reference-Sequence
+    (RefSeq) and the GenBank database.
+    For further insights into the database contents, kindly refer to their respective public websites.
+    This dashboard provides a comprehensive listing of databases categorized as active (downloaded and formatted) and
+    inactive (neither downloaded nor formatted). Kindly bear in mind that these databases are utilized
+    collaboratively by multiple users. Removing a specific database
+    will result in its removal for all users utilizing the system.
 {% endblock %}
 
 
 {% block content %}
 
+    <br>
     <div class="container-fluid" id="whole_dashboard">
+
         <div class="row">
             <div class="col" style="text-align: right">
+                {% include "refseq_transactions/form_genbank_assembly_summary.html" %}
+            </div>
+            <div class="col" style="text-align: left">
                 {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
             </div>
         </div>
 
-        {% if refseq_exists %}
+        {% if refseq_exists and genbank_exists %}
             <div class="dashboard_project_list_col" style="margin-bottom: 30px;" id="post_form_container">
+                <h3 class="col_header" style="text-align: center"> BLAST database Metadata </h3>
+                <p style="font-size: medium;text-align: center">Add a name and a description, select the completeness level and add taxonomy restrictions.</p>
                 {% include "refseq_transactions/form_create_refseq_database_metadata.html" %}
             </div>
         {% endif %}

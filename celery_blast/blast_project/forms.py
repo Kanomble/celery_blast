@@ -464,9 +464,13 @@ class UploadGenomeForm(forms.Form):
         assembly_accessions_file = cleaned_data['assembly_accessions_file']
         assembly_level_file = cleaned_data['assembly_level_file']
         user_email = cleaned_data['user_email']
-        database_title = cleaned_data['database_title']
-        if check_if_database_title_exists(database_title):
-            self.add_error('database_title', 'This title is already in use, please specify another title.')
+
+        if 'database_title' not in list(cleaned_data.keys()):
+            self.add_error('database_title', "This field is required, set an appropriate database title!")
+        else:
+            database_title = cleaned_data['database_title']
+            if check_if_database_title_exists(database_title):
+                self.add_error('database_title', 'This title is already in use, please specify another title.')
 
         if genome_fasta_file.name.endswith('.faa') is not True and genome_fasta_file.name.endswith(
                 '.fasta') is not True:
@@ -586,9 +590,12 @@ class UploadMultipleFilesGenomeForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         user_email = cleaned_data['user_email']
-        database_title = cleaned_data['database_title']
-        if check_if_database_title_exists(database_title):
-            self.add_error('database_title', 'This title is already in use, please specify another title.')
+        if 'database_title' not in list(cleaned_data.keys()):
+            self.add_error('database_title', "This field is required, set an appropriate database title!")
+        else:
+            database_title = cleaned_data['database_title']
+            if check_if_database_title_exists(database_title):
+                self.add_error('database_title', 'This title is already in use, please specify another title.')
 
         for field in self.fields:
             if "genome_file" in field:

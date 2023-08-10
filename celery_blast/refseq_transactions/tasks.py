@@ -9,7 +9,7 @@ from blast_project.py_django_db_services import update_blast_database_with_task_
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
-from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE
+from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE, GENBANK_URL
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 
@@ -20,7 +20,7 @@ logger = get_task_logger(__name__)
 
 ''' download_refseq_assembly_summary_file
 
-    This function downloads the current assembly_summary_refseq.txt file into 
+    This function downloads the current assembly_summary_refseq.txt file or the assembly_summary_genbank.txt file into 
     the media directory /databases/refseq_summary_file/ if this directory does not exists the function
     creates the directory.
     WARNING: This function uses the default BLAST_DATABASE_DIR filepath, overwriting BLAST_DATABASE_DIR does not
@@ -34,11 +34,20 @@ logger = get_task_logger(__name__)
 
 
 @shared_task()
-def download_refseq_assembly_summary():
+def download_refseq_assembly_summary(summary_file:str):
     try:
-        refseq_url = REFSEQ_URL
         current_working_directory = getcwd()  # /blast/reciprocal_blast
-        path_to_assembly_file_location = REFSEQ_ASSEMBLY_FILE
+        if summary_file == "RefSeq":
+            path_to_assembly_file_location = REFSEQ_ASSEMBLY_FILE
+            refseq_url = REFSEQ_URL
+
+        elif summary_file == "GenBank":
+            path_to_assembly_file_location = GENBANK_ASSEMBLY_FILE
+            refseq_url = GENBANK_URL
+        else:
+            logger.warning("wrong summary_file selected: {}".format(summary_file))
+            logger.warning("specify RefSeq or GenBank in the relevant form.html document ...")
+            raise Exception("wrong summary_file selected: {}".format(summary_file))
         timeout = 300
 
         logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
@@ -48,13 +57,18 @@ def download_refseq_assembly_summary():
             logger.warning('path_to_assembly_file_location : {} does not exists, trying to create it with mkdir ...')
             mkdir(path_to_assembly_file_location)
 
-        path_to_assembly_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
+        if summary_file == "RefSeq":
+            path_to_assembly_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
+        elif summary_file == "GenBank":
+            path_to_assembly_file = GENBANK_ASSEMBLY_FILE + 'assembly_summary_genbank.txt'
+
         if (isfile(path_to_assembly_file)):
-            logger.warning('assembly_summary_refseq.txt exists deleting it in order to download a newer version')
+            logger.warning('assembly_summary_refseq.txt/assembly_summary_genbank.txt exists deleting it in order to download a newer version')
             remove(path_to_assembly_file)
 
         # invoke wget program
         logger.info('creating popen process')
+        logger.info("refseq_url: {}, path_to_assembly_file: {}".format(refseq_url, path_to_assembly_file))
         wget_process = Popen(['wget', refseq_url, '-q', '-O', path_to_assembly_file], shell=False)
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute

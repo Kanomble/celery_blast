@@ -4,7 +4,7 @@ from os.path import isfile
 
 import pandas as pd
 from blast_project.py_django_db_services import get_database_by_id
-from celery_blast.settings import BLAST_DATABASE_DIR
+from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE
 from django.db import IntegrityError
 
 # TODO implement deletion of files that do not start with: "GCF_XYZ." or "GCA_XYZ.".
@@ -73,7 +73,20 @@ def update_blast_database_table(errorlist:list, database_path:str, download_erro
 
 
 def refseq_file_exists():
-    return isfile('media/databases/refseq_summary_file/assembly_summary_refseq.txt')
+    return isfile(REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt')
+
+
+''' genbank_file_exists
+
+    checks if the genbank_summary_file exists in the desired media directory
+
+    :returns
+        :type boolean
+'''
+
+
+def genbank_file_exists():
+    return isfile(GENBANK_ASSEMBLY_FILE + 'assembly_summary_genbank.txt')
 
 
 '''get_database_download_and_formatting_task_result_progress

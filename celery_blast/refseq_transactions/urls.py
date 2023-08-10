@@ -3,7 +3,7 @@ from django.urls import path, include
 from . import views
 
 service_urls = [
-    path('download_refseq_assembly_summary', views.download_refseq_assembly_summary_view,
+    path('<str:summary_file>/download_refseq_assembly_summary', views.download_refseq_assembly_summary_view,
          name='download_refseq_assembly_summary'),
     path('create_refseq_database_metadata', views.create_blast_database_model_and_directory,
          name='create_refseq_database_metadata'),

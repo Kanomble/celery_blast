@@ -390,7 +390,6 @@ def upload_genome_view(request):
             # belong to one template, the upload_genome_files_dashboard.html
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user)
             upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
-
             if upload_genome_form.is_valid():
                 with transaction.atomic():
                     new_db = save_uploaded_genomes_into_database(
@@ -459,7 +458,6 @@ def upload_multiple_genomes_view(request):
             multiple_files_genome_form = UploadMultipleFilesGenomeForm(request.user, request.POST, request.FILES,
                                                                        extra=extra_field_count)
             if multiple_files_genome_form.is_valid():
-                print("ITS VALID BITCH!")
                 with transaction.atomic():
 
                     new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
@@ -722,7 +720,6 @@ def ajax_call_to_logfiles(request, project_id: int):
                     if len(progress) == 1:
                         progress_without_subtasks.append(progress[0])
             progress_without_subtasks.sort()
-            # print(max(progress_without_subtasks))
             return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:

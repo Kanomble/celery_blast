@@ -11,7 +11,8 @@ from .forms import RefseqDatabaseForm
 from .py_refseq_transactions import get_downloaded_databases, get_databases_in_progress, \
     get_databases_without_tasks, create_blastdatabase_table_and_directory, \
     read_database_table_by_database_id_and_return_json, get_failed_tasks
-from .py_services import refseq_file_exists, get_database_download_and_formatting_task_result_progress
+from .py_services import refseq_file_exists, get_database_download_and_formatting_task_result_progress, \
+    genbank_file_exists
 from .tasks import download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
 
 ''' dashboard
@@ -33,6 +34,9 @@ def dashboard(request):
         if (refseq_file_exists()):
             context['refseq_exists'] = True
 
+        if (genbank_file_exists()):
+            context['genbank_exists'] = True
+
         refseq_database_form = RefseqDatabaseForm(request.user)
         executed_databases = get_downloaded_databases()
         not_executed_databases = get_databases_without_tasks()
@@ -52,9 +56,11 @@ def dashboard(request):
 
 ''' download_refseq_assembly_summary_view
     
-    triggers a @shared_task function in order to download the current refseq summary file
+    triggers a @shared_task function in order to download the current summary file
     from the ncbi ftp directory
     redirects to the refseq_transactions_dashboard url e.g. the dashboard view above
+    
+    downloadable summary files: genbank/refseq
     
     url: download_refseq_assembly_summary
     redirect: refseq_transactions_dashboard.html
@@ -63,9 +69,9 @@ def dashboard(request):
 
 
 @login_required(login_url='login')
-def download_refseq_assembly_summary_view(request):
+def download_refseq_assembly_summary_view(request, summary_file:str):
     try:
-        download_refseq_assembly_summary()
+        download_refseq_assembly_summary(summary_file)
         return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request, e)

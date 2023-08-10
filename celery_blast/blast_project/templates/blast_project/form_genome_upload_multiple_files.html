@@ -6,9 +6,9 @@
              <div class="form-group">
                 <label for="{{ MultipleFileUploadGenomeForm.database_title.name }}">Database Title</label>
                 <input type="text" class="form-control" id="{{ MultipleFileUploadGenomeForm.database_title.name }}" name="{{ MultipleFileUploadGenomeForm.database_title.name  }}">
-                {% if MultipleFileUploadGenomeForm.database_title.name.errors %}
+                {% if MultipleFileUploadGenomeForm.database_title.errors %}
                 <div class="alert alert-danger">
-                    <strong>{{ MultipleFileUploadGenomeForm.database_title.name.errors }}</strong>
+                    <strong>{{ MultipleFileUploadGenomeForm.database_title.errors }}</strong>
                 </div>
                 {% endif %}
              </div>
@@ -16,9 +16,9 @@
             <div class="form-group">
                 <label for="{{ MultipleFileUploadGenomeForm.database_description.name }}">Database Description</label>
                 <input type="text" class="form-control" id="{{ MultipleFileUploadGenomeForm.database_description.name }}" name="{{ MultipleFileUploadGenomeForm.database_description.name }}">
-                {% if MultipleFileUploadGenomeForm.database_description.name.errors %}
+                {% if MultipleFileUploadGenomeForm.database_description.errors %}
                 <div class="alert alert-danger">
-                    <strong>{{ MultipleFileUploadGenomeForm.database_description.name.errors }}</strong>
+                    <strong>{{ MultipleFileUploadGenomeForm.database_description.errors }}</strong>
                 </div>
                 {% endif %}
              </div>

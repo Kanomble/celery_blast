@@ -1,0 +1,24 @@
+<form action="{% url 'download_refseq_assembly_summary' summary_file="GenBank" %}" method="post"
+      onsubmit="showLoader('loading_div','whole_dashboard')">
+    {% csrf_token %}
+    <div class="form-group">
+
+        <a href="#" data-toggle="tooltip"
+                {% if genbank_exists %}
+           title="GenBank assembly summary exists, but you can download a newer version!"
+                {% else %}
+           title="GenBank assembly summary does not exists, download it by pressing the button!"
+                {% endif %}
+        >
+
+            <input type="submit"
+                    {% if not genbank_exists %}
+                   value="Download Newest GenBank Assembly Summary"
+                    {% else %}
+                   value="Download GenBank Assembly Summary"
+                    {% endif %}
+                   class="btn btn-primary btn-dark">
+        </a>
+
+    </div>
+</form>
