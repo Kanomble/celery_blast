@@ -491,7 +491,7 @@ def upload_multiple_genomes_view(request):
 '''
 
 
-@unauthenticated_user  # you dont need an account to trigger this view
+# you dont need an account to trigger this view
 def login_user(request):
     # login with django default authenticate method
     if request.method == 'POST':
@@ -507,14 +507,13 @@ def login_user(request):
     return render(request, 'blast_project/login.html')
 
 
-# logout view
+@login_required(login_url='login')
 def logout_user(request):
     logout(request)
     return redirect('login')
 
 
 # registration view
-@unauthenticated_user
 def registration_view(request):
     user_form = CreateUserForm()
     if request.method == 'POST':
