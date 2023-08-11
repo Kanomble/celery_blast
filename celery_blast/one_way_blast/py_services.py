@@ -9,6 +9,37 @@ from .models import OneWayBlastProject, OneWayRemoteBlastProject
 from .py_django_db_services import get_one_way_remote_project_by_id, get_one_way_project_by_id
 from celery_blast.settings import ONE_WAY_BLAST_PROJECT_DIR
 
+'''check_amount_of_blast_hits
+
+    This function is used to check if there are hits in the blast result table.
+    It is executed in the one_way_blast details view.
+    
+    :param project_id
+        :type int
+    :param remote_or_local
+        :type str
+    returns: amount of blast hits
+        :type int
+'''
+
+
+def check_amount_of_blast_hits(project_id:int,remote_or_local:str) -> int:
+    try:
+        if remote_or_local == "remote":
+            blast_table = pd.read_table(
+                ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/' + str(project_id) + '/blast_results.table',
+                header=None, sep="\t")
+        else:
+            blast_table = pd.read_table(
+                ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/blast_results.table',
+                header=None, sep="\t")
+        return len(blast_table)
+    except pd.errors.EmptyDataError:
+        return 0
+    except Exception as e:
+        raise Exception("ERROR: checking the amoung of blast hits with exception: {}".format(e))
+
+
 '''read_snakemake_logfile
 
     This function reads the current status of the snakemake run for remote and local one way BLAST searches.

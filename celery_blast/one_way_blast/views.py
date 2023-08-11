@@ -13,7 +13,7 @@ from .py_django_db_services import get_one_way_project_by_id, get_one_way_remote
 from .py_project_creation import create_one_way_blast_project, create_one_way_remote_blast_project
 from .py_services import delete_one_way_blast_project_and_associated_directories_by_id, \
     delete_one_way_remote_blast_project_and_associated_directories_by_id, get_one_way_html_results,\
-    read_snakemake_logfile
+    read_snakemake_logfile, check_amount_of_blast_hits
 from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_project
 
 '''one_way_blast_project_creation_view
@@ -98,11 +98,18 @@ def one_way_blast_project_creation_view(request):
 def one_way_project_details_view(request, project_id: int):
     try:
         blast_project = get_one_way_project_by_id(project_id)
-        bokeh_plot_template = "one_way_blast/" + str(project_id) + '/bokeh_plot.html'
-        context = {'OneWayBlastProject': blast_project,
-                   'Database': blast_project.project_database,
-                   'BokehPlot': bokeh_plot_template,
-                   }
+        context = {}
+        if blast_project.project_execution_task_result.status == 'FAILURE':
+            hits = check_amount_of_blast_hits(project_id, 'local')
+            if hits == 0:
+                context['no_hits'] = True
+            else:
+                context['no_hits'] = False
+        else:
+            bokeh_plot_template = "one_way_blast/" + str(project_id) + '/bokeh_plot.html'
+            context['BokehPlot'] = bokeh_plot_template
+        context['OneWayBlastProject'] = blast_project
+        context['Database'] = blast_project.project_database
         return render(request, 'one_way_blast/one_way_blast_details.html', context)
     except Exception as e:
         return failure_view(request, e)
@@ -113,11 +120,17 @@ def one_way_remote_project_details_view(request, project_id):
     try:
 
         blast_project = get_one_way_remote_project_by_id(project_id)
-        bokeh_plot_template = "one_way_blast/remote_searches/" + str(project_id) + '/bokeh_plot.html'
-        # prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email,project_id)
-        context = {'OneWayRemoteBlastProject': blast_project,
-                   'BokehPlot': bokeh_plot_template}
-        # 'ProtPfam':prot_to_pfam}
+        context = {}
+        if blast_project.project_execution_task_result.status == 'FAILURE':
+            hits = check_amount_of_blast_hits(project_id, 'remote')
+            if hits == 0:
+                context['no_hits'] = True
+            else:
+                context['no_hits'] = False
+        else:
+            bokeh_plot_template = "one_way_blast/remote_searches/" + str(project_id) + '/bokeh_plot.html'
+            context['BokehPlot'] = bokeh_plot_template
+        context['OneWayRemoteBlastProject'] = blast_project
         return render(request, 'one_way_blast/one_way_remote_blast_details.html', context)
     except Exception as e:
         return failure_view(request, e)

@@ -109,14 +109,31 @@
 
 
         {% if OneWayRemoteBlastProject.r_project_execution_task_result.status == 'FAILURE' %}
-        <div class="dashboard_project_list_col">
-            <div class="alert alert-danger">
-                An error occurred during execution of the pipeline.
+            {% if no_hits == True %}
+            <div class="dashboard_project_list_col">
+                <div class="alert alert-danger">
+                    Your BLAST resulted into no hits. Try to use a different database.
+                </div>
             </div>
-            <div class="progress">
-                <div id="progress_bar"> 0% </div>
-            </div>
-        </div>
+            {% elif no_hits == False %}
+                <div class="dashboard_project_list_col">
+                    <div class="alert alert-danger">
+                        There are hits in your BLAST table but an unknown error occurred during execution of the pipeline.
+                    </div>
+                    <div class="progress">
+                        <div id="progress_bar"> 0% </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="dashboard_project_list_col">
+                    <div class="alert alert-danger">
+                        An unknown error occurred during execution of the pipeline.
+                    </div>
+                    <div class="progress">
+                        <div id="progress_bar"> 0% </div>
+                    </div>
+                </div>
+            {% endif %}
         {% else %}
             <div class="dashboard_project_list_col">
                 <div class="progress">

@@ -136,6 +136,21 @@ class OneWayBlastProject(models.Model):
             raise Exception(
                 "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
 
+        '''check_amount_of_blast_hits
+            
+            This function is used to check if there are hits in the blast result table.
+            It is executed in the one_way_blast details view.
+            
+            returns: amount of blast hits
+                :type int
+        '''
+        def check_amount_of_blast_hits(self)->int:
+            try:
+                blast_table = pd.read_table( ONE_WAY_BLAST_PROJECT_DIR + str(self.id) + '/blast_results.table',
+                                             header=None, sep="\t")
+                return len(blast_table)
+            except Exception as e:
+                raise Exception("ERROR: checking the amoung of blast hits with exception: {}".format(e))
 
 # TODO documentation - on_delete=models.CASCADE!?
 class OneWayRemoteBlastProject(models.Model):
@@ -276,3 +291,4 @@ class OneWayRemoteBlastProject(models.Model):
         except Exception as e:
             raise Exception(
                 "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
+
