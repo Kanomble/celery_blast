@@ -53,6 +53,8 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url, 
     var progress_container = document.getElementsByClassName('progress')[0];
     var progress = data.progress;
 
+    var dropdown_content_div = "min-width:300px;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);"
+
     var new_div_base_style = "position:absolute; \
       margin-right: auto; \
       color: white; \
@@ -114,6 +116,7 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url, 
             query_info_log_link.target = "_blank"
             blast_tables_to_plot_link.target = "_blank"
 
+            query_info_dropdown_menu.style.cssText = dropdown_content_div
             query_info_dropdown_menu.classList.add("dropdown_content")
             query_info_dropdown_menu.appendChild(query_info_link)
             query_info_dropdown_menu.appendChild(query_info_log_link)
@@ -137,7 +140,6 @@ function ajax_call_to_project_details(data, static_url, reciprocal_results_url, 
             reciprocal_blast_finished.style.cssText = reciprocal_results_div_style
             reciprocal_blast_finished.classList.add("dropdown_menu")
             var dropdown_menu = document.createElement("div")
-
             var recblast_result_link = document.createElement("a")
             var recblast_result_table_link = document.createElement("a")
             var backward_blast_log = document.createElement("a")

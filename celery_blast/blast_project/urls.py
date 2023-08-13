@@ -12,6 +12,9 @@ registration_urls = [
 ]
 
 service_urls = [
+
+    path('<str:selected_table>/datatable_view', views.active_table_view, name='active_table_view'),
+
     path('create_taxonomic_file', views.create_taxonomic_file_view, name='species_taxids'),
     path('upload_genomes/',views.upload_genome_view,name='upload_genomes'),
     path('upload_multiple_genomes/', views.upload_multiple_genomes_view, name='upload_multiple_genomes'),

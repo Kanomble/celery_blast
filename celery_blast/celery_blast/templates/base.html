@@ -72,31 +72,31 @@
                                     <a class="nav-link" href="{% url 'project_creation' %}">Reciprocal BLAST</a>
                                 </nav>
                             </div>
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
-                                <div class="sb-nav-link-icon"><i class="fa-solid fa-dna fa-lg"></i></div>
+
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseDatabaseCreation" aria-expanded="false" aria-controls="collapseDatabaseCreation">
+                                <div class="sb-nav-link-icon"><i class="fa-solid fa-dna fa-xl"></i></div>
                                 BLAST database creation
                                 <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                             </a>
-                            <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                                <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
-                                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseAuth" aria-expanded="false" aria-controls="pagesCollapseAuth">
-                                        Download databases from NCBI
-                                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                                    </a>
-                                    <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
-                                        <nav class="sb-sidenav-menu-nested nav">
-                                            <a class="nav-link" href="{% url 'refseq_transactions_dashboard' %}">Database Download</a>
-                                        </nav>
-                                    </div>
-                                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseError" aria-expanded="false" aria-controls="pagesCollapseError">
-                                        Upload local protein fasta files
-                                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                                    </a>
-                                    <div class="collapse" id="pagesCollapseError" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
-                                        <nav class="sb-sidenav-menu-nested nav">
-                                            <a class="nav-link" href="{% url 'upload_genomes' %}">Upload local protein fasta files</a>
-                                        </nav>
-                                    </div>
+                            <div class="collapse" id="collapseDatabaseCreation" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{% url 'refseq_transactions_dashboard' %}">NCBI Databases</a>
+                                    <a class="nav-link" href="{% url 'upload_genomes' %}">Local Databases</a>
+                                </nav>
+                            </div>
+
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseTables" aria-expanded="false" aria-controls="collapseTables">
+                                <div class="sb-nav-link-icon"><i class="fa-solid fa-list fa-xl"></i></div>
+                                Active Projects And Databases
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="collapseTables" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{% url 'active_table_view' selected_table="reciprocal_blast_projects" %}">Reciprocal Projects</a>
+                                    <a class="nav-link" href="{% url 'active_table_view' selected_table="one_way_projects" %}">Local One-Way Projects</a>
+                                    <a class="nav-link" href="{% url 'active_table_view' selected_table="one_way_remote_projects" %}">Remote One-Way Projects</a>
+                                    <a class="nav-link" href="{% url 'active_table_view' selected_table="databases" %}">Databases</a>
+
                                 </nav>
                             </div>
 

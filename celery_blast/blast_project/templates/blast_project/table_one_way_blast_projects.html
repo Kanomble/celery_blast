@@ -1,29 +1,56 @@
-<div class="table-responsive">
-    <table class="table table-hover" id="oneWayBLASTProjectTable">
-            <thead>
-                <tr>
-                    <th>Project Title</th>
-                    <th>Database</th>
-                   <!--  <th>Timestamp</th> -->
-                    <th>Project Details</th>
-                </tr>
-            </thead>
-            <tbody id="blastProjectTableBody">
-                {% for project in OneWayBlastProjects %}
+{% extends "base.html" %}
+
+{% block title %} BLAST Dashboard {% endblock %}
+
+{% block page_title %} {% endblock %}
+
+{% block infoheader %} Active BLAST Projects {% endblock %}
+
+{% block page_description %}
+    You are logged in as: <strong>{{request.user}}</strong>.<br>
+{% endblock %}
+
+{% block header %}
+{% endblock %}
+
+{% block content %}
+<div class="dashboard_project_list_col">
+
+    <div class="table-responsive">
+        <table class="table table-hover" id="oneWayBLASTProjectTable">
+                <thead>
                     <tr>
-                        <td>{{project.project_title}}</td>
-                        <td>{{project.project_database.database_name}}</td>
-                      <!--   <td>{{project.timestamp |date:'d.m.Y, h:m:s'}}</td> -->
-                        <td>
-                             <form class="col"
-                                   action="{% url 'one_way_project_details' project_id=project.id %}"
-                                   method="GET">
-                                {% csrf_token %}
-                                <input type="submit" value="Details" class="btn btn-dark">
-                            </form>
-                        </td>
+                        <th>Project Title</th>
+                        <th>Database</th>
+                       <!--  <th>Timestamp</th> -->
+                        <th>Project Details</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody id="blastProjectTableBody">
+                    {% for project in OneWayBlastProjects %}
+                        <tr>
+                            <td>{{project.project_title}}</td>
+                            <td>{{project.project_database.database_name}}</td>
+                          <!--   <td>{{project.timestamp |date:'d.m.Y, h:m:s'}}</td> -->
+                            <td>
+                                 <form class="col"
+                                       action="{% url 'one_way_project_details' project_id=project.id %}"
+                                       method="GET">
+                                    {% csrf_token %}
+                                    <input type="submit" value="Details" class="btn btn-dark">
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+    </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#oneWayBLASTProjectTable').DataTable();
+    });
+</script>
+{% endblock %}

@@ -28,10 +28,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
     <div class="dashboard_project_list_col">
 
-        <h2 style="text-align: center"> Project Details and Execution Dashboard </h2>
+        <h3  class="col_header" style="text-align: center"> Project Details and Execution Dashboard </h3>
         <p style="font-size: medium; text-align: center">
             {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
                 Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
@@ -76,14 +75,14 @@
                                    action="#"
                                    method="POST">
                                 {% csrf_token %}
-                                <input type="submit" value="Execute Snakemake" class="btn btn-dark disabled">
+                                <input type="submit" value="Execute Snakemake" class="btn btn-primary disabled">
                             </form>
                             {% else %}
                                 <form class="col"
                                    action="{% url 'project_execution' project_id=BlastProject.id%}"
                                    method="POST">
                                 {% csrf_token %}
-                                <input type="submit" value="Execute Snakemake" class="btn btn-dark">
+                                <input type="submit" value="Execute Snakemake" class="btn btn-primary">
                             </form>
                             {% endif %}
                         </td>
@@ -121,10 +120,23 @@
                 </tbody>
             </table>
         </div>
-    </div>
+
+    {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+    <br>
+        <div class="container">
+            <div class="row justify-content-md-center" style="text-align: center">
+                <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('query_sequence_information')" > Query Sequence Information </button>
+                </div>
+                <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('result_graphs')" > E-Value/Taxonomy Distribution </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     <br>
 
-    <div class="dashboard_project_list_col" style="height: 200px;overflow-y: hidden">
     {% if BlastProject.project_execution_snakemake_task.status == 'FAILURE' %}
         <div class="alert alert-danger" style="text-align: center">
             An error occurred during execution of the pipeline.
@@ -144,15 +156,11 @@
             </div>
     {% endif %}
     </div>
-    <!-- <div class="dashboard_project_list_col" id="QUERY_INFO" style="overflow-x: scroll;overflow-y: scroll">
-    </div> -->
 
-    <br>
 
-    {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+{% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
 
-    <br>
-    <div class="dashboard_project_list_col">
+    <div class="dashboard_project_list_col" id="query_sequence_information" style="display: none">
         <h2 style="text-align: center">Query Sequence Information</h2>
         <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
             Information is just available for valid accession ids (ids with sequences stored in the NCBI protein database). </p>
@@ -163,11 +171,11 @@
     </div>
     <br>
 
-    <div class="dashboard_project_list_col">
+    <div class="dashboard_project_list_col" id="result_graphs" style="display: none">
         <h2 style="text-align: center"> Result Graphs </h2>
         <p style="font-size: medium; text-align: center"> <strong> Amount of hits in database organisms: </strong> Number of inferred RBHs (x-axis) in different species (y-axis) for one particular query sequence.
             <br>
-            E.g. y-value is four and x value is two: Four species each with two RBHs - these two RBHs are putative in-paralogs. </p>
+            E.g. y-value is four and x value is two: Four species, each with two RBHs. </p>
         <p style="font-size: medium; text-align: center"><strong> E-Value distribution in target sequences: </strong>
             Distribution of forward BLAST e-values for each query sequence. </p>
         <br>
@@ -201,8 +209,6 @@
         </div>
     </div>
     {% endif %}
-
-</div>
 {% endblock %}
 
 

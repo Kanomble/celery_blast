@@ -47,48 +47,11 @@
 {% block content %}
 {% if cdd_database_exists == True %}
 <div class="container-fluid" id="project_dashboard">
-
-    <div class="row" style="text-align: center;">
-          <div class="col-sm dashboard_project_list_col" style="height: 600px;">
-
-                <h3 class="col_header"> Reciprocal BLAST Projects </h3>
-              <p style="font-size: medium">Identification of RBHs (putative orthologous sequences)</p>
-               {% include "blast_project/table_blast_projects.html" %}
-            </div>
-
-            <div class="col-sm dashboard_project_list_col" style="height: 600px">
-                <h3 class="col_header">Remote BLAST Projects</h3>
-              <p style="font-size: medium">Perform BLAST similarity searches on the NCBI Server</p>
-
-                {% include "blast_project/table_one_way_remote_blast_projects.html" %}
-            </div>
-    </div>
-    <div class="row"  style="text-align: center;">
-            <div class="col-sm dashboard_project_list_col" style="height: 600px">
-                <h3 class="col_header">Local Databases</h3>
-              <p style="font-size: medium">Custom databases for SymBLAST</p>
-
-                {% include "blast_project/table_downloaded_and_formatted_blast_databases.html" %}
-
-            </div>
-            <div class="col-sm dashboard_project_list_col" style="height: 600px">
-                <h3 class="col_header">Local BLAST Projects</h3>
-              <p style="font-size: medium">Perform BLAST similarity searches with local databases</p>
-
-                {% include "blast_project/table_one_way_blast_projects.html" %}
-            </div>
-    </div>
 </div>
 {% endif %}
 {% endblock %}
 {% block scripts %}
 <script>
-    $(document).ready(function() {
-        $('#blastProjectTable').DataTable();
-        $('#oneWayBLASTProjectTable').DataTable();
-        $('#oneWayRemoteBlastProjectTable').DataTable();
-        $('#activeDatabasesTable').DataTable();
-    });
 </script>
 {% endblock %}
 

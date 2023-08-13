@@ -78,6 +78,38 @@ def dashboard_view(request):
     except Exception as e:
         return failure_view(request, e)
 
+'''active_table_view
+    
+    This view is part of the navigation bar 
+'''
+@login_required(login_url='login')
+def active_table_view(request, selected_table:str):
+    try:
+        context = {}
+        if request.method == 'GET':
+            if selected_table == "reciprocal_blast_projects":
+                users_blast_projects = get_users_blast_projects(request.user.id)
+                context['blast_projects'] = users_blast_projects
+                return render(request, 'blast_project/table_blast_projects.html', context)
+            elif selected_table == "one_way_projects":
+                one_way_blast_projects = get_users_one_way_blast_projects(request.user.id)
+                context['OneWayBlastProjects'] = one_way_blast_projects
+                return render(request, 'blast_project/table_one_way_blast_projects.html', context)
+            elif selected_table == "one_way_remote_projects":
+                one_way_remote_blast_projects = get_users_one_way_remote_blast_projects(request.user.id)
+                context['OneWayRemoteBlastProjects'] = one_way_remote_blast_projects
+                return render(request, 'blast_project/table_one_way_remote_blast_projects.html', context)
+            elif selected_table == "databases":
+                available_blast_databases = get_downloaded_databases()
+                context['ActiveBlastDatabases'] = available_blast_databases
+                return render(request, 'blast_project/table_downloaded_and_formatted_blast_databases.html', context)
+            else:
+                raise Exception("There is no table view with an selected_table value of: {}".format(selected_table))
+        else:
+            raise Exception("There is no POST request for this view function.")
+    except Exception as e:
+        return failure_view(request, e)
+
 '''project_creation_view
 
     This view receives user provided form data and creates a BlastProject model object.
