@@ -35,7 +35,6 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
         <div class="dashboard_project_list_col">
             <h2 style="text-align: center"> BLAST Project Details and Execution Dashboard</h2>
             <p style="font-size: medium; text-align: center">
@@ -60,6 +59,7 @@
                         <th>Database</th>
                         <th>Timestamp</th>
                         <th></th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody id="blastProjectTableBody">
@@ -82,6 +82,24 @@
                         <td>{{ OneWayBlastProject.timestamp |date:'d.m.Y, h:m:s' }}</td>
 
                         <td>
+                            {% if OneWayBlastProject.project_execution_task_result.status == 'PROGRESS' %}
+                            <form class="col"
+                                   action="#"
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit" value="Execute Snakemake" class="btn btn-primary disabled">
+                            </form>
+                            {% else %}
+                                <form class="col"
+                                   action="{% url 'one_way_project_execution' project_id=OneWayBlastProject.id %}"
+                                   method="POST">
+                                {% csrf_token %}
+                                <input type="submit" value="Execute Snakemake" class="btn btn-primary">
+                            </form>
+                            {% endif %}
+                        </td>
+
+                        <td>
                             <form class="col"
                                   action="{% url 'one_way_project_deletion' project_id=OneWayBlastProject.id %}"
                                   method="GET">
@@ -89,67 +107,71 @@
                                 <input type="submit" value="Delete Blast Project" class="btn btn-danger">
                             </form>
                         </td>
-                        <td>
-                            <form class="col"
-                                  action="{% url 'one_way_project_execution' project_id=OneWayBlastProject.id %}"
-                                  method="POST">
-                                {% csrf_token %}
-                                <input type="submit" value="Execute Snakemake" class="btn btn-dark">
-                            </form>
-                        </td>
-                        {% if OneWayBlastProject.project_execution_task_result.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark"
-                                   href="{% url 'one_way_html_results' project_id=OneWayBlastProject.id remote=0 %}">
-                                Results Table </a></td>
-                        {% endif %}
 
+                        {% if OneWayBlastProject.project_execution_task_result.status != 'SUCCESS' %}
                         <td>
                             <a class="btn btn-dark"
                                href="{% url 'one_way_target_sequence_download' project_id=OneWayBlastProject.id project_type='one_way_blast' filename=OneWayBlastProject.project_query_sequences %}">
                                 Download Query Fasta Files </a>
                         </td>
+                        {% endif %}
                     </tr>
+
+                    {% if OneWayBlastProject.project_execution_task_result.status == 'SUCCESS' %}
+                        <tr>
+                            <td>
+                                 <button class="btn btn-dark" onclick="displayDivElement('database_div')" > BLAST Database </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-dark" onclick="displayDivElement('query_sequence_information')" > Query Sequence Information </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-dark" onclick="displayDivElement('one_way_bokeh_plot')" > Interactive Result Plot </button>
+                            </td>
+                            <td><a class="btn btn-dark"
+                                   href="{% url 'one_way_html_results' project_id=OneWayBlastProject.id remote=0 %}">
+                                Results Table </a>
+                            </td>
+                            <td>
+                                <a class="btn btn-dark"
+                                   href="{% url 'one_way_target_sequence_download' project_id=OneWayBlastProject.id project_type='one_way_blast' filename=OneWayBlastProject.project_query_sequences %}">
+                                    Download Query Fasta Files </a>
+                            </td>
+                        </tr>
+                    {% endif %}
                     </tbody>
                 </table>
             </div>
-        </div>
-        <br>
 
+        <br>
         {% if OneWayBlastProject.project_execution_task_result.status == 'FAILURE' %}
             {% if no_hits == True %}
-            <div class="dashboard_project_list_col">
                 <div class="alert alert-danger">
                     Your BLAST resulted into no hits. Try to use a different database.
                 </div>
-            </div>
             {% elif no_hits == False %}
-                <div class="dashboard_project_list_col">
                     <div class="alert alert-danger">
                         There are hits in your BLAST table but an unknown error occurred during execution of the pipeline.
                     </div>
                     <div class="progress">
                         <div id="progress_bar"> 0% </div>
                     </div>
-                </div>
             {% else %}
-                <div class="dashboard_project_list_col">
                     <div class="alert alert-danger">
                         An unknown error occurred during execution of the pipeline.
                     </div>
                     <div class="progress">
                         <div id="progress_bar"> 0% </div>
                     </div>
-                </div>
             {% endif %}
         {% else %}
-            <div class="dashboard_project_list_col">
                 <div class="progress">
                     <div id="progress_bar"> 0% </div>
                 </div>
-            </div>
         {% endif %}
+        </div>
 
-        <div class="dashboard_project_list_col">
+        <div class="dashboard_project_list_col" id="database_div" style="display:none">
             <h2 style="text-align: center">BLAST Database Content - Target Genomes</h2>
             <br>
             <div class="container-fluid">
@@ -175,8 +197,7 @@
 
         {% if OneWayBlastProject.project_execution_task_result.status == 'SUCCESS' %}
 
-            <br>
-            <div class="dashboard_project_list_col">
+            <div class="dashboard_project_list_col" id="query_sequence_information" style="display:none">
                 <h2 style="text-align: center">Query Sequence Information</h2>
                 <p style="font-size: medium; text-align: center"> This table combines information about your uploaded
                     query sequences.
@@ -187,13 +208,12 @@
                     {{ OneWayBlastProject.read_query_information_table | safe }}
                 </div>
             </div>
-            <br>
-            <div class="dashboard_project_list_col">
+
+            <div class="dashboard_project_list_col" id="one_way_bokeh_plot" style="display: none">
                 {% include BokehPlot %}
             </div>
 
         {% endif %}
-    </div>
 {% endblock %}
 
 

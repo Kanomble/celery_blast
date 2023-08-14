@@ -122,7 +122,7 @@
         </div>
 
     {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
-    <br>
+        <br>
         <div class="container">
             <div class="row justify-content-md-center" style="text-align: center">
                 <div class="col-md">
@@ -136,6 +136,7 @@
     {% endif %}
 
     <br>
+    <br>
 
     {% if BlastProject.project_execution_snakemake_task.status == 'FAILURE' %}
         <div class="alert alert-danger" style="text-align: center">
@@ -145,12 +146,10 @@
             <div id="progress_bar"> 0% </div>
         </div>
     {% elif BlastProject.project_execution_snakemake_task.status == 'PROGRESS' %}
-            <p style="text-align: center"> Snakemake pipeline in progress ... </p>
             <div class="progress">
                 <div id="progress_bar"> 0% </div>
             </div>
     {% else %}
-            <p style="text-align: center"> Snakemake pipeline finished! </p>
             <div class="progress">
                 <div id="progress_bar"> 0% </div>
             </div>
@@ -169,8 +168,6 @@
             {{ BlastProject.read_query_information_table | safe }}
         </div>
     </div>
-    <br>
-
     <div class="dashboard_project_list_col" id="result_graphs" style="display: none">
         <h2 style="text-align: center"> Result Graphs </h2>
         <p style="font-size: medium; text-align: center"> <strong> Amount of hits in database organisms: </strong> Number of inferred RBHs (x-axis) in different species (y-axis) for one particular query sequence.
@@ -261,8 +258,60 @@
 </script>
 
 <script>
-    $(document).ready(function() {
-        $('#myTable').DataTable();
+    $(document).ready(function () {
+        var result_table = document.getElementById('myTable');
+        result_table.setAttribute("class", "display")
+        $('#myTable').DataTable(
+            {
+                dom: 'Bfrtip',
+                "lengthMenu": [10],
+                buttons: [
+                    'copy',
+                    'csv',
+                    'selectAll',
+                    'selectNone',
+                    'selectRows'
+                ],
+                select: true,
+                "columns": [
+                    {"data": "index"},
+                    {"data": "Accession ID"},
+                    {"data": "Organism"},
+                    {"data": "Sequence Length"},
+                    {"data": "Sequence Definition"},
+                    {"data": "Features"},
+                    {
+                        "data": "PFAM", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                            if (oData.PFAM) {
+                                $(nTd).html("<a href='" + oData.PFAM + "'>" + oData.PFAM + "</a>");
+                            } else {
+                                $(nTd).html("<p>no link available</p>");
+                            }
+                        }
+                    },
+                    {
+                        "data": "CDD", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                            if (oData.CDD) {
+                                $(nTd).html("<a href='" + oData.CDD + "'>" + oData.CDD + "</a>");
+                            } else {
+                                $(nTd).html("<p>no link available</p>");
+                            }
+                        }
+                    },
+                    {
+                        "data": "TIGR", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                            if (oData.TIGR) {
+                                $(nTd).html("<a href='" + oData.TIGR + "'>" + oData.TIGR + "</a>");
+                            } else {
+                                $(nTd).html("<p>no link available</p>");
+                            }
+                        }
+                    }
+                ],
+                "deferRender": true,
+            }
+        );
+
     });
 </script>
 {% endblock %}
