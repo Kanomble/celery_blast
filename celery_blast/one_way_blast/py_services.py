@@ -58,20 +58,28 @@ def read_snakemake_logfile(project_id:int, remote=False)->int:
         # this function returns the newest file in the specified path
         def newest(path_):
             files = listdir(path_)
-            paths = [path.join(path_, basename) for basename in files]
-            return max(paths, key=path.getctime)
+            if len(files) > 0:
+                paths = [path.join(path_, basename) for basename in files]
+                return max(paths, key=path.getctime)
+            else:
+                return 0
         if remote == False:
             logfile_path = ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/.snakemake/log'
         else:
             logfile_path = ONE_WAY_BLAST_PROJECT_DIR + 'remote_searches/' + str(project_id) + '/.snakemake/log'
-        with open(newest(logfile_path), 'r') as logfile:
-            lines = logfile.readlines()
 
-        progress = []
-        for line in lines:
-            if 'steps' in line:
-                prog = int(line.split(" ")[4].replace("(", "").replace(")", "").replace("%", ""))
-                progress.append(prog)
+        logfile = newest(logfile_path)
+        if logfile != 0:
+            with open(logfile, 'r') as logfile:
+                lines = logfile.readlines()
+
+            progress = []
+            for line in lines:
+                if 'steps' in line:
+                    prog = int(line.split(" ")[4].replace("(", "").replace(")", "").replace("%", ""))
+                    progress.append(prog)
+        else:
+            progress = [0]
         return max(progress)
     except Exception as e:
         raise Exception("[-] ERROR reading snakemake logfiles with exception: {}".format(e))

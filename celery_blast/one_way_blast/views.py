@@ -99,15 +99,16 @@ def one_way_project_details_view(request, project_id: int):
     try:
         blast_project = get_one_way_project_by_id(project_id)
         context = {}
-        if blast_project.project_execution_task_result.status == 'FAILURE':
-            hits = check_amount_of_blast_hits(project_id, 'local')
-            if hits == 0:
-                context['no_hits'] = True
+        if blast_project.project_execution_task_result:
+            if blast_project.project_execution_task_result.status == 'FAILURE':
+                hits = check_amount_of_blast_hits(project_id, 'local')
+                if hits == 0:
+                    context['no_hits'] = True
+                else:
+                    context['no_hits'] = False
             else:
-                context['no_hits'] = False
-        else:
-            bokeh_plot_template = "one_way_blast/" + str(project_id) + '/bokeh_plot.html'
-            context['BokehPlot'] = bokeh_plot_template
+                bokeh_plot_template = "one_way_blast/" + str(project_id) + '/bokeh_plot.html'
+                context['BokehPlot'] = bokeh_plot_template
         context['OneWayBlastProject'] = blast_project
         context['Database'] = blast_project.project_database
         return render(request, 'one_way_blast/one_way_blast_details.html', context)
@@ -121,15 +122,16 @@ def one_way_remote_project_details_view(request, project_id):
 
         blast_project = get_one_way_remote_project_by_id(project_id)
         context = {}
-        if blast_project.project_execution_task_result.status == 'FAILURE':
-            hits = check_amount_of_blast_hits(project_id, 'remote')
-            if hits == 0:
-                context['no_hits'] = True
+        if blast_project.project_execution_task_result:
+            if blast_project.project_execution_task_result.status == 'FAILURE':
+                hits = check_amount_of_blast_hits(project_id, 'remote')
+                if hits == 0:
+                    context['no_hits'] = True
+                else:
+                    context['no_hits'] = False
             else:
-                context['no_hits'] = False
-        else:
-            bokeh_plot_template = "one_way_blast/remote_searches/" + str(project_id) + '/bokeh_plot.html'
-            context['BokehPlot'] = bokeh_plot_template
+                bokeh_plot_template = "one_way_blast/remote_searches/" + str(project_id) + '/bokeh_plot.html'
+                context['BokehPlot'] = bokeh_plot_template
         context['OneWayRemoteBlastProject'] = blast_project
         return render(request, 'one_way_blast/one_way_remote_blast_details.html', context)
     except Exception as e:
@@ -198,7 +200,12 @@ def load_one_way_result_html_table_view(request, project_id, remote):
         return failure_view(request, e)
 
 
-# TODO documentation
+'''one_way_download_target_sequences
+
+    This function is executed by triggering the "Download Query Fasta Files" Button at the Local BLAST Project 
+    details website.
+
+'''
 @login_required(login_url='login')
 def one_way_download_target_sequences(request, project_id, project_type, filename='', ):
     try:
@@ -236,7 +243,8 @@ def one_way_download_target_sequences(request, project_id, project_type, filenam
 '''ajax_call_to_snakemake_logfiles
 
     This function sends task progress data based on available logfiles to the template.
-
+    If the task has not written any logfile yet, the progress will be set to 0.
+    
     :param project_id
         :type int
     :param remote - 0 = OneWayBlast 1 = OneWayRemoteBlast
@@ -248,7 +256,17 @@ def one_way_download_target_sequences(request, project_id, project_type, filenam
 def ajax_call_to_snakemake_logfiles(request, project_id: int, remote: int):
     try:
         if request.is_ajax and request.method == "GET":
-            progress = read_snakemake_logfile(project_id, remote)
+            if remote == 0:
+                blast_project = get_one_way_project_by_id(project_id)
+            elif remote == 1:
+                blast_project = get_one_way_remote_project_by_id(project_id)
+            else:
+                raise Exception("There is no one way blast project with this id")
+
+            if blast_project.project_execution_task_result:
+                progress = read_snakemake_logfile(project_id, remote)
+            else:
+                progress = 0
             return JsonResponse({"progress": progress}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
