@@ -49,7 +49,7 @@
             {% csrf_token %}
             <div class="form-group row">
                 <div class="form-group col-sm-4" style="margin: 20px">
-                    <label for="entrez_query"> Enter a search query </label>
+                    <label for="entrez_query"> NCBI search query </label>
                     <input type="text" class="form-control" id="entrez_query" name="entrez_query">
                     {% if EntrezSearchForm.entrez_query.errors %}
                         <div class="alert alert-danger">
@@ -83,13 +83,13 @@
                 <table id="table_id" class="main_table table table-hover">
                     <thead>
                     <tr>
-                        <th>Database</th>
-                        <th> Esearch Query</th>
-                        <th> Paper Entries</th>
-                        <th> Timestamp</th>
-                        <th> Task Status</th>
-                        <th> Link to Result-Table</th>
-                        <th> Delete Query</th>
+                        <th> Database</th>
+                        <th> Esearch Query </th>
+                        <th> Entries </th>
+                        <th> Timestamp </th>
+                        <th> Task Status </th>
+                        <th> Result Table </th>
+                        <th> Delete Query </th>
                     </tr>
                     </thead>
                     {% for search in EntrezSearches %}
@@ -131,7 +131,7 @@
                                 </td>
                             {% endif %}
                             {% if search.search_task_result.status == 'PROGRESS' %}
-                                <td>Result are loading.</td>
+                                <td> loading ... </td>
                                 <td>
                                     <button class="btn btn-danger" disabled>
                                         <s>Delete-Search</s>

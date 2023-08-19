@@ -211,15 +211,21 @@ def search_detail_view(request: WSGIRequest, search_id: int):
             organism_progress_dic = {}
             email = request.user.email
             organism_download = entrez_search.get_organisms()
+
             for organism in organism_download:
-                task_arg_str = '"(' + str(search_id) + ", '" + organism + "', " + "'" + email + "'" + ')"'
+                if '\'' in organism:
+
+                    task_arg_str = '"(' + str(search_id) + ", '" + organism.replace("'","\\\\'") + "', " + "'" + email + "'" + ')"'
+                else:
+                    task_arg_str = '"(' + str(search_id) + ", '" + organism + "', " + "'" + email + "'" + ')"'
                 file_name = "media/esearch_output/" + str(search_id) + "/" + organism + ".faa"
                 if os.path.isfile(file_name):
                     task_row = TaskResult.objects.get(task_args=task_arg_str)
                     task_status = task_row.status
-                    organism_progress_dic[organism] = task_status
+                    organism_progress_dic[organism] = [organism, task_status]
                 else:
-                    organism_progress_dic[organism] = ""
+                    organism_progress_dic[organism] = [organism, ""]
+
             context['Organism_progress_dic'] = organism_progress_dic
             context['Organisms'] = entrez_search.get_organisms()
 
@@ -237,6 +243,7 @@ def search_detail_view(request: WSGIRequest, search_id: int):
 
         return render(request, 'external_tools/search_details.html', context)
     except Exception as e:
+        e = str(e) + " " + str(task_arg_str) + " " + organism + " #### " + organism.replace("'","\\\\'")
         return failure_view(request, e)
 
 
