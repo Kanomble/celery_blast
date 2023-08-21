@@ -366,7 +366,7 @@ def calculate_database_statistics_task(self, project_id: int, user_email: str, t
         raise Exception("ERROR: unknown exception occurred: {}".format(e))
 
 
-'''download_and_decompress_cdd_database
+'''download_and_decompress_cdd_database OBSOLETE
 
     This task can be used to refresh the CDD database which is per default loaded before
     web server startup.

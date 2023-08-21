@@ -16,16 +16,17 @@ from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_proj
     calculate_database_statistics_task, download_and_decompress_cdd_database
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
-    read_task_logs_summary_table, download_project_directory, check_if_cdd_database_exists
+    read_task_logs_summary_table, download_project_directory
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json, get_database_selection_task_status
 from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
-    save_uploaded_multiple_file_genomes_into_database, delete_failed_or_unknown_databases
+    save_uploaded_multiple_file_genomes_into_database, delete_failed_or_unknown_databases, get_domain_database_model
 from one_way_blast.py_django_db_services import get_users_one_way_blast_projects, \
     get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
+from external_tools.tasks import download_cdd_database
 from Bio import Entrez
 from os.path import isfile
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
@@ -40,7 +41,7 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 @login_required(login_url='login')
 def download_cdd_database_view(request):
     try:
-        download_and_decompress_cdd_database()
+        download_cdd_database.delay()
         return redirect("blast_project_dashboard")
     except Exception as e:
         return failure_view(request, e)
@@ -63,8 +64,8 @@ def download_cdd_database_view(request):
 def dashboard_view(request):
     try:
         context = {}
-        context['cdd_database_exists'] = check_if_cdd_database_exists()
-
+        context['domain_database'] = get_domain_database_model()
+        print(context['domain_database'].domain_database_loaded)
         if request.method == 'GET':
             users_blast_projects = get_users_blast_projects(request.user.id)
             available_blast_databases = get_downloaded_databases()

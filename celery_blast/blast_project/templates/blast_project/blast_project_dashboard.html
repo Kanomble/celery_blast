@@ -45,8 +45,9 @@
 {% endif %}
 
 {% block content %}
-{% if cdd_database_exists == True %}
+{% if domain_database.domain_database_loaded == True %}
 <div class="container-fluid" id="project_dashboard">
+    <p> DomainDatabase is loaded </p>
 </div>
 {% endif %}
 {% endblock %}

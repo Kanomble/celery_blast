@@ -5,7 +5,7 @@ import pandas as pd
 
 import psutil
 from blast_project.py_django_db_services import update_external_tool_with_cdd_search, get_project_by_id, \
-    update_blast_project_with_database_statistics_selection_task_result_model
+    update_blast_project_with_database_statistics_selection_task_result_model, update_domain_database_task_result_model
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
@@ -15,7 +15,7 @@ from django.conf import settings
 from .entrez_search_service import execute_entrez_search, create_random_filename, save_entrez_search_model, \
     download_esearch_protein_fasta_files, \
     update_entrezsearch_with_download_task_result, download_by_organism
-from .models import ExternalTools
+from .models import ExternalTools, DomainDatabase
 from .py_cdd_domain_search import produce_bokeh_pca_plot, write_domain_corrected_fasta_file
 from .genbank_download_clinker_synteny import extract_assembly_ftp_paths_from_reciprocal_result_entries, \
     download_genbank_files, write_new_genbank_file, delete_sliced_genbank_files
@@ -283,6 +283,19 @@ def download_cdd_database(self):
     try:
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
+
+        domain_database_query_set = DomainDatabase.objects.all()
+
+        if len(domain_database_query_set) != 1:
+            DomainDatabase.objects.all().delete()
+            domain_database_model = DomainDatabase(domain_database_loaded=False)
+        else:
+            domain_database_model = domain_database_query_set[0]
+            domain_database_model.domain_database_loaded = False
+
+        update_domain_database_task_result_model(domain_database_model.id, self.id)
+
+
         cdd_path = BLAST_DATABASE_DIR + 'CDD/'
         if isdir(cdd_path) == False:
             logger.info("creating cdd directory in: {}".format(cdd_path))
@@ -317,6 +330,9 @@ def download_cdd_database(self):
             raise SubprocessError
         logger.info("successfully extracted the cdd database")
         remove(path_to_cdd_location)
+        domain_database_model.domain_database_loaded = True
+        domain_database_model.save()
+
     except TimeoutExpired as e:
         logger.warning("error during downloading the cdd database, timeout expired with exception: {}".format(e))
         raise Exception("[-] ERROR timeout expired for downloading the cdd database ...")

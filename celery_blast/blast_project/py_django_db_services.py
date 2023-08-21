@@ -1,7 +1,7 @@
 import os
 from .models import BlastProject, BlastSettings
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
-from external_tools.models import ExternalTools, QuerySequences
+from external_tools.models import ExternalTools, QuerySequences, DomainDatabase
 from blast_project import py_biopython as pyb
 from .py_services import create_blastdatabase_directory, concatenate_genome_fasta_files_in_db_dir, upload_file
 from django_celery_results.models import TaskResult
@@ -371,6 +371,44 @@ def update_blast_project_with_database_statistics_task_result_model(project_id: 
         raise IntegrityError(
             'problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
+'''get_domain_database_model
+    
+    This function returns the only DomainDatabase model from the PostgreSQL database.
+
+'''
+def get_domain_database_model():
+    try:
+        domain_database_query_set = DomainDatabase.objects.all()
+        if len(domain_database_query_set) != 1:
+            DomainDatabase.objects.all().delete()
+            domain_database_model = DomainDatabase(domain_database_loaded=False)
+            domain_database_model.save()
+        else:
+            domain_database_model = domain_database_query_set[0]
+        return domain_database_model
+    except Exception as e:
+        raise Exception("error trying to return the domain_database_model instance with exception: {}".format(e))
+
+'''update_domain_database_task_result_model
+    
+    This function updates the DomainDatabase model (there is only 1) with the associated TaskResult object.
+    
+    :param project_id
+        :type int
+    :param task_id
+        :type int
+'''
+
+
+def update_domain_database_task_result_model(domain_database_id: int, task_id: int):
+    try:
+        domain_database = DomainDatabase.objects.get(id=domain_database_id)
+        taskresult = TaskResult.objects.get(task_id=task_id)
+        domain_database.domain_database_download_task_result = taskresult
+        domain_database.save()
+    except Exception as e:
+        raise IntegrityError(
+            'problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
 '''update_blast_project_with_database_statistics_selection_task_result_model
 

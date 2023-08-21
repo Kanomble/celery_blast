@@ -426,3 +426,14 @@ class EntrezSearch(models.Model):
         self.paper_entries = paper_entries
         self.save()
         return paper_entries
+
+
+class DomainDatabase(models.Model):
+    domain_database_loaded = models.BooleanField(verbose_name="domain database integrity marker")
+    domain_database_download_task_result = models.OneToOneField(
+        TaskResult,
+        on_delete=models.CASCADE,
+        verbose_name="TaskResult model for domain database download",
+        related_name="domain_database_download",
+        null=True
+    )
