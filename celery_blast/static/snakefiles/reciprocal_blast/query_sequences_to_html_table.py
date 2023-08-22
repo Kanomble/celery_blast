@@ -1,7 +1,70 @@
 from Bio import Entrez
 import pandas as pd
 from sys import exit
+from os.path import isfile
 ERRORCODE=11
+
+'''get_additional_porotein_information
+
+    This function parses the query sequence file and extracts the fasta headers.
+    
+    :params target_file
+        :type str
+    :returns header
+        :type dict
+
+'''
+def get_additional_protein_information(target_file:str)->dict:
+    try:
+        if isfile(target_file) == False:
+            raise Exception("there is no target fasta file for: {}".format(target_file))
+        else:
+            with open(target_file, 'r') as proteins:
+                header = {}
+                for line in proteins.readlines():
+                    if line.startswith(">"):
+                        if "|" in line:
+                            line = line.replace("|", " ")
+                        acc = line.split(" ")[0].split(">")[-1].split(".")[0]
+                        protein_info = line.split(" ")[1:]
+                        protein_info = " ".join(protein_info)
+                        protein_info = protein_info.rstrip()
+                        header[acc] = protein_info
+            return header
+    except Exception as e:
+        raise Exception("[-] ERROR during reading query sequence file with exception: {}".format(e))
+
+'''get_protein_length
+    
+    This function returns a dictionary containing the length of the query sequences.
+    
+    :params target_file
+        :type str
+    :returns proteins
+        :type dict
+'''
+def get_protein_length(target_file:str)->dict:
+    try:
+        if isfile(target_file) == False:
+            raise Exception("there is no target fasta file for: {}".format(target_file))
+        with open(target_file, 'r') as fasta_file:
+            proteins = {}
+
+            for line in fasta_file.readlines():
+                if line.startswith(">"):
+                    if "|" in line:
+                        line = line.replace("|", " ")
+                    acc = line.split(" ")[0].split(">")[-1].split(".")[0]
+                    proteins[acc] = ""
+                else:
+                    proteins[acc] += line.rstrip()
+
+            for key in proteins.keys():
+                proteins[key] = len(proteins[key])
+            return proteins
+    except Exception as e:
+        raise Exception("[-] ERROR during reading query sequence file with exception: {}".format(e))
+
 ''' get_target_header
     
     Parse fasta file and extract fasta headers, return just the sequence identifier.
@@ -13,6 +76,8 @@ ERRORCODE=11
 '''
 def get_target_header(target_file:str)->list:
     try:
+        if isfile(target_file) == False:
+            raise Exception("there is no target fasta file for: {}".format(target_file))
         with open(target_file,'r') as proteins:
             header = []
             for line in proteins.readlines():
@@ -22,8 +87,8 @@ def get_target_header(target_file:str)->list:
                     acc = line.split(" ")[0].split(">")[-1].split(".")[0]
                     header.append(acc)
         return header
-    except FileNotFoundError:
-        raise FileNotFoundError("[-] There is no target fasta file for: {}".format(target_file))
+    except Exception as e:
+        raise Exception("[-] ERROR during reading query sequence file with exception: {}".format(e))
 
 ''' fetch_protein_records
 
@@ -283,8 +348,40 @@ with open(snakemake.log['log'],'w') as logfile:
         logfile.write("INFO:starting to create query sequence html table\n")
         logfile.write("INFO:reading query sequence file\n")
         proteins = get_target_header(snakemake.input['target_file'])
-        logfile.write("INFO:fetching protein records with biopython\n")
-        records = fetch_protein_records(proteins,snakemake.params['email'])
+        additional_infos = get_additional_protein_information(snakemake.input['target_file'])
+        protein_length = get_protein_length(snakemake.input['target_file'])
+
+        unknown_proteins = []
+        known_proteins = []
+
+        logfile.write("INFO:trying to fetch protein records with biopython\n")
+
+        try:
+            records = fetch_protein_records(proteins, snakemake.params['email'])
+            for record in records:
+                known_proteins.append(record['GBSeq_locus'])
+
+            for protein in proteins:
+                if protein not in known_proteins:
+                    unknown_proteins.append(protein)
+            protein_information = parse_entrez_xml(records)
+        except Exception as e:
+            logfile.write("WARNING:There are no protein information available on NCBI")
+            unknown_proteins = proteins
+            protein_information = {}
+            protein_information['queries'] = []
+            protein_information['features'] = {}
+            protein_information['links'] = {}
+            protein_information['general_information'] = {}
+
+        logfile.write("INFO:parsing unknown proteins and adding additional information")
+        for protein in unknown_proteins:
+            protein_information['queries'].append(protein)
+            protein_information['features'][protein] = {'': [additional_infos[protein]]}
+            protein_information['links'][protein] = {'pfam': '', 'jvci': '', 'cdd': '', 'refseq': ''}
+            protein_information['general_information'][protein] = (
+                additional_infos[protein], protein_length[protein], 'input organism')
+
         logfile.write("INFO:parsing records and extracting information\n")
         protein_informations = parse_entrez_xml(records)
         logfile.write("INFO:writing html file with pandas (DataTable CNNs included)\n")

@@ -1,22 +1,95 @@
 from Bio import Entrez
 import pandas as pd
+from os.path import isfile
+
+'''get_additional_porotein_information
+
+    This function parses the query sequence file and extracts the fasta headers.
+
+    :params target_file
+        :type str
+    :returns header
+        :type dict
+
+'''
+def get_additional_protein_information(target_file: str) -> dict:
+    try:
+        if isfile(target_file) == False:
+            raise Exception("there is no target fasta file for: {}".format(target_file))
+        else:
+            with open(target_file, 'r') as proteins:
+                header = {}
+                for line in proteins.readlines():
+                    if line.startswith(">"):
+                        if "|" in line:
+                            line = line.replace("|", " ")
+                        acc = line.split(" ")[0].split(">")[-1].split(".")[0]
+                        protein_info = line.split(" ")[1:]
+                        protein_info = " ".join(protein_info)
+                        protein_info = protein_info.rstrip()
+                        header[acc] = protein_info
+            return header
+    except Exception as e:
+        raise Exception("[-] ERROR during reading query sequence file with exception: {}".format(e))
+
+
+'''get_protein_length
+
+    This function returns a dictionary containing the length of the query sequences.
+
+    :params target_file
+        :type str
+    :returns proteins
+        :type dict
+'''
+def get_protein_length(target_file: str) -> dict:
+    try:
+        if isfile(target_file) == False:
+            raise Exception("there is no target fasta file for: {}".format(target_file))
+        with open(target_file, 'r') as fasta_file:
+            proteins = {}
+
+            for line in fasta_file.readlines():
+                if line.startswith(">"):
+                    if "|" in line:
+                        line = line.replace("|", " ")
+                    acc = line.split(" ")[0].split(">")[-1].split(".")[0]
+                    proteins[acc] = ""
+                else:
+                    proteins[acc] += line.rstrip()
+
+            for key in proteins.keys():
+                proteins[key] = len(proteins[key])
+            return proteins
+    except Exception as e:
+        raise Exception("[-] ERROR during reading query sequence file with exception: {}".format(e))
+
 
 ''' get_target_header
 
+    Parse fasta file and extract fasta headers, return just the sequence identifier.
+
+    :param target_file
+        :type str
+    :returns header
+        :type list
 '''
-def get_target_header(target_file):
+def get_target_header(target_file: str) -> list:
     try:
-        with open(target_file,'r') as proteins:
+        if isfile(target_file) == False:
+            raise Exception("there is no target fasta file for: {}".format(target_file))
+        with open(target_file, 'r') as proteins:
             header = []
             for line in proteins.readlines():
                 if line.startswith(">"):
                     if "|" in line:
-                        line = line.replace("|"," ")
+                        line = line.replace("|", " ")
                     acc = line.split(" ")[0].split(">")[-1].split(".")[0]
                     header.append(acc)
         return header
-    except FileNotFoundError:
-        raise FileNotFoundError("[-] There is no target fasta file for: {}".format(target_file))
+    except Exception as e:
+        raise Exception("[-] ERROR during reading query sequence file with exception: {}".format(e))
+
 
 ''' fetch_protein_records
 Function wrapper for Entrez.efetch function. 
@@ -26,7 +99,9 @@ address for the current user.
 Returns the Entrez.Parser.ListElement (from Bio import Entrez) that can be used by the
 parse_entrez_xml function.
 '''
-def fetch_protein_records(proteins:list,email:str):
+
+
+def fetch_protein_records(proteins: list, email: str):
     try:
         Entrez.email = email
         handle = Entrez.efetch(db="protein", id=proteins, retmode="xml")
@@ -56,6 +131,8 @@ Input sequences should be protein sequences. The function returns an clean dicti
 4. general_information: dictionary for all other informations
     keys --> accession:
 '''
+
+
 def parse_entrez_xml(records) -> dict:
     try:
         protein_informations = {'queries': [], 'features': {}, 'links': {}, 'general_information': {}}
@@ -120,7 +197,8 @@ Returns an integer:
 '''
 
 
-def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, path_to_html_output: str, path_to_csv_output:str) -> int:
+def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, path_to_html_output: str,
+                                    path_to_csv_output: str) -> int:
     try:
         # 'queries':[],'features':{},'links':{},'general_information':{}
         df = pd.DataFrame(
@@ -162,7 +240,6 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
 
             row_to_add = pd.Series(values_to_add)
             df = df.append(row_to_add, ignore_index=True)
-
 
         pd.set_option('colheader_justify', 'left')
         html_string = '''
@@ -252,7 +329,37 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
     except Exception as e:
         raise Exception("[-] ERROR during creation of pandas html tables with exception: {}".format(e))
 
+
 proteins = get_target_header(snakemake.input['target_file'])
-records = fetch_protein_records(proteins,snakemake.params['email'])
-protein_informations = parse_entrez_xml(records)
-create_pandas_df_and_html_table(proteins,protein_informations,snakemake.output['output_html'],snakemake.output['output_csv'])
+additional_infos = get_additional_protein_information(snakemake.input['target_file'])
+protein_length = get_protein_length(snakemake.input['target_file'])
+
+unknown_proteins = []
+known_proteins = []
+
+try:
+    records = fetch_protein_records(proteins, snakemake.params['email'])
+    for record in records:
+        known_proteins.append(record['GBSeq_locus'])
+
+    for protein in proteins:
+        if protein not in known_proteins:
+            unknown_proteins.append(protein)
+    protein_information = parse_entrez_xml(records)
+except Exception as e:
+    print("[-] There are no protein information available on NCBI")
+    unknown_proteins = proteins
+    protein_information = {}
+    protein_information['queries'] = []
+    protein_information['features'] = {}
+    protein_information['links'] = {}
+    protein_information['general_information'] = {}
+
+for protein in unknown_proteins:
+    protein_information['queries'].append(protein)
+    protein_information['features'][protein] = {'': [additional_infos[protein]]}
+    protein_information['links'][protein] = {'pfam': '', 'jvci': '', 'cdd': '', 'refseq': ''}
+    protein_information['general_information'][protein] = (
+    additional_infos[protein], protein_length[protein], 'input organism')
+
+create_pandas_df_and_html_table(proteins,protein_information,snakemake.output['output_html'],snakemake.output['output_csv'])

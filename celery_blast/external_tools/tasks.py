@@ -221,7 +221,7 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
             logger.info("trying to execute clinker")
             working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
             logger.info("executing clinker in working directory: {}".format(working_directory))
-            cmd = "clinker "+working_directory+'*.gbk'+" -p "+working_directory+'clinker_result_plot.html'
+            cmd = "clinker "+working_directory+'*.gbk'+" -p "+working_directory+'clinker_result_plot.html'+' -i 0.25'
             proc = Popen(cmd, shell=True)
             returncode = proc.wait(timeout=2000)
             progress_recorder.set_progress(99, 100, "PROGRESS")
