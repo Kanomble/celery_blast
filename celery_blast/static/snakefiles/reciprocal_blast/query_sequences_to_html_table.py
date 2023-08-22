@@ -358,6 +358,7 @@ with open(snakemake.log['log'],'w') as logfile:
 
         try:
             records = fetch_protein_records(proteins, snakemake.params['email'])
+            logfile.write("INFO:parsing records and extracting information\n")
             for record in records:
                 known_proteins.append(record['GBSeq_locus'])
 
@@ -366,7 +367,7 @@ with open(snakemake.log['log'],'w') as logfile:
                     unknown_proteins.append(protein)
             protein_information = parse_entrez_xml(records)
         except Exception as e:
-            logfile.write("WARNING:There are no protein information available on NCBI")
+            logfile.write("WARNING:There are no protein information available on NCBI\n")
             unknown_proteins = proteins
             protein_information = {}
             protein_information['queries'] = []
@@ -374,7 +375,7 @@ with open(snakemake.log['log'],'w') as logfile:
             protein_information['links'] = {}
             protein_information['general_information'] = {}
 
-        logfile.write("INFO:parsing unknown proteins and adding additional information")
+        logfile.write("INFO:parsing unknown proteins and adding additional information\n")
         for protein in unknown_proteins:
             protein_information['queries'].append(protein)
             protein_information['features'][protein] = {'': [additional_infos[protein]]}
@@ -382,10 +383,9 @@ with open(snakemake.log['log'],'w') as logfile:
             protein_information['general_information'][protein] = (
                 additional_infos[protein], protein_length[protein], 'input organism')
 
-        logfile.write("INFO:parsing records and extracting information\n")
-        protein_informations = parse_entrez_xml(records)
-        logfile.write("INFO:writing html file with pandas (DataTable CNNs included)\n")
-        create_pandas_df_and_html_table(proteins,protein_informations,snakemake.output['output_html'],snakemake.output['output_csv'])
+
+        logfile.write("INFO:writing html file with pandas (DataTable CDNs included)\n")
+        create_pandas_df_and_html_table(proteins,protein_information,snakemake.output['output_html'],snakemake.output['output_csv'])
         logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))
