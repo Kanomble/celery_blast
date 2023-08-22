@@ -13,7 +13,7 @@ from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesG
     CreateTaxonomicFileForMultipleScientificNames, SymBLASTProjectSettingsForm
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
     execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
-    calculate_database_statistics_task, download_and_decompress_cdd_database
+    calculate_database_statistics_task
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
     read_task_logs_summary_table, download_project_directory
@@ -33,15 +33,19 @@ from os.path import isfile
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
-'''download_cdd_database_view
+'''download_domain_database_view
 
     This function executes the celery_task download_and_decompress_cdd_database.
 
 '''
 @login_required(login_url='login')
-def download_cdd_database_view(request):
+def download_domain_database_view(request):
     try:
-        download_cdd_database.delay()
+        if request.method == "POST":
+            download_cdd_database.delay()
+        else:
+            raise Exception("There is no GET method for this view")
+
         return redirect("blast_project_dashboard")
     except Exception as e:
         return failure_view(request, e)
@@ -65,7 +69,7 @@ def dashboard_view(request):
     try:
         context = {}
         context['domain_database'] = get_domain_database_model()
-        print(context['domain_database'].domain_database_loaded)
+
         if request.method == 'GET':
             users_blast_projects = get_users_blast_projects(request.user.id)
             available_blast_databases = get_downloaded_databases()
@@ -753,10 +757,28 @@ def ajax_call_to_logfiles(request, project_id: int):
                         progress_without_subtasks.append(progress[0])
             progress_without_subtasks.sort()
             return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
-        return JsonResponse({"ERROR": "NOT OK"}, status=200)
+        return JsonResponse({"error": "POST not allowed"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+
+'''get_domain_database_download_task_status
+    
+    This ajax call tracks the status of the domain database download task.
+
+'''
+def get_domain_database_download_task_status(request):
+    try:
+        if request.is_ajax and request.method == "GET":
+            domain_database = get_domain_database_model()
+            if domain_database.domain_database_download_task_result:
+                return JsonResponse({"progress_status":domain_database.domain_database_download_task_result.status})
+            else:
+                return JsonResponse({"progress_status":"NOT_EXEC"})
+        else:
+            return JsonResponse({"error","POST not allowed"})
+    except Exception as e:
+        return JsonResponse({"error":"{}".format(e)}, status=400)
 
 '''send_logfile_content_view
     

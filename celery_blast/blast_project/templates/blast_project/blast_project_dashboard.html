@@ -36,23 +36,55 @@
 {% block header %}
 {% endblock %}
 
-{% if cdd_database_exists == True %}
-
-{% else %}
-<div>
-    {% include "blast_project/form_download_cdd_database.html" %}
-</div>
-{% endif %}
-
 {% block content %}
-{% if domain_database.domain_database_loaded == True %}
-<div class="container-fluid" id="project_dashboard">
-    <p> DomainDatabase is loaded </p>
-</div>
+{% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result != "SUCCESS" %}
+    {% if domain_database.domain_database_download_task_result %}
+        {% if domain_database.domain_database_download_task_result.status != "SUCCESS" %}
+            <button class="btn btn-dark" disabled>
+                <span class="spinner-grow spinner-grow-sm"></span>
+                <p><span class="domain_database_download_progress"></span></p>
+            </button>
+        {% endif %}
+    {% else %}
+        <div class="container-fluid" id="project_dashboard">
+            {% include "blast_project/form_download_domain_database.html" %}
+        </div>
+    {% endif %}
 {% endif %}
 {% endblock %}
 {% block scripts %}
 <script>
+    (function () {
+        var status = $('.domain_database_download_progress'),
+            poll = function () {
+                jQuery.ajax({
+                    url: "{% url 'domain_database_download_status' %}",
+                    dataType: 'json',
+                    type: 'get',
+                    success: function (data) { // check if available
+                        if (data) { // get and check data value
+                            status.text(data.progress_status); // get and print data string
+                            //console.log(data.progress)
+                            if (data.progress_status == "SUCCESS") {
+                                status.text("DONE")
+                                clearInterval(pollInterval); // optional: stop poll function
+                            } else if (data.progress_status == "FAILURE") {
+                                status.text("ERROR")
+                                clearInterval(pollInterval);
+                            }
+
+                        }
+                    },
+                    error: function () { // error logging
+                        status.text("error polling progress data")
+                    }
+                });
+            },
+            pollInterval = setInterval(function () { // run function every 5000 ms
+                poll();
+            }, 5000);
+        poll(); // also run function on init
+    })();
 </script>
 {% endblock %}
 

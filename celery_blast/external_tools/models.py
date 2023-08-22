@@ -428,6 +428,11 @@ class EntrezSearch(models.Model):
         return paper_entries
 
 
+'''DomainDatabase 
+
+    This model saves information of the current status of the local domain database.
+
+'''
 class DomainDatabase(models.Model):
     domain_database_loaded = models.BooleanField(verbose_name="domain database integrity marker")
     domain_database_download_task_result = models.OneToOneField(

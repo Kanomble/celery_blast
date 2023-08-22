@@ -31,6 +31,7 @@ def run():
         DomainDatabase.objects.all().delete()
         domain_database_model = DomainDatabase(domain_database_loaded=False)
         domain_database_model.save()
+        check_domain_database_status()
     else:
         domain_database = DomainDatabase.objects.all()[0]
         if domain_database.domain_database_loaded == False:

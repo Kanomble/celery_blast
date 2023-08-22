@@ -293,7 +293,8 @@ def download_cdd_database(self):
             domain_database_model = domain_database_query_set[0]
             domain_database_model.domain_database_loaded = False
 
-        update_domain_database_task_result_model(domain_database_model.id, self.id)
+        logger.info("trying to update domaindatabase model instance: {}".format(domain_database_model))
+        update_domain_database_task_result_model(domain_database_model.id, self.request.id)
 
 
         cdd_path = BLAST_DATABASE_DIR + 'CDD/'
@@ -330,6 +331,9 @@ def download_cdd_database(self):
             raise SubprocessError
         logger.info("successfully extracted the cdd database")
         remove(path_to_cdd_location)
+
+        domain_database_query_set = DomainDatabase.objects.all()
+        domain_database_model = domain_database_query_set[0]
         domain_database_model.domain_database_loaded = True
         domain_database_model.save()
 
