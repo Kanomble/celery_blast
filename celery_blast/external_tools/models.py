@@ -415,7 +415,7 @@ class EntrezSearch(models.Model):
 
     def get_organisms(self):
         paper = self.get_pandas_table()
-        paper['Organism'] = paper['Organism'].apply(lambda x: x.split("/")[0])
+        paper['Organism'] = paper['Organism'].apply(lambda x: str(x).split("/")[0])
         if self.database == "protein":
             oragnism_list = paper['Organism'].unique().tolist()
 

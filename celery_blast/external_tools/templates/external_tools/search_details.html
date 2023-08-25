@@ -88,7 +88,7 @@
     {% endif %}
 
 
-    <div class="dashboard_project_list_col" id="entrez_table">
+    <div class="dashboard_project_list_col" id="entrez_table" style="display: none">
         {{ HtmlTable | safe }}
     </div>
 
@@ -116,6 +116,8 @@
     <script>
         $(document).ready(function() {
             $('#T_searchResultTable').DataTable();
+            var entrez_table = document.getElementById("entrez_table");
+            entrez_table.style.display = "block";
             $('#organism_table').DataTable();
         });
     </script>
