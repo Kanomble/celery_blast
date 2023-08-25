@@ -204,8 +204,6 @@ def search_detail_view(request: WSGIRequest, search_id: int):
         sleep(0.5)
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
         context = {'EntrezSearch': entrez_search, 'HtmlTable': entrez_search.get_paper_content()}
-        # context['Stat_col_length'] = entrez_search.get_stat_columns_lenght()
-
         if entrez_search.database == 'protein':
 
             organism_progress_dic = {}
@@ -214,7 +212,7 @@ def search_detail_view(request: WSGIRequest, search_id: int):
 
             for organism in organism_download:
                 if '\'' in organism:
-
+                    # TODO find a better way to remove inappropriate characters
                     task_arg_str = '"(' + str(search_id) + ", '" + organism.replace("'","\\\\'") + "', " + "'" + email + "'" + ')"'
                 else:
                     task_arg_str = '"(' + str(search_id) + ", '" + organism + "', " + "'" + email + "'" + ')"'
@@ -241,11 +239,10 @@ def search_detail_view(request: WSGIRequest, search_id: int):
             else:
                 context['DownloadTaskSuccess'] = 2
 
-        for i, t in context['Organism_progress_dic'].items():
-            print(i,t)
+
         return render(request, 'external_tools/search_details.html', context)
     except Exception as e:
-        e = str(e) + " " + str(task_arg_str) + " " + organism + " #### " + organism.replace("'","\\\\'")
+        e = str(e) + " TaskID: " + str(task_arg_str) + " Organism: " + organism
         return failure_view(request, e)
 
 

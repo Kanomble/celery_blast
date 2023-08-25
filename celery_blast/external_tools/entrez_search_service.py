@@ -25,7 +25,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         xtract_format['cdd'] = "Id Title Subtitle Abstract"
         xtract_format['protfam'] = "Id DispMethod DispReviewLevel string"
 
-        cmd = 'esearch -db {} -query "{}" | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
+        cmd = 'esearch -db {} -query "{}" -retmax 10000 | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
             database, entrez_query, xtract_format[database], output_filepath)
 
         process = Popen(cmd, shell=True)
@@ -249,7 +249,8 @@ def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
         raise Exception("[-] There is no entrez_search object with id: {} exception: {}".format(search_id, e))
 
 
-def delete_esearch_by_id(search_id: int):
+# TODO also remove sequence_list_RNDNumber
+def delete_esearch_by_id(search_id: int) -> int:
     # deletes entrezsearch associated files and taskresult entries based on a search_id
     # returns 0 if it worked or 1 if it did not
     try:
