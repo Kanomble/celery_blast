@@ -309,19 +309,16 @@
 
     <script>
     (function() {
-        var status = $('.progress_bar'),
         poll = function() {
             jQuery.ajax({
                 url: "{% url 'ajax_call_to_snakemake_logfiles' project_id=OneWayBlastProject.id remote=0 %}",
                 dataType: 'json',
                 type: 'get',
                 success: function(data) { // check if available
-                    console.log(data)
                     if(data){
                         var progress_bar = document.getElementById("progress_bar");
                         progress_bar.style.width = String(data.progress) + "%";
                         progress_bar.innerHTML = String(data.progress) + "%";
-
                         if(data.progress >= 100){
                             clearInterval(pollInterval); // optional: stop poll function
                         } else if(data.progress == "ERROR"){
@@ -331,9 +328,10 @@
                        clearInterval(pollInterval);
                     }
                  },
-                error: function() { // error logging
-                    console.log("ERROR")
-                    status.text("error polling progress data")
+                error: function(data) { // error logging
+                    var progress_bar = document.getElementById("progress_bar");
+                    progress_bar.style.width = String(100) + "%";
+                    progress_bar.innerHTML = String(data.responseJSON.error);
             }
         });
     },

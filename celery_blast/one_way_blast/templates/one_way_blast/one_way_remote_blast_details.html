@@ -223,7 +223,6 @@
     </script>
     <script>
     (function() {
-        var status = $('.progress_bar'),
         poll = function() {
             jQuery.ajax({
                 url: "{% url 'ajax_call_to_snakemake_logfiles' project_id=OneWayRemoteBlastProject.id remote=1 %}",
@@ -246,8 +245,9 @@
                     }
                  },
                 error: function() { // error logging
-                    console.log("ERROR")
-                    status.text("error polling progress data")
+                    var progress_bar = document.getElementById("progress_bar");
+                    progress_bar.style.width = String(100) + "%";
+                    progress_bar.innerHTML = String(data.responseJSON.error);
             }
         });
     },

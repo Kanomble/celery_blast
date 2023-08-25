@@ -264,10 +264,13 @@ def ajax_call_to_snakemake_logfiles(request, project_id: int, remote: int):
                 raise Exception("There is no one way blast project with this id")
 
             if blast_project.project_execution_task_result:
-                progress = read_snakemake_logfile(project_id, remote)
+                if blast_project.project_execution_task_result == 'SUCCESS':
+                    progress = 100
+                else:
+                    progress = read_snakemake_logfile(project_id, remote)
             else:
                 progress = 0
             return JsonResponse({"progress": progress}, status=200)
-        return JsonResponse({"ERROR": "NOT OK"}, status=200)
+        return JsonResponse({"progress": "NOT OK"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)

@@ -78,6 +78,10 @@ def read_snakemake_logfile(project_id:int, remote=False)->int:
                 if 'steps' in line:
                     prog = int(line.split(" ")[4].replace("(", "").replace(")", "").replace("%", ""))
                     progress.append(prog)
+
+            if len(progress) == 0:
+                progress = [100]
+
         else:
             progress = [0]
         return max(progress)
