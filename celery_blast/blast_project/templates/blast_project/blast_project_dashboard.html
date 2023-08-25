@@ -64,7 +64,6 @@
                     success: function (data) { // check if available
                         if (data) { // get and check data value
                             status.text(data.progress_status); // get and print data string
-                            //console.log(data.progress)
                             if (data.progress_status == "SUCCESS") {
                                 status.text("DONE")
                                 clearInterval(pollInterval); // optional: stop poll function

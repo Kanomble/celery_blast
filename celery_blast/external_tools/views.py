@@ -241,6 +241,8 @@ def search_detail_view(request: WSGIRequest, search_id: int):
             else:
                 context['DownloadTaskSuccess'] = 2
 
+        for i, t in context['Organism_progress_dic'].items():
+            print(i,t)
         return render(request, 'external_tools/search_details.html', context)
     except Exception as e:
         e = str(e) + " " + str(task_arg_str) + " " + organism + " #### " + organism.replace("'","\\\\'")

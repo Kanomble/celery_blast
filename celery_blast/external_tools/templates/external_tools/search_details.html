@@ -62,7 +62,7 @@
                             <td>{{ result.1 }}</td>
                             {% if result.1 == "SUCCESS" %}
                                 <td>
-                                    <a href="{% url 'view_downloaded_organism_sequences' organism_download=organism search_id=EntrezSearch.id %}"
+                                    <a href="{% url 'view_downloaded_organism_sequences' organism_download=organism_task search_id=EntrezSearch.id %}"
                                        download="{{ result.0 }}sequences.faa">
                                         <button class="btn btn-dark">Download Database</button>
                                     </a>
