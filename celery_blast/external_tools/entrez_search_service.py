@@ -50,46 +50,50 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
 def download_by_organism(search_id: int, organism_download: str, email: str) -> int:
     # uses biopython entrez tool to download fasta files of a selected organism in an entrezsearch paper and saves it in a file
     try:
-        logfile = open("media/esearch_output/download_by_organism.log", 'w')
-        entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
-
-        organism_target_df = entrez_search.get_pandas_table()
-
-        organism = organism_download
-        filtered_organism_target_df = organism_target_df[organism_target_df.Organism == organism]
-        filtered_organism_target_id_list = filtered_organism_target_df["Id"].to_list()
-        Entrez.email = email  # use the email of the user
         if os.path.isdir("media/esearch_output/" + str(search_id)) == False:
             os.mkdir("media/esearch_output/" + str(search_id))
-        output = open("media/esearch_output/" + str(search_id) + "/" + str(organism) + ".faa",
-                      'w')  # could use the name of the file used as input
 
-        end = len(filtered_organism_target_id_list)
-        begin = 0
-        step = 500
-        steps = 500
-        while begin < end:
-            if step >= end:
-                step = end
-            splitted_ids = filtered_organism_target_id_list[begin:step]
-            # range(X) tries for biopython calls
-            for attempt in range(10):
-                try:
-                    handle = Entrez.efetch(id=splitted_ids, db="protein", retmode="xml")
-                    record = Entrez.read(handle)
-                    handle.close()
-                except Exception as e:
-                    if attempt == 9:
-                        logfile.write(
-                            "ERROR:biopython inference of proteins failed with exception {}\n".format(e))
-                else:
-                    for rec in record:
-                        output.write('>' + rec['GBSeq_locus'] + ' ' + rec['GBSeq_definition'] + "\n")
-                        output.write(rec['GBSeq_sequence'] + "\n")
-                    output.close()
-                    break
-            begin += steps
-            step += steps
+        with open("media/esearch_output/" + str(search_id) + "/download_by_organism.log", 'w') as logfile:
+            logfile.write("INFO:starting to download proteins for the selected organism: {}\n".format(organism_download))
+            entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
+
+            organism_target_df = entrez_search.get_pandas_table()
+
+            organism = organism_download
+            filtered_organism_target_df = organism_target_df[organism_target_df.Organism == organism]
+            filtered_organism_target_id_list = filtered_organism_target_df["Id"].to_list()
+            Entrez.email = email  # use the email of the user
+            fasta_file = "media/esearch_output/" + str(search_id) + "/" + str(organism) + ".faa"
+            logfile.write("INFO:starting to write fasta file: {}\n".format(fasta_file))
+            with open(fasta_file,'w') as output:  # could use the name of the file used as input
+
+                end = len(filtered_organism_target_id_list)
+                begin = 0
+                logfile.write("INFO:total number of ids: {}\nINFO:splitting ids into chunks of 500\n".format(end))
+                step = 500
+                steps = 500
+                while begin < end:
+                    if step >= end:
+                        step = end
+                    splitted_ids = filtered_organism_target_id_list[begin:step]
+                    # range(X) tries for biopython calls
+                    for attempt in range(10):
+                        try:
+                            handle = Entrez.efetch(id=splitted_ids, db="protein", retmode="xml")
+                            record = Entrez.read(handle)
+                            handle.close()
+                        except Exception as e:
+                            if attempt == 9:
+                                logfile.write(
+                                    "ERROR:biopython inference of proteins failed with exception {}\n".format(e))
+                        else:
+                            for rec in record:
+                                output.write('>' + rec['GBSeq_locus'] + ' ' + rec['GBSeq_definition'] + "\n")
+                                output.write(rec['GBSeq_sequence'] + "\n")
+                            output.close()
+                            break
+                    begin += steps
+                    step += steps
         return 0
     except Exception:
         return 1
@@ -136,7 +140,7 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
                 entrez_search.save()
 
             return returncode
-        if database == "pubmed":
+        elif database == "pubmed":
             cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efetch -format fasta > {}'.format(
                 entrez_query, target_fasta_file_path)
             process = Popen(cmd, shell=True)
@@ -146,7 +150,8 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
                 entrez_search.fasta_file_name = target_fasta_file_path
                 entrez_search.save()
             return returncode
-
+        else:
+            raise Exception("There is no download option for the selected database: {}".format(database))
     # catch subprocess exceptions
     except TimeoutExpired:
         # delete all child processes

@@ -618,10 +618,11 @@ def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int):
         if request.is_ajax and request.method == "GET":
             query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id)[0]
             data = query_sequence.cdd_domain_search_task.result
+            print(data)
             return JsonResponse({"data": loads(data)}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
-        return JsonResponse({"error": "{}".format(e)}, status=400)
+        return JsonResponse({"ERROR": "{}".format(e)}, status=400)
 
 '''bokeh_task
 

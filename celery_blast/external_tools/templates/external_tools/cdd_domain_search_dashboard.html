@@ -17,34 +17,54 @@
 
     </div>
 {% endblock %}
-
+{% block header %}
+{% endblock %}
 {% block content %}
-    <div class="dashboard_project_list_col">
+    {% if query_task_dict.items|length > 0 %}
+    <div class="dashboard_project_list_col" style="overflow-x: hidden">
         {% for query, status in query_task_dict.items %}
-            <p></p>
             {% if status.0 == 'NOTEXEC' %}
                 {% if status.1 == 'not valid' %}
-                    <a class="btn btn-dark disabled"
-                       href="{% url 'execute_cdd_domain_search' project_id=project_id %}">{{ query }} <= 2 RBHs or <= 2
-                        CDD hits</a>
+                    <div class="row">
+                        <a class="btn btn-dark disabled"
+                           href="{% url 'execute_cdd_domain_search' project_id=project_id %}">{{ query }} <= 2 RBHs or <= 2
+                            CDD hits</a>
+                    </div>
+                {% else %}
+                    <div class="row">
+                         <p> CDD search for: {{ query }} not executed.</p>
+                    </div>
                 {% endif %}
             {% elif status.0 == 'SUCCESS' %}
-                <a class="btn btn-info"
-                   href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results
-                    for: {{ query }}</a>
+                <div class="row col-sm-2">
+                    <a class="btn btn-info" id="cdd_success"
+                       href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results
+                        for: {{ query }}</a>
+                </div>
             {% elif status.0 == 'PROGRESS' %}
-                <p> Progress for {{ query }} CDD search: </p>
-                <button class="btn btn-dark" disabled>
-                    <span class="spinner-grow spinner-grow-sm"></span>
-                    <p><span class="progress-{{ query }}"></span></p>
-                </button>
+                <div class="row">
+                    <div class="col-sm-2">
+                         <p> CDD search for: {{ query }}</p>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="btn btn-success" disabled>
+                            <span class="spinner-grow spinner-grow-sm"></span>
+                            <p><span class="progress-{{ query }}"></span></p>
+                        </button>
+                    </div>
+                </div>
             {% elif status.0 == 'FAILURE' %}
-                <a class="btn btn-danger"
-                   href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> Delete CDD Search
-                    for: {{ query }}</a>
+                <div class="row col-sm-4">
+
+                    <a class="btn btn-danger"
+                       href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> An ERROR occurred, delete CDD Search
+                        for: {{ query }}</a>
+                </div>
             {% endif %}
+            <br>
         {% endfor %}
     </div>
+    {% endif %}
 
     <div class="dashboard_project_list_col">
         <form method="post" action="{% url 'execute_cdd_domain_search' project_id=project_id %}">
@@ -54,8 +74,7 @@
         </form>
     </div>
 
-    <br>
-    <div class="dashboard_project_list_col" style="height: 500px">
+    <div class="dashboard_project_list_col" >
         <h3 class="col_header"> Query Sequence Domain Table </h3>
         {{ html_results|safe }}
     </div>
@@ -75,15 +94,9 @@
                                 success: function (data) { // check if available
 
                                     if (data.data) { // get and check data value
-                                        status.text(data.data.current); // get and print data string
-                                        if (data.data.current > 99) {
-                                            status.text("DONE")
-                                            clearInterval(pollInterval); // optional: stop poll function
-                                        } else if (data.data.description != "PROGRESS") {
-                                            status.text(data.data.description)
-                                            clearInterval(pollInterval);
-                                        }
-
+                                        status.text(data.data.description); // get and print data string
+                                        console.log(data.data.description)
+                                        console.log(data.data)
                                     }
                                 },
                                 error: function () { // error logging
@@ -93,7 +106,7 @@
                         },
                         pollInterval = setInterval(function () { // run function every 5000 ms
                             poll();
-                        }, 5000);
+                        }, 10000);
                     poll(); // also run function on init
                 })();
             {% endif %}

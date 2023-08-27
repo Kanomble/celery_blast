@@ -5,11 +5,13 @@ import pandas as pd
 from Bio import SeqIO
 from bokeh.io import output_file, save
 from bokeh.layouts import column, gridplot
-from bokeh.models import ColumnDataSource, MultiSelect, DataTable, TableColumn, HTMLTemplateFormatter, Button
+from bokeh.models import ColumnDataSource, MultiSelect, DataTable, TableColumn, HTMLTemplateFormatter, Button, Select
 from bokeh.models import CustomJS, Legend
 from bokeh.plotting import figure
 from django.conf import settings
 from sklearn.decomposition import PCA
+from bokeh.palettes import Spectral
+import seaborn as sns
 
 '''load_domain_query_data
     
@@ -153,6 +155,92 @@ def add_color_column_to_dataframe(result_df: pd.DataFrame, taxonomic_unit) -> tu
     except Exception as e:
         raise Exception("[-] ERROR creating color column for result dataframe with exception: {}".format(e))
 
+
+def create_color_palette_selection():
+    try:
+
+        options = [(str(val), "Spectral" + str(val)) for val in range(3, 12)]
+        color_palette_menu = Select(options=options,
+                                    value=str(3),
+                                    title="Select a color palette")
+        return color_palette_menu
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt create color palette selection")
+
+def create_color_palette_selection():
+    try:
+
+        palettes = Spectral
+        options = [(str(val), "Spectral" + str(val)) for val in range(3, 12)]
+        color_palette_menu = Select(options=options,
+                                    value=str(3),
+                                    title="Select a color palette")
+        return color_palette_menu
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt create color palette selection")
+
+def create_color_dictionaries_for_bokeh_dataframe(result_data: pd.DataFrame, taxonomic_unit: str) -> tuple:
+    try:
+        # prepare distinct colors for the specified taxonomic unit
+        color_dict = {}
+        for tax_unit in ['phylum', 'order', 'class', 'family', 'genus']:
+            num_colors = len(result_data[tax_unit].unique())
+
+            if num_colors > 256:
+                clrs = sns.color_palette('pastel', n_colors=num_colors)
+                clrs = clrs.as_hex()
+                color_dict.update(dict(zip(result_data[tax_unit].unique(), clrs)))
+
+            else:
+                clrs = sns.color_palette('pastel', n_colors=num_colors)
+                clrs = clrs.as_hex()
+                color_dict.update(dict(zip(result_data[tax_unit].unique(), clrs)))  # magma(n)
+
+        create_color_scheme = lambda value: color_dict[value]
+        result_data['color'] = result_data[taxonomic_unit].apply(create_color_scheme)
+
+        return result_data, color_dict
+    except Exception as e:
+        raise Exception("[-] ERROR creating marker and color data for RBH result plot with exception: {}".format(e))
+
+
+def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: Select,
+                                            taxonomy_table_callback_dict: dict) -> CustomJS:
+    try:
+        palettes = Spectral
+        c_palette_callback = CustomJS(
+            args=dict(sc=curr, color_menu=color_menu, tax_menu=taxonomy_table_callback_dict, pals=palettes), code="""
+                                    // the callback value is a number 3,4,5,6,7,8,9,10,11,12
+                                    var call_back_object = cb_obj.value
+
+                                    var unique_organisms = []
+
+
+                                    for(var i = 0; i<sc.get_length(); i++){
+                                        if(unique_organisms.includes(sc.data[color_menu.value][i]) == false){
+                                            unique_organisms.push(sc.data[color_menu.value][i])
+                                        }
+                                    }
+
+                                    if(unique_organisms.length <= pals[call_back_object].length){
+                                        var color_dict = {}
+                                        for(var i = 0; i < unique_organisms.length; i++){
+                                            if(i == pals[call_back_object].length){
+                                                i = 0
+                                            }
+                                            color_dict[unique_organisms[i]] = pals[call_back_object][i]
+                                        }
+                                        sc.data['color'] = []
+                                        for(var i = 0; i<sc.data[color_menu.value].length; i++){
+                                            sc.data['color'].push(color_dict[sc.data[color_menu.value][i]])
+                                        }
+                                     sc.change.emit();
+                                     }
+
+        """)
+        return c_palette_callback
+    except Exception as e:
+        raise Exception("[-] ERROR couldnt create color palette selection callback")
 
 '''build_dataframe_for_bokeh
 
@@ -596,7 +684,7 @@ def bokeh_django_task_button(current_selection: ColumnDataSource) -> CustomJS:
 
 
 def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_unit: str, variances: list,
-                     query_sequence: str):
+                     query_sequence: str, color_dict:dict):
     try:
         # bokeh data preparation
         bokeh_dataframe = bokeh_dataframe.rename(
@@ -657,6 +745,20 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
         family_menu = build_taxonomy_menu(bokeh_dataframe, 'family')
         genus_menu = build_taxonomy_menu(bokeh_dataframe, 'genus')
 
+        unique_phylum = list(bokeh_dataframe['phylum'].unique())
+        unique_class = list(bokeh_dataframe['class'].unique())
+        unique_order = list(bokeh_dataframe['order'].unique())
+        unique_family = list(bokeh_dataframe['family'].unique())
+        unique_genus = list(bokeh_dataframe['genus'].unique())
+
+        taxonomy_table_callback_dict = {
+            'phylum':unique_phylum,
+            'class':unique_class,
+            'order':unique_order,
+            'family':unique_family,
+            'genus':unique_genus
+        }
+
         # defining callback functions for the taxonomy menus
         tax_selection_dict = {'class': class_menu, 'order': order_menu, 'family': family_menu, 'genus': genus_menu}
         phylum_menu_callback = build_json_callback_for_taxonomy(column_dat, static_data, table_dat, table_header,
@@ -689,9 +791,32 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
         task_selection_callback = bokeh_django_task_button(column_dat)
         task_selection_button = Button(label="Calculate Domain Corrected Phylogeny")
         task_selection_button.js_on_click(task_selection_callback)
+        color_menu = Select(options=['phylum', 'class', 'order', 'family', 'genus'],
+                            value=taxonomic_unit, title="Select Legend Color")
+        color_callback = CustomJS(args=dict(legend=p.legend.items[0], sc=column_dat,
+                                            source=static_data, color_dict=color_dict),
+            code='''
+                var tax_unit = cb_obj.value
+
+                legend.label = {'field':tax_unit}
+                var length = sc.get_length()
+                sc.data['color']=[]
+                for(var i = 0; i < length; i++){
+                    console.log(color_dict[sc.data[tax_unit][i]])
+                    sc.data['color'].push(color_dict[sc.data[tax_unit][i]])
+                }
+
+                sc.change.emit();
+            ''')
+        color_menu.js_on_change('value', color_callback)
+
+        color_palette = create_color_palette_selection()
+        color_palette_callback = create_color_palette_selection_callback(column_dat, color_menu,
+                                                                         taxonomy_table_callback_dict)
+        color_palette.js_on_change('value', color_palette_callback)
 
         return gridplot(
-            [[column(p), column(table, task_selection_button, download_selection_button), column(phylum_menu, class_menu, order_menu, family_menu, genus_menu)]],
+            [[column(p), column(table, task_selection_button, download_selection_button), column(phylum_menu, class_menu, order_menu, family_menu, genus_menu, color_menu, color_palette)]],
             toolbar_location='right'), circle
     except Exception as e:
         raise Exception("[-] ERROR during creation of bokeh plots with exception: {}".format(e))
@@ -735,7 +860,7 @@ def produce_bokeh_pca_plot(project_id: int, qseqid: str,
             result_df[result_df['genus'] == "unknown"]['family']
 
         # add color column to result_df
-        result_df, color_dict = add_color_column_to_dataframe(result_df, taxonomic_unit)
+        result_df, color_dict = create_color_dictionaries_for_bokeh_dataframe(result_df, taxonomic_unit)
 
         selection = result_df[result_df['qseqid'] == qseqid][['sacc',
                                                               'color',
@@ -779,7 +904,7 @@ def produce_bokeh_pca_plot(project_id: int, qseqid: str,
             variances = [round(pca_selection.explained_variance_ratio_[0] * 100, 3),
                          round(pca_selection.explained_variance_ratio_[1] * 100, 3)]
             bk_df, header = build_dataframe_for_bokeh(cdd_dataframe, pca_df, selection)
-            grid, p = build_bokeh_plot(bk_df, header, taxonomic_unit, variances, qseqid)
+            grid, p = build_bokeh_plot(bk_df, header, taxonomic_unit, variances, qseqid, color_dict)
             # save bokeh plot
             output_file(filename=path_to_output,
                         title="Principal Component Analysis of CDD-pidents".format(

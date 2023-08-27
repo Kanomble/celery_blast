@@ -684,7 +684,7 @@ def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data:
             raise SubprocessError
 
         logger.info("INFO:performing PCA analysis and build interactive visualization ...")
-        produce_bokeh_pca_plot(project_id, target_query, taxonomic_unit='class')
+        produce_bokeh_pca_plot(project_id, target_query, taxonomic_unit='phylum')
         progress_recorder.set_progress(60, 100, "PROGRESS")
 
         logger.info("INFO:starting to write domain corrected fasta file ...")
