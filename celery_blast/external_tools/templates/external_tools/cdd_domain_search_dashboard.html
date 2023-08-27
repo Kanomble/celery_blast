@@ -54,14 +54,13 @@
                     </div>
                 </div>
             {% elif status.0 == 'FAILURE' %}
-                <div class="row col-sm-4">
-
-                    <a class="btn btn-danger"
+                <div class="col-sm-4">
+                     <a class="btn btn-danger"
                        href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> An ERROR occurred, delete CDD Search
                         for: {{ query }}</a>
                 </div>
             {% endif %}
-            <br>
+        <br>
         {% endfor %}
     </div>
     {% endif %}
@@ -94,9 +93,16 @@
                                 success: function (data) { // check if available
 
                                     if (data.data) { // get and check data value
-                                        status.text(data.data.description); // get and print data string
-                                        console.log(data.data.description)
-                                        console.log(data.data)
+                                        status.text(data.data.progress); // get and print data string
+                                        console.log(data)
+                                        if (data.data.progress == "SUCCESS") {
+                                            status.text("DONE - refresh the page")
+                                            clearInterval(pollInterval); // optional: stop poll function
+                                        } else if (data.data.progress != "PROGRESS") {
+                                            status.text(data.data.progress)
+                                            clearInterval(pollInterval);
+                                        }
+
                                     }
                                 },
                                 error: function () { // error logging
@@ -106,7 +112,7 @@
                         },
                         pollInterval = setInterval(function () { // run function every 5000 ms
                             poll();
-                        }, 10000);
+                        }, 5000);
                     poll(); // also run function on init
                 })();
             {% endif %}
