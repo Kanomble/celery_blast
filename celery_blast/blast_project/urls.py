@@ -13,6 +13,7 @@ registration_urls = [
 
 service_urls = [
     path('domain_database_download', views.download_domain_database_view, name='download_domain_database'),
+    path('delete_domain_database',views.delete_domain_database_view, name='delete_domain_database'),
     path('<str:selected_table>/datatable_view', views.active_table_view, name='active_table_view'),
 
     path('create_taxonomic_file', views.create_taxonomic_file_view, name='species_taxids'),

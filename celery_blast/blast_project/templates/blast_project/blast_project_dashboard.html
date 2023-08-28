@@ -39,11 +39,18 @@
 {% block content %}
 {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result != "SUCCESS" %}
     {% if domain_database.domain_database_download_task_result %}
-        {% if domain_database.domain_database_download_task_result.status != "SUCCESS" %}
+        {% if domain_database.domain_database_download_task_result.status == "PROGRESS" %}
             <button class="btn btn-dark" disabled>
                 <span class="spinner-grow spinner-grow-sm"></span>
                 <p><span class="domain_database_download_progress"></span></p>
             </button>
+        {% elif domain_database.domain_database_download_task_result.status == "FAILURE" %}
+            <form class="col"
+                   action="{% url "delete_domain_database" %}"
+                   method="POST">
+                {% csrf_token %}
+                <input type="submit" value="Download Failed: Delete Domain Database" class="btn btn-danger">
+            </form>
         {% endif %}
     {% else %}
         <div class="container-fluid" id="project_dashboard">

@@ -31,11 +31,13 @@ def run():
         DomainDatabase.objects.all().delete()
         domain_database_model = DomainDatabase(domain_database_loaded=False)
         domain_database_model.save()
+
         check_domain_database_status()
     else:
         domain_database = DomainDatabase.objects.all()[0]
         if domain_database.domain_database_loaded == False:
             check_domain_database_status()
+
 
     if isfile(BLAST_DATABASE_DIR + 'taxdb.btd') and isfile(BLAST_DATABASE_DIR + 'taxdb.bti'):
         print("INFO:TAXONOMY DATABASE IS LOADED")
@@ -51,8 +53,10 @@ def run():
         try:
             taxdb_ftp_path = TAXDB_URL
             current_working_directory = getcwd()  # /blast/reciprocal_blast
-            path_to_taxdb_location = current_working_directory + BLAST_DATABASE_DIR
-            path_to_taxdb_location = path_to_taxdb_location + 'taxdb.tar.gz'
+            path_to_taxdb_location = current_working_directory + "/" + BLAST_DATABASE_DIR
+            path_to_taxdb_location = path_to_taxdb_location
+
+            print("INFO:TAXDB_URL: {}".format(taxdb_ftp_path))
 
             proc = subprocess.Popen(["wget", taxdb_ftp_path, "-q", "-O", path_to_taxdb_location], shell=False)
             returncode = proc.wait(timeout=600)
@@ -72,12 +76,15 @@ def run():
                 "INFO:IF YOU HAVE NO STABLE INTERNET CONNECTION TRY TO RESTART THE WEBSERVER ONCE YOU HAVE A BETTER CONNECTION")
             print("INFO:YOU CAN MANUALLY LOAD THE TAXONOMY DATABASE INTO THE DATABASE FOLDER")
             if 'proc' in locals():
-                pid = proc.pid
-                parent = psutil.Process(pid)
+                try:
+                    pid = proc.pid
+                    parent = psutil.Process(pid)
 
-                for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
+                    for child in parent.children(recursive=True):
+                        child.kill()
+                    parent.kill()
+                except:
+                    print("ERROR:INSTALL THE TAXONOMY DATABASE MANUALLY into: {}".format("data/databases/"))
             else:
                 print("WARNING: CHECK FOR UNFINISHED PROCESSES OR RESTART THE WEB-SERVER")
         except subprocess.SubprocessError as e:
@@ -85,11 +92,14 @@ def run():
             print("INFO:YOU CAN MANUALLY LOAD THE TAXONOMY DATABASE INTO THE DATABASE FOLDER")
 
             if 'proc' in locals():
-                pid = proc.pid
-                parent = psutil.Process(pid)
+                try:
+                    pid = proc.pid
+                    parent = psutil.Process(pid)
 
-                for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
+                    for child in parent.children(recursive=True):
+                        child.kill()
+                    parent.kill()
+                except:
+                    print("ERROR:INSTALL THE TAXONOMY DATABASE MANUALLY into: {}".format("data/databases/"))
             else:
                 print("WARNING: CHECK FOR UNFINISHED PROCESSES OR RESTART THE WEB-SERVER")

@@ -260,21 +260,39 @@ def check_domain_database_status():
     try:
         cdd_db_path = BLAST_DATABASE_DIR + "CDD/"
         # testing domain database integrity
-        out = check_output(['blastdbcheck', '-db', cdd_db_path + 'Cdd'])
-        returncode = False
-        # integrity test failed
-        domain_database_query_set = DomainDatabase.objects.all()
 
-        if 'No errors reported for 1 alias(es)' in str(out):
-            if len(domain_database_query_set) != 1:
-                DomainDatabase.objects.all().delete()
-                domain_database_model = DomainDatabase(domain_database_loaded=True)
-                domain_database_model.save()
-            else:
-                domain_database_query_set[0].domain_database_loaded = True
-                domain_database_query_set[0].save()
-                returncode = True
+        if isdir(cdd_db_path + 'Cdd/') :
+                try:
+                    out = check_output(['blastdbcheck', '-db', cdd_db_path + 'Cdd'])
+                except Exception as e:
+                    out = str(e)
+
+                returncode = False
+                # integrity test failed
+                domain_database_query_set = DomainDatabase.objects.all()
+
+                if 'No errors reported for 1 alias(es)' in str(out):
+                    if len(domain_database_query_set) != 1:
+                        DomainDatabase.objects.all().delete()
+                        domain_database_model = DomainDatabase(domain_database_loaded=True)
+                        domain_database_model.save()
+                    else:
+                        domain_database_query_set[0].domain_database_loaded = True
+                        domain_database_query_set[0].save()
+                        returncode = True
+                else:
+                    if len(domain_database_query_set) != 1:
+                        DomainDatabase.objects.all().delete()
+                        domain_database_model = DomainDatabase(domain_database_loaded=False)
+                        domain_database_model.save()
+                    else:
+                        domain_database_query_set[0].domain_database_loaded = False
+                        domain_database_query_set[0].save()
+                        returncode = False
         else:
+            if isdir(cdd_db_path) == False:
+                mkdir(cdd_db_path)
+            domain_database_query_set = DomainDatabase.objects.all()
             if len(domain_database_query_set) != 1:
                 DomainDatabase.objects.all().delete()
                 domain_database_model = DomainDatabase(domain_database_loaded=False)
@@ -283,25 +301,31 @@ def check_domain_database_status():
                 domain_database_query_set[0].domain_database_loaded = False
                 domain_database_query_set[0].save()
                 returncode = False
-
         return returncode
     except Exception as e:
         raise Exception("check_domain_database_status has thrown an error: {}".format(e))
 
+'''delete_domain_database
+
+    This function is executed within the delete_domain_database_view function.
+    It deletes the domain database sitting in BLAST_DATABASE_DIR + "CDD/" and the associated 
+    DomainDatabase model. It then creates a new model with the attribute domain_database_loaded
+    set to false.
+
+'''
 def delete_domain_database():
     try:
         cdd_db_path = BLAST_DATABASE_DIR + "CDD/"
 
-        for file in listdir(cdd_db_path):
-            file_to_remove = cdd_db_path + file
-            remove(file_to_remove)
-        rmdir(cdd_db_path)
-        domain_database_query_set = DomainDatabase.objects.all()
-        if len(domain_database_query_set) != 1:
-            raise Exception("DomainDatabase model in PostgreSQL is corrupted, there are multiple entries.")
-        else:
-            domain_database_query_set[0].domain_database_loaded = False
-            domain_database_query_set[0].save()
+        if isdir(cdd_db_path):
+            for file in listdir(cdd_db_path):
+                file_to_remove = cdd_db_path + file
+                remove(file_to_remove)
+            rmdir(cdd_db_path)
 
+        DomainDatabase.objects.all().delete()
+        domain_database_model = DomainDatabase(domain_database_loaded=False)
+        domain_database_model.save()
+        return 0
     except Exception as e:
         raise Exception("ERROR during deletion of domain database in: {} with exception: {}".format(cdd_db_path, e))

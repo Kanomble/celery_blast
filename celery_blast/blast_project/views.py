@@ -16,7 +16,7 @@ from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_proj
     calculate_database_statistics_task
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
-    read_task_logs_summary_table, download_project_directory
+    read_task_logs_summary_table, download_project_directory, delete_domain_database
 from .py_project_creation import create_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json, get_database_selection_task_status
@@ -47,6 +47,22 @@ def download_domain_database_view(request):
             raise Exception("There is no GET method for this view")
 
         return redirect("blast_project_dashboard")
+    except Exception as e:
+        return failure_view(request, e)
+
+'''delete_domain_database_view
+    
+    This function deletes the domain database.
+    
+'''
+@login_required(login_url="login")
+def delete_domain_database_view(request):
+    try:
+        if request.method == "POST":
+            delete_domain_database()
+            return redirect("blast_project_dashboard")
+        else:
+            raise Exception("There is no GET method for this view")
     except Exception as e:
         return failure_view(request, e)
 
