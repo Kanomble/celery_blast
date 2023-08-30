@@ -314,10 +314,12 @@ def project_delete_view(request, project_id: int):
 
 def ajax_wp_to_links(request, project_id: int):
     try:
-        if request.is_ajax and request.method == "GET":
-            # progress = read_database_download_and_format_logfile(database_id)
-            prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email, project_id)
-            return JsonResponse(prot_to_pfam, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                # progress = read_database_download_and_format_logfile(database_id)
+                prot_to_pfam = calculate_pfam_and_protein_links_from_queries(request.user.email, project_id)
+                return JsonResponse(prot_to_pfam, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
@@ -674,9 +676,11 @@ def database_statistics_dashboard(request, project_id):
 @login_required(login_url='login')
 def database_selection_phylogeny_task_status(request, project_id):
     try:
-        if request.is_ajax and request.method == "GET":
-            data = get_database_selection_task_status(project_id)
-            return JsonResponse({"data": data}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                data = get_database_selection_task_status(project_id)
+                return JsonResponse({"data": data}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
@@ -692,9 +696,11 @@ def database_selection_phylogeny_task_status(request, project_id):
 @login_required(login_url='login')
 def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxonomic_unit: str):
     try:
-        if request.is_ajax and request.method == "GET":
-            data = transform_normalized_database_table_to_json(project_id, taxonomic_unit)
-            return JsonResponse({"data": data}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                data = transform_normalized_database_table_to_json(project_id, taxonomic_unit)
+                return JsonResponse({"data": data}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
@@ -750,29 +756,31 @@ def delete_database_statistics(request, project_id):
 '''
 def ajax_call_to_logfiles(request, project_id: int):
     try:
-        if request.is_ajax and request.method == "GET":
-            blast_project = get_project_by_id(project_id)
-            logfiles = blast_project.return_list_of_all_logfiles()
-            logfile_table = read_task_logs_summary_table()
-            logfile_table = logfile_table.loc[0:17, :]
-            queries = []
-            progress_without_subtasks = []
-            for logfile in logfiles:
-                if len(logfile.split("/")) == 2:
-                    query = logfile.split("/")[0]
-                    if query not in queries:
-                        queries.append(query)
-                    progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                blast_project = get_project_by_id(project_id)
+                logfiles = blast_project.return_list_of_all_logfiles()
+                logfile_table = read_task_logs_summary_table()
+                logfile_table = logfile_table.loc[0:17, :]
+                queries = []
+                progress_without_subtasks = []
+                for logfile in logfiles:
+                    if len(logfile.split("/")) == 2:
+                        query = logfile.split("/")[0]
+                        if query not in queries:
+                            queries.append(query)
+                        progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
 
-                    if len(progress) == 1:
-                        progress_without_subtasks.append(progress[0])
-                else:
-                    progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+                        if len(progress) == 1:
+                            progress_without_subtasks.append(progress[0])
+                    else:
+                        progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
 
-                    if len(progress) == 1:
-                        progress_without_subtasks.append(progress[0])
-            progress_without_subtasks.sort()
-            return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+                        if len(progress) == 1:
+                            progress_without_subtasks.append(progress[0])
+                progress_without_subtasks.sort()
+                return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
         return JsonResponse({"error": "POST not allowed"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
@@ -785,14 +793,18 @@ def ajax_call_to_logfiles(request, project_id: int):
 '''
 def get_domain_database_download_task_status(request):
     try:
-        if request.is_ajax and request.method == "GET":
-            domain_database = get_domain_database_model()
-            if domain_database.domain_database_download_task_result:
-                return JsonResponse({"progress_status":domain_database.domain_database_download_task_result.status})
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                domain_database = get_domain_database_model()
+                if domain_database.domain_database_download_task_result:
+                    return JsonResponse({"progress_status":domain_database.domain_database_download_task_result.status})
+                else:
+                    return JsonResponse({"progress_status":"NOT_EXEC"})
             else:
-                return JsonResponse({"progress_status":"NOT_EXEC"})
+                return JsonResponse({"error","POST not allowed"})
         else:
-            return JsonResponse({"error","POST not allowed"})
+            raise Exception("No ajax request!")
     except Exception as e:
         return JsonResponse({"error":"{}".format(e)}, status=400)
 

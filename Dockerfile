@@ -6,7 +6,8 @@
 FROM ubuntu:focal
 
 # Download and install required software
-RUN apt-get update -y && apt-get upgrade -y && apt-get install curl -y && apt-get install wget bzip2 netcat -y
+# netcat for the wait-for script / libdw1 for rpsbproc
+RUN apt-get update -y && apt-get upgrade -y && apt-get install curl -y && apt-get install wget bzip2 netcat libdw1 -y 
 
 # Software and packages for the E-Direct Tool
 RUN apt-get -y -m update && DEBIAN_FRONTEND="noninteractive" apt-get install -y cpanminus libxml-simple-perl libwww-perl libnet-perl build-essential tzdata
@@ -67,15 +68,10 @@ RUN conda install -c conda-forge notebook
 RUN mkdir /blast/reciprocal_blast
 COPY /celery_blast /blast/reciprocal_blast
 
-# create default BLASTDB environment variable
+# Create default BLASTDB environment variable
 ENV BLASTDB /blast/reciprocal_blast/media/databases
-#set appropriate working directory in order to allow development with docker
+# Set appropriate working directory
 WORKDIR /blast/reciprocal_blast
-
-# Download the taxdb archive
-RUN perl ../ncbi-blast-2.11.0+/bin/update_blastdb.pl taxdb
-# Install it in the BLASTDB directory
-RUN gunzip -cd taxdb.tar.gz | (cd $BLASTDB; tar xvf - )
 
 # Install mafft and fasttree
 RUN apt-get update && (apt-get install -t buster-backports -y mafft fasttree || apt-get install -y mafft fasttree)
@@ -87,23 +83,18 @@ RUN mkdir /blast/utilities/
 RUN mv wait-for /blast/utilities/
 ENV PATH /blast/utilities:$PATH
 
-# Download requirements for ete3
-# PyQt5 in requirements
-RUN pip install --upgrade ete3
-RUN apt-get -y update && apt-get -y install python-numpy python-lxml python-six libglib2.0-0 libgtk2.0-dev libqt5x11extras5 libgl1-mesa-glx
-RUN conda install -y pyqt
-
+# Download requirements 
 COPY requirements.txt /blast/reciprocal_blast
 RUN pip install -r requirements.txt
 
-# download trimai
+# Download trimai
 RUN wget https://github.com/inab/trimal/archive/refs/heads/trimAl.zip
 RUN unzip -d /blast/utilities trimAl.zip
 RUN rm trimAl.zip
 RUN make -C /blast/utilities/trimal-trimAl/source
 ENV PATH /blast/utilities/trimal-trimAl/source:$PATH
 
-# download mview
+# Download mview
 RUN wget https://sourceforge.net/projects/bio-mview/files/bio-mview/mview-1.67/mview-1.67.tar.gz
 RUN tar xvzf mview-1.67.tar.gz -C /blast/utilities/
 RUN mkdir /blast/utilities/mview
@@ -111,6 +102,12 @@ RUN cd /blast/utilities/mview-1.67/ && perl install.pl /blast/utilities/mview -y
 RUN cd /blast/reciprocal_blast
 RUN rm mview-1.67.tar.gz
 ENV PATH /blast/utilities/mview:$PATH
+
+# Download rpsbproc
+RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/rpsbproc/RpsbProc-x64-linux.tar.gz
+RUN tar xvzf RpsbProc-x64-linux.tar.gz -C /blast/utilities/
+RUN rm RpsbProc-x64-linux.tar.gz
+ENV PATH /blast/utilities/RpsbProc-x64-linux:$PATH
 
 # Delete not required packages etc..
 RUN apt-get autoremove --purge --yes && apt-get clean && rm -rf /var/lib/apt/lists/*

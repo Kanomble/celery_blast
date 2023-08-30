@@ -159,11 +159,13 @@ def one_way_remote_project_delete_view(request, project_id):
 # TODO documentation
 def ajax_one_way_wp_to_links(request, project_id, remote):
     try:
-        if request.is_ajax and request.method == "GET":
-            # progress = read_database_download_and_format_logfile(database_id)
-            prot_to_pfam = calculate_pfam_and_protein_links_from_one_way_queries(request.user.email, project_id, remote)
-            return JsonResponse(prot_to_pfam, status=200)
-        return JsonResponse({"ERROR": "NOT OK"}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                # progress = read_database_download_and_format_logfile(database_id)
+                prot_to_pfam = calculate_pfam_and_protein_links_from_one_way_queries(request.user.email, project_id, remote)
+                return JsonResponse(prot_to_pfam, status=200)
+        return JsonResponse({"ERROR": "NOT OK"}, status=400)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
@@ -255,22 +257,24 @@ def one_way_download_target_sequences(request, project_id, project_type, filenam
 
 def ajax_call_to_snakemake_logfiles(request, project_id: int, remote: int):
     try:
-        if request.is_ajax and request.method == "GET":
-            if remote == 0:
-                blast_project = get_one_way_project_by_id(project_id)
-            elif remote == 1:
-                blast_project = get_one_way_remote_project_by_id(project_id)
-            else:
-                raise Exception("There is no one way blast project with this id")
-
-            if blast_project.project_execution_task_result:
-                if blast_project.project_execution_task_result == 'SUCCESS':
-                    progress = 100
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                if remote == 0:
+                    blast_project = get_one_way_project_by_id(project_id)
+                elif remote == 1:
+                    blast_project = get_one_way_remote_project_by_id(project_id)
                 else:
-                    progress = read_snakemake_logfile(project_id, remote)
-            else:
-                progress = 0
-            return JsonResponse({"progress": progress}, status=200)
-        return JsonResponse({"progress": "NOT OK"}, status=200)
+                    raise Exception("There is no one way blast project with this id")
+
+                if blast_project.project_execution_task_result:
+                    if blast_project.project_execution_task_result == 'SUCCESS':
+                        progress = 100
+                    else:
+                        progress = read_snakemake_logfile(project_id, remote)
+                else:
+                    progress = 0
+                return JsonResponse({"progress": progress}, status=200)
+        return JsonResponse({"progress": "NOT OK"}, status=400)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)

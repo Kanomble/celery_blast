@@ -54,7 +54,7 @@ def run():
             taxdb_ftp_path = TAXDB_URL
             current_working_directory = getcwd()  # /blast/reciprocal_blast
             path_to_taxdb_location = current_working_directory + "/" + BLAST_DATABASE_DIR
-            path_to_taxdb_location = path_to_taxdb_location
+            path_to_taxdb_location = path_to_taxdb_location  + 'taxdb.tar.gz'
 
             print("INFO:TAXDB_URL: {}".format(taxdb_ftp_path))
 

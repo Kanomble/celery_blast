@@ -74,9 +74,15 @@ def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, quer
 @csrf_exempt
 def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, project_id:int, query_sequence:str):
     try:
-        if request.is_ajax and request.method == "GET":
-            table_data = read_query_sequence_rbh_table(project_id, query_sequence)
-            return JsonResponse({"data": table_data}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                table_data = read_query_sequence_rbh_table(project_id, query_sequence)
+                return JsonResponse({"data": table_data}, status=200)
+            else:
+                return JsonResponse({"error": "POST requests are not allowed"}, status=400)
+        else:
+            raise Exception("No ajax request!")
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
@@ -90,10 +96,12 @@ def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, projec
 @csrf_exempt
 def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, query_sequence:str):
     try:
-        if request.is_ajax and request.method == "POST":
-            form_data = request.POST
-            data = form_data.dict()
-            synteny_calculation_task.delay(project_id, query_sequence, data)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "POST":
+                form_data = request.POST
+                data = form_data.dict()
+                synteny_calculation_task.delay(project_id, query_sequence, data)
         return JsonResponse({"response": "success"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
@@ -392,12 +400,14 @@ def perform_fasttree_phylobuild(request, project_id, query_sequence_id):
 @login_required(login_url='login')
 def ajax_call_progress_phylo_task(request, query_sequence_id):
     try:
-        if request.is_ajax and request.method == "GET":
-            qseq = QuerySequences.objects.get(id=query_sequence_id)
-            progress = qseq.phylogenetic_tree_construction_task.status
-            return JsonResponse({"progress": progress})
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                qseq = QuerySequences.objects.get(id=query_sequence_id)
+                progress = qseq.phylogenetic_tree_construction_task.status
+                return JsonResponse({"progress": progress})
         else:
-            return JsonResponse({"progress": "error"})
+            return JsonResponse({"progress": "No ajax request!"})
     except Exception as e:
         return failure_view(request, e)
 
@@ -405,12 +415,14 @@ def ajax_call_progress_phylo_task(request, query_sequence_id):
 @login_required(login_url='login')
 def ajax_call_progress_msa_task(request, query_sequence_id):
     try:
-        if request.is_ajax and request.method == "GET":
-            qseq = QuerySequences.objects.get(id=query_sequence_id)
-            progress = qseq.multiple_sequence_alignment_task.status
-            return JsonResponse({"progress": progress})
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                qseq = QuerySequences.objects.get(id=query_sequence_id)
+                progress = qseq.multiple_sequence_alignment_task.status
+                return JsonResponse({"progress": progress})
         else:
-            return JsonResponse({"progress": "error"})
+            return JsonResponse({"progress": "No ajax request!"})
     except Exception as e:
         return failure_view(request, e)
 
@@ -418,12 +430,14 @@ def ajax_call_progress_msa_task(request, query_sequence_id):
 @login_required(login_url='login')
 def ajax_call_progress_entrezsearch_to_fasta(request, search_id: int):
     try:
-        if request.is_ajax and request.method == "GET":
-            entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
-            progress = entrez_search.download_task_result.status
-            return JsonResponse({"progress": progress})
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
+                progress = entrez_search.download_task_result.status
+                return JsonResponse({"progress": progress})
         else:
-            return JsonResponse({"progress": "error"})
+            return JsonResponse({"progress": "No ajax request!"})
     except Exception as e:
         return failure_view(request, e)
 
@@ -615,11 +629,12 @@ def delete_cdd_domain_search_view(request, query_id: str, project_id: int):
 @login_required(login_url='login')
 def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int):
     try:
-        if request.is_ajax and request.method == "GET":
-            query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id)[0]
-            data = query_sequence.cdd_domain_search_task.result
-            print(data)
-            return JsonResponse({"data": loads(data)}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id)[0]
+                data = query_sequence.cdd_domain_search_task.result
+                return JsonResponse({"data": loads(data)}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
         return JsonResponse({"ERROR": "{}".format(e)}, status=400)
@@ -633,18 +648,22 @@ def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int):
 @csrf_exempt
 def bokeh_task(request:WSGIRequest):
     try:
-        if request.is_ajax and request.method == "POST":
-            form_data = request.POST
-            data = form_data.dict()
-            data = data.keys()
-            data = list(data)[0]
-            data = loads(data)
-            url = data['url'].split("/")
-            project_id = int(url[4])
-            query_id = str(url[7])
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "POST":
+                form_data = request.POST
+                data = form_data.dict()
+                data = data.keys()
+                data = list(data)[0]
+                data = loads(data)
+                url = data['url'].split("/")
+                project_id = int(url[4])
+                query_id = str(url[7])
 
-            calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0])
-        return JsonResponse({"response": "success"}, status=200)
+                calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0])
+            return JsonResponse({"response": "success"}, status=200)
+        else:
+            return JsonResponse({"response": "No ajax request!"}, status=400)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
@@ -657,15 +676,18 @@ def bokeh_task(request:WSGIRequest):
 @csrf_exempt
 def bokeh_database_task(request:WSGIRequest):
     try:
-        if request.is_ajax and request.method == "POST":
-            form_data = request.POST
-            data = form_data.dict()
-            data = data.keys()
-            data = list(data)[0]
-            data = loads(data)
-            url = data['url'].split("/")
-            project_id = int(url[4])
-            calculate_phylogeny_based_on_database_statistics_selection.delay(project_id, data['accessions'][0])
-        return JsonResponse({"response": "success"}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "POST":
+                form_data = request.POST
+                data = form_data.dict()
+                data = data.keys()
+                data = list(data)[0]
+                data = loads(data)
+                url = data['url'].split("/")
+                project_id = int(url[4])
+                calculate_phylogeny_based_on_database_statistics_selection.delay(project_id, data['accessions'][0])
+            return JsonResponse({"response": "success"}, status=200)
+        return JsonResponse({"response","No ajax request!"}, status=400)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)

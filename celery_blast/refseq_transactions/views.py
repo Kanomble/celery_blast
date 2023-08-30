@@ -194,9 +194,12 @@ def display_blast_database_details_view(request, database_id):
 @csrf_exempt
 def ajax_call_for_database_details(request, database_id):
     try:
-        if request.is_ajax and request.method == "GET":
-            table_data = read_database_table_by_database_id_and_return_json(database_id)
-            return JsonResponse({"data": table_data}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                table_data = read_database_table_by_database_id_and_return_json(database_id)
+                return JsonResponse({"data": table_data}, status=200)
+        return JsonResponse({"data":"No ajax request!"}, status=400)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
@@ -220,14 +223,17 @@ def ajax_call_for_database_details(request, database_id):
 
 def ajax_call_for_database_download_progress(request, database_id):
     try:
-        if request.is_ajax and request.method == "GET":
-            # progress = read_database_download_and_format_logfile(database_id)
-            database = get_database_by_id(database_id)
-            if database.database_download_and_format_task.status == 'SUCCESS':
-                return JsonResponse({"progress": 100}, status=200)
-            else:
-                progress = get_database_download_and_formatting_task_result_progress(database_id)
-                return JsonResponse({"progress": progress}, status=200)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                # progress = read_database_download_and_format_logfile(database_id)
+                database = get_database_by_id(database_id)
+                if database.database_download_and_format_task.status == 'SUCCESS':
+                    return JsonResponse({"progress": 100}, status=200)
+                else:
+                    progress = get_database_download_and_formatting_task_result_progress(database_id)
+                    return JsonResponse({"progress": progress}, status=200)
+        return JsonResponse({"progress","No ajax request!"}, status=400)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
