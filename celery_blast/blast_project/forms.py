@@ -193,6 +193,7 @@ class ProjectCreationForm(forms.Form):
                 self.add_error('project_title', 'This title is already in use, please specify another title.')
 
             try:
+                species_name = species_name.strip()
                 taxonomic_nodes = get_species_taxid_by_name(user_email, species_name)
             except Exception as e:
                 self.add_error('species_name_for_backward_blast',
