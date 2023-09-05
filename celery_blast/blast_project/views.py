@@ -244,6 +244,7 @@ def project_creation_view(request):
                 context = {'taxdb': False}
                 task = download_and_format_taxdb.delay()
 
+        context['domain_database'] = get_domain_database_model()
         return render(request, 'blast_project/project_creation_dashboard.html', context)
     except Exception as e:
         return failure_view(request, e)

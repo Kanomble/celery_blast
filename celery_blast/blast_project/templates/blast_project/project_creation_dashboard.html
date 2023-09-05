@@ -72,16 +72,22 @@ This Website can be used for the creation of reciprocal BLAST projects.
     </div>
 
     {% if taxdb == True %}
+        {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result != "SUCCESS" %}
         <div class="dashboard_project_list_col" >
-
+            <p style="text-align: center"> You have to download the Conserved Domain Database before you can create any reciprocal BLAST projects.
+                Return to the Dashboard and download the CDD.</p>
+        </div>
+        {% else %}
+        <div class="dashboard_project_list_col" >
             {% include "blast_project/form_project_creation.html" %}
             <br>
             <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
         </div>
+        {% endif %}
     {% endif %}
     {% if taxdb == False %}
         <div class="dashboard_project_list_col">
-
+            <p> There is no active taxonomic database, before you can use CATHIs pipeline, you should download NCBIs taxonomy database.</p>
         </div>
     {% endif %}
 </div>

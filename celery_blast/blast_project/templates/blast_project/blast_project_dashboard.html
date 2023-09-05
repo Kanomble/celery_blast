@@ -72,10 +72,11 @@
                         if (data) { // get and check data value
                             status.text(data.progress_status); // get and print data string
                             if (data.progress_status == "SUCCESS") {
-                                status.text("DONE")
+                                status.text("DONE");
                                 clearInterval(pollInterval); // optional: stop poll function
+                                location.reload();
                             } else if (data.progress_status == "FAILURE") {
-                                status.text("ERROR")
+                                status.text("ERROR");
                                 clearInterval(pollInterval);
                             }
 
