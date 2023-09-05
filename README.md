@@ -4,13 +4,13 @@ Symmetrical BLAST and target sequence search web interface with Django, Gunicorn
 E-Direct, BLAST, Snakemake and Miniconda.
 
 CATHI is a user-friendly bioinformatics tool that performs reciprocal BLAST searches, generates multiple sequence 
-alignments, and builds phylogenetic trees. It is integrated with the workflow management system snakemake, providing a 
+alignments, and builds phylogenetic trees. It is integrated with the workflow management system ``Snakemake`, providing a 
 streamlined and efficient way to manage the entire bioinformatics pipeline. 
 Furthermore, CATHI offers additional features that make it a powerful and flexible solution
 for researchers across various fields. CATHI generates interactive plots and tables in standalone HTML documents, 
-which enables users to visualize and analyze complex biological data easily. CATHI integrates the ``entrez`` tool, 
+which enables users to visualize and analyze complex biological data easily. CATHI integrates the NCBI's EDirect tool, 
 which allows for sequence and paper searches directly within the web interface. It also enables users to download 
-taxonomic-specific protein sequences based on the results of their ``entrez`` searches.
+taxonomic-specific protein sequences based on the results of their EDirect searches.
 
 In addition, CATHI includes tools for managing local protein BLAST databases. Researchers can download and format custom 
 databases, providing greater control and flexibility over the data used in their analyses. CATHI also includes 
