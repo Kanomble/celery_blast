@@ -74,7 +74,6 @@
                             if (data.progress_status == "SUCCESS") {
                                 status.text("DONE");
                                 clearInterval(pollInterval); // optional: stop poll function
-                                location.reload();
                             } else if (data.progress_status == "FAILURE") {
                                 status.text("ERROR");
                                 clearInterval(pollInterval);
