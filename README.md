@@ -20,8 +20,7 @@ database using the RPS-BLAST tool.
 CATHI is highly sophisticated and powerful, offering a range of features and capabilities ideal for target sequence searches.
 It enables performing reciprocal and one-way BLAST searches within local and remote 
 databases, providing valuable insights into the evolutionary relationships and functional characteristics of sequences.
-CATHI's integration into a docker container network streamlines its installation process. 
-Overall, CATHI is a flexible and intuitive solution that can help researchers achieve their research goals.
+CATHI's integration into a docker container network streamlines its installation process.
 
 ## Content
 - [Installation](#installation)
