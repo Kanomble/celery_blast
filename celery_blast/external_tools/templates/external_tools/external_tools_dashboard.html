@@ -63,7 +63,7 @@
                         </td>
                         <td>
                             {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-                                <a class="btn btn-dark"
+                                <a class="btn btn-dark disabled"
                                    href="{% url 'phylogenetic_information' project_id=project_id query_sequence_id=qseq.query_accession_id %}">
                                     Phylogenetic Information
                                 </a>
