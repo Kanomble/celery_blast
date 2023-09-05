@@ -10,7 +10,7 @@ Furthermore, CATHI offers additional features that make it a powerful and flexib
 for researchers across various fields. CATHI generates interactive plots and tables in standalone HTML documents, 
 which enables users to visualize and analyze complex biological data easily. CATHI integrates the ``entrez`` tool, 
 which allows for sequence and paper searches directly within the web interface. It also enables users to download 
-taxonomic-specific protein sequences based on the results of their ``entrez`` searches. 
+taxonomic-specific protein sequences based on the results of their ``entrez`` searches.
 
 In addition, CATHI includes tools for managing local protein BLAST databases. Researchers can download and format custom 
 databases, providing greater control and flexibility over the data used in their analyses. CATHI also includes 
@@ -168,6 +168,8 @@ that is displayed in the BLAST database transaction dashboard after pressing the
 the level of assembly completeness (e.g. 'Complete Genome', 'Chromosome', 'Contig' and 'Scaffold') 
 and (multiple) taxonomic information (e.g. 'Cnidaria, Mammalia').
 
+![Example Database Dashboard](./celery_blast/static/images/blast_database_dashboard.JPG)
+
 ### Example database creation
 E.g. if you want to create a high quality database containing only species from the phylum `Cyanobacteriota`, you have to specify 
 this during database creation. This can be done by typing `Cyanobacteriota` into the field "Scientific Names (sep. by ",")" and by
@@ -179,6 +181,9 @@ The model is saved into the database, the database is not downloaded and formatt
 The download and formatting procedure has to be started separately, which enables the user to validate database entries.
 The download and format process progression is visualized on the database dashboard.
 Available databases are shared between users.
+
+![Example Database Details](./celery_blast/static/images/blast_database_details.JPG)
+
 
 <a name="genome_upload"></a>
 ## Uploading genomes for BLAST database creation
@@ -310,7 +315,8 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
-- fix one-way BLAST snakemake pipeline
+- [] fix one-way BLAST snakemake pipeline
+- [] add videos, links to init page
 
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
