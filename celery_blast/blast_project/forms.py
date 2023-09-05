@@ -135,7 +135,7 @@ class ProjectCreationForm(forms.Form):
         required=True,
         label='Scientific Names (conversion to Taxonomic Nodes) for Backward BLAST',
         error_messages={
-            'required': "Specify a Scientific Name for your backward BLAST - use a comma separated list - names will be converted to taxids that will be written to a file which will serve as the -taxidlist parameter of your backward BLAST"})
+            'required': "Specify ONE! Scientific Name for your backward BLAST - The species from which you obtained the query sequences!"})
 
     user_email = forms.CharField(
         max_length=200,
