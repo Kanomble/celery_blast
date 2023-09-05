@@ -72,7 +72,7 @@ This Website can be used for the creation of reciprocal BLAST projects.
     </div>
 
     {% if taxdb == True %}
-        {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result != "SUCCESS" %}
+        {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result.status != "SUCCESS" %}
         <div class="dashboard_project_list_col" >
             <p style="text-align: center"> You have to download the Conserved Domain Database before you can create any reciprocal BLAST projects.
                 Return to the Dashboard and download the CDD.</p>
