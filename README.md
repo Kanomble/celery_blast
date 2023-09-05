@@ -25,10 +25,13 @@ Overall, CATHI is a flexible and intuitive solution that can help researchers ac
 
 ## Content
 - [Installation](#installation)
-- [Container network and configuration](#configuration_notes)
+  - [Installation of docker-desktop](#installation_docker_desktop)
+  - [Installation of CATHI](#installation_cathi)
+  - [Advanced Installation](#configuration_notes)
 - [How To Use CATHI](#project_setup)
+  - [Example output](#example_output)
 - [BLAST Database creation](#blast_database)
-- [Upload your own genome files](#genome_upload)
+  - [Upload your own genome files](#genome_upload)
 - [Technical Details](#technical_details)
   - [Notes on the download procedure](#download_process)
   - [Notes on the BLAST database formatting procedure](#makeblastdb)
@@ -36,7 +39,7 @@ Overall, CATHI is a flexible and intuitive solution that can help researchers ac
 
 <a name="installation"></a>
 ## Installation
-
+<a name="installation_docker_desktop"></a>
 ### Installation of docker-desktop
 The only requirement for installation is a local Docker-Desktop installation, which you can download under the following 
 link: [docker-desktop](https://www.docker.com/products/docker-desktop/).
@@ -44,7 +47,7 @@ link: [docker-desktop](https://www.docker.com/products/docker-desktop/).
 If you are working on a UNIX machine, you may need to enable file sharing. Therefore, open your docker-desktop
 application and switch to the Settings tab. Open the settings page and add the path to CATHI on the File Sharing tab in the 
 Resources section (see following image).
-
+<a name="installation_cathi"></a>
 ![Docker File Sharing](./celery_blast/static/images/docker_file_sharing.png)
 
 ### Installation of CATHI
@@ -70,6 +73,7 @@ The installation procedure can take up to 30 minutes, depending on your availabl
 During installation process, a local copy of the CDD database is downloaded.
 It is recommended to install the application with the remotely available images and the `docker compose up` command. 
 
+<a name="configuration_notes"></a>
 ## Advanced Installation
 
 It is possible to build the necessary images from the Dockerfile of this repository. You can change and adapt the dockerfile according to the software 
@@ -77,8 +81,6 @@ tools you need, keep in mind to adapt the `docker-compose.yml` or the `docker-co
 
 Docker creates seven containers named: `celery_blast_X_1` where `X` is a synonym for 
 `nginx, worker, flower, web, postgres and rabbitmq`.
-
-<a name="configuration_notes"></a>
 ### Notes on CATHI containers and possible configurations
 CATHI is a server site tool, by starting the container network, your local computer will be used as a web
 server. `Django` is the underlying web-framework and `gunicorn` serves as the WSGI HTTP Server. Both applications reside
@@ -138,6 +140,7 @@ Further CATHI post-processing procedures outside the scope of this pipeline invo
    3. Building an interactive bokeh plot with the first two principal components and the taxonomic information within the RBH result table
    4. Refine the 
 
+<a name="example_output"></a>
 ### CATHI example output
 
 ![Interactive Bokeh Plot](./celery_blast/static/images/example_bokeh_plot.png)
