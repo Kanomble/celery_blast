@@ -22,7 +22,7 @@
                         <button class="btn btn-dark" style="height: 80px;width: 130px; margin-right: 5px"> Calculate DB Statistics </button>
                     </a>
                 </div>
-            {% else %}
+            {% elif task_status == 'SUCCESS' %}
                 <div class="col">
                     <a href="{% url 'execute_database_statistics_task' project_id=project_id %}">
                         <button class="btn btn-dark" style="height: 80px;width: 130px; margin-right: 5px"> Calculate DB Statistics </button>
@@ -33,7 +33,26 @@
                         <button class="btn btn-danger" style="height: 80px;width: 130px; margin-right: 5px"> Delete DB Statistics </button>
                     </a>
                 </div>
-
+                 <div class="col">
+                    <button class="btn btn-dark" onclick="displayDivElement('taxonomy_entries_in_db')" > Taxonomy Entries in DB </button>
+                </div>
+                 <div class="col">
+                    <button class="btn btn-dark" onclick="displayDivElement('bokeh_plot')" > Interactive Graph </button>
+                </div>
+                 <div class="col">
+                    <button class="btn btn-dark" onclick="displayDivElement('taxonomy_table')" > Taxonomy Statistics </button>
+                </div>
+            {% elif task_status == 'FAILURE' %}
+                 <div class="col">
+                    <a href="{% url 'execute_database_statistics_task' project_id=project_id %}">
+                        <button class="btn btn-dark" style="height: 80px;width: 130px; margin-right: 5px"> Task failed, try to Re-Calculate DB Statistics </button>
+                    </a>
+                </div>
+                 <div class="col">
+                    <a href="{% url 'delete_database_statistics' project_id=project_id %}">
+                        <button class="btn btn-danger" style="height: 80px;width: 130px; margin-right: 5px"> Delete DB Statistics </button>
+                    </a>
+                </div>
             {% endif %}
             {% if selection_task == 'SUCCESS' %}
             <div class="col">
@@ -41,6 +60,7 @@
                     <button id="success_button" class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Phylogeny </button>
                 </a>
             </div>
+
             {% elif selection_task == 'PROGRESS' %}
             <div class="col">
                  <button class="btn btn-info" disabled>
@@ -54,7 +74,7 @@
     </div>
     <!-- Just Display Class Based Database Statistic Result Dataframe-->
     {%  if task_status == 'SUCCESS' %}
-    <div class="dashboard_project_list_col" style="text-align: center;">
+    <div class="dashboard_project_list_col" id="taxonomy_entries_in_db" style="text-align: center;display:none">
         <div style="text-align: center">
             <h3 class="col_header"> Number of entries of different taxonomic units</h3>
             <p style="font-size: medium"> Total number of entries of the relevant taxonomic units in the forward Database
@@ -89,11 +109,11 @@
         </table>
     </div>
 
-    <div class="dashboard_project_list_col" style="justify-content: center;align-content: center;text-align: center">
+    <div class="dashboard_project_list_col" id="bokeh_plot" style="justify-content: center;align-content: center;text-align: center;display:none">
         {% include DatabaseStatisticsBokehPlot %}
     </div>
 
-    <div class="dashboard_project_list_col">
+    <div class="dashboard_project_list_col" id="taxonomy_table" style="display:block">
         <hr>
         <table id="class_table" class="table table-responsive table-hover"> </table>
     </div>
