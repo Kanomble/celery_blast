@@ -1,31 +1,32 @@
-# SymBLAST - Symmetric BLAST phylogenetic and functional protein analysis
+# CATHI - An interactive platform for comparative genomics and homolog identification
+
 Symmetrical BLAST and target sequence search web interface with Django, Gunicorn, Ngninx, PostgreSQL, Celery, RabbitMQ, 
 E-Direct, BLAST, Snakemake and Miniconda.
 
-SymBLAST is a user-friendly bioinformatics tool that performs reciprocal BLAST searches, generates multiple sequence 
+CATHI is a user-friendly bioinformatics tool that performs reciprocal BLAST searches, generates multiple sequence 
 alignments, and builds phylogenetic trees. It is integrated with the workflow management system snakemake, providing a 
 streamlined and efficient way to manage the entire bioinformatics pipeline. 
-Furthermore, SymBLAST offers additional features that make it a powerful and flexible solution
-for researchers across various fields. SymBLAST generates interactive plots and tables in standalone HTML documents, 
-which enables users to visualize and analyze complex biological data easily. SymBLAST integrates the ``entrez`` tool, 
+Furthermore, CATHI offers additional features that make it a powerful and flexible solution
+for researchers across various fields. CATHI generates interactive plots and tables in standalone HTML documents, 
+which enables users to visualize and analyze complex biological data easily. CATHI integrates the ``entrez`` tool, 
 which allows for sequence and paper searches directly within the web interface. It also enables users to download 
 taxonomic-specific protein sequences based on the results of their ``entrez`` searches. 
 
-In addition, SymBLAST includes tools for managing local protein BLAST databases. Researchers can download and format custom 
-databases, providing greater control and flexibility over the data used in their analyses. SymBLAST also includes 
+In addition, CATHI includes tools for managing local protein BLAST databases. Researchers can download and format custom 
+databases, providing greater control and flexibility over the data used in their analyses. CATHI also includes 
 a refined alignment and phylogenetic tree reconstruction process that leverages the protein domains of the CDD 
 database using the RPS-BLAST tool. 
 
-SymBLAST is highly sophisticated and powerful, offering a range of features and capabilities ideal for target sequence searches.
+CATHI is highly sophisticated and powerful, offering a range of features and capabilities ideal for target sequence searches.
 It enables performing reciprocal and one-way BLAST searches within local and remote 
 databases, providing valuable insights into the evolutionary relationships and functional characteristics of sequences.
-SymBLAST's integration into a docker container network streamlines its installation process. 
-Overall, SymBLAST is a flexible and intuitive solution that can help researchers achieve their research goals.
+CATHI's integration into a docker container network streamlines its installation process. 
+Overall, CATHI is a flexible and intuitive solution that can help researchers achieve their research goals.
 
 ## Content
 - [Installation](#installation)
 - [Container network and configuration](#configuration_notes)
-- [How To Use SymBLAST](#project_setup)
+- [How To Use CATHI](#project_setup)
 - [BLAST Database creation](#blast_database)
 - [Upload your own genome files](#genome_upload)
 - [Technical Details](#technical_details)
@@ -35,9 +36,21 @@ Overall, SymBLAST is a flexible and intuitive solution that can help researchers
 
 <a name="installation"></a>
 ## Installation
+
+### Installation of docker-desktop
+The only requirement for installation is a local Docker-Desktop installation, which you can download under the following 
+link: [docker-desktop](https://www.docker.com/products/docker-desktop/).
+
+If you are working on a UNIX machine, you may need to enable file sharing. Therefore, open your docker-desktop
+application and switch to the Settings tab. Open the settings page and add the path to CATHI on the File Sharing tab in the 
+Resources section (see following image).
+
+![Docker File Sharing](./celery_blast/static/images/docker_file_sharing.png)
+
+### Installation of CATHI
 Download and decompress this repository via the `Download ZIP` button of the `<> Code` tab or with `git clone git@github.com:Kanomble/celery_blast.git`.
-Open a terminal and use the `cd` command to point to the local version of the SymBLAST project repository (e.g., if you have downloaded and decompressed SymBLAST
-in the directory: `C:\Users\Test\Documents\SymBLAST`, open your powershell and execute the command `cd "C:\Users\Test\Documents\SymBLAST"`.
+Open a terminal and use the `cd` command to point to the local version of the CATHI project repository (e.g., if you have downloaded and decompressed CATHI
+in the directory: `C:\Users\Test\Documents\CATHI`, open your powershell and execute the command `cd "C:\Users\Test\Documents\CATHI"`.
 Use the `ls` command to confirm that your terminal/powershell points to the correct directory, the output of `ls` should include following files and directories:
 `celery_blast  data  docker-compose-production.yml  docker-compose.yml  Dockerfile  LICENSE  nginx  README.md  requirements.txt  tmp`.
 
@@ -66,23 +79,23 @@ Docker creates seven containers named: `celery_blast_X_1` where `X` is a synonym
 `nginx, worker, flower, web, postgres and rabbitmq`.
 
 <a name="configuration_notes"></a>
-### Notes on SymBLAST containers and possible configurations
-SymBLAST is a server site tool, by starting the container network, your local computer will be used as a web
+### Notes on CATHI containers and possible configurations
+CATHI is a server site tool, by starting the container network, your local computer will be used as a web
 server. `Django` is the underlying web-framework and `gunicorn` serves as the WSGI HTTP Server. Both applications reside
-in the SymBLAST base image. `Nginx` is used as a reverse proxy server, it directs client requests to `gunicorn`.
+in the CATHI base image. `Nginx` is used as a reverse proxy server, it directs client requests to `gunicorn`.
 The long-running background tasks are managed by `rabbitmq` and `celery`, thus triggered processes are picked up by 
 the message broker `rabbitmq` and passed to a queue, if a `celery-worker` is free, the process is executed. The task progress
 is saved within the `postgresql` database within the `django_celery_results_taskresult` table, which enables task monitoring.
 The `flower` container can be used to monitor the `celery-worker`. The reciprocal BLAST pipeline and the normal 
 one-way BLAST pipelines are integrated into a Snakefile, which is used by the workflow management system `snakemake`.
 Customization of Snakefiles enables user defined post-processing. In addtion, a `jupyter-notebook` container is 
-integrated into the SymBLAST container network. Configuration is done within the `.env.prod` file. 
+integrated into the CATHI container network. Configuration is done within the `.env.prod` file. 
 All important environment variables are defined within this file 
 (e.g. the `DJANGO_ALLOWED_HOSTS` and the `SECRET_KEY` variables).
 
 <a name="project_setup"></a>
 ## Project setup
-To execute the integrated reciprocal BLAST pipeline of SymBLAST, certain data must be set up by the user. 
+To execute the integrated reciprocal BLAST pipeline of CATHI, certain data must be set up by the user. 
 This includes the query sequences from a particular organism/genome file,
 a forward BLAST database that will serve as the search space, a backward BLAST database, the scientific name of the 
 organism from which the query sequences were obtained, and a project title. Additionally, the user can modify some BLAST
@@ -94,6 +107,9 @@ while the backward BLAST database must contain the genome file from which the qu
 Prior to saving a project into the database or executing the pipeline, the user-provided data undergoes validation to 
 ensure that it meets the necessary criteria. If any of the validations fail,
 accurate error messages are displayed within the relevant form fields to ensure a smooth pipeline execution.
+
+![Project Creation](./celery_blast/static/images/project_creation.PNG)
+
 
 The pipeline comprises the following steps:
 
@@ -108,7 +124,9 @@ The pipeline comprises the following steps:
 9. Post-processing of the phylogenetic tree with ete3
 10. CDD domain search of target sequences
 
-Further SymBLAST post-processing procedures outside the scope of this pipeline involves:
+![Example Project Details](./celery_blast/static/images/example_reciprocal_project_dashboard_view.JPG)
+
+Further CATHI post-processing procedures outside the scope of this pipeline involves:
 
 1. Combining taxonomic information of the underlying database with the RBH result table
 2. Building an interactive bokeh plot, that enables intuitive result interpretation
@@ -120,8 +138,16 @@ Further SymBLAST post-processing procedures outside the scope of this pipeline i
    3. Building an interactive bokeh plot with the first two principal components and the taxonomic information within the RBH result table
    4. Refine the 
 
-### SymBLAST example output
+### CATHI example output
+
 ![Interactive Bokeh Plot](./celery_blast/static/images/example_bokeh_plot.png)
+The X and Y axes of the scatter plot are parameters of the dataset, such as bitscore, e-value, sequence identity (pident), and sequence lengths, enabling the
+exploration of relationships among these RBHs. The interactivity of the scatter plot is facilitated by Bokeh, a powerful
+visualization library. Users can dynamically manipulate the dataset through filtering options informed by the
+taxonomic information associated with each RBH. In addition, Bokeh provides a lasso tool to select specific RBHs
+within the graph. The lasso tool can be selected from the Bokeh tool-panel displayed at the right side of the figure.
+This interactive feature empowers researchers to dissect real-time taxonomic trends and relationships among RBHs,
+unveiling underlying patterns and insights.
 
 ### Best practices for project settings
 Use appropriate BLAST databases. If you want to search in more complete genomes, create a database that contains genome sequences
@@ -135,7 +161,7 @@ The backward BLAST database should contain only one genome that corresponds to t
 <a name="blast_database"></a>
 ## BLAST Databases
 ## BLAST database preparation from GenBank or RefSeq assemblies
-First, you need to tell SymBLAST to download the refseq or genbank assembly summary file from the
+First, you need to tell CATHI to download the refseq or genbank assembly summary file from the
 refseq [FTP](ftp://ftp.ncbi.nih.gov/genomes/refseq/) or genbank [FTP](https://ftp.ncbi.nlm.nih.gov/genomes/genbank/) directories.
 The application loads the processed entries of the summary file into a pandas dataframe, 
 that is displayed in the BLAST database transaction dashboard after pressing the submit button. Possible BLAST database user specifications are
@@ -284,141 +310,7 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
-- [ ] refactor synteny dashboard
-  - [X] synteny dashboard just for uploaded==False databases
-- [ ] refactor phylogenetic dashboard
-  - [ ] add custom msa and fasttree executions
-    - [ ] add options - e.g. bootstrap support etc.
-- [ ] disable execute snakemake button if task is in progress 
-- [ ] strange error during database statistics task
-- [ ] after 100% reload refresh page 
-  - [ ] use window.location.reload()
-- [ ] blastdbcheck in celery snakemake process for the cdd database and other databases?
-  - [X] base functions are implemented
-- [ ] check if uploaded genomes consist of protein sequences
-- [ ] refactor entrez query for one way blast remote searches
-- [ ] deletion of taxonomic nodes
-- [ ] refactor interface for the CDD domain search
-- [ ] separate download buttons for phylogenies and multiple sequence alignments within the external tools website
-- [ ] project validation -> check if project title already exist!
-- [ ] database statistics progress bar
-- [ ] duplicate entries in CDD result dataframe for bokeh plot - due to different assemblies - maybe too much info
-- [ ] gunicorn --timeout setting
-- [ ] section for each database statistic table
-- [ ] update BLAST databases
-- [ ] if no genome level is defined take all
-- [ ] snakemake --unlock ? 
-- [ ] refactor website structures
-  - [X] synteny dashboard
-  - [X] project details
-  - [X] fasttree and msa dashboard
-    - [ ] phylogenetic dashboard
-- [X] add a production environment
-  - [X] follow this [guide](https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/)
-- [X] add a development environment
-- [X] refactor one-way-remote BLAST bokeh plots
-  - [X] download button
-  - [X] annotations in plot
-  - [X] add progress bar
-- [ ] add query sequence information to one way blast detail page - maybe also to table
-- [ ] fix plotting: /blast/reciprocal_blast/media/blast_projects/2/.snakemake/scripts/tmp0ybykovj.build_folders_with_hit_info_for_each_qseqid.py:89: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
-  fig, ax = plt.subplots(2, 2)
-- [ ] refactor correct deletion of static files - if database gets deleted, also delete project dirs associated to this database
-- [ ] exception is thrown if there is no result in the esearch output
-- [ ] refactor blast_tables_to_orthologous_table.py with new entrez function of the database statistics ncbi_transaction script
-- [ ] refactor query_sequences_to_html_table.py - what happens if there are no information on NCBI available?
-  - [ ] test with uploaded genomes and sequences
-- [ ] failure BLAST database task
-- [X] delete .gitkeep in postgres folder and fix wait-for script line ending
-  - [X] wait-for script checking - LF / CLRF
-- [ ] allow stopping database downloading and formatting tasks, allow deletion of paused/stopped database download/format procedures
-- [ ] include taxonomic information in BLAST database tables
-- [ ] esearch output into subfolders for each user
-- [ ] there are some bugs in the EntrezSearch - e.g. if you search for rhino in pubmed
-- [ ] what happens if a user deletes a database that is still connected to some projects?
-- [ ] remote BLAST without entrez query: results in an error: Error: [blastp] internal_error: Message ID#54 Error: Failed to process the Entrez query: Only organism entrez queries are supported
-- [ ] snakemake incomplete flag - restart function for snakemake
-- [ ] limit for query sequences in one-way-blast
-- [ ] add genbank database option
-- [ ] upload genome: if \n is in any uploaded txt file it will count as a value for insertion
-- [ ] display warning if backward organism not in the forward database as there is no controlling step - cause hits against the identical protein are not considered
-- [ ] uploaded databases might have problems with taxonomic nodes - especially if the user selects different databases for the forward and backward blast
-  - [ ] if there is no taxonomic node available (which can be the case for some organisms) it is not possible to upload a taxmap file ...
-  - [ ] provide a tool for writing taxmap files of combined genomes 
-  - [ ] forward and backward BLAST databases should both contain the backward BLAST taxonomic node, otherwise you wont see your 100% results in the backward BLAST!
-- [ ] with uploaded DNA / RNA sequences it is currently not possible to perform the reciprocal BLAST analysis
-    - [ ] multiple sequence alignment and phylogenetic tree reconstruction is also not supported with DNA/RNA seqs
-    - [ ] refactor the reciprocal BLAST creation view - model supports blastn command (search strategy)
-    - [ ] integrate the possible execution of blastn also in snakemake
-- [ ] update taxdb option!
-- [ ] input fasta query file headers have to be separated by a space, not by a pipe symbol (|) or others
-  - [ ] reformat input sequences during upload
-- [ ] exclude not downloaded and formatted assemblies from summary table
-- [ ] write documentation for added functions
-- [ ] blastn one way searches can't display query sequence information (of DNA sequences) received by biopython, biopython uses the protein db per default which causes errors if gene ids are provided
-- [X] fasttree, mafft timeout setting: 4000s not appropriate: 40.000s
-- [X] fix javascript download button for the protein database in the entrez search
-- [X] add taxonomic information processing to database creation or database statistics calculation
-- [X] refactor the external project information dashboard
-  - [X] replace MSA and Phylogeny buttons with the number of RBH's
-- [X] pipeline log files
-  - [X] view logfile content on pipeline dashboard
-- [X] refactor protein identifier field in one way BLASTs
-- [X] fix error handling during one way BLAST project setup
-- [X] add automate redirection to one way BLAST page
-- [X] refactor one way blast rules
-  - [X] blast_results_to_plots_and_html_table
-  - [X] change altair to bokeh plots
-- [X] refactor html result tables
-  - [x] reciprocal results -> index column
-  - [X] database statistics -> decimal place
-- [X] refactor one-way remote BLAST pipeline
-- [X] refactor logging in exceptions
-- [X] table column names in entrez esearch dashboard
-- [X] integrate MAFFT and FastTree in the corresponding snakefiles
-- [X] define global timeout variable --> use celery timeouts --> soft and hard timeouts
-- [X] correct ajax requests if it results into an error
-- [X] implement custom snakemake logfile that lists all of the executed functions
-- [X] if no reciprocal hits are available for at least one gene the snakemake workflow will result into an error - rule extract_sequences
-- [X] reciprocal_result.csv should also contain assembly accession for each hit and genus, family .. informations
-  - [X] genus, family and other taxonomic information are integrated
-  - [X] assembly accession id
-- [X] add correct docker timezone (currently it is Europe/Berlin but still 2h difference)
-- [X] add pident ssequence and other output options to the blast results
-- [X] check genome upload option | all options - begin with the view function
-- [x] download taxdb during build process of the docker image
-- [x] check if backward organism is in database
-- [X] refactor the create_blastdatabase_table_and_directory function (too long)
-- [x] extract subject sequences from database (with blastdbcmd and orthologous sequence id list)
-    - [x] integrate docker container for mafft and fasttree 
-    - [x] perform msa with orthologous subject sequences
-    - [x] build ml or neighbour joining trees from all msa's
-  - [X] check if query sequences are in backward database
-- [X] installation still requires the `assembly_levels.sql` SQL-Script which inserts the four assembly levels, search for automatic insertions by installation
-- [X] add more options to BlastSettings - Alter BlastSettings model and forms
-- [x] integrate functionality for Create Taxonomic Node File option in celery_blast project
-    - [X] think about multiple species_name inputs ... --> not possible
-- [X] add configuration environment variables for SNAKEMAKE - settings.py
-- [X] use a config file for all configuration options, e.g. the panoptes - settings.py
-- [X] reciprocal BLAST results, sequence in output and string of taxonomy; EXAMPLE: https://docs.google.com/spreadsheets/d/1EBwEp-C0ocCUBx3zVaCtxrMlTKGTZHx19lPq8q7W_bE/edit#gid=649158632
-- [X] error handling if ftp_path does not exist e.g.: ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/893/775/GCF_000893775.1_ViralProj70005/GCF_000893775.1_ViralProj70005_protein.faa.gz
-- [X] refactor the refseq_transactions_dashboard in order to allow creation of a database directory with a csv table file, and tables for deletion download and details functions
-    - [X] add table for not downloaded databases with delete and download button (download button triggers snakemake)
-    - [X] add table for downloaded databases with deletion button
-    - [X] add table for downloaded databases with errors and with a deletion button
-- [x] correct timezone in the docker image
-- [x] integrate blast_project_dashboard functionality
-    - [x] database models for dashboard functionality (base functionality)
-    - [x] add links to Detail View, Delete View and Execution View
-- [X] integrate blastdb_creation dashboard functionality
-    - [X] assembly download, `makeblastdb` execution and creation of `.pal` blast database alias files with celery
-    - [X] monitoring with ajax and celery progress
-- [X] integrate project_creation dashboard functionality
-- [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously
-    - [X] use [ajax](https://api.jquery.com/jquery.ajax/) asynchronously to check celery tasks execution process
-- [X] use [celery-progress](https://github.com/czue/celery-progress) for monitoring the celery tasks execution process in the backend
-- [X] check out the .pal files from BLAST databases
-
+- fix one-way BLAST snakemake pipeline
 
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
