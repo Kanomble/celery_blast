@@ -67,10 +67,9 @@ which points to the applications working directory (directory with `docker-compo
 The docker client will pull remotely available images, including the base image for this application,
 an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
 Docker images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
-All required software tools are loaded and installed automatically, there is no need for other third party software.
-The installation procedure can take up to 30 minutes, depending on your available RAM and internet connection. 
-During installation process, a local copy of the CDD database is downloaded.
 It is recommended to install the application with the remotely available images and the `docker compose up` command. 
+
+Once installed, CATHI is accessible via: `http://127.0.0.1:8080/blast_project/`
 
 <a name="configuration_notes"></a>
 ## Advanced Installation

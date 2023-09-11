@@ -12,8 +12,28 @@ from django.contrib.auth.models import User
 from django.db import transaction, IntegrityError
 from django_celery_results.models import TaskResult
 from .models import EntrezSearch
+from celery_blast.settings import ESEARCH_OUTPUT
 
+'''execute_entrez_search
 
+    This function executes the search requested by the user. It is utilized in the external_tools/tasks.py
+    script within the entrez_search_task function.
+    
+    :param database - from form
+        :type str
+        
+    :param entrez_query - from form
+        :type str
+        
+    :param output_filepath - s. ESEARCH_OUTPUT
+        :type str
+        
+    :param entrez_search
+        :type EntrezSearch
+        
+    :returns returncode
+        :type int
+'''
 def execute_entrez_search(database: str, entrez_query: str, output_filepath: str, entrez_search: EntrezSearch) -> int:
     # starts an Esearch which downloads the requested search with the selected database and saves it in a file
     # for adding  more databases, the columns need to be added here, in the models.py get_pandas_table function and in forms.py to the EntrezSearchForm class
@@ -46,14 +66,14 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
     except Exception:
         return 1
 
-
+# TODO documentation
 def download_by_organism(search_id: int, organism_download: str, email: str) -> int:
     # uses biopython entrez tool to download fasta files of a selected organism in an entrezsearch paper and saves it in a file
     try:
-        if os.path.isdir("media/esearch_output/" + str(search_id)) == False:
-            os.mkdir("media/esearch_output/" + str(search_id))
+        if os.path.isdir(ESEARCH_OUTPUT + str(search_id)) == False:
+            os.mkdir(ESEARCH_OUTPUT + str(search_id))
 
-        with open("media/esearch_output/" + str(search_id) + "/download_by_organism.log", 'w') as logfile:
+        with open(ESEARCH_OUTPUT + str(search_id) + "/download_by_organism.log", 'w') as logfile:
             logfile.write("INFO:starting to download proteins for the selected organism: {}\n".format(organism_download))
             entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
 
@@ -63,7 +83,7 @@ def download_by_organism(search_id: int, organism_download: str, email: str) -> 
             filtered_organism_target_df = organism_target_df[organism_target_df.Organism == organism]
             filtered_organism_target_id_list = filtered_organism_target_df["Id"].to_list()
             Entrez.email = email  # use the email of the user
-            fasta_file = "media/esearch_output/" + str(search_id) + "/" + str(organism) + ".faa"
+            fasta_file = ESEARCH_OUTPUT + str(search_id) + "/" + str(organism) + ".faa"
             logfile.write("INFO:starting to write fasta file: {}\n".format(fasta_file))
             with open(fasta_file,'w') as output:  # could use the name of the file used as input
 
@@ -99,7 +119,24 @@ def download_by_organism(search_id: int, organism_download: str, email: str) -> 
         return 1
 
 
-# TODO implementation
+'''download_esearch_protein_fasta_files
+    
+    This function is part of the download_entrez_search_associated_protein_sequences task in external_tools/tasks.py.
+    The function downloads the protein sequences listed in the entrez search output. It uses the efetch tool for 
+    the downloading process.
+    
+    If the search was based on the pubmed database, associated protein sequences are downloaded via the elink and 
+    efetch tool. 
+    
+    The output of this function is a sequence file and a table containing the listed identifier. Both files 
+    are created with a random character string.
+    
+    :param search_id
+        :type int
+        
+    :returns returncode
+        :type int
+'''
 def download_esearch_protein_fasta_files(search_id: int) -> int:
     # downloads a fasta file of the associated protein sequences of an enztezsearch if the entrez database is protein or pubmed
     try:
@@ -111,8 +148,8 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
         file_path = entrez_search.file_name
         file_random_number = file_path.split("_")[-1].split(".")[0]
 
-        target_fasta_file_path = 'media/esearch_output/target_fasta_file_' + str(file_random_number) + '.faa'
-        sequence_list_file_path = 'media/esearch_output/sequence_list_' + str(file_random_number) + '.table'
+        target_fasta_file_path = ESEARCH_OUTPUT + 'target_fasta_file_' + str(file_random_number) + '.faa'
+        sequence_list_file_path = ESEARCH_OUTPUT + 'sequence_list_' + str(file_random_number) + '.table'
 
         if os.path.isfile(target_fasta_file_path):
             if entrez_search.download_task_result != None:
@@ -179,7 +216,7 @@ def update_entrezsearch_with_download_task_result(search_id: int, task_id: int) 
 
         file_path = entrez_search.file_name
         file_random_number = file_path.split("_")[-1].split(".")[0]
-        target_fasta_file_path = 'media/esearch_output/target_fasta_file_' + str(file_random_number) + '.faa'
+        target_fasta_file_path = ESEARCH_OUTPUT + 'target_fasta_file_' + str(file_random_number) + '.faa'
 
         if os.path.isfile(target_fasta_file_path):
             if entrez_search.download_task_result != None:
@@ -233,7 +270,11 @@ def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_f
     except Exception:
         return 1
 
+'''create_random_filename
 
+    This function is used to create filenames for the output of the entrez search.
+
+'''
 def create_random_filename() -> str:
     # creates a rondom file name and returns it
     randomly_generated_filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -265,7 +306,7 @@ def delete_esearch_by_id(search_id: int) -> int:
             task_db_id = EntrezSearch.objects.values('search_task_result_id').filter(id=search_id)
             task_db_id = task_db_id[0]['search_task_result_id']
             task_db = TaskResult.objects.get(id=task_db_id)
-            organism_db_file_name = "media/esearch_output/" + str(search_id)
+            organism_db_file_name = ESEARCH_OUTPUT + str(search_id)
 
             if os.path.isdir(organism_db_file_name):
                 shutil.rmtree(organism_db_file_name)
