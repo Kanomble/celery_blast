@@ -59,17 +59,18 @@ Use the `ls` command to confirm that your terminal/powershell points to the corr
 ```` Bash
 git clone git@github.com:Kanomble/celery_blast.git
 cd celery_blast
-docker compose up
+docker compose up -f docker-compose-production.yml 
 ````
 
-The application can get installed by submitting the `docker-compose up` or `docker compose up` command in a terminal window,
-which points to the applications working directory (directory with `docker-compose.yml`). 
+The application can get installed by submitting the command: `docker-compose up` for the development environment or by: 
+`docker-compose up -f docker-compose-production.yml` for the production environment.
 The docker client will pull remotely available images, including the base image for this application,
 an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
 Docker images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
 It is recommended to install the application with the remotely available images and the `docker compose up` command. 
 
-Once installed, CATHI is accessible via: `http://127.0.0.1:8080/blast_project/`
+Once installed, CATHI is accessible via: `http://127.0.0.1:1337/blast_project/` for the production environment
+and via: `http://127.0.0.1:8080/blast_project/` for the Django development server.
 
 <a name="configuration_notes"></a>
 ## Advanced Installation
