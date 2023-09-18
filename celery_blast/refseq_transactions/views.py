@@ -67,7 +67,7 @@ def dashboard(request):
     
 '''
 
-
+@csrf_exempt
 @login_required(login_url='login')
 def download_refseq_assembly_summary_view(request, summary_file:str):
     try:
