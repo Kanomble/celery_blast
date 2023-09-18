@@ -32,12 +32,14 @@ from os.path import isfile
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+from django.views.decorators.csrf import csrf_exempt
 
 '''download_domain_database_view
 
     This function executes the celery_task download_and_decompress_cdd_database.
 
 '''
+@csrf_exempt
 @login_required(login_url='login')
 def download_domain_database_view(request):
     try:

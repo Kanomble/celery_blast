@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %} RecBlast Project Creation {% endblock %}
+{% block title %} CATHI Project Creation {% endblock %}
 
 {% block page_title %} Reciprocal Blast Project Creation {% endblock %}
 
@@ -23,12 +23,13 @@ This Website can be used for the creation of reciprocal BLAST projects.
             <ul class="list-group">
                 <li class="list-group-item">
                     <b> Project Title </b> <br>
-                    <p style="text-align: left;font-size: medium"> Just enter a project specific title. This field is mandatory as it is needed for correct project assignment. </p>
+                    <p style="text-align: left;font-size: medium"> Just enter a UNIQUE project title.
+                        This field is mandatory as it is needed for correct project assignment. </p>
                 </li>
                 <li class="list-group-item">
                     <b> Query Sequences </b> <br>
                     <p style="text-align: left;font-size: medium">Upload a query sequence fasta file. <br>
-                        Sequences in this file MUST derive from only ONE organism (genome file). <br>
+                        Sequences in this file MUST derive from only ONE organism. <br>
                         <br>
                         Example target file content:
                         <br>
@@ -47,23 +48,31 @@ This Website can be used for the creation of reciprocal BLAST projects.
                         DAVCNEIAEAVNAVRPGHCANLAGRTSLDEAVALIAGAHAMVSNDSGLMHVAAAFGVPQVAIFGSSSPLH<br>
                         TPPLNPAATVLWLKNDPSYQPPLDCAPCFKRDCPLGHTRCLNDITSDKVLSVL<br>
                         <br>
-                        The sequence identifiers (the genome from which you receive the sequences) have to reside in the backward database. <br>
+                        The sequence identifier (the genome from which you receive the sequences) have to reside in the backward database. <br>
                         A careful design of query sequences is recommended as too much starting sequences can significantly increase the running time. </p>
                 </li>
                 <li class="list-group-item">
                     <b> Forward BLAST database </b> <br>
                     <p style="text-align: left;font-size: medium">
-                        This database will function as the "search space" for your provided query sequences. <br>
-                        As a first step the query sequences are "blasted" against this database. <br>
+                        This database is the "search space" for your provided query sequences. <br>
+                        This database is used for the initial BLAST, the forward BLAST. <br>
                         All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta. </p>
                 </li>
                 <li class="list-group-item">
                     <b> Backward BLAST database </b> <br>
-                    <p style="text-align: left;font-size: medium"> The organism or/and genome of the query sequences has to reside in this database. All hits of the forward BLAST are "blasted" against this database. If those hits match the exact query sequence of the forward BLAST, reciprocal best hits are found. </p>
+                    <p style="text-align: left;font-size: medium"> The organism or/and genome of the query sequences has to reside in this database.
+                        All hits of the forward BLAST are used as input for the backward BLAST, which uses this database.
+                        If those hits match the exact query sequence of the forward BLAST, reciprocal best hits (RBHs) are found.
+                        E.g., if you want to search RBHs for WP_087494701.1, WP_087494701.1 needs to reside in your backward BLAST database (you need
+                        to select a database containing the proteome of Curvibacter sp. AEP1-3).
+                    </p>
                 </li>
                 <li class="list-group-item">
-                    <b> Species Name for the backward BLAST </b> <br>
-                    <p style="text-align: left;font-size: medium"> This is the scientific name of the organisms from which the query sequences were obtained. Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer orthologs in the forward BLAST database. You can use the NCBI protein website and search there for query sequence entries. </p>
+                    <b> Species name for the backward BLAST </b> <br>
+                    <p style="text-align: left;font-size: medium"> This is the scientific name of the organisms from which the query sequences were obtained.
+                        Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer RBHs.
+                        E.g., if you want to search RBHs for WP_087494701.1, you need to enter Curvibacter sp. AEP1-3.
+                    </p>
                 </li>
             </ul>
             <br>
@@ -73,21 +82,22 @@ This Website can be used for the creation of reciprocal BLAST projects.
 
     {% if taxdb == True %}
         {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result.status != "SUCCESS" %}
-        <div class="dashboard_project_list_col" >
-            <p style="text-align: center"> You have to download the Conserved Domain Database before you can create any reciprocal BLAST projects.
-                Return to the Dashboard and download the CDD.</p>
-        </div>
+            <div class="dashboard_project_list_col" >
+                <p style="text-align: center"> You have to download the Conserved Domain Database (CDD) before you can create any reciprocal BLAST projects.
+                    Return to the Dashboard and download the CDD.</p>
+            </div>
         {% else %}
-        <div class="dashboard_project_list_col" >
-            {% include "blast_project/form_project_creation.html" %}
-            <br>
-            <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
-        </div>
+            <div class="dashboard_project_list_col" >
+                {% include "blast_project/form_project_creation.html" %}
+                <br>
+                <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
+            </div>
         {% endif %}
     {% endif %}
     {% if taxdb == False %}
         <div class="dashboard_project_list_col">
-            <p> There is no active taxonomic database, before you can use CATHIs pipeline, you should download NCBIs taxonomy database.</p>
+            <p> There is no active taxonomic database, before you can use CATHIs pipeline,
+                you should download NCBIs taxonomy database and extract it into the database directory of CATHI.</p>
         </div>
     {% endif %}
 </div>

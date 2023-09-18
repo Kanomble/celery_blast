@@ -1,34 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %} BLAST Dashboard {% endblock %}
+{% block title %} CATHI Dashboard {% endblock %}
 
 {% block page_title %} {% endblock %}
 
-{% block infoheader %} BLAST Project Dashboard {% endblock %}
+{% block infoheader %} CATHI Dashboard {% endblock %}
 
 {% block page_description %}
     You are logged in as: <strong>{{request.user}}</strong>.<br>
-    This dashboard lists all available local databases, remote one way BLAST, local one way BLAST and
-    reciprocal BLAST projects for {{request.user}}.
-    Monitor and execute your current projects or view your results on the
-    <strong>Project Details </strong> pages. Manage and view available local databases by pressing the <strong>Database Details</strong>
-    button.
-    If you want to create a completely new project or upload custom proteoms for BLAST databases creation, take a look at the navigation bar
-    at the top of this page.
+    Monitor and execute your current projects by entering the
+    <a class="nav-link" href="{% url 'active_table_view' selected_table="reciprocal_blast_projects" %}">Reciprocal Projects</a> dashboard.
+    Manage and view available local databases by entering the
+    <a class="nav-link" href="{% url 'active_table_view' selected_table="databases" %}">Active Databases</a> dashboard.
+
+    If you want to create a completely new project or upload custom proteomes for BLAST databases creation, take a look at the navigation bar
+    on the left hand side of this dashboard.
     <br>
     <h2> Content of this Web-Tool </h2>
     <ul>
         <li> <a href="{% url 'project_creation' %}">  Reciprocal BLAST pipeline project creation </a></li>
         <li> <a href="{% url 'one_way_project_creation' %}"> One-way BLAST project creation </a></li>
-        <ul>
-            <li> based on remotely available NCBI-Databases </li>
-            <li> based on locally downloaded or uploaded BLAST databases </li>
-        </ul>
         <li> BLAST Database creation</li>
         <ul>
             <li> <a href="{% url 'refseq_transactions_dashboard' %}"> based on remotely available NCBI-Databases </a></li>
             <li> <a href="{% url 'upload_genomes'  %}"> based on locally downloaded or uploaded protein fasta files </a></li>
         </ul>
+        <li> <a href="{% url 'entrez_dashboard' %}"> Search target sequences with the EDirect tool </a></li>
         <li> <a href="{% url 'species_taxids' %}"> Create files with taxonomic nodes for limiting your BLAST databases by taxonomic information </a></li>
     </ul>
 {% endblock %}
