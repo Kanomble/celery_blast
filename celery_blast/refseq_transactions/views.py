@@ -24,8 +24,6 @@ from .tasks import download_refseq_assembly_summary, download_blast_databases_ba
     template: refseq_transactions_dashboard.html
     context: BlastDatabase instances, defined by their TaskResult status
 '''
-
-
 @login_required(login_url='login')
 def dashboard(request):
     try:
@@ -66,8 +64,6 @@ def dashboard(request):
     redirect: refseq_transactions_dashboard.html
     
 '''
-
-@csrf_exempt
 @login_required(login_url='login')
 def download_refseq_assembly_summary_view(request, summary_file:str):
     try:
