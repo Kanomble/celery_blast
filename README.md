@@ -1,3 +1,10 @@
+# Installation Issues
+
+There might be some installation issues, if you need help to set up Docker and CATHI: write a mail to lukas.becker@hhu.de and we can arrange a meeting.
+CATHI is still under development, any help is useful, so don't hesitate to write a mail.
+
+Thanks!
+
 # CATHI - An interactive platform for comparative genomics and homolog identification
 
 Symmetrical BLAST and target sequence search web interface with Django, Gunicorn, Ngninx, PostgreSQL, Celery, RabbitMQ, 
