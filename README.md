@@ -70,7 +70,7 @@ docker compose up -f docker-compose-production.yml
 ````
 
 The application can get installed by submitting the command: `docker-compose up` for the development environment or by: 
-`docker-compose up -f docker-compose-production.yml` for the production environment.
+`docker-compose -f docker-compose-production.yml up` for the production environment.
 The docker client will pull remotely available images, including the base image for this application,
 an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
 Docker images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
