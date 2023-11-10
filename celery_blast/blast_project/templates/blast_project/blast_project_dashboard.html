@@ -36,6 +36,7 @@
 {% block content %}
 {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result.status != "SUCCESS" %}
     {% if domain_database.domain_database_download_task_result %}
+
         {% if domain_database.domain_database_download_task_result.status == "PROGRESS" %}
             <div class="dashboard_project_list_col" id="cdd_download_progress">
                 <button class="btn btn-dark" disabled>
@@ -62,6 +63,7 @@
             {% include "blast_project/form_download_domain_database.html" %}
         </div>
     {% endif %}
+
 {% endif %}
 {% endblock %}
 {% block scripts %}

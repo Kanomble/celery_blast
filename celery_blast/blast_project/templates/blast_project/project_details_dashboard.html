@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %} SymBlast Core Pipeline Project Details {% endblock %}
+{% block title %} CATHI Core Pipeline Project Details {% endblock %}
 
 {% block page_title %} Reciprocal Blast Project Details {% endblock %}
 
@@ -228,13 +228,17 @@
                         var static_url = '{% static 'images/' %}';
                         var reciprocal_results_url = "{% url 'reciprocal_results' project_id=BlastProject.id %}";
                         var query_sequence_info_url = "{% url 'send_query_sequence_information' project_id=BlastProject.id %}"
-                        ajax_call_to_project_details(
-                            data,
-                            static_url,
-                            reciprocal_results_url,
-                            query_sequence_info_url
-                        )
-
+                        //ajax_call_to_project_details(
+                        //    data,
+                        //    static_url,
+                        //    reciprocal_results_url,
+                        //    query_sequence_info_url
+                        //)
+                        var progress_bar = document.getElementById('progress_bar');
+                        var progress_container = document.getElementsByClassName('progress')[0];
+                        var progress = data.progress;
+                        progress_bar.style.width = String(progress) + "%";
+                        progress_bar.innerHTML = String(progress) + "%";
                         if(data.progress >= 100){
                             clearInterval(pollInterval); // optional: stop poll function
                         } else if(data.progress == "ERROR"){
