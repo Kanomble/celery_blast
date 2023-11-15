@@ -48,12 +48,20 @@ CATHI's integration into a docker container network streamlines its installation
 <a name="installation_docker_desktop"></a>
 ### Installation of docker-desktop
 The only requirement for installation is a local Docker-Desktop installation, which you can download under the following 
-link: [docker-desktop](https://www.docker.com/products/docker-desktop/).
+link: [docker-desktop](https://www.docker.com/products/docker-desktop/). Make sure to create an account for Docker and to 
+be logged into Docker before you install CATHI.
 
+You may also need to configure Docker. Thus, it may require a lot of your RAM and processors. You can do this by adding
+a `.wslconfig` file in your `User` directory. For more information I recommend reading this [article](https://mrakelinggar.medium.com/set-up-configs-like-memory-limits-in-docker-for-windows-and-wsl2-80689997309c).
+
+![wslconfig in user directory](./celery_blast/static/images/wslconfig.PNG)
+
+### UNIX setup 
 If you are working on a UNIX machine, you may need to enable file sharing. Therefore, open your docker-desktop
 application and switch to the Settings tab. Open the settings page and add the path to CATHI on the File Sharing tab in the 
 Resources section (see following image).
 <a name="installation_cathi"></a>
+
 ![Docker File Sharing](./celery_blast/static/images/docker_file_sharing.png)
 
 ### Installation of CATHI
@@ -64,23 +72,35 @@ Use the `ls` command to confirm that your terminal/powershell points to the corr
 `celery_blast  data  docker-compose-production.yml  docker-compose.yml  Dockerfile  LICENSE  nginx  README.md  requirements.txt  tmp`.
 
 ```` Bash
+mkdir CATHI
+cd CATHI
 git clone git@github.com:Kanomble/celery_blast.git
 cd celery_blast
-docker compose up -f docker-compose-production.yml 
+docker compose -f docker-compose-production.yml up
 ````
 
 The application can get installed by submitting the command: `docker-compose up` for the development environment or by: 
 `docker-compose -f docker-compose-production.yml up` for the production environment.
-The docker client will pull remotely available images, including the base image for this application,
-an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
-Docker images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
-It is recommended to install the application with the remotely available images and the `docker compose up` command. 
 
 Once installed, CATHI is accessible via: `http://127.0.0.1:1337/blast_project/` for the production environment
 and via: `http://127.0.0.1:8080/blast_project/` for the Django development server.
 
+<a name="CATHI setup"></a>
+### CATHI setup
+Once you have installed CATHI you should see, that the containers within the Docker-Desktop application are listed green.
+Here is an example for the production environment:
+
+![Docker Container Network](./celery_blast/static/images/docker_container_network.PNG)
+
+
+
 <a name="configuration_notes"></a>
 ## Advanced Installation
+
+The docker client will pull remotely available images, including the base image for this application,
+an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
+Docker images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
+It is recommended to install the application with the remotely available images and the `docker compose up` command. 
 
 It is possible to build the necessary images from the Dockerfile of this repository. You can change and adapt the dockerfile according to the software 
 tools you need, keep in mind to adapt the `docker-compose.yml` or the `docker-compose-production.yml` files if you want to use local Docker images of this tool.

@@ -2,17 +2,17 @@ import os
 import random
 import shutil
 import string
-
-
 from subprocess import Popen, TimeoutExpired, SubprocessError
+
 import psutil
 from Bio import Entrez
+from celery_blast.settings import ESEARCH_OUTPUT
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction, IntegrityError
 from django_celery_results.models import TaskResult
+
 from .models import EntrezSearch
-from celery_blast.settings import ESEARCH_OUTPUT
 
 '''execute_entrez_search
 
@@ -45,7 +45,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         xtract_format['cdd'] = "Id Title Subtitle Abstract"
         xtract_format['protfam'] = "Id DispMethod DispReviewLevel string"
 
-        cmd = 'esearch -db {} -query "{}" -retmax 10000 | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
+        cmd = 'esearch -db {} -query "{}" -retmax 10000 | efetch -format docsum -stop 10000 | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
             database, entrez_query, xtract_format[database], output_filepath)
 
         process = Popen(cmd, shell=True)
@@ -66,7 +66,24 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
     except Exception:
         return 1
 
-# TODO documentation
+'''download_by_organism
+
+    This function is executed within the entrez search dashboard details page.
+    It downloads protein fasta files for the specified organism via biopython.
+    
+    :param search_id
+        :type int
+    
+    :param organism_download
+        :type str
+    
+    :param email
+        :type str
+        
+    :returns returncode
+        :type int
+
+'''
 def download_by_organism(search_id: int, organism_download: str, email: str) -> int:
     # uses biopython entrez tool to download fasta files of a selected organism in an entrezsearch paper and saves it in a file
     try:
@@ -209,7 +226,17 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
                 search_id, e))
 
 
-# TODO documentation
+'''update_entrezsearch_with_download_task_result
+    
+    Updates the EntrezSearch database model object with the associated celery TaskResult database model.
+    
+    :param search_id - identifier for the EntrezSearch object
+        :type int
+    
+    :param task_id - identifier for the associated TaskResult object
+        :type int
+
+'''
 def update_entrezsearch_with_download_task_result(search_id: int, task_id: int) -> int:
     try:
         entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
@@ -238,7 +265,12 @@ def update_entrezsearch_with_download_task_result(search_id: int, task_id: int) 
                 e))
 
 
-# TODO implementation documentation
+# TODO not in use
+'''execute_entrez_efetch_fasta_files
+
+    This function is currently not in use.
+
+'''
 def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_filepath: str) -> int:
     try:
         if database == 'pubmed':
@@ -286,7 +318,18 @@ def create_random_filename() -> str:
     return randomly_generated_filename
 
 
-def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
+'''get_entrezsearch_object_with_entrezsearch_id
+    
+    Returns the associated EntrezSearch database model object.
+    
+    :param search_id
+        :type int
+        
+    :returns entrez_search
+        :type EntrezSearch
+
+'''
+def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> EntrezSearch:
     # gets an entrez search database row based on a search_id and returns it
     try:
         entrez_search = EntrezSearch.objects.get(id=search_id)
@@ -296,6 +339,17 @@ def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> int:
 
 
 # TODO also remove sequence_list_RNDNumber
+'''delete_esearch_by_id
+    
+    Deletes the associated EntrezSearch object and all relevant files.
+    
+    :param search_id
+        :type int
+    
+    :returns returncode
+        :type int
+
+'''
 def delete_esearch_by_id(search_id: int) -> int:
     # deletes entrezsearch associated files and taskresult entries based on a search_id
     # returns 0 if it worked or 1 if it did not
@@ -328,6 +382,24 @@ def delete_esearch_by_id(search_id: int) -> int:
             "ERROR during deletion of entrez_search with id : {} with exception: {}".format(search_id, e))
 
 
+'''save_entrez_search_model
+
+    Wrapper function to create the EntrezSearch model isntance from the Django form data.
+    
+    :param database
+        :type str
+    :param entrez_query
+        :type str
+    :param file_name - with random ending
+        :type str
+    :param task_result_id
+        :type int
+    :param user_id
+        :type int
+    
+    :returns esearch_object - created EntrezSearch model
+        :type EntrezSearch
+'''
 def save_entrez_search_model(database: str, entrez_query: str, file_name: str, task_result_id: int,
                              user_id: int) -> EntrezSearch:
     # saves users entrezsearch input into a datbase with extra information
