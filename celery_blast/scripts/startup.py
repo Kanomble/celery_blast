@@ -1,7 +1,7 @@
 '''SCRIPT THAT GETS EXECUTED DURING SERVER STARTUP
 1. Adding assembly level models to database
 2. Downloading and extracting taxonomy database
-3. Downloading and extracting CDD database
+3. Checks if CDD database folder exists.
 '''
 
 from refseq_transactions.models import AssemblyLevels
@@ -36,8 +36,13 @@ def run():
     else:
         domain_database = DomainDatabase.objects.all()[0]
         if domain_database.domain_database_loaded == False:
+            print("INFO: Conserved Domain Database is not loaded. CATHI setup has to be done by the user.")
             check_domain_database_status()
-
+        elif domain_database.domain_database_loaded == True:
+            if isdir(BLAST_DATABASE_DIR + 'CDD') == False:
+                print("INFO: CDD database directory does not exist.")
+                print("INFO: checking status of domain database ...")
+                check_domain_database_status()
 
     if isfile(BLAST_DATABASE_DIR + 'taxdb.btd') and isfile(BLAST_DATABASE_DIR + 'taxdb.bti'):
         print("INFO:TAXONOMY DATABASE IS LOADED")

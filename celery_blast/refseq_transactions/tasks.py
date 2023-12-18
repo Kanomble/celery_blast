@@ -12,7 +12,6 @@ from celery.utils.log import get_task_logger
 from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE, GENBANK_URL
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
-
 from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name, update_blast_database_table
 
 # logger for celery worker instances

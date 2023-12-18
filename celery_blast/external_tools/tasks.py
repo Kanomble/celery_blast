@@ -24,6 +24,7 @@ from .py_services import check_if_target_sequences_are_available, check_if_msa_f
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
 from os.path import isdir
 from os import listdir, mkdir, remove
+from refseq_transactions.tasks import download_refseq_assembly_summary
 # logger for celery worker instances
 logger = get_task_logger(__name__)
 
@@ -336,7 +337,8 @@ def download_cdd_database(self):
         domain_database_model = domain_database_query_set[0]
         domain_database_model.domain_database_loaded = True
         domain_database_model.save()
-
+        download_refseq_assembly_summary("RefSeq")
+        download_refseq_assembly_summary("GenBank")
     except TimeoutExpired as e:
         logger.warning("error during downloading the cdd database, timeout expired with exception: {}".format(e))
         raise Exception("[-] ERROR timeout expired for downloading the cdd database ...")

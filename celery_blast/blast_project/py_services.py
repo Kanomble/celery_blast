@@ -250,13 +250,13 @@ def concatenate_genome_fasta_files_in_db_dir(path_to_database:str, database_titl
 '''check_domain_database_status
     This function checks if the domain database is loaded by utilizing the subprocess
     check_output function in conjunction with the blastdbcheck tool from the BLAST+ software suite.
-    Sets the domain_database_loaded variable of the DomainDatabase class to True if the database directory
-    is healthy.
+    Sets the "domain_database_loaded" variable of the DomainDatabase class to True if the database directory
+    is functional. If not it sets the value to True.
     
     :returns returncode
         :type bool
 '''
-def check_domain_database_status():
+def check_domain_database_status()->bool:
     try:
         cdd_db_path = BLAST_DATABASE_DIR + "CDD/"
         # testing domain database integrity

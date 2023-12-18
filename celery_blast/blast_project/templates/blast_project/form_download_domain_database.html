@@ -1,7 +1,12 @@
+<h3> CATHI Tool Setup </h3>
+<br>
+<p> Before you can start creating projects, you need to perform a setup.
+    During this setup, the Conserved Domain Database is downloaded from the NCBI FTP site, along with genome assembly files. These files are used in the database creation dashboard.
+    Additionally, these files can be downloaded later on if there is a new release for GenBank or RefSeq.</p>
+<br>
 <form action="{% url 'setup_cathi_view' %}" method="post">
     {% csrf_token %}
     <div class="form-group">
-
         <a href="#" data-toggle="tooltip"
            title="Set-Up CATHI by downloading the CDD database and the refseq and genbank assembly summary files."
         >
@@ -10,6 +15,5 @@
                    value="SetUp CATHI"
                    class="btn btn-primary btn-dark">
         </a>
-
     </div>
 </form>

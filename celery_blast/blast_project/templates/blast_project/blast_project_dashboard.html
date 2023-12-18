@@ -38,14 +38,20 @@
     {% if domain_database.domain_database_download_task_result %}
 
         {% if domain_database.domain_database_download_task_result.status == "PROGRESS" %}
-            <div class="dashboard_project_list_col" id="cdd_download_progress">
+            <div class="dashboard_project_list_col" id="cdd_download_progress" style="display: flex;
+                                                                          flex-direction: column;
+                                                                          align-items: center;
+                                                                          justify-content: center;">>
                 <button class="btn btn-dark" disabled>
                     <span class="spinner-grow spinner-grow-sm"></span>
                     <p><span class="domain_database_download_progress"></span></p>
                 </button>
             </div>
         {% elif domain_database.domain_database_download_task_result.status == "FAILURE" %}
-            <div class="dashboard_project_list_col" id="cdd_download_failure" >
+            <div class="dashboard_project_list_col" id="cdd_download_failure"  style="display: flex;
+                                                                          flex-direction: column;
+                                                                          align-items: center;
+                                                                          justify-content: center;">
                 <form class="col"
                        action="{% url "delete_domain_database" %}"
                        method="POST">
@@ -53,13 +59,19 @@
                     <input type="submit" value="Download Failed: Delete Domain Database" class="btn btn-danger">
                 </form>
             </div>
-        {% elif domain_database.domain_database_loaded == False and domain_database.domain_database_download_task_result == "SUCCESS" %}
-             <div class="dashboard_project_list_col" id="project_dashboard" >
+        {% elif domain_database.domain_database_loaded == False and domain_database.domain_database_download_task_result.status == "SUCCESS" %}
+             <div class="dashboard_project_list_col" id="project_dashboard" style="display: flex;
+                                                                          flex-direction: column;
+                                                                          align-items: center;
+                                                                          justify-content: center;">
                 {% include "blast_project/form_download_domain_database.html" %}
             </div>
         {% endif %}
     {% else %}
-        <div class="dashboard_project_list_col" id="project_dashboard" >
+        <div class="dashboard_project_list_col" id="project_dashboard"  style="display: flex;
+                                                                          flex-direction: column;
+                                                                          align-items: center;
+                                                                          justify-content: center;">
             {% include "blast_project/form_download_domain_database.html" %}
         </div>
     {% endif %}

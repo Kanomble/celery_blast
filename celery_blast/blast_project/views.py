@@ -36,7 +36,8 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 '''setup_cathi_view
 
     This function executes the celery_task download_and_decompress_cdd_database.
-
+    Additionally the function will also download the refseq and genbank assembly summary files.
+    
 '''
 @login_required(login_url='login')
 def setup_cathi_view(request):
