@@ -12,7 +12,7 @@ registration_urls = [
 ]
 
 service_urls = [
-    path('domain_database_download', views.download_domain_database_view, name='download_domain_database'),
+    path('setup_cathi_view', views.setup_cathi_view, name='setup_cathi_view'),
     path('delete_domain_database',views.delete_domain_database_view, name='delete_domain_database'),
     path('<str:selected_table>/datatable_view', views.active_table_view, name='active_table_view'),
 

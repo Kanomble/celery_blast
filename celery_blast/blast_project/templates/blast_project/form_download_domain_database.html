@@ -1,13 +1,13 @@
-<form action="{% url 'download_domain_database' %}" method="post">
+<form action="{% url 'setup_cathi_view' %}" method="post">
     {% csrf_token %}
     <div class="form-group">
 
         <a href="#" data-toggle="tooltip"
-           title="You have to download the CDD database before you can create new projects!"
+           title="Set-Up CATHI by downloading the CDD database and the refseq and genbank assembly summary files."
         >
 
             <input type="submit"
-                   value="Download Protein Domain Database"
+                   value="SetUp CATHI"
                    class="btn btn-primary btn-dark">
         </a>
 

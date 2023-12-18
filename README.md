@@ -344,8 +344,13 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
-- [] fix one-way BLAST snakemake pipeline
-- [] add videos, links to init page
+- [ ] fix one-way BLAST snakemake pipeline
+- [ ] add videos, links to init page
+- [ ] add option to filter for genomes directly within the refseq/genbank assembly summary files
+- [ ] add option to selection contrained phylogeny just with selection based on taxonomic units
+- [ ] add setup option after installation -> directly download CDD/refseq/genbank assembly summary files (maybe add a wizard)
+- [ ] add error message if filtered database table is empty 
+- [ ] add error message if there are 0 hits within the forward blast dataframe
 
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)

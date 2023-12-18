@@ -33,13 +33,13 @@ from os.path import isfile
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
-'''download_domain_database_view
+'''setup_cathi_view
 
     This function executes the celery_task download_and_decompress_cdd_database.
 
 '''
 @login_required(login_url='login')
-def download_domain_database_view(request):
+def setup_cathi_view(request):
     try:
         if request.method == "POST":
             download_cdd_database.delay()
