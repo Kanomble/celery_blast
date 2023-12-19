@@ -45,7 +45,7 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         xtract_format['cdd'] = "Id Title Subtitle Abstract"
         xtract_format['protfam'] = "Id DispMethod DispReviewLevel string"
 
-        cmd = 'esearch -db {} -query "{}" -retmax 10000 | efetch -format docsum -stop 10000 | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
+        cmd = 'esearch -db {} -query "{}" | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
             database, entrez_query, xtract_format[database], output_filepath)
 
         process = Popen(cmd, shell=True)
