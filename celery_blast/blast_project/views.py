@@ -26,7 +26,7 @@ from one_way_blast.py_django_db_services import get_users_one_way_blast_projects
     get_users_one_way_remote_blast_projects
 from .py_biopython import calculate_pfam_and_protein_links_from_queries
 from refseq_transactions.py_refseq_transactions import get_downloaded_databases
-from external_tools.tasks import download_cdd_database
+from external_tools.tasks import setup_cathi_download_cdd_refseq_genbank_assembly_files
 from Bio import Entrez
 from os.path import isfile
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
@@ -35,18 +35,18 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 
 '''setup_cathi_view
 
-    This function executes the celery_task download_and_decompress_cdd_database.
-    Additionally the function will also download the refseq and genbank assembly summary files.
+    This function executes the celery_task setup_cathi_download_cdd_refseq_genbank_assembly_files.
+    The function will download and decompress the CDD database and the refseq and genbank assembly
+    summary files.
     
 '''
 @login_required(login_url='login')
 def setup_cathi_view(request):
     try:
         if request.method == "POST":
-            download_cdd_database.delay()
+            setup_cathi_download_cdd_refseq_genbank_assembly_files.delay()
         else:
-            raise Exception("There is no GET method for this view")
-
+            raise Exception("[-] ERROR. There is no GET method for this view")
         return redirect("blast_project_dashboard")
     except Exception as e:
         return failure_view(request, e)
@@ -102,7 +102,7 @@ def dashboard_view(request):
 
 '''active_table_view
     
-    This view is part of the navigation bar 
+    This view is part of the navigation bar.
 '''
 @login_required(login_url='login')
 def active_table_view(request, selected_table:str):
@@ -214,7 +214,7 @@ def project_creation_view(request):
                 return redirect('project_details', project_id=blast_project.id)
 
             else:  # RETURN PROJECT CREATION VIEW WITH VALIDATION ERRORS
-                # TODO what happens if taxdb is not there - downloading database
+                # TODO what happens if taxdb is not there - downloading database?
                 if check_if_taxdb_exists():
                     taxdb = True
                 else:

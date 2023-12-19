@@ -271,16 +271,18 @@ def check_database_integrity(self, path_to_database:str, database_name:str):
     except Exception as e:
         raise Exception("[-] ERROR during BLAST database integrity check with exception: {}".format(e))
 
-'''download_cdd_database
+'''setup_cathi_download_cdd_refseq_genbank_assembly_files
 
     Function for downloading the cdd database. The function checks if a directory exists and 
     removes previously downloaded files. It then downloads the CDD database from: CDD_DATABASE_URL
+    After successfully downloading the CDD database, this function downloads the RefSeq and GenBank 
+    assembly summary files.
 
 '''
 
 
 @shared_task(bind=True)
-def download_cdd_database(self):
+def setup_cathi_download_cdd_refseq_genbank_assembly_files(self):
     try:
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
@@ -316,8 +318,8 @@ def download_cdd_database(self):
         download_directory = BLAST_DATABASE_DIR + 'CDD'
         logger.info("downloading CDD into {}".format(download_directory))
         proc = Popen(["wget", cdd_ftp_path, "-q", "-O", path_to_cdd_location], shell=False)
-        returncode = proc.wait(timeout=2000)
-        progress_recorder.set_progress(80, 100, "PROGRESS")
+        returncode = proc.wait(timeout=4000)
+        progress_recorder.set_progress(70, 100, "PROGRESS")
         if returncode != 0:
             logger.warning("error during donwload of the cdd database")
             raise SubprocessError
@@ -325,8 +327,8 @@ def download_cdd_database(self):
         proc = Popen(
             ["tar", "-zxvf", path_to_cdd_location, "-C", download_directory + '/'],
             shell=False)
-        returncode = proc.wait(timeout=800)
-        progress_recorder.set_progress(99, 100, "PROGRESS")
+        returncode = proc.wait(timeout=2000)
+        progress_recorder.set_progress(80, 100, "PROGRESS")
         if returncode != 0:
             logger.warning("error during extraction of the cdd database")
             raise SubprocessError
@@ -337,11 +339,16 @@ def download_cdd_database(self):
         domain_database_model = domain_database_query_set[0]
         domain_database_model.domain_database_loaded = True
         domain_database_model.save()
-        download_refseq_assembly_summary("RefSeq")
-        download_refseq_assembly_summary("GenBank")
+
+        try:
+            download_refseq_assembly_summary("RefSeq")
+            download_refseq_assembly_summary("GenBank")
+        except Exception as e:
+            logger.warning("error during download of the RefSeq and/or GenBank assembly summary files.")
+            raise Exception("[-] ERROR during download of RefSeq and/or GenBank summary files with exception: {}.".format(e))
     except TimeoutExpired as e:
         logger.warning("error during downloading the cdd database, timeout expired with exception: {}".format(e))
-        raise Exception("[-] ERROR timeout expired for downloading the cdd database ...")
+        raise Exception("[-] ERROR timeout expired for downloading the cdd database with exception: {}".format(e))
 
     except Exception as e:
         raise Exception("[-] ERROR during downloading and decompressing the CDD database with exception: {}".format(e))
