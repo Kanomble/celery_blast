@@ -122,8 +122,8 @@ def one_way_remote_project_details_view(request, project_id):
 
         blast_project = get_one_way_remote_project_by_id(project_id)
         context = {}
-        if blast_project.project_execution_task_result:
-            if blast_project.project_execution_task_result.status == 'FAILURE':
+        if blast_project.r_project_execution_task_result:
+            if blast_project.r_project_execution_task_result.status == 'FAILURE':
                 hits = check_amount_of_blast_hits(project_id, 'remote')
                 if hits == 0:
                     context['no_hits'] = True

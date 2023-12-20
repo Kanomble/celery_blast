@@ -34,7 +34,7 @@ from .models import EntrezSearch
     :returns returncode
         :type int
 '''
-def execute_entrez_search(database: str, entrez_query: str, output_filepath: str, entrez_search: EntrezSearch) -> int:
+def execute_entrez_search(database: str, number_records: str, entrez_query: str, output_filepath: str, entrez_search: EntrezSearch) -> int:
     # starts an Esearch which downloads the requested search with the selected database and saves it in a file
     # for adding  more databases, the columns need to be added here, in the models.py get_pandas_table function and in forms.py to the EntrezSearchForm class
     try:
@@ -45,8 +45,8 @@ def execute_entrez_search(database: str, entrez_query: str, output_filepath: str
         xtract_format['cdd'] = "Id Title Subtitle Abstract"
         xtract_format['protfam'] = "Id DispMethod DispReviewLevel string"
 
-        cmd = 'esearch -db {} -query "{}" | efetch -format docsum | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
-            database, entrez_query, xtract_format[database], output_filepath)
+        cmd = 'esearch -db {} -query "{}" | efetch -format docsum -start 0 -stop {} | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
+            database, entrez_query,number_records, xtract_format[database], output_filepath)
 
         process = Popen(cmd, shell=True)
         try:

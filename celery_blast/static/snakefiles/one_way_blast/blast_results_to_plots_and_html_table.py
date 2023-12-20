@@ -110,7 +110,6 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
 '''
 def create_color_callback(p_legend, current_selection: ColumnDataSource, data: ColumnDataSource, color_dict: dict,
                           menu_qseqids: MultiSelect) -> MultiSelect:
-    print(type(p_legend))
     callback = CustomJS(
         args=dict(legend=p_legend, sc=current_selection, source=data, color_dict=color_dict, menu_qseqids=menu_qseqids),
         code='''  

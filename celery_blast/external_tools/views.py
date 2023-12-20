@@ -306,9 +306,13 @@ def entrez_dashboard_view(request: WSGIRequest):
             entrez_search_form = EntrezSearchForm(request.POST)
             if entrez_search_form.is_valid():
                 database = entrez_search_form.cleaned_data['database']
+                number_records = entrez_search_form.cleaned_data['number_records']
                 entrez_query = entrez_search_form.cleaned_data[
                     'entrez_query']  # needs an if clause to check if in db already
-                entrez_search_task.delay(database, entrez_query, request.user.id)
+
+                print("[+] HELLO from server ", entrez_search_form.cleaned_data)
+
+                entrez_search_task.delay(database,number_records, entrez_query, request.user.id)
 
                 entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
                     request.user.id)

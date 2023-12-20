@@ -391,7 +391,7 @@ def download_entrez_search_associated_protein_sequences(self, search_id: int):
 
 
 @shared_task(bind=True)
-def entrez_search_task(self, database: str, entrez_query: str, user_id: int):
+def entrez_search_task(self, database: str,number_records: str, entrez_query: str, user_id: int):
     try:
         logger.info("trying to start entrez search")
         progress_recorder = ProgressRecorder(self)
@@ -407,7 +407,7 @@ def entrez_search_task(self, database: str, entrez_query: str, user_id: int):
                                                  task_result_id=self.request.id,
                                                  user_id=user_id)
 
-        returncode = execute_entrez_search(database, entrez_query, esearch_output_filepath, entrez_search)
+        returncode = execute_entrez_search(database, number_records, entrez_query, esearch_output_filepath, entrez_search)
 
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))

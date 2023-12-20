@@ -18,7 +18,7 @@ class EntrezSearchForm(forms.Form):
 
     database = forms.ChoiceField(choices=DATABASES,
                                  initial=('protein', 'protein'))
-
+    number_records = forms.IntegerField(initial=100, min_value=1, max_value=10000)
 
 '''RpsBLASTSettingsForm
 

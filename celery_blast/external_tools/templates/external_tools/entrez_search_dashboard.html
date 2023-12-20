@@ -57,7 +57,15 @@
                         </div>
                     {% endif %}
                 </div>
-
+                <div class="form-group col-sm-4" style="margin: 20px">
+                    <label for="number_records"> Limit Your Search </label>
+                    <input type="number" class="form-control" id="number_records" name="number_records" value="100">
+                    {% if EntrezSearchForm.number_records.errors %}
+                        <div class="alert alert-danger">
+                            <strong>{{ EntrezSearchForm.number_records.errors }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
                 <div class="form-group col-sm-4" style="margin: 20px">
                     <label for="database">Select a NCBI Database </label>
                     <select class="form-control" id="database" name="database">

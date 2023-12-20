@@ -46,19 +46,37 @@
         {% endif %}
 
         {% if DownloadInProgressBlastDatabases.count > 0 %}
-            <div class="dashboard_project_list_col" style="margin-bottom: 30px">
+            <div class="dashboard_project_list_col"  style="margin-bottom: 30px;
+                                                            display: flex;
+                                                            flex-direction: column;
+                                                            align-items: center;
+                                                             justify-content: center;">
+                <h3> BLAST Database Download Process </h3>
+                <br>
                 {% include "refseq_transactions/table_download_in_progress_databases.html" %}
             </div>
         {% endif %}
 
         {% if ActiveBlastDatabases.count > 0 %}
-            <div class="dashboard_project_list_col" style="margin-bottom: 30px">
+            <div class="dashboard_project_list_col" style="margin-bottom: 30px;
+                                                            display: flex;
+                                                            flex-direction: column;
+                                                            align-items: center;
+                                                             justify-content: center;">
+                <h3> Active BLAST Databases </h3>
+                <br>
                 {% include "refseq_transactions/table_active_blast_databases.html" %}
             </div>
         {% endif %}
 
         {% if UnactiveBlastDatabases.count > 0 %}
-            <div class="dashboard_project_list_col" style="margin-bottom: 30px">
+            <div class="dashboard_project_list_col"  style="margin-bottom: 30px;
+                                                            display: flex;
+                                                            flex-direction: column;
+                                                            align-items: center;
+                                                             justify-content: center;">
+                <h3> Unactive BLAST Databases </h3>
+                <br>
                 {% include "refseq_transactions/table_unactive_blast_databases.html" %}
             </div>
         {% endif %}
