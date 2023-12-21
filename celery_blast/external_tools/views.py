@@ -1,3 +1,5 @@
+# TODO Documentation
+
 import os
 from json import loads
 from time import sleep
@@ -277,7 +279,7 @@ def download_protein_by_organisms_from_entrez_search(request: WSGIRequest, searc
         return failure_view(request, e)
 
 
-# unfinished
+# TODO unfinished
 @login_required(login_url='login')
 def delete_search_view(request: WSGIRequest, search_id: int):
     # delete edirectpaper file entry based on search_id
