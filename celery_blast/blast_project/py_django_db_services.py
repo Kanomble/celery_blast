@@ -1,5 +1,5 @@
 import os
-from .models import BlastProject, BlastSettings
+from .models import BlastProject, BlastSettings, RemoteBlastProject
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from external_tools.models import ExternalTools, QuerySequences, DomainDatabase
 from blast_project import py_biopython as pyb
@@ -8,7 +8,7 @@ from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
 from pandas import read_csv, Series
 from shutil import rmtree
-from celery_blast.settings import BLAST_DATABASE_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR
 
 '''update_assembly_entries_in_database
     
@@ -194,6 +194,8 @@ def create_external_tools_after_snakemake_workflow_finishes(project_id: int) -> 
 def get_users_blast_projects(userid: int):
     return BlastProject.objects.get_blast_projects_by_userid(userid)
 
+def get_users_remote_blast_projects(userid: int):
+    return RemoteBlastProject.objects.get_blast_projects_by_userid(userid)
 
 ''' get_all_blast_databases
 
@@ -251,6 +253,9 @@ def delete_failed_or_unknown_databases():
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)
 
+def get_remote_project_by_id(project_id):
+    return RemoteBlastProject.objects.get(id=project_id)
+
 
 ''' create_project_from_form
 
@@ -275,7 +280,7 @@ the postgresql database. The input for this function is maintained by the py_pro
 
 def create_project_from_form(valid_project_form, user, fw_settings, bw_settings, query_sequence_filename,
                              symblast_settings_form,
-                             filepath='media/blast_projects/'):
+                             filepath=BLAST_PROJECT_DIR):
     try:
         blast_project = BlastProject.objects.create_blast_project(
             project_title=valid_project_form.cleaned_data['project_title'],
@@ -293,6 +298,29 @@ def create_project_from_form(valid_project_form, user, fw_settings, bw_settings,
         return blast_project
     except Exception as e:
         raise IntegrityError('couldnt create blast project with exception : {}'.format(e))
+
+
+def create_remote_project_from_form(valid_project_form, user, fw_settings, bw_settings, query_sequence_filename,
+                             symblast_settings_form,
+                             filepath=REMOTE_BLAST_PROJECT_DIR):
+    try:
+        blast_project = RemoteBlastProject.objects.create_blast_project(
+            r_project_title=valid_project_form.cleaned_data['r_project_title'],
+            r_search_strategy='blastp',
+            r_project_query_sequences=query_sequence_filename,
+            r_project_user=user,
+            r_project_forward_settings=fw_settings,
+            r_project_backward_settings=bw_settings,
+            r_project_settings=symblast_settings_form,
+            r_project_forward_database=valid_project_form.cleaned_data['r_project_forward_database'],
+            r_project_backward_database=valid_project_form.cleaned_data['r_project_backward_database'],
+            r_species_name_for_backward_blast=valid_project_form.cleaned_data['r_species_name_for_backward_blast'],
+            filepath=filepath
+        )
+        return blast_project
+    except Exception as e:
+        raise IntegrityError('couldnt create blast project with exception : {}'.format(e))
+
 
 
 # TODO documentation

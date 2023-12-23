@@ -12,7 +12,8 @@ This Website can be used for the creation of reciprocal BLAST projects.
 
 {% block header %}
 {% endblock %}
-
+{% block extend_body %} {% if RemoteProjectCreationForm.errors %} onload="loadRemoteOrLocal('remote')" {% endif %}
+    {% if ProjectCreationForm.errors %} onload="loadRemoteOrLocal('local')" {% endif %} {% endblock %}
 {% block content %}
 <div id="post_form_container">
     <div class="dashboard_project_list_col">
@@ -87,11 +88,35 @@ This Website can be used for the creation of reciprocal BLAST projects.
                     Return to the Dashboard and download the CDD.</p>
             </div>
         {% else %}
-            <div class="dashboard_project_list_col" >
+
+            <div class="text-center dashboard_project_list_col">
+                <form name="project_creation_menu" action="javascript:void(0)" id="one_way_project_creation_form">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input class="custom-control-input" type="radio" id="local" name="local_search_button" value="local"
+                               onchange="loadRemoteOrLocal(this.value)">
+                        <label class="custom-control-label" for="local">Search Against Available Local BLAST Databases</label>
+                    </div>
+
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input class="custom-control-input" type="radio" id="remote" name="remote_search_button" value="remote"
+                               onchange="loadRemoteOrLocal(this.value)">
+                        <label class="custom-control-label" for="remote">Search Against Available Remote BLAST Databases</label>
+                    </div>
+                </form>
+            </div>
+
+            <div class="dashboard_project_list_col" id="project_creation_local" style="display: none">
                 {% include "blast_project/form_project_creation.html" %}
                 <br>
                 <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
             </div>
+
+            <div class="dashboard_project_list_col" id="project_creation_remote" style="display: none">
+                {% include "blast_project/form_remote_project_creation.html" %}
+                <br>
+                <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
+            </div>
+
         {% endif %}
     {% endif %}
     {% if taxdb == False %}

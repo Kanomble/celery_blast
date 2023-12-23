@@ -6,66 +6,78 @@
     {% csrf_token %}
 
      <div class="form-group">
-        <label for="project_title">Project Title</label>
-        <input type="text" class="form-control" id="project_title" name="project_title">
-        {% if ProjectCreationForm.project_title.errors %}
+        <label for="r_project_title">Project Title</label>
+        <input type="text" class="form-control" id="r_project_title" name="r_project_title">
+        {% if RemoteProjectCreationForm.r_project_title.errors %}
         <div class="alert alert-danger">
-            <strong>{{ ProjectCreationForm.project_title.errors }}</strong>
+            <strong>{{ RemoteProjectCreationForm.r_project_title.errors }}</strong>
         </div>
         {% endif %}
     </div>
 
 
     <div class="form-group">
-        <label for="query_sequence_file"> Query Sequences as FASTA File </label>
+        <label for="r_query_sequence_file"> Query Sequences as FASTA File </label>
             <!--
             <span class="badge badge-info">  In FASTA format (with sequence name)
             </span></label>
             -->
-        <input type="file" class="form-control-file" id="query_sequence_file" name="query_sequence_file">
-        {% if ProjectCreationForm.query_sequence_file.errors %}
+        <input type="file" class="form-control-file" id="r_query_sequence_file" name="r_query_sequence_file">
+        {% if RemoteProjectCreationForm.r_query_sequence_file.errors %}
             <div class="alert alert-danger">
-                <strong>{{ ProjectCreationForm.query_sequence_file.errors }}</strong>
+                <strong>{{ RemoteProjectCreationForm.r_query_sequence_file.errors }}</strong>
             </div>
         {% endif %}
     </div>
 
     <div class="form-group">
-            <label for="query_sequence_text">Protein Identifiers:</label>
-            <input type="text" class="form-control" id="query_sequence_text" name="query_sequence_text">
-            {% if ProjectCreationForm.query_sequence_text.errors %}
+            <label for="r_query_sequence_text">Protein Identifiers:</label>
+            <input type="text" class="form-control" id="r_query_sequence_text" name="r_query_sequence_text">
+            {% if RemoteProjectCreationForm.r_query_sequence_text.errors %}
             <div class="alert alert-danger">
-                <strong>{{ ProjectCreationForm.query_sequence_text.errors }}</strong>
+                <strong>{{ RemoteProjectCreationForm.r_query_sequence_text.errors }}</strong>
             </div>
             {% endif %}
     </div>
 
     <div class="form-group">
-        <label for="project_forward_database"> Select a BLAST Database for the forward BLAST </label>
-        <select class="form-control" id="project_forward_database" name="project_forward_database">
+        <label for="r_project_forward_database"> Select a BLAST Database for the forward BLAST </label>
+        <select class="form-control" id="r_project_forward_database" name="r_project_forward_database">
 
-            {% for database in ProjectCreationForm.project_forward_database %}
+            {% for database in RemoteProjectCreationForm.r_project_forward_database %}
                 {{database}}
             {% endfor %}
 
         </select>
     </div>
     <div class="form-group">
-        <label for="project_backward_database"> Select a BLAST Database for the backward BLAST </label>
-        <select class="form-control" id="project_backward_database" name="project_backward_database">
+        <label for="r_project_backward_database"> Select a BLAST Database for the backward BLAST </label>
+        <select class="form-control" id="r_project_backward_database" name="r_project_backward_database">
 
-            {% for database in ProjectCreationForm.project_backward_database %}
+            {% for database in RemoteProjectCreationForm.r_project_backward_database %}
                 {{database}}
             {% endfor %}
 
         </select>
     </div>
+
+
+    <div class="form-group">
+        <label for="r_entrez_query">Optional Query For Limiting BLAST Searches By Taxonomy - <a href="https://blast.ncbi.nlm.nih.gov/doc/blast-topics/blastsearchparams.html#limit-by-entrez-query"> Entrez Query Examples </a> </label>
+        <input type="text" class="form-control" id="r_entrez_query" name="r_entrez_query">
+        {% if RemoteProjectCreationForm.r_entrez_query.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ RemoteProjectCreationForm.r_entrez_query.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
      <div class="form-group">
-        <label for="species_name_for_backward_blast">Species Name for the Backward BLAST</label>
-        <input type="text" class="form-control" id="species_name_for_backward_blast" name="species_name_for_backward_blast">
-        {% if ProjectCreationForm.species_name_for_backward_blast.errors %}
+        <label for="r_species_name_for_backward_blast">Species Name for the Backward BLAST</label>
+        <input type="text" class="form-control" id="r_species_name_for_backward_blast" name="r_species_name_for_backward_blast">
+        {% if RemoteProjectCreationForm.r_species_name_for_backward_blast.errors %}
         <div class="alert alert-danger">
-            <strong>{{ ProjectCreationForm.species_name_for_backward_blast.errors }}</strong>
+            <strong>{{ RemoteProjectCreationForm.r_species_name_for_backward_blast.errors }}</strong>
         </div>
         {% endif %}
     </div>
@@ -271,5 +283,6 @@
             </div>
     </div>
     <br>
+    <input type="hidden" value="remote" id="project_type" name="project_type">
     <input type="submit" value="Submit" class="btn btn-dark">
 </form>

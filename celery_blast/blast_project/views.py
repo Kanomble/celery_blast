@@ -9,18 +9,20 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .view_access_decorators import unauthenticated_user
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
-    ProjectCreationForm, BlastSettingsFormBackward, BlastSettingsFormForward, UploadGenomeForm, \
+    ProjectCreationForm, RemoteProjectCreationForm, BlastSettingsFormBackward, \
+    BlastSettingsFormForward, UploadGenomeForm, \
     CreateTaxonomicFileForMultipleScientificNames, SymBLASTProjectSettingsForm
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
     execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
     calculate_database_statistics_task
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
-    read_task_logs_summary_table, download_project_directory, delete_domain_database
-from .py_project_creation import create_blast_project
+    read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id
+from .py_project_creation import create_blast_project, create_remote_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json, get_database_selection_task_status
-from .py_django_db_services import get_users_blast_projects, get_project_by_id, save_uploaded_genomes_into_database, \
+from .py_django_db_services import get_users_blast_projects, get_users_remote_blast_projects, get_project_by_id, \
+    save_uploaded_genomes_into_database, get_remote_project_by_id, \
     save_uploaded_multiple_file_genomes_into_database, delete_failed_or_unknown_databases, get_domain_database_model
 from one_way_blast.py_django_db_services import get_users_one_way_blast_projects, \
     get_users_one_way_remote_blast_projects
@@ -31,7 +33,7 @@ from Bio import Entrez
 from os.path import isfile
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR
 
 '''setup_cathi_view
 
@@ -125,6 +127,10 @@ def active_table_view(request, selected_table:str):
                 available_blast_databases = get_downloaded_databases()
                 context['ActiveBlastDatabases'] = available_blast_databases
                 return render(request, 'blast_project/table_downloaded_and_formatted_blast_databases.html', context)
+            elif selected_table == "reciprocal_remote_blast_projects":
+                users_remote_blast_projects = get_users_remote_blast_projects(request.user.id)
+                context['blast_projects'] = users_remote_blast_projects
+                return render(request, 'blast_project/table_remote_blast_projects.html', context)
             else:
                 raise Exception("There is no table view with an selected_table value of: {}".format(selected_table))
         else:
@@ -159,91 +165,148 @@ def active_table_view(request, selected_table:str):
 def project_creation_view(request):
     try:
         if request.method == 'POST':
-            project_creation_form = ProjectCreationForm(request.user, request.POST, request.FILES)
-            blast_settings_forward_form = BlastSettingsFormForward(request.POST)
-            blast_settings_backward_form = BlastSettingsFormBackward(request.POST)
-            symblast_project_settings_form = SymBLASTProjectSettingsForm(request.POST)
-            # RETURN PROJECT DETAILS VIEW
-            if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() \
-                    and blast_settings_backward_form.is_valid() and symblast_project_settings_form.is_valid():
-                query_sequence_file = project_creation_form.cleaned_data['query_sequence_file']
-                query_sequences = project_creation_form.cleaned_data['query_sequence_text']
+            if request.POST['project_type'] == 'local':
 
-                try:
-                    with transaction.atomic():
-                        # user uploaded a fasta file
-                        if query_sequence_file != None:
-                            blast_project = create_blast_project(
-                                user=request.user,
-                                query_file_name=query_sequence_file.name,
-                                project_form=project_creation_form,
-                                fw_settings_form=blast_settings_forward_form,
-                                bw_settings_form=blast_settings_backward_form,
-                                symblast_settings_form=symblast_project_settings_form,
-                                filepath=BLAST_PROJECT_DIR)
-                            path_to_query_file = BLAST_PROJECT_DIR + str(
-                                blast_project.id) + '/' + query_sequence_file.name
-                            upload_file(query_sequence_file, path_to_query_file)
+                project_creation_form = ProjectCreationForm(request.user, request.POST, request.FILES)
+                blast_settings_forward_form = BlastSettingsFormForward(request.POST)
+                blast_settings_backward_form = BlastSettingsFormBackward(request.POST)
+                symblast_project_settings_form = SymBLASTProjectSettingsForm(request.POST)
+                # RETURN PROJECT DETAILS VIEW
+                if project_creation_form.is_valid() and blast_settings_forward_form.is_valid() \
+                        and blast_settings_backward_form.is_valid() and symblast_project_settings_form.is_valid():
+                    query_sequence_file = project_creation_form.cleaned_data['query_sequence_file']
+                    query_sequences = project_creation_form.cleaned_data['query_sequence_text']
 
-                        # user provided sequence identifier
-                        elif query_sequences != '':
-                            query_file_name = "target_sequences.faa"
-                            blast_project = create_blast_project(
-                                user=request.user,
-                                query_file_name=query_file_name,
-                                project_form=project_creation_form,
-                                fw_settings_form=blast_settings_forward_form,
-                                bw_settings_form=blast_settings_backward_form,
-                                symblast_settings_form=symblast_project_settings_form,
-                                filepath=BLAST_PROJECT_DIR)
+                    try:
+                        with transaction.atomic():
+                            # user uploaded a fasta file
+                            if query_sequence_file != None:
+                                blast_project = create_blast_project(
+                                    user=request.user,
+                                    query_file_name=query_sequence_file.name,
+                                    project_form=project_creation_form,
+                                    fw_settings_form=blast_settings_forward_form,
+                                    bw_settings_form=blast_settings_backward_form,
+                                    symblast_settings_form=symblast_project_settings_form,
+                                    filepath=BLAST_PROJECT_DIR)
+                                path_to_query_file = BLAST_PROJECT_DIR + str(
+                                    blast_project.id) + '/' + query_sequence_file.name
+                                upload_file(query_sequence_file, path_to_query_file)
 
-                            path_to_query_file = BLAST_PROJECT_DIR + str(blast_project.id) + '/' + query_file_name
-                            if type(query_sequences) != Entrez.Parser.ListElement:
-                                raise Exception("wrong protein data for form field query_sequence_text")
+                            # user provided sequence identifier
+                            elif query_sequences != '':
+                                query_file_name = "target_sequences.faa"
+                                blast_project = create_blast_project(
+                                    user=request.user,
+                                    query_file_name=query_file_name,
+                                    project_form=project_creation_form,
+                                    fw_settings_form=blast_settings_forward_form,
+                                    bw_settings_form=blast_settings_backward_form,
+                                    symblast_settings_form=symblast_project_settings_form,
+                                    filepath=BLAST_PROJECT_DIR)
 
-                            with open(path_to_query_file, 'w') as qfile:
-                                for rec in query_sequences:
-                                    txt = ">" + rec['GBSeq_primary-accession'] + " " + rec['GBSeq_definition'] + "\n" + \
-                                          rec[
-                                              'GBSeq_sequence'] + "\n"
-                                    qfile.write(txt)
+                                path_to_query_file = BLAST_PROJECT_DIR + str(blast_project.id) + '/' + query_file_name
+                                if type(query_sequences) != Entrez.Parser.ListElement:
+                                    raise Exception("wrong protein data for form field query_sequence_text")
 
-                except IntegrityError as e:
-                    return failure_view(request, e)
+                                with open(path_to_query_file, 'w') as qfile:
+                                    for rec in query_sequences:
+                                        txt = ">" + rec['GBSeq_primary-accession'] + " " + rec['GBSeq_definition'] + "\n" + \
+                                              rec[
+                                                  'GBSeq_sequence'] + "\n"
+                                        qfile.write(txt)
 
-                return redirect('project_details', project_id=blast_project.id)
+                    except IntegrityError as e:
+                        return failure_view(request, e)
 
-            else:  # RETURN PROJECT CREATION VIEW WITH VALIDATION ERRORS
-                # TODO what happens if taxdb is not there - downloading database?
-                if check_if_taxdb_exists():
-                    taxdb = True
-                else:
-                    # what happens if task runs into any error?
-                    taxdb = False
-                    task = download_and_format_taxdb.delay()
+                    return redirect('project_details', project_id=blast_project.id)
 
-                context = {'ProjectCreationForm': project_creation_form,
-                           'BlastSettingsForwardForm': blast_settings_forward_form,
-                           'BlastSettingsBackwardForm': blast_settings_backward_form,
-                           'SymBLASTProjectSettingsForm':symblast_project_settings_form,
-                           'taxdb': taxdb}
+
+
+                else:  # RETURN PROJECT CREATION VIEW WITH VALIDATION ERROR
+
+                    # gets returned at the end of this function if validation errors occurred
+                    context = {'ProjectCreationForm': project_creation_form,
+                               'BlastSettingsForwardForm': blast_settings_forward_form,
+                               'BlastSettingsBackwardForm': blast_settings_backward_form,
+                               'SymBLASTProjectSettingsForm':symblast_project_settings_form,
+                               'taxdb': check_if_taxdb_exists()}
+            else:
+                # REMOTE BLAST PROJECT CREATION
+                remote_project_creation_form = RemoteProjectCreationForm(request.user, request.POST, request.FILES)
+                blast_settings_forward_form = BlastSettingsFormForward(request.POST)
+                blast_settings_backward_form = BlastSettingsFormBackward(request.POST)
+                symblast_project_settings_form = SymBLASTProjectSettingsForm(request.POST)
+                # RETURN PROJECT DETAILS VIEW
+                if remote_project_creation_form.is_valid() and blast_settings_forward_form.is_valid() \
+                        and blast_settings_backward_form.is_valid() and symblast_project_settings_form.is_valid():
+                    query_sequence_file = remote_project_creation_form.cleaned_data['r_query_sequence_file']
+                    query_sequences = remote_project_creation_form.cleaned_data['r_query_sequence_text']
+                    try:
+                        with transaction.atomic():
+                            # user uploaded a fasta file
+                            if query_sequence_file != None:
+                                blast_project = create_remote_blast_project(
+                                    user=request.user,
+                                    query_file_name=query_sequence_file.name,
+                                    project_form=remote_project_creation_form,
+                                    fw_settings_form=blast_settings_forward_form,
+                                    bw_settings_form=blast_settings_backward_form,
+                                    symblast_settings_form=symblast_project_settings_form,
+                                    filepath=REMOTE_BLAST_PROJECT_DIR)
+                                path_to_query_file = REMOTE_BLAST_PROJECT_DIR + str(
+                                    blast_project.id) + '/' + query_sequence_file.name
+                                upload_file(query_sequence_file, path_to_query_file)
+
+                            # user provided sequence identifier
+                            elif query_sequences != '':
+                                query_file_name = "target_sequences.faa"
+                                blast_project = create_remote_blast_project(
+                                    user=request.user,
+                                    query_file_name=query_file_name,
+                                    project_form=remote_project_creation_form,
+                                    fw_settings_form=blast_settings_forward_form,
+                                    bw_settings_form=blast_settings_backward_form,
+                                    symblast_settings_form=symblast_project_settings_form,
+                                    filepath=REMOTE_BLAST_PROJECT_DIR)
+
+                                path_to_query_file = REMOTE_BLAST_PROJECT_DIR + str(blast_project.id) + '/' + query_file_name
+                                if type(query_sequences) != Entrez.Parser.ListElement:
+                                    raise Exception("wrong protein data for form field query_sequence_text")
+
+                                with open(path_to_query_file, 'w') as qfile:
+                                    for rec in query_sequences:
+                                        txt = ">" + rec['GBSeq_primary-accession'] + " " + rec['GBSeq_definition'] + "\n" + \
+                                              rec[
+                                                  'GBSeq_sequence'] + "\n"
+                                        qfile.write(txt)
+
+                    except IntegrityError as e:
+                        return failure_view(request, e)
+
+                    return redirect('remote_project_details', project_id=blast_project.id)
+
+                else:  # RETURN PROJECT CREATION VIEW WITH VALIDATION ERRORS
+                    # gets returned at the end of this function if validation errors occurred
+                    context = {'RemoteProjectCreationForm': remote_project_creation_form,
+                               'BlastSettingsForwardForm': blast_settings_forward_form,
+                               'BlastSettingsBackwardForm': blast_settings_backward_form,
+                               'SymBLASTProjectSettingsForm': symblast_project_settings_form,
+                               'taxdb': check_if_taxdb_exists()}
 
         else:
-            if check_if_taxdb_exists():
-                project_creation_form = ProjectCreationForm(request.user)
-                blast_settings_forward_form = BlastSettingsFormForward()
-                blast_settings_backward_form = BlastSettingsFormBackward()
-                symblast_project_settings_form = SymBLASTProjectSettingsForm()
-                context = {'ProjectCreationForm': project_creation_form,
-                           'BlastSettingsForwardForm': blast_settings_forward_form,
-                           'BlastSettingsBackwardForm': blast_settings_backward_form,
-                           'SymBLASTProjectSettingsForm': symblast_project_settings_form,
-                           'taxdb': True}
+            project_creation_form = ProjectCreationForm(request.user)
+            remote_project_creation_form = RemoteProjectCreationForm(request.user)
 
-            else:
-                # what happens if task runs into any error?
-                context = {'taxdb': False}
-                task = download_and_format_taxdb.delay()
+            blast_settings_forward_form = BlastSettingsFormForward()
+            blast_settings_backward_form = BlastSettingsFormBackward()
+            symblast_project_settings_form = SymBLASTProjectSettingsForm()
+            context = {'ProjectCreationForm': project_creation_form,
+                       'BlastSettingsForwardForm': blast_settings_forward_form,
+                       'BlastSettingsBackwardForm': blast_settings_backward_form,
+                       'SymBLASTProjectSettingsForm': symblast_project_settings_form,
+                       'RemoteProjectCreationForm': remote_project_creation_form,
+                       'taxdb': check_if_taxdb_exists()}
 
         context['domain_database'] = get_domain_database_model()
         return render(request, 'blast_project/project_creation_dashboard.html', context)
@@ -277,6 +340,15 @@ def project_details_view(request, project_id: int):
     except Exception as e:
         return failure_view(request, e)
 
+@login_required(login_url='login')
+def remote_project_details_view(request, project_id: int):
+    try:
+        blast_project = get_remote_project_by_id(project_id)
+        context = {'BlastProject': blast_project,
+                   'Database': blast_project.r_project_forward_database}
+        return render(request, 'blast_project/remote_project_details_dashboard.html', context)
+    except Exception as e:
+        return failure_view(request, e)
 
 '''project_delete_view
 
@@ -299,6 +371,18 @@ def project_delete_view(request, project_id: int):
     try:
         if request.method == "POST":
             delete_project_and_associated_directories_by_id(project_id)
+            return success_view(request)
+        else:
+            return project_details_view(request, project_id)
+    except Exception as e:
+        return failure_view(request, e)
+
+
+@login_required(login_url='login')
+def remote_project_delete_view(request, project_id: int):
+    try:
+        if request.method == "POST":
+            delete_remote_project_and_associated_directories_by_id(project_id)
             return success_view(request)
         else:
             return project_details_view(request, project_id)
@@ -339,7 +423,7 @@ def ajax_wp_to_links(request, project_id: int):
 
 
 @login_required(login_url='login')
-def execute_reciprocal_blast_project_view(request, project_id: int):
+def start_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
             blast_project = get_project_by_id(project_id)
@@ -354,6 +438,23 @@ def execute_reciprocal_blast_project_view(request, project_id: int):
     except Exception as e:
         return failure_view(request, e)
 
+
+def start_remote_reciprocal_blast_project_view(request, project_id: int):
+    try:
+        if request.method == 'POST':
+            blast_project = get_remote_project_by_id(project_id)
+            if blast_project.r_project_execution_snakemake_task:
+                if blast_project.r_project_execution_snakemake_task.status != 'FAILURE':
+                    return redirect('project_details', project_id=project_id)
+                else:
+                    pass
+                    #execute_reciprocal_blast_project.delay(project_id)
+            else:
+                pass
+                #execute_reciprocal_blast_project.delay(project_id)
+        return redirect('project_details', project_id=project_id)
+    except Exception as e:
+        return failure_view(request, e)
 
 '''load_reciprocal_result_html_table_view
 

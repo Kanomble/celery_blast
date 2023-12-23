@@ -344,7 +344,8 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
-- [ ] fix one-way BLAST snakemake pipeline
+- [ ] add validation for entrez_queries
+- [x] fix one-way BLAST snakemake pipeline
 - [ ] add videos, links to init page
 - [ ] add option to filter for genomes directly within the refseq/genbank assembly summary files
 - [ ] add option to selection contrained phylogeny just with selection based on taxonomic units

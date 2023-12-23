@@ -5,7 +5,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError
-from .managers import BlastProjectManager
+from .managers import BlastProjectManager, RemoteBlastProjectManager
 from refseq_transactions.models import BlastDatabase
 from os.path import isdir, isfile
 from os import mkdir, listdir
@@ -411,28 +411,33 @@ class RemoteBlastProject(models.Model):
         BlastSettings,
         on_delete=models.CASCADE,
         verbose_name="settings for the forward BLAST execution",
-        related_name='project_forward_settings')
+        related_name='r_project_forward_settings')
 
     r_project_backward_settings = models.OneToOneField(
         BlastSettings,
         on_delete=models.CASCADE,
         verbose_name="settings for the backward BLAST execution",
-        related_name='project_backward_settings')
+        related_name='r_project_backward_settings')
 
     # each project can have one forward BlastDatabase
     r_project_forward_database = models.CharField(
         max_length=20,
         default='nr',
         verbose_name="BLAST program that is used inside snakemake execution",
-        related_name = "project_database"
     )
 
+    r_entrez_query = models.CharField(
+        max_length=500,
+        default='',
+        blank=True, null=True,
+        verbose_name="Optional ENTREZ query for filtering the associated remote database",
+    )
 
     r_project_backward_database = models.ForeignKey(
         BlastDatabase,
         on_delete=models.CASCADE,
         verbose_name="associated backward BLAST database",
-        related_name="project_backward_database"
+        related_name="r_project_backward_database"
     )
 
     r_species_name_for_backward_blast = models.CharField(
@@ -445,26 +450,26 @@ class RemoteBlastProject(models.Model):
         TaskResult,
         on_delete=models.SET_NULL,
         blank=True, null=True,
-        related_name="project_execution_snakemake_task",
+        related_name="r_project_execution_snakemake_task",
         verbose_name="django_celery_results taskresult model for this projects snakemake pipeline")
 
     r_project_database_statistics_task = models.OneToOneField(
         TaskResult,
         on_delete=models.SET_NULL,
         blank=True, null=True,
-        related_name="project_database_statistics_task",
+        related_name="r_project_database_statistics_task",
         verbose_name="django_celery_results taskresult model for this projects database statistics")
 
     r_project_database_statistics_task_selection = models.OneToOneField(
         TaskResult,
         on_delete=models.SET_NULL,
         blank=True, null=True,
-        related_name="project_database_statistics_task_selection",
+        related_name="r_project_database_statistics_task_selection",
         verbose_name="django_celery_results taskresult model for this "
                      "projects database statistics phylogenetic inference based on user selection task")
 
     # customized initialization can be added in BlastProjectManager (e.g. direct creation of project directory
-    objects = BlastProjectManager()
+    objects = RemoteBlastProjectManager()
 
     # overwritten functions
     def __str__(self):
@@ -484,7 +489,7 @@ class RemoteBlastProject(models.Model):
             :type list[str]
     '''
 
-    def get_list_of_query_sequences(self, filepath=BLAST_PROJECT_DIR):
+    def get_list_of_query_sequences(self, filepath=REMOTE_BLAST_PROJECT_DIR):
         try:
             query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
             query_file = open(query_sequence_file_path, 'r')
@@ -510,7 +515,7 @@ class RemoteBlastProject(models.Model):
 
     '''
 
-    def get_fasta_header_of_query_sequences(self, filepath=BLAST_PROJECT_DIR):
+    def get_fasta_header_of_query_sequences(self, filepath=REMOTE_BLAST_PROJECT_DIR):
         try:
             query_sequence_file_path = self.get_project_query_sequence_filepath(filepath)
             query_file = open(query_sequence_file_path, 'r')
@@ -537,7 +542,7 @@ class RemoteBlastProject(models.Model):
     def get_project_dir(self):
         return REMOTE_BLAST_PROJECT_DIR + str(self.id)
 
-    def get_project_query_sequence_filepath(self, filepath=BLAST_PROJECT_DIR):
+    def get_project_query_sequence_filepath(self, filepath=REMOTE_BLAST_PROJECT_DIR):
         return filepath + str(self.id) + '/' + self.r_project_query_sequences
 
     def if_executed_return_associated_taskresult_model(self):
@@ -582,13 +587,14 @@ class RemoteBlastProject(models.Model):
             :type str
     '''
 
-    def write_snakemake_configuration_file(self, project_settings, filepath=BLAST_PROJECT_DIR):
+    def write_snakemake_configuration_file(self, project_settings, filepath=REMOTE_BLAST_PROJECT_DIR):
         try:
             with open(filepath + str(self.id) + '/snakefile_config', 'w') as snk_config_file:
                 # database path from media/blast_projects/project_id as working directory for snakemake
                 snk_config_file.write('project_id: ' + str(self.id) + "\n")
                 snk_config_file.write('blastdb: ' + str(
-                    self.r_project_forward_database) + "\"\n")
+                    self.r_project_forward_database) + "\n")
+                snk_config_file.write('entrez_query:' + "\n")
                 snk_config_file.write('backwarddb: ' + "\"" + "../../databases/" + str(
                     self.r_project_backward_database.id) + "/" + self.r_project_backward_database.get_pandas_table_name() + ".database\"\n")
                 snk_config_file.write('query_sequence: ' + "\"" + self.r_project_query_sequences + "\"\n")
@@ -623,7 +629,7 @@ class RemoteBlastProject(models.Model):
 
     '''
 
-    def read_query_information_table(self, filepath=BLAST_PROJECT_DIR):
+    def read_query_information_table(self, filepath=REMOTE_BLAST_PROJECT_DIR):
         def clean_feature_column(features):
             new_feature_column = []
             try:
@@ -675,7 +681,7 @@ class RemoteBlastProject(models.Model):
 
     def return_list_of_all_logfiles(self) -> list:
         try:
-            path_to_project_dir = BLAST_PROJECT_DIR + str(self.id) + "/log"
+            path_to_project_dir = REMOTE_BLAST_PROJECT_DIR + str(self.id) + "/log"
             if isdir(path_to_project_dir) == False:
                 return []
             else:

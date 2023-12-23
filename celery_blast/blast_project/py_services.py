@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .models import BlastProject
+from .models import BlastProject, RemoteBlastProject
 from refseq_transactions.models import BlastDatabase
 from external_tools.models import DomainDatabase
 
@@ -10,7 +10,7 @@ from subprocess import check_output
 from shutil import rmtree, make_archive
 from wsgiref.util import FileWrapper
 from django.db import IntegrityError, transaction
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, TAXDB_URL
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, TAXDB_URL, REMOTE_BLAST_PROJECT_DIR
 
 '''download_project_directory
     
@@ -49,7 +49,6 @@ def read_task_logs_summary_table() -> pd.DataFrame:
         return logfiles_table
     except Exception as e:
         raise Exception("[-] ERROR reading task_logfile.txt file in {} with exception: {}".format(data_path, e))
-
 
 '''check_if_taxdb_exists
     
@@ -143,6 +142,15 @@ def delete_project_and_associated_directories_by_id(project_id: int) -> None:
     except Exception as e:
         raise IntegrityError("couldnt delete blast project entry : {}".format(e))
 
+def delete_remote_project_and_associated_directories_by_id(project_id: int) -> None:
+    try:
+        with transaction.atomic():
+            project = RemoteBlastProject.objects.get(id=project_id)
+            if isdir(REMOTE_BLAST_PROJECT_DIR + str(project_id)):
+                rmtree(REMOTE_BLAST_PROJECT_DIR + str(project_id))
+            project.delete()
+    except Exception as e:
+        raise IntegrityError("couldnt delete blast project entry : {}".format(e))
 
 ''' create_blastdatabase_directory
     

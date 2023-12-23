@@ -466,6 +466,11 @@ class RemoteProjectCreationForm(forms.Form):
         empty_label=None
     )
 
+    r_entrez_query = forms.CharField(
+        max_length=500,
+        required=False,
+    )
+
     def __init__(self, user, *args, **kwargs):
         super(RemoteProjectCreationForm, self).__init__(*args, **kwargs)
         self.fields['r_user_email'].charfield = user.email

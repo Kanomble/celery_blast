@@ -31,11 +31,11 @@
 
         <h3  class="col_header" style="text-align: center"> Project Details and Execution Dashboard </h3>
         <p style="font-size: medium; text-align: center">
-            {% if BlastProject.project_execution_task_result.status == 'SUCCESS' %}
+            {% if BlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
                 Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
-            {% elif BlastProject.project_execution_task_result.status == 'FAILURE' %}
+            {% elif BlastProject.r_project_execution_task_result.status == 'FAILURE' %}
                 Re-Execute your Snakemake Run for this BLAST project or delete the project.
-            {% elif BlastProject.project_execution_task_result.status == 'PROGRESS' %}
+            {% elif BlastProject.r_project_execution_task_result.status == 'PROGRESS' %}
                 Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
             {% else %}
                 Execute your BLAST project by pressing the Execute Snakemake button.
@@ -55,20 +55,20 @@
                 </thead>
                 <tbody id="blastProjectTableBody">
                     <tr>
-                        <td>{{BlastProject.project_title}}</td>
+                        <td>{{BlastProject.r_project_title}}</td>
                         <td>
                             <table>
                                 <tr>
-                                    <tr> <td>Title: {{BlastProject.project_forward_database.database_name}}</td></tr>
-                                    <tr> <td>Entries: {{BlastProject.project_forward_database.assembly_entries}}</td></tr>
+                                    <tr> <td>Title: {{BlastProject.r_project_forward_database}}</td></tr>
+
                                 </tr>
                             </table>
                         </td>
 
-                        <td>{{BlastProject.timestamp|date:'d.m.Y, h:m:s'}}</td>
+                        <td>{{BlastProject.r_timestamp|date:'d.m.Y, h:m:s'}}</td>
 
                         <td>
-                            {% if BlastProject.project_execution_snakemake_task.status == 'PROGRESS' %}
+                            {% if BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
                             <form class="col"
                                    action="#"
                                    method="POST">
@@ -77,18 +77,17 @@
                             </form>
                             {% else %}
                                 <form class="col"
-                                   action="{% url 'project_execution' project_id=BlastProject.id%}"
+                                   action="{% url 'remote_project_execution' project_id=BlastProject.id%}"
                                    method="POST">
                                 {% csrf_token %}
                                 <input type="submit" value="Execute Snakemake" class="btn btn-primary">
                             </form>
                             {% endif %}
-                        </td>
-                        <td><a class="btn btn-dark" href="{% url 'database_details' database_id=Database.id %}">Database Details</a></td>
-                        {% if BlastProject.project_execution_snakemake_task.status != 'POGRESS' %}
+                        <td></td>
+                        {% if BlastProject.r_project_execution_snakemake_task.status != 'POGRESS' %}
                         <td>
                             <form class="col"
-                                   action="{% url 'project_deletion' project_id=BlastProject.id %}"
+                                   action="{% url 'remote_project_deletion' project_id=BlastProject.id %}"
                                    method="POST">
                                 {% csrf_token %}
                                 <input type="submit" value="Delete Blast Project" class="btn btn-danger">
@@ -97,29 +96,23 @@
                         {% endif %}
                     </tr>
                     <tr>
-                        {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
-                            {% if BlastProject.project_forward_database.uploaded_files == True %}
-                                <td></td>
-                            {% endif %}
+                        {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
-                            <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
-                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
-                            <td><a class="btn btn-dark" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
-                            {% if BlastProject.project_forward_database.uploaded_files == False %}
-                                <td><a class="btn btn-dark" href="{% url 'synteny_dashboard' project_id=BlastProject.id %}">Synteny Detection</a> </td>
-                            {% endif %}
+                            <td><a class="btn btn-dark disabled" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
+                            <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
+                            <td><a class="btn btn-dark disabled" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
+                            <td><a class="btn btn-dark disabled" href="{% url 'synteny_dashboard' project_id=BlastProject.id %}">Synteny Detection</a> </td>
                             <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
-
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
-                            <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>
+                            <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>
                         {% endif %}
                     </tr>
                 </tbody>
             </table>
         </div>
 
-    {% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+    {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
         <br>
         <div class="container">
             <div class="row justify-content-md-center" style="text-align: center">
@@ -136,14 +129,14 @@
     <br>
     <br>
 
-    {% if BlastProject.project_execution_snakemake_task.status == 'FAILURE' %}
+    {% if BlastProject.r_project_execution_snakemake_task.status == 'FAILURE' %}
         <div class="alert alert-danger" style="text-align: center">
             An error occurred during execution of the pipeline.
         </div>
         <div class="progress">
             <div id="progress_bar"> 0% </div>
         </div>
-    {% elif BlastProject.project_execution_snakemake_task.status == 'PROGRESS' %}
+    {% elif BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
             <div class="progress">
                 <div id="progress_bar"> 0% </div>
             </div>
@@ -155,7 +148,7 @@
     </div>
 
 
-{% if BlastProject.project_execution_snakemake_task.status == 'SUCCESS' %}
+{% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
 
     <div class="dashboard_project_list_col" id="query_sequence_information" style="display: none">
         <h2 style="text-align: center">Query Sequence Information</h2>
@@ -185,10 +178,10 @@
             <!-- The slideshow -->
             <div class="carousel-inner">
             <div class="carousel-item active">
-                <img src="/media/blast_projects/{{BlastProject.id}}/plot_amount_hits_of_target_taxon.png" alt="distribution of hits of target taxons" class="img-fluid" >
+                <img src="/media/blast_projects/remote_projects/{{BlastProject.id}}/plot_amount_hits_of_target_taxon.png" alt="distribution of hits of target taxons" class="img-fluid" >
             </div>
             <div class="carousel-item">
-                <img src="/media/blast_projects/{{BlastProject.id}}/plot_evalue_distribution.png" alt="evalues" class="img-fluid" >
+                <img src="/media/blast_projects/remote_projects/{{BlastProject.id}}/plot_evalue_distribution.png" alt="evalues" class="img-fluid" >
             </div>
 
             </div>
