@@ -1,0 +1,275 @@
+<form action="{% url 'project_creation' %}"
+      method="post"
+      enctype="multipart/form-data"
+      onsubmit="showLoader('loading_div','post_form_container')">
+
+    {% csrf_token %}
+
+     <div class="form-group">
+        <label for="project_title">Project Title</label>
+        <input type="text" class="form-control" id="project_title" name="project_title">
+        {% if ProjectCreationForm.project_title.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ ProjectCreationForm.project_title.errors }}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+
+    <div class="form-group">
+        <label for="query_sequence_file"> Query Sequences as FASTA File </label>
+            <!--
+            <span class="badge badge-info">  In FASTA format (with sequence name)
+            </span></label>
+            -->
+        <input type="file" class="form-control-file" id="query_sequence_file" name="query_sequence_file">
+        {% if ProjectCreationForm.query_sequence_file.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ ProjectCreationForm.query_sequence_file.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+            <label for="query_sequence_text">Protein Identifiers:</label>
+            <input type="text" class="form-control" id="query_sequence_text" name="query_sequence_text">
+            {% if ProjectCreationForm.query_sequence_text.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ ProjectCreationForm.query_sequence_text.errors }}</strong>
+            </div>
+            {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="project_forward_database"> Select a BLAST Database for the forward BLAST </label>
+        <select class="form-control" id="project_forward_database" name="project_forward_database">
+
+            {% for database in ProjectCreationForm.project_forward_database %}
+                {{database}}
+            {% endfor %}
+
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="project_backward_database"> Select a BLAST Database for the backward BLAST </label>
+        <select class="form-control" id="project_backward_database" name="project_backward_database">
+
+            {% for database in ProjectCreationForm.project_backward_database %}
+                {{database}}
+            {% endfor %}
+
+        </select>
+    </div>
+     <div class="form-group">
+        <label for="species_name_for_backward_blast">Species Name for the Backward BLAST</label>
+        <input type="text" class="form-control" id="species_name_for_backward_blast" name="species_name_for_backward_blast">
+        {% if ProjectCreationForm.species_name_for_backward_blast.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ ProjectCreationForm.species_name_for_backward_blast.errors }}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="form-row" id="advanced_settings" style="display: none">
+            <hr>
+            <h3 style="font-family: 'Courier New';text-align: center;
+                margin-bottom: 5px;
+                font-weight: bold;">
+                Forward BLAST Settings </h3>
+
+            <div class="col">
+                <div class="form-group">
+                    <label for="fw_e_value">FW E-Value</label>
+                    <input type="number" class="form-control" step=any id="fw_e_value" name="fw_e_value" value="0.001">
+                    {% if BlastSettingsForwardForm.fw_e_value.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_e_value.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="fw_word_size">FW Word Size </label>
+                    <input type="number" class="form-control"  id="fw_word_size" name="fw_word_size" value="3">
+                    {% if BlastSettingsForwardForm.fw_word_size.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_word_size.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="fw_num_alignments">FW Num Alignments </label>
+                    <input type="number" class="form-control"  id="fw_num_alignments" name="fw_num_alignments" value="10000">
+                    {% if BlastSettingsForwardForm.fw_num_alignments.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_num_alignments.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group" style="display: none">
+                    <label for="fw_max_target_seqs">FW Max Target Sequences </label>
+                    <input type="number" class="form-control"  id="fw_max_target_seqs" name="fw_max_target_seqs" value="10000">
+                    {% if BlastSettingsForwardForm.fw_max_target_seqs.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_max_target_seqs.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="fw_num_threads">FW Num Threads </label>
+                    <input type="number" class="form-control"  id="fw_num_threads" name="fw_num_threads" value="1">
+                    {% if BlastSettingsForwardForm.fw_num_threads.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_num_threads.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="fw_max_hsps">FW Max Hsps </label>
+                    <input type="number" class="form-control"  id="fw_max_hsps" name="fw_max_hsps" value="500">
+                    {% if BlastSettingsForwardForm.fw_max_hsps.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsForwardForm.fw_max_hsps.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+
+            <h3 style="font-family: 'Courier New';text-align: center;
+                margin-bottom: 5px;
+                font-weight: bold;">
+                Backward BLAST Settings </h3>
+            <div class="col">
+                <div class="form-group">
+                    <label for="bw_e_value">BW E-Value</label>
+                    <input type="number" class="form-control" step=any id="bw_e_value" name="bw_e_value" value="0.001">
+                    {% if BlastSettingsBackwardForm.bw_e_value.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_e_value_blast.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="bw_word_size">BW Word Size </label>
+                    <input type="number" class="form-control"  id="bw_word_size" name="bw_word_size" value="3">
+                    {% if BlastSettingsBackwardForm.bw_word_size.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_word_size_blast.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="bw_num_alignments">BW Num Alignments </label>
+                    <input type="number" class="form-control"  id="bw_num_alignments" name="bw_num_alignments" value="1">
+                    {% if BlastSettingsBackwardForm.bw_num_alignments.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_num_alignments_blast.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group" style="display: none">
+                    <label for="bw_max_target_seqs">BW Max Target Seqs </label>
+                    <input type="number" class="form-control"  id="bw_max_target_seqs" name="bw_max_target_seqs" value="1">
+                    {% if BlastSettingsBackwardForm.bw_max_target_seqs.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_max_target_seqs.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="bw_num_threads">BW Num Threads </label>
+                    <input type="number" class="form-control"  id="bw_num_threads" name="bw_num_threads" value="1">
+                    {% if BlastSettingsBackwardForm.bw_num_threads.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_num_threads.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="bw_max_hsps">BW Max Hsps </label>
+                    <input type="number" class="form-control" id="bw_max_hsps" name="bw_max_hsps" value="500">
+                    {% if BlastSettingsBackwardForm.bw_max_hsps.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ BlastSettingsBackwardForm.bw_max_hsps.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <h3 style="font-family: 'Courier New';text-align: center;
+                margin-bottom: 5px;
+                font-weight: bold;">
+                Additional settings </h3>
+
+            <div class="col">
+                <div class="form-group">
+                    <label for="bitscore_filter">Bitscore filter</label>
+                    <input type="number" class="form-control" step=any id="bitscore_filter" name="bitscore_filter" value="50">
+                    {% if SymBLASTProjectSettingsForm.bitscore_filter.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.bitscore_filter.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="max_amount_of_rbh_for_msa_and_phylogeny">Maximal Amount of RBHs in MSA and Phylogeny </label>
+                    <input type="number" class="form-control"  id="max_amount_of_rbh_for_msa_and_phylogeny" name="max_amount_of_rbh_for_msa_and_phylogeny" value="10000">
+                    {% if SymBLASTProjectSettingsForm.max_amount_of_rbh_for_msa_and_phylogeny.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.max_amount_of_rbh_for_msa_and_phylogeny.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="trimal_gt">TrimAL - Fraction of Sequences With a Gap Allowed </label>
+                    <input type="number" class="form-control"  id="trimal_gt" name="trimal_gt" value="0.8">
+                    {% if SymBLASTProjectSettingsForm.trimal_gt.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.trimal_gt.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="trimal_st">TrimAL - Minimum Average Similarity </label>
+                    <input type="number" class="form-control"  id="trimal_st" name="trimal_st" value="0.001">
+                    {% if SymBLASTProjectSettingsForm.trimal_st.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.trimal_st.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="trimal_cons">TrimAL - Minimum Perc. of Position in Original Alignment to Conserve </label>
+                    <input type="number" class="form-control"  id="trimal_cons" name="trimal_cons" value="60">
+                    {% if SymBLASTProjectSettingsForm.trimal_cons.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{{ SymBLASTProjectSettingsForm.trimal_cons.errors }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="mview_sort"> Select a Sorting Mechanism for the Multiple Sequence Alignment File </label>
+                    <select class="form-control" id="mview_sort" name="mview_sort">
+                        {% for sort in SymBLASTProjectSettingsForm.mview_sort %}
+                            {{sort}}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mview_coloring"> Select a Coloring Scheme for the Multiple Sequence Alignment File </label>
+                    <select class="form-control" id="mview_coloring" name="mview_coloring">
+                        {% for coloring in SymBLASTProjectSettingsForm.mview_coloring %}
+                            {{coloring}}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+    </div>
+    <br>
+    <input type="submit" value="Submit" class="btn btn-dark">
+</form>

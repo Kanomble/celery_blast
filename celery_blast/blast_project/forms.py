@@ -387,6 +387,228 @@ class SymBLASTProjectSettingsForm(forms.Form):
                  ("group","group"))
     )
 
+
+''' RemoteProjectCreationForm
+    
+    Adaption to ProjectCreationForm for remote BLAST projects. Model fields are essentially the 
+    same as in the ProjectCreationForm except for the r_project_forward_database. All fields
+    are extended by the prefix "r_".
+    Options for the forward database are either the nr, the refseq or the swissprot database.
+
+    This form is used in the form_remote_project_creation.html.
+    All form fields are processed into the RemoteBlastProject model instance via the project_creation_view functions.
+    Field validation is done in the clean function of this form.
+
+    fields | types:
+        - r_project_title | charfield
+        - r_search_strategy | choicefield --> currently disabled
+
+        # The user has to provide data for at least one of these fields.
+        - r_query_sequence_file | filefield
+        - r_query_sequence_text | charfield
+
+        - r_project_forward_database | nr, swissprot or refseq
+        - r_project_backward_database | BlastDatabaseModelChoiceField
+        - r_species_name_for_backward_blast | charfield
+        - r_user_email | charfield
+'''
+
+
+class RemoteProjectCreationForm(forms.Form):
+    class BlastDatabaseModelChoiceField(forms.ModelChoiceField):
+        def label_from_instance(self, blast_database):
+            return str(blast_database.database_name)
+
+    BLAST_REMOTE_DATABASES = [
+        ('nr', 'none redundant proteins'),
+        ('refseq_protein', 'refseq protein database'),
+        ('refseq_select_prot', 'refseq selected protein database'),
+        ('swissprot', 'protein sequences from the swissprot database')]
+
+    r_project_title = forms.CharField(
+        label="Project title",
+        error_messages={
+            'required': "A project title is required for saving project metadata into the database"})
+
+    # for now just blastp is possible this field is not included in the html form
+    r_search_strategy = forms.ChoiceField(
+        required=False,
+        choices=(('blastp', 'blastp'), ('blastn', 'blastn')),
+        label="Search strategy",
+        error_messages={
+            'required': "Please specify a search strategy otherwise you won't be able to execute a BLAST run .."})
+
+    r_species_name_for_backward_blast = forms.CharField(
+        required=True,
+        label='Scientific Names (conversion to Taxonomic Nodes) for Backward BLAST',
+        error_messages={
+            'required': "Specify ONE! Scientific Name for your backward BLAST - The species from which you obtained the query sequences!"})
+
+    r_user_email = forms.CharField(
+        max_length=200,
+        required=False)
+
+    r_query_sequence_file = forms.FileField(
+        required=False,
+        error_messages={
+            'required': "Upload a query sequence file, this file will serve as the -query parameter for the forward BLAST analysis"})
+
+    r_query_sequence_text = forms.CharField(
+        label="Query Sequence IDs", max_length=800, required=False
+    )
+
+    r_project_forward_database = forms.ChoiceField(
+        choices=BLAST_REMOTE_DATABASES
+    )
+
+    r_project_backward_database = BlastDatabaseModelChoiceField(
+        queryset=get_all_succeeded_databases(),
+        empty_label=None
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        super(RemoteProjectCreationForm, self).__init__(*args, **kwargs)
+        self.fields['r_user_email'].charfield = user.email
+        self.fields['r_user_email'].initial = user.email
+
+    ''' Validation of user input.
+
+        species_name_for_backward_blast: The provided species name must be a valid scientific name, that can get trans-
+        lated into taxonomic identifier, which will be used for database filtering. This taxonomic identifier (taxid) 
+        has to reside in the backward database. This may cause problems as there is another taxid called species taxid.
+        Organism names are validated with biopython.
+
+            functions: get_species_taxid_by_name, check_if_taxid_is_in_database
+
+        query_sequence_file and/or query_sequence_text: One of those fields have to be filled by the user, even if both
+        fields have the required=False setting. The filename has to consist of ascii_letters or "_", "-" signs. It has 
+        to end with .faa, .fasta or .fa. Currently there are no restrictions for the number of provided sequences.
+        Query sequences have to reside in the backward database, this is validated by combaring query sequence identifiers.
+
+            functions: fetch_protein_records, check_if_sequences_are_in_database
+    '''
+
+    def clean(self):
+        try:
+            cleaned_data = super().clean()
+
+            species_name = cleaned_data['r_species_name_for_backward_blast']
+            user_email = self.fields['r_user_email'].charfield
+
+            if check_if_project_title_exists(cleaned_data['r_project_title']):
+                self.add_error('r_project_title', 'This title is already in use, please specify another title.')
+
+            try:
+                species_name = species_name.strip()
+                taxonomic_nodes = get_species_taxid_by_name(user_email, species_name)
+            except Exception as e:
+                self.add_error('r_species_name_for_backward_blast',
+                               'ERROR during fetching the taxonomic node of {}\n. There might be a entrez server error,'
+                               ' try again later. Exception: {}.'.format(species_name, e))
+
+            backward_db = cleaned_data['r_project_backward_database']
+            try:
+                booleanbw = check_if_taxid_is_in_database(backward_db.id, taxonomic_nodes)
+                if booleanbw == False:
+                    self.add_error('r_species_name_for_backward_blast',
+                                   'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
+                                       taxonomic_nodes, backward_db.database_name))
+
+                if booleanbw == True:
+                    # taking the first taxonomic node in the provided list
+                    cleaned_data['r_species_name_for_backward_blast'] = (species_name, taxonomic_nodes[0])
+
+            except Exception:
+                self.add_error('r_species_name_for_backward_blast',
+                               'specified taxonomic node: {} does not reside in the selected BACKWARD database: {}'.format(
+                                   taxonomic_nodes, backward_db.database_name))
+
+            query_file = cleaned_data['r_query_sequence_file']
+            query_sequences = cleaned_data['r_query_sequence_text']
+
+            # upload a query file or specify valid protein identifiers
+            if query_file is None and query_sequences == '':
+                self.add_error('r_query_sequence_file',
+                               "please upload a fasta file containing your sequences or specify valid protein identifier")
+
+            # query file was uploaded
+            if query_file != None:
+                if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
+                    raise self.add_error('r_query_sequence_file', "please upload only fasta files!")
+
+                if len(query_file.name.split(".")) != 2:
+                    raise self.add_error('r_query_sequence_file',
+                                         "there are no dots allowed except the filetype delimiter")
+                else:
+                    filename = query_file.name.split(".")[0]
+                    for character in filename:
+                        if character in punctuation:
+                            if character != '_' and character != '-':
+                                raise self.add_error('r_query_sequence_file',
+                                                     "bad character: \"{}\" in query file name".format(character))
+                        if character not in ascii_letters:
+                            if character != '_' and character != '-':
+                                raise self.add_error('r_query_sequence_file',
+                                                     "bad character: \"{}\" in query file name".format(character))
+
+                header = []
+                # checks accession identifier of query sequences
+                for chunk in query_file.chunks():
+                    lines = chunk.decode().split("\n")
+                    for line in lines:
+                        if line.startswith('>'):
+                            try:
+                                acc = line.split(" ")[0].split('>')[-1].split(".")[0]
+                                if "|" in acc or " " in acc:
+                                    raise Exception(
+                                        "{} is no valid protein identifier - Format: e.g. WP_8765432".format(acc))
+                                header.append(acc)
+                            except Exception as e:
+                                self.add_error('r_query_sequence_file',
+                                               'error during parsing of query_file : {}'.format(e))
+
+                if len(header) > 20:
+                    self.add_error('r_query_sequence_file',
+                                   'You try to infer orthologs for more than 300 query sequences,'
+                                   ' this is not allowed, consider to separate the query sequences.')
+                else:
+                    valid = check_if_sequences_are_in_database(backward_db.id, header)
+                    if valid != True:
+                        self.add_error('r_query_sequence_file',
+                                       'following sequences do not reside in your backward database: {}'.format(valid))
+
+                if len(header) != len(set(header)):
+                    self.add_error('r_query_sequence_file',
+                                   'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+            # protein identifier have been uploaded
+            elif query_sequences != '' and query_file is None:
+                # check string for invalid characters
+                query_sequences = query_sequences.replace(" ", "").split(",")
+                query_sequences = [qseq.split(".")[0] for qseq in query_sequences]
+                try:
+                    valid = check_if_sequences_are_in_database(backward_db.id, query_sequences)
+                    if valid != True:
+                        self.add_error('r_query_sequence_file',
+                                       'following sequences do not reside in your backward database: {}'.format(valid))
+
+                    proteins, errors = fetch_protein_records(query_sequences, user_email)
+                    if len(errors) > 0:
+                        self.add_error('r_query_sequence_text', 'following sequences are unavailable: {}'.format(errors))
+                    cleaned_data['r_query_sequence_text'] = proteins
+                except Exception as e:
+                    self.add_error("query_sequence_text", "please provide valid protein identifiers")
+
+                # self.add_error('query_sequence_text','not available yet')
+            else:
+                self.add_error('r_query_sequence_text',
+                               "please upload a fasta file containing your sequences or specify valid protein identifier")
+
+        except Exception as e:
+            raise ValidationError(
+                "validation error in project creation, due to this exception: {}".format(
+                    e))
+        return cleaned_data
+
 '''UploadGenomeForm
 
     Form for uploading a single (concatenated) fasta file. Several metadata information are necessary to format this file
