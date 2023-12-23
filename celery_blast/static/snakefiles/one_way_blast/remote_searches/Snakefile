@@ -24,8 +24,6 @@ rule blast:
 	run:
 		if(params.entrez_query != ""):
 			entrez_query = params.entrez_query
-			if "orgn" not in entrez_query:
-				entrez_query = entrez_query + "[ORGN]"
 			cmd_string = params.search_strategy + " -db "+params.database+\
 			" -outfmt \"6 qseqid sseqid pident evalue bitscore slen qgi sgi sacc staxids sscinames scomnames stitle\""\
 			" -out "+output.results+\

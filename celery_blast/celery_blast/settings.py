@@ -154,7 +154,9 @@ CACHES = {
     }
 }
 '''
-CSRF_TRUSTED_ORIGINS = ['https://*','https://*.127.0.0.1','http://*','http://*.127.0.0.1']
+#CSRF_TRUSTED_ORIGINS = ['https://*','https://*.127.0.0.1','http://*','http://*.127.0.0.1']
+
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=5000000000, cast=int)
 FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=5000000000, cast=int)
 CELERY_RESULT_EXTENDED = True
