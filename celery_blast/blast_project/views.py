@@ -14,7 +14,7 @@ from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesG
     CreateTaxonomicFileForMultipleScientificNames, SymBLASTProjectSettingsForm
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
     execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
-    calculate_database_statistics_task
+    calculate_database_statistics_task, execute_remote_reciprocal_blast_project
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
     read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id
@@ -445,14 +445,14 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
             blast_project = get_remote_project_by_id(project_id)
             if blast_project.r_project_execution_snakemake_task:
                 if blast_project.r_project_execution_snakemake_task.status != 'FAILURE':
-                    return redirect('project_details', project_id=project_id)
+                    return redirect('remote_project_details', project_id=project_id)
                 else:
                     pass
-                    #execute_reciprocal_blast_project.delay(project_id)
+                    execute_remote_reciprocal_blast_project.delay(project_id)
             else:
                 pass
-                #execute_reciprocal_blast_project.delay(project_id)
-        return redirect('project_details', project_id=project_id)
+                execute_remote_reciprocal_blast_project.delay(project_id)
+        return redirect('remote_project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
 

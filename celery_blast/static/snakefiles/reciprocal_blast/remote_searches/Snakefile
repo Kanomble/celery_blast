@@ -1,0 +1,214 @@
+#snakemake configuration is defined in the snakefile_config file,
+#which is created by a BlastProject model function
+configfile: "./snakefile_config"
+import pandas as pd
+from math import ceil
+
+#PIPELINE PREPARATION
+#filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
+QSEQIDS = []
+with open(config['query_sequence'],'r') as qseqfile:
+	for line in qseqfile.readlines():
+		if ">" in line:
+			#TODO adjust qseq_ids in query_sequence file in order to assign a new unique name ?
+			qseq_id = line.split(" ")[0].split(">")[1].split(".")[0]
+			QSEQIDS.append(qseq_id)
+
+rule all:
+	input:
+		"blastp_fw_out.table",
+		"bw_queries_gi_list_for_blastdbcmd.txt",
+		"reciprocal_results_with_taxonomy.csv",
+		expand("{qseqid}/results_rbhs.html", qseqid=QSEQIDS),
+		"query_sequence_information.html",
+		"blastp_fw_out_reformatted.table"
+
+#RULE 1
+#Forward BLAST - inference of target sequences within the search space
+#RULE 1
+rule forward_blast:
+	input: queries=config['query_sequence']
+	output: results="blastp_fw_out.table"
+	params: word_size=config['fw_word_size'], e_value=config['fw_e_value'], num_alignments=config['fw_num_alignments'], num_threads=config['fw_num_threads'], database=config['blastdb'], entrez_query=config['entrez_query']
+	log: log="log/forward_blast.log"
+	run:
+		with open(log[0], "w") as logfile:
+			try:
+				logfile.write("INFO:starting forward blast search against: {}\n".format(params.database))
+				if(params.entrez_query != ""):
+					entrez_query = params.entrez_query
+					cmd_string = "blastp" + " -db "+params.database+\
+					" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\""\
+					" -out "+output.results+\
+					" -word_size "+str(params.word_size)+\
+					" -evalue "+str(params.e_value)+\
+					" -num_alignments "+str(params.num_alignments)+\
+					" -query "+input.queries+\
+					" -remote"+\
+					" -entrez_query \""+entrez_query+"\""
+					shell(cmd_string)
+				else:
+					cmd_string = "blastp" + " -db "+params.database+\
+					" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\""\
+					" -out "+output.results+\
+					" -word_size "+str(params.word_size)+\
+					" -evalue "+str(params.e_value)+\
+					" -num_alignments "+str(params.num_alignments)+\
+					" -query "+input.queries+\
+					" -remote"
+					shell(cmd_string)
+				logfile.write("DONE\n")
+			except Exception as e:
+				logfile.write("ERROR: Exception occurred during remote blast search: {}\n".format(e))
+				raise Exception("[-] ERROR during execution of remote forward BLAST with following exception: {}".format(e))
+
+#RULE 2
+#collects the subject id's of the forward BLAST and writes those id's into a file that is used by the bw_query_preparation rule (RULE 3)
+rule fw_result_processing:
+	input: fw_res="blastp_fw_out.table", fw_blast_logs="log/forward_blast.log"
+	output: gi_list="bw_queries_gi_list_for_blastdbcmd.txt"
+	log: log="log/fw_result_processing.log"
+	run:
+		with open(log[0],'w') as logfile:
+			try:
+				logfile.write("INFO:working with forward blast results: writing target sequences into output file\n")
+				fw_results = pd.read_table(input[0], header=None)
+				with open(output[0],"w+") as out:
+					# remove duplicates
+					for gi in fw_results[7][:].unique():
+						out.write(gi+"\n")
+				logfile.write(('INFO:done writing {} target sequences into output file\n'.format(len(fw_results[7][:].unique()))))
+				logfile.write("DONE\n")
+			except Exception as e:
+				logfile.write("ERROR:{}\n".format(e))
+				raise Exception("ERROR in forward blast result processing: {}".format(e))
+
+#RULE 3
+#prepares the backward query fasta file for the backward blast
+rule bw_query_preparation:
+	input: gi_list="bw_queries_gi_list_for_blastdbcmd.txt", fw_result_processing_logs="log/fw_result_processing.log"
+	output: fasta_file="bw_queries.faa"
+	params: user_email=config['user_email']
+	log: log="log/bw_query_preparation.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/remote_searches/extract_subject_sequences_from_NCBI_edirect.py"
+
+#RULE 4
+#backward blast rule. the backward blast is divided into chunks of 100 query sequences.
+rule backward_blast:
+	input: bw_queries="bw_queries.faa", bw_query_preparation_logs="log/bw_query_preparation.log"
+	output: "blastp_bw_out.table"
+	params: word_size=config['bw_word_size'],e_value=config['bw_e_value'],num_alignments=config['bw_num_alignments'],max_hsps=config['bw_max_hsps'],num_threads=config['bw_num_threads'],taxid=config['bw_taxid'],database=config['backwarddb'],intermediate_filename="inter_blast.table"
+	log: log="log/backward_blast.log"
+	run:
+		with open(log[0],'w') as logfile:
+			try:
+				logfile.write("INFO:starting backward blast ...\n")
+				step = 100
+				sequence_dict = {}
+				#loading query sequences into python dictionary
+				with open(input[0],'r') as infile:
+					for line in infile.readlines():
+						if line.startswith(">"):
+							header = line.split(" ")[0].split(">")[-1]
+							sequence_dict[header] = ''
+						if header:
+							sequence_dict[header] += line
+
+				#preparation of transient input files for the backward blast. maximal 100 query sequences will reside in the input fasta files
+				filenames = ["bw_queries_" + str(i) + ".faa" for i in range(ceil(len(sequence_dict.keys()) / float(step)))]
+				logfile.write("INFO:working with: {} input fasta files\n".format(len(filenames)))
+				keys = list(sequence_dict.keys())
+				start = 0
+				filecounter = 0
+				end = step
+				while start < len(keys) and filecounter <= len(filenames):
+					with open(filenames[filecounter],'w') as outfile:
+						for key in keys[start:end]:
+							for line in sequence_dict[key]:
+								outfile.write(line)
+						start = end
+						end += step
+						filecounter += 1
+
+				#backward blast procedure
+				inter_blast_out = open("blast.table",'w')
+				for index, file in enumerate(filenames):
+					logfile.write("INFO:working with input sequence file {}\n".format(index))
+					shell("blastp -db {params.database} -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\" -out {params.intermediate_filename} -taxids {params.taxid} -word_size {params.word_size} -evalue {params.e_value} -num_alignments {params.num_alignments} -max_hsps {params.max_hsps} -num_threads {params.num_threads} -query {file} 2> {log}")
+					with open(params.intermediate_filename,'r') as interfilename:
+						for line in interfilename.readlines():
+							inter_blast_out.write(line)
+				inter_blast_out.close()
+				logfile.write("INFO:done with blastp on all input files, removing intermediate query files ...\n")
+				#removing intermediate query files
+				for file in filenames:
+					shell("rm {file}")
+				#removing intermediate blast table (table of the last backward blast run)
+				shell("rm inter_blast.table")
+				logfile.write("INFO:renaming blast.table to snakemake output: blastp_bw_out.table\n")
+				#changing output filename to snakemake output name
+				shell("mv blast.table {output}")
+				logfile.write("DONE\n")
+			except Exception as e:
+				logfile.write("ERROR:{}\n".format(e))
+				raise Exception("[-] ERROR during backward blast with exception: {}".format(e))
+
+#RULE 5
+#prepares the backward query fasta file for the backward blast
+rule reformat_blast_forward_dataframe:
+	input: fw_res="blastp_fw_out.table"
+	output: new_fw_res="blastp_fw_out_reformatted.table"
+	log: log="log/reformat_blast_forward_dataframe.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/remote_searches/reformat_forward_blast_table.py"
+
+
+#RULE 6
+#extracting reciprocal best hits with pandas blast tables
+rule reciprocal_best_hits:
+	input: bw_res="blastp_bw_out.table", fw_res="blastp_fw_out_reformatted.table", reformatting_log="log/reformat_blast_forward_dataframe.log"
+	output: rec_best_hits="reciprocal_best_hits_protein_ids.txt"
+	log: log="log/reciprocal_best_hits.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/extract_reciprocal_best_hits.py"
+
+#RULE 7
+#transforms the forward blast and backward blast tables with the rbhs table to a result output table with additional taxonomic information.
+rule blast_tables_to_csv:
+	input: fw_res="blastp_fw_out_reformatted.table", rec_res="reciprocal_best_hits_protein_ids.txt", query_file=config['query_sequence'], reciprocal_best_hits_log="log/reciprocal_best_hits.log"
+	output: result_csv="reciprocal_results.csv", taxonomy_result_csv='reciprocal_results_with_taxonomy.csv'
+	log: log="log/blast_tables_to_csv.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/blast_tables_to_orthologous_table.py"
+
+#RULE 8
+#transforming csv files to html files for the frontend
+rule blast_tables_to_html:
+	input: rec_res="reciprocal_results_with_taxonomy.csv", blast_tables_to_csv_log="log/blast_tables_to_csv.log"
+	output: rec_html="reciprocal_results.html"
+	log: log="log/blast_tables_to_html.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"
+
+#RULE 9
+#outputs a summary for the RBH inference and constructs directories for each query sequence
+rule build_folders_with_hit_info_for_each_qseqid:
+	input: result_csv="reciprocal_results_with_taxonomy.csv", query_file=config['query_sequence'], blast_tables_to_html_log="log/blast_tables_to_html.log"
+	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
+		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),rec_res_table=expand("{qseqid}/rbh_table.tsf",qseqid=QSEQIDS),
+		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
+	params:	project_id=config['project_id']
+	log: log="log/build_folders_with_hit_info_for_each_qseqid.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
+
+#RULE 10
+#creates a html table with information of the query sequences
+rule query_sequences_to_html_table:
+	input: target_file=config['query_sequence']
+	params: email=config['user_email']
+	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
+	log: log="log/query_sequences_to_html_table.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"

@@ -377,6 +377,16 @@ def update_blast_project_with_task_result_model(project_id, task_id):
         raise IntegrityError(
             'problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
+def update_remote_blast_project_with_task_result_model(project_id, task_id):
+    try:
+        blast_project = RemoteBlastProject.objects.get(id=project_id)
+        taskresult = TaskResult.objects.get(task_id=task_id)
+        blast_project.r_project_execution_snakemake_task = taskresult
+        blast_project.save()
+    except Exception as e:
+        raise IntegrityError(
+            'problem during updating of remoteblastproject model with task result instance exception : {}'.format(e))
+
 
 '''update_blast_project_with_database_statistics_task_result_model
     
@@ -387,8 +397,6 @@ def update_blast_project_with_task_result_model(project_id, task_id):
     :param task_id
         :type int
 '''
-
-
 def update_blast_project_with_database_statistics_task_result_model(project_id: int, task_id: int):
     try:
         blast_project = BlastProject.objects.get(id=project_id)
@@ -398,6 +406,7 @@ def update_blast_project_with_database_statistics_task_result_model(project_id: 
     except Exception as e:
         raise IntegrityError(
             'problem during updating of blastproject model with task result instance exception : {}'.format(e))
+
 
 '''get_domain_database_model
     

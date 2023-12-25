@@ -11,9 +11,11 @@ from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
 from .py_django_db_services import update_blast_project_with_task_result_model, \
     update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
-    update_blast_project_with_database_statistics_task_result_model, get_all_blast_databases
+    update_blast_project_with_database_statistics_task_result_model, get_all_blast_databases, \
+    update_remote_blast_project_with_task_result_model
 from .py_database_statistics import calculate_database_statistics
-from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES, CDD_DATABASE_URL
+from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES, \
+    CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -233,6 +235,99 @@ def execute_reciprocal_blast_project(self, project_id):
             parent.kill()
         raise Exception("ERROR Reciprocal BLAST reached Task Time Limit")
 
+@shared_task(bind=True)
+def execute_remote_reciprocal_blast_project(self, project_id):
+    try:
+        snakemake_working_dir = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        snakemake_config_file = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/snakefile_config'
+        snakefile_dir = 'static/snakefiles/reciprocal_blast/remote_searches/Snakefile'
+
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(0, 100, "started process")
+
+        try:
+            update_remote_blast_project_with_task_result_model(project_id, str(self.request.id))
+        except Exception as e:
+            logger.warning('couldnt update blastproject with exception : {}'.format(e))
+            raise Exception('couldnt update blastproject with exception : {}'.format(e))
+
+        try:
+            logger.info('INFO:trying to start snakemake reciprocal BLAST workflow')
+            progress_recorder.set_progress(25, 100, 'PROGRESS')
+
+            '''
+            #snakemake --snakefile '../../../static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/blast_project/1/snakefile_config --directory 'media/blast_project/1'
+            cmd = 'snakemake --snakefile {} --wms-monitor {} --cores 1 --configfile {} --directory {} --keep-incomplete -q'.format(
+                snakefile_dir, settings.PANOPTES_IP, snakemake_config_file, snakemake_working_dir
+            )
+            reciprocal_blast_snakemake = Popen(
+                cmd, shell=True
+            )       
+            '''
+
+            # '--wms-monitor', settings.PANOPTES_IP,
+            reciprocal_blast_snakemake = Popen(
+                ['snakemake',
+                 '--snakefile', snakefile_dir,
+                 '--cores', '1',
+                 '--configfile', snakemake_config_file,
+                 '--directory', snakemake_working_dir,
+                 ], shell=False)  # -q
+
+            progress_recorder.set_progress(50, 100, "PROGRESS")
+
+            logger.info('INFO:waiting for popen instance {} to finish with timeout set to {}'.format(
+                reciprocal_blast_snakemake.pid, 604800))
+            returncode = reciprocal_blast_snakemake.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)  # 66 min 604800 = 7d
+            logger.info('returncode : {}'.format(returncode))
+            if (returncode != 0):
+                logger.warning('subprocess Popen reciprocal BLAST resulted in an error!')
+                progress_recorder.set_progress(0, 100, "FAILURE")
+                raise Exception('Popen hasnt succeeded ...')
+
+            progress_recorder.set_progress(100, 100, "SUCCESS")
+            # logger.info('INFO:creating external tools model')
+            # create_external_tools_after_snakemake_workflow_finishes(project_id)
+            # logger.info('INFO:update phylo and msa task with id of the reciprocal BLAST')
+            # external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+            # external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
+            # external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
+
+            return returncode
+
+        except TimeoutExpired as e:
+            logger.info('ERROR:timeout expired - trying to kill process {}'.format(reciprocal_blast_snakemake.pid))
+            if 'reciprocal_blast_snakemake' in locals():
+                pid = reciprocal_blast_snakemake.pid
+                parent = psutil.Process(pid)
+                for child in parent.children(recursive=True):
+                    child.kill()
+                parent.kill()
+
+            raise Exception(
+                'ERROR:exception during waiting for popen reciprocal blast task: {} \n\t returncode of popen.wait : {}'.format(
+                    e, returncode))
+
+        except SubprocessError as e:
+            logger.info('ERROR:subprocess throwed exception: {}'.format(e))
+            if 'reciprocal_blast_snakemake' in locals():
+                pid = reciprocal_blast_snakemake.pid
+                parent = psutil.Process(pid)
+                for child in parent.children(recursive=True):
+                    child.kill()
+                parent.kill()
+            raise Exception(
+                'ERROR:exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
+
+    except SoftTimeLimitExceeded as e:
+        logger.info("ERROR:Reciprocal BLAST reached Task Time Limit")
+        if 'reciprocal_blast_snakemake' in locals():
+            pid = reciprocal_blast_snakemake.pid
+            parent = psutil.Process(pid)
+            for child in parent.children(recursive=True):
+                child.kill()
+            parent.kill()
+        raise Exception("ERROR Reciprocal BLAST reached Task Time Limit")
 
 # TODO documentation
 @shared_task(bind=True)
@@ -435,3 +530,5 @@ def download_and_decompress_cdd_database(self):
         logger.warning("WARNING:YOU CANT USE THE CDD EXTENSION")
         logger.warning("INFO:YOU CAN MANUALLY LOAD THE CONSERVED DOMAIN DATABASE INTO THE DATABASE/CDD FOLDER")
         raise Exception(e)
+
+

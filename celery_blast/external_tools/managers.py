@@ -1,6 +1,6 @@
 from os.path import isfile
 import pandas as pd
-from blast_project.models import BlastProject
+from blast_project.models import BlastProject, RemoteBlastProject
 from django.db import models, IntegrityError
 from django_celery_results.models import TaskResult
 from external_tools import models as mdl

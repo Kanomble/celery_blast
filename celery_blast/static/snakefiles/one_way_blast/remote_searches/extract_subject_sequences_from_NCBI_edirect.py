@@ -38,7 +38,7 @@ try:
             output.write(rec['GBSeq_sequence']+"\n")
     output.close()
     with open(snakemake.log['log'], 'w') as log_f:
-        log_f.write('DONE: The fasta file {} has been parsed.'.format(snakemake.output['fasta_file']))
+        log_f.write('DONE: The fasta file {} has been created.\n'.format(snakemake.output['fasta_file']))
 except Exception as e:
     with open(snakemake.log['log'], 'w') as log_f:
         log_f.write("ERROR:[-] Error during parsing of fasta: {} with Exception: {}".format(snakemake.output['fasta_file'],e))
