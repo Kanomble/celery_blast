@@ -102,7 +102,7 @@
                             <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
                             <td><a class="btn btn-dark disabled" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
                             <td><a class="btn btn-dark disabled" href="{% url 'synteny_dashboard' project_id=BlastProject.id %}">Synteny Detection</a> </td>
-                            <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
+                            <td><a class="btn btn-info" href="{% url 'download_remote_archive' project_id=BlastProject.id %}">Download Project</a> </td>
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
                             <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
                             <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>

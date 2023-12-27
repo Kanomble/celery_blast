@@ -33,6 +33,8 @@ service_urls = [
 
     path('<int:project_id>/download_archive', views.download_project_as_zip_archive_view,
          name='download_archive'),
+    path('<int:project_id>/download_remote_archive', views.download_remote_project_as_zip_archive_view,
+         name='download_remote_archive'),
 ]
 
 # this ajax call is currently not used - it has been replaced by the snakemake pipeline script

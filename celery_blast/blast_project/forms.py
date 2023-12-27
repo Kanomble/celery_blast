@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
     get_list_of_species_taxids_by_list_of_scientific_names, fetch_protein_records
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, \
-    check_if_sequences_are_in_database, check_if_project_title_exists, check_if_database_title_exists
+    check_if_sequences_are_in_database, check_if_project_title_exists, check_if_database_title_exists, check_if_remote_project_title_exists
 from string import punctuation, ascii_letters
 
 ''' CreateTaxonomicFileForm
@@ -500,7 +500,7 @@ class RemoteProjectCreationForm(forms.Form):
             species_name = cleaned_data['r_species_name_for_backward_blast']
             user_email = self.fields['r_user_email'].charfield
 
-            if check_if_project_title_exists(cleaned_data['r_project_title']):
+            if check_if_remote_project_title_exists(cleaned_data['r_project_title']):
                 self.add_error('r_project_title', 'This title is already in use, please specify another title.')
 
             try:

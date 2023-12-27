@@ -76,6 +76,14 @@ def check_if_project_title_exists(new_project_title:str)->bool:
     except Exception as e:
         raise Exception("[-] couldnt check if project title exists with exception: {}".format(e))
 
+def check_if_remote_project_title_exists(new_project_title:str)->bool:
+    try:
+        for project in RemoteBlastProject.objects.all():
+            if project.r_project_title == new_project_title:
+                return True
+        return False
+    except Exception as e:
+        raise Exception("[-] couldnt check if project title exists with exception: {}".format(e))
 
 '''check_if_database_title_exists
     

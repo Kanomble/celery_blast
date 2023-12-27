@@ -1009,6 +1009,20 @@ def download_project_as_zip_archive_view(request, project_id:int) -> HttpRespons
     except Exception as e:
         return failure_view(request, e)
 
+@login_required(login_url='login')
+def download_remote_project_as_zip_archive_view(request, project_id:int) -> HttpResponse:
+    try:
+        project_dir = REMOTE_BLAST_PROJECT_DIR + str(project_id)
+        blast_project = get_remote_project_by_id(project_id)
+        file_wrapper = download_project_directory(project_dir)
+        response = HttpResponse(file_wrapper, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="{filename}.zip"'.format(
+            filename = blast_project.r_project_title.replace(" ", "_")
+        )
+        return response
+    except Exception as e:
+        return failure_view(request, e)
+
 '''view_selection_phylogeny
 
     This function is part of the database statistics bokeh plot dashboard. It is similar to the load_reciprocal_result_view view function
