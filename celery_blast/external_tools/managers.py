@@ -9,36 +9,50 @@ from .py_services import check_if_cdd_search_can_get_executed
 
 
 class ExternalToolsManager(models.Manager):
-    def create_external_tools(self, project_id:int):
+    def create_external_tools(self, project_id:int,remote_or_local:str):
         try:
-            if self.filter(associated_project_id=project_id).exists() == False:
+
+            if remote_or_local == 'local':
                 blast_project = BlastProject.objects.get(id=project_id)
                 external_tools = self.create(
                     associated_project=blast_project)
 
                 external_tools.initialize_external_tools_project()
             else:
-                external_tools = self.get(associated_project_id=project_id)
+                remote_blast_project = RemoteBlastProject.objects.get(id=project_id)
+                external_tools = self.create(
+                    remote_associated_project=remote_blast_project)
 
+                external_tools.initialize_external_tools_project()
             return external_tools
         except Exception as e:
             raise IntegrityError("[-] couldnt save external tools model into database with exception : {}".format(e))
 
-    def get_external_tools_based_on_project_id(self, project_id):
+
+    def get_external_tools_based_on_project_id(self, project_id, remote_or_local):
         try:
-            if self.filter(associated_project_id=project_id).exists() == False:
-                raise IntegrityError(
-                    "[-] there is no external tools object with your specified project id : {}".format(project_id))
+            if remote_or_local == "local":
+                if self.filter(associated_project_id=project_id).exists() == False:
+                    raise IntegrityError(
+                        "[-] there is no external tools object with your specified project id : {}".format(project_id))
+                else:
+                    return self.get(associated_project_id=project_id)
+            elif remote_or_local == "remote":
+                if self.filter(remote_associated_project_id=project_id).exists() == False:
+                    raise IntegrityError(
+                        "[-] there is no external tools object with your specified project id : {}".format(project_id))
+                else:
+                    return self.get(remote_associated_project_id=project_id)
             else:
-                return self.get(associated_project_id=project_id)
+                raise Exception("[-] associated external tools object is not local nor remote ...")
         except Exception as e:
             raise IntegrityError(
                 "[-] there is no external tools object with your specified project id : {} with exception: {}".format(
                     project_id, e))
 
-    def get_all_associated_query_sequences(self, project_id):
+    def get_all_associated_query_sequences(self, project_id, remote_or_local):
         try:
-            external_tools = self.get_external_tools_based_on_project_id(project_id)
+            external_tools = self.get_external_tools_based_on_project_id(project_id, remote_or_local)
             query_sequence_set = mdl.QuerySequences.objects.filter(external_tool_for_query_sequence=external_tools)
             return query_sequence_set
         except Exception as e:
@@ -59,9 +73,9 @@ class ExternalToolsManager(models.Manager):
             :type django.db.models.query.QuerySet
     '''
 
-    def get_associated_query_sequence(self, project_id: int, query_sequence: str):
+    def get_associated_query_sequence(self, project_id: int, query_sequence: str, remote_or_local):
         try:
-            external_tools = self.get_external_tools_based_on_project_id(project_id)
+            external_tools = self.get_external_tools_based_on_project_id(project_id, remote_or_local)
             query_sequence = mdl.QuerySequences.objects.filter(external_tool_for_query_sequence=external_tools,
                                                                query_accession_id=query_sequence)
             return query_sequence
@@ -83,9 +97,9 @@ class ExternalToolsManager(models.Manager):
             :type TaskResult
     '''
 
-    def get_associated_query_sequence_and_return_cdd_task(self, project_id: int, query_sequence: str):
+    def get_associated_query_sequence_and_return_cdd_task(self, project_id: int, query_sequence: str, remote_or_local:str):
         try:
-            external_tools = self.get_external_tools_based_on_project_id(project_id)
+            external_tools = self.get_external_tools_based_on_project_id(project_id, remote_or_local)
             query_sequence = mdl.QuerySequences.objects.filter(external_tool_for_query_sequence=external_tools,
                                                                query_accession_id=query_sequence)
             task_id = query_sequence[0].cdd_domain_search_task_id

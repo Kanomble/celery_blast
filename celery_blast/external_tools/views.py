@@ -30,10 +30,10 @@ from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tre
     
 '''
 @login_required(login_url='login')
-def synteny_dashboard_view(request:WSGIRequest, project_id:int):
+def synteny_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local="local"):
     try:
         context = {}
-        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         context['qseqids'] = qseqids
         context['project_id'] = project_id
         return render(request, "external_tools/synteny_detection_dashboard.html", context)
@@ -96,14 +96,14 @@ def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, projec
     Based on the RBH id the result dataframe and database table the ftp path for the corresponding genbank file is calculated.
 '''
 @csrf_exempt
-def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, query_sequence:str):
+def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, query_sequence:str, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
             if request.method == "POST":
                 form_data = request.POST
                 data = form_data.dict()
-                synteny_calculation_task.delay(project_id, query_sequence, data)
+                synteny_calculation_task.delay(project_id, query_sequence, data, remote_or_local)
         return JsonResponse({"response": "success"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
@@ -338,10 +338,10 @@ def entrez_dashboard_view(request: WSGIRequest):
 
 # TODO documentation
 @login_required(login_url='login')
-def project_informations(request, project_id):
+def project_informations(request, project_id, remote_or_local="local"):
     try:
         context = {}
-        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         context['qseqids'] = qseqids
         context['project_id'] = project_id
         return render(request, "external_tools/external_tools_dashboard.html", context)
@@ -450,10 +450,10 @@ def ajax_call_progress_entrezsearch_to_fasta(request, search_id: int):
 
 # view for phylogenetic dashboard
 @login_required(login_url='login')
-def phylogenetic_information(request, project_id, query_sequence_id):
+def phylogenetic_information(request, project_id, query_sequence_id, remote_or_local="local"):
     try:
         context = {}
-        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         context['qseqids'] = qseqids
         context['query_sequence_id'] = query_sequence_id
         context['project_id'] = project_id

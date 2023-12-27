@@ -344,6 +344,8 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
+- [ ] refactor calculation of database normalized tables
+  - seems to be zero in some cases (which is wrong)
 - [ ] add validation for same project titles
 - [ ] add validation for entrez_queries
 - [x] fix one-way BLAST snakemake pipeline

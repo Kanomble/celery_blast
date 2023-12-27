@@ -50,9 +50,9 @@ def update_assembly_entries_in_database(database_id: int):
 '''
 
 
-def update_external_tool_with_cdd_search(project_id: int, query_sequence: str, task_id: int):
+def update_external_tool_with_cdd_search(project_id: int, query_sequence: str, task_id: int, remote_or_local:str):
     try:
-        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tool.update_query_sequences_cdd_search_task(query_sequence, task_id)
     except Exception as e:
         raise Exception(
@@ -118,9 +118,9 @@ def check_if_database_title_exists(new_database_title:str)->bool:
 '''
 
 
-def get_query_sequence_of_external_tools(project_id: int, query_sequence: str):
+def get_query_sequence_of_external_tools(project_id: int, query_sequence: str, remote_or_local:str):
     try:
-        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tool = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         query_sequence_model = QuerySequences.objects.filter(external_tool_for_query_sequence=external_tool,
                                                              query_accession_id=query_sequence)
         return query_sequence_model
@@ -179,10 +179,10 @@ This script provides functions that should serve as a layer between the database
 
 
 # TODO documentation
-def create_external_tools_after_snakemake_workflow_finishes(project_id: int) -> ExternalTools:
+def create_external_tools_after_snakemake_workflow_finishes(project_id: int, remote_or_local:str) -> ExternalTools:
     try:
         with transaction.atomic():
-            external_tool = ExternalTools.objects.create_external_tools(project_id)
+            external_tool = ExternalTools.objects.create_external_tools(project_id,remote_or_local)
         return external_tool
     except IntegrityError as e:
         raise IntegrityError("[-] couldnt create external tools model with exception : {}".format(e))

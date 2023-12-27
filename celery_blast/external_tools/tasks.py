@@ -105,13 +105,13 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
 
 
 @shared_task(bind=True)
-def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:str, accession_data:dict):
+def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:str, accession_data:dict, remote_or_local="local"):
     try:
         logger.info("starting phylogenetic inference based on selected RBHs from the CDD domain plot")
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
         logger.info("updating external tools with selection constrained cdd task")
-        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tools.update_selection_constrained_CDD_phylogenetic_inference(query_sequence, str(self.request.id))
         blast_project = get_project_by_id(project_id)
         logger.info("working with post data ...")
@@ -175,7 +175,7 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
 
 '''
 @shared_task(bind=True)
-def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:dict):
+def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:dict, remote_or_local:str):
     try:
         logger.info("starting synteny calculation task for query sequence: {} in project {}".format(query_sequence, project_id))
         progress_recorder = ProgressRecorder(self)
@@ -185,7 +185,7 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
         if returncode == 1:
             logger.warning("there is no directory for the given project_id: {} and query_sequence: {}".format(project_id,query_sequence))
             return 1
-        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tools.update_query_sequences_synteny_calculation_task(query_sequence, str(self.request.id))
         blast_project = get_project_by_id(project_id)
 
@@ -452,12 +452,12 @@ execute_multiple_sequence_alignment
 
 
 @shared_task(bind=True)
-def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
+def execute_multiple_sequence_alignment(self, project_id, query_sequence_id, remote_or_local="local"):
     try:
         logger.info("trying to start mafft multiple sequence alignment")
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
-        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tools.update_query_sequences_msa_task(query_sequence_id, str(self.request.id))
         logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
         path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
@@ -490,7 +490,7 @@ def execute_multiple_sequence_alignment(self, project_id, query_sequence_id):
 
 
 @shared_task(bind=True)
-def execute_phylogenetic_tree_building(self, project_id, query_sequence_id):
+def execute_phylogenetic_tree_building(self, project_id, query_sequence_id, remote_or_local="local"):
     try:
         logger.info(
             "trying to execute fasttree phylogenetic tree construction per request to bioinformatic tools container")
@@ -498,7 +498,7 @@ def execute_phylogenetic_tree_building(self, project_id, query_sequence_id):
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
 
-        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         logger.info("cheking if msa task succeeded for query sequence : {}".format(query_sequence_id))
 
         path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
@@ -531,12 +531,12 @@ def execute_phylogenetic_tree_building(self, project_id, query_sequence_id):
 
 
 @shared_task(bind=True)
-def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id):
+def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id, remote_or_local="local"):
     try:
         logger.info("trying to start mafft multiple sequence alignment for multiple query sequence targets")
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
-        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
         logger.info("updated multiple query sequence models with taskresult instance : {}".format(str(self.request.id)))
         progress_recorder.set_progress(19, 100, "PROGRESS")
@@ -583,12 +583,12 @@ def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id
 
 
 @shared_task(bind=True)
-def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id):
+def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id, remote_or_local="local"):
     try:
         logger.info("trying to execute fasttree phylogenetic tree construction for all query sequences")
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
-        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+        external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
 
         external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
         logger.info("updated multiple query sequence models with taskresult instance : {}".format(str(self.request.id)))

@@ -171,7 +171,6 @@ def execute_reciprocal_blast_project(self, project_id):
             )       
             '''
 
-            # '--wms-monitor', settings.PANOPTES_IP,
             reciprocal_blast_snakemake = Popen(
                 ['snakemake',
                  '--snakefile', snakefile_dir,
@@ -193,9 +192,9 @@ def execute_reciprocal_blast_project(self, project_id):
 
             progress_recorder.set_progress(100, 100, "SUCCESS")
             logger.info('INFO:creating external tools model')
-            create_external_tools_after_snakemake_workflow_finishes(project_id)
+            create_external_tools_after_snakemake_workflow_finishes(project_id, 'local')
             logger.info('INFO:update phylo and msa task with id of the reciprocal BLAST')
-            external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
+            external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, 'local')
             external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
             external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
 
@@ -255,17 +254,6 @@ def execute_remote_reciprocal_blast_project(self, project_id):
             logger.info('INFO:trying to start snakemake reciprocal BLAST workflow')
             progress_recorder.set_progress(25, 100, 'PROGRESS')
 
-            '''
-            #snakemake --snakefile '../../../static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/blast_project/1/snakefile_config --directory 'media/blast_project/1'
-            cmd = 'snakemake --snakefile {} --wms-monitor {} --cores 1 --configfile {} --directory {} --keep-incomplete -q'.format(
-                snakefile_dir, settings.PANOPTES_IP, snakemake_config_file, snakemake_working_dir
-            )
-            reciprocal_blast_snakemake = Popen(
-                cmd, shell=True
-            )       
-            '''
-
-            # '--wms-monitor', settings.PANOPTES_IP,
             reciprocal_blast_snakemake = Popen(
                 ['snakemake',
                  '--snakefile', snakefile_dir,
@@ -286,12 +274,12 @@ def execute_remote_reciprocal_blast_project(self, project_id):
                 raise Exception('Popen hasnt succeeded ...')
 
             progress_recorder.set_progress(100, 100, "SUCCESS")
-            # logger.info('INFO:creating external tools model')
-            create_external_tools_after_snakemake_workflow_finishes(project_id)
-            # logger.info('INFO:update phylo and msa task with id of the reciprocal BLAST')
-            # external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
-            # external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
-            # external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
+            logger.info('INFO:creating external tools model')
+            create_external_tools_after_snakemake_workflow_finishes(project_id,'remote')
+            logger.info('INFO:update phylo and msa task with id of the reciprocal BLAST')
+            external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, 'remote')
+            external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
+            external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
 
             return returncode
 

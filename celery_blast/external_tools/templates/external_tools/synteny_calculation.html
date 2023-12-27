@@ -118,7 +118,7 @@
                         }
                         $.ajax({
                             type: "POST",
-                            url: "{% url 'calculate_synteny_form_submit_ajax' project_id=project_id query_sequence=query_sequence %}",
+                            url: "{% url 'calculate_synteny_form_submit_ajax' project_id=project_id query_sequence=query_sequence remote_or_local="local" %}",
                             data: jsonArr,
                             success: function (data){
                                 if (data.response === 'success'){

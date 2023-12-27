@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from blast_project.models import BlastProject
+from blast_project.models import BlastProject, RemoteBlastProject
 from django.contrib.auth.models import User
 from django.db import models
 from django_celery_results.models import TaskResult
@@ -12,15 +12,48 @@ from .managers import ExternalToolsManager, QuerySequenceManager, EntrezSearchMa
 class ExternalTools(models.Model):
     associated_project = models.OneToOneField(
         BlastProject,
+        blank=True,
+        null=True,
         on_delete=models.CASCADE,
         verbose_name="Associated BlastProject"
     )
 
+    remote_associated_project = models.OneToOneField(
+        RemoteBlastProject,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name="Associated Remote BlastProject"
+    )
+
+    remote_or_local = models.CharField(
+        blank=True,
+        null=True,
+        max_length=10,
+        default='local')
+
     objects = ExternalToolsManager()
+
+    def is_local(self):
+        try:
+            if self.associated_project:
+                return True
+            elif self.remote_associated_project:
+                return False
+            else:
+                raise Exception(
+                    "either a remote nor a local project can be attachted to the external tools model instance")
+        except Exception as e:
+            raise Exception("[-] associated external tools objects is not local nor remote ...")
 
     def initialize_external_tools_project(self):
         try:
-            blast_project = self.associated_project
+            if self.associated_project:
+                blast_project = self.associated_project
+            elif self.remote_associated_project:
+                blast_project = self.remote_associated_project
+            else:
+                raise Exception("either a remote nor a local project can be attachted to the external tools model instance")
             query_sequence_id_list = blast_project.get_list_of_query_sequences()
             query_sequence_information = blast_project.get_fasta_header_of_query_sequences()
             if len(query_sequence_id_list) != len(query_sequence_information):
