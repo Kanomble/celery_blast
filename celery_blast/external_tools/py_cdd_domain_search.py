@@ -681,11 +681,15 @@ def bokeh_django_task_button(current_selection: ColumnDataSource, remote_or_loca
         :type list[str]
     :param query_sequence
         :type str
+    :param color_dict
+        :type dict
+    :param remote_or_local
+        :type str
 '''
 
 
 def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_unit: str, variances: list,
-                     query_sequence: str, color_dict:dict):
+                     query_sequence: str, color_dict:dict, remote_or_local:str):
     try:
         # bokeh data preparation
         bokeh_dataframe = bokeh_dataframe.rename(
@@ -789,7 +793,7 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
         download_selection_button = Button(label="Download Selection")
         download_selection_button.js_on_click(download_selection_callback)
 
-        task_selection_callback = bokeh_django_task_button(column_dat)
+        task_selection_callback = bokeh_django_task_button(column_dat, remote_or_local)
         task_selection_button = Button(label="Calculate Domain Corrected Phylogeny")
         task_selection_button.js_on_click(task_selection_callback)
         color_menu = Select(options=['phylum', 'class', 'order', 'family', 'genus'],
@@ -915,7 +919,7 @@ def produce_bokeh_pca_plot(project_id: int, qseqid: str,remote_or_local:str,
             variances = [round(pca_selection.explained_variance_ratio_[0] * 100, 3),
                          round(pca_selection.explained_variance_ratio_[1] * 100, 3)]
             bk_df, header = build_dataframe_for_bokeh(cdd_dataframe, pca_df, selection)
-            grid, p = build_bokeh_plot(bk_df, header, taxonomic_unit, variances, qseqid, color_dict)
+            grid, p = build_bokeh_plot(bk_df, header, taxonomic_unit, variances, qseqid, color_dict, remote_or_local)
             # save bokeh plot
             output_file(filename=path_to_output,
                         title="Principal Component Analysis of CDD-pidents".format(
