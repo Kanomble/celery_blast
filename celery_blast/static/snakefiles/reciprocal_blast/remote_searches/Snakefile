@@ -23,7 +23,10 @@ rule all:
 		expand("{qseqid}/results_rbhs.html", qseqid=QSEQIDS),
 		"query_sequence_information.html",
 		"blastp_fw_out_reformatted.table",
-
+		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
+		"query_domains.tsf", "query_domains.html",
+		expand("{qseqid}/target_sequences_trimmed.html",qseqid=QSEQIDS),
+		expand("{qseqid}/target_sequences_tree.html",qseqid=QSEQIDS)
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -203,7 +206,7 @@ rule create_interactive_plot:
 		"../../../../static/snakefiles/reciprocal_blast/remote_searches/bokeh_plot_for_remote_blast_project.py"
 
 
-#RULE 9
+#RULE 10
 #outputs a summary for the RBH inference and constructs directories for each query sequence
 rule build_folders_with_hit_info_for_each_qseqid:
 	input: result_csv="reciprocal_results_with_taxonomy.csv", query_file=config['query_sequence'], blast_tables_to_html_log="log/blast_tables_to_html.log"
@@ -215,7 +218,7 @@ rule build_folders_with_hit_info_for_each_qseqid:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/build_folders_with_hit_info_for_each_qseqid.py"
 
-#RULE 10
+#RULE 11
 #creates a html table with information of the query sequences
 rule query_sequences_to_html_table:
 	input: target_file=config['query_sequence']
@@ -224,3 +227,161 @@ rule query_sequences_to_html_table:
 	log: log="log/query_sequences_to_html_table.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/query_sequences_to_html_table.py"
+
+#RULE 12
+#extracts sequences of RBHs from the forward database
+rule extract_subject_sequences_from_database:
+	input: target_ids="{qseqid}/target_sequence_ids.txt", target_fasta="bw_queries.faa", build_folders_with_hit_info_for_each_qseqid_log="log/build_folders_with_hit_info_for_each_qseqid.log"
+	output: "{qseqid}/target_sequences_raw.faa"
+	log: log="log/{qseqid}/extract_subject_sequences_from_database.log"
+	run:
+		with open(log.log, "w") as logfile:
+			logfile.write("INFO:creating target sequence fasta file for query sequences\n")
+			try:
+				logfile.write("INFO:reading target id file ...\n")
+				target_ids = []
+				with open(input.target_ids, "r") as idfile:
+					for line in idfile.readlines():
+						target_ids.append(line.rstrip())
+				logfile.write("INFO:reading input fasta file and creating output fasta file ...\n")
+				with open(output[0],"w") as outputfasta:
+					with open(input.target_fasta, "r") as inputfasta:
+						switch = 0
+						for line in inputfasta.readlines():
+							if line.startswith(">"):
+								header = line.split(" ")
+								header = header[0].split(">")[-1]
+								if header in target_ids:
+									switch = 1
+									outputfasta.write(line)
+								else:
+									switch = 0
+							elif switch == 1:
+								outputfasta.write(line)
+
+				logfile.write("DONE\n")
+			except Exception as e:
+				logfile.write("ERROR:error during creation of query sequence target sequences with exception: {}\n".format(e))
+				raise Exception("[-] ERROR during creation of query sequence target sequence file with exception: {}".format(e))
+
+#RULE 13
+#checks if the query sequence resides in the target_sequences.faa file
+rule check_if_query_sequence_is_in_target_sequences_faa:
+	input: target_file=expand("{qseqid}/target_sequences_raw.faa",qseqid=QSEQIDS), query_file=config['query_sequence']
+	output: expand("{qseqid}/target_sequences.faa",qseqid=QSEQIDS)
+	params: qseqs=QSEQIDS
+	log: log="log/check_if_query_sequence_is_in_target_sequences_faa.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/check_if_query_sequence_is_in_target_sequences_faa.py"
+
+
+#RULE 14
+#this rule shouldn't throw exceptions, if an error occurs an empty file is created
+rule conduct_multiple_sequence_alignment_mafft:
+	input: target_fasta="{qseqid}/target_sequences.faa", query_sequences_to_html_table_log="log/query_sequences_to_html_table.log"
+	output: "{qseqid}/target_sequences.msa"
+	log: log="log/{qseqid}/msa.log"
+	run:
+		execute_mafft=True
+		#check if target sequence file is empty (or just contains the query sequence)
+		#if this is the case, there is no need for producing a msa
+		with open(input[0],'r') as infile:
+			if len(infile.readlines()) <= 1:
+				execute_mafft=False
+		try:
+			if execute_mafft==True:
+				#mafft execution
+				mafft=shell("mafft --auto {input.target_fasta} > {output} 2> {log}")
+				with open(log['log'],'a') as lfile:
+					lfile.write("INFO:ending mafft multiple sequence alignment\n")
+					lfile.write("DONE")
+			else:
+				with open(log['log'],'w') as lfile:
+					lfile.write("WARNING: producing empty alignment file with touch\n")
+					lfile.write("DONE\n")
+				#produce empty file for snakemake
+				shell("touch {output}")
+		except Exception as e:
+			with open(log['log'],'w') as lfile:
+				lfile.write("ERROR: in mafft with exception: {}\n".format(e))
+				shell("touch {output}")
+
+#RULE 15
+rule trimal:
+	input: target_msa="{qseqid}/target_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
+	output: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
+	log: trimal_log="log/{qseqid}/trimal.log"
+	shell:
+		"trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}"
+
+#RULE 16
+rule display_alignment:
+	input: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
+	output: html_output="{qseqid}/target_sequences_trimmed.html"
+	log: display_alignment_log="log/{qseqid}/mview.log"
+	shell:
+		"mview -in fasta -html head -moltype aa -css on -coloring any -consensus on -sort cov {input.trimmed_sequences} > {output.html_output} 2> {log.display_alignment_log}"
+
+#RULE 17
+#this rule shouldn't throw exceptions, if an error occurs an empty file is created
+rule conduct_phylogeny_fast_tree:
+	input: target_msa="{qseqid}/target_sequences_trimmed.msa"
+	output: "{qseqid}/target_sequences.tree"
+	log: log="log/{qseqid}/phylogeny.log"
+	run:
+		#check if multiple sequence alignment has entries
+		execute_fasttree=True
+		with open(input[0],"r") as infile:
+			if len(infile.readlines()) <= 1:
+				#if there are no entries in the multiple sequence alignment there is no need for
+				# conducting fasttree
+				execute_fasttree == False
+		try:
+			#fasttree execution
+			if execute_fasttree == True:
+				fasttree = shell("fasttree {input.target_msa} > {output} 2> {log}")
+				with open(log['log'],'a') as lfile:
+					lfile.write("INFO:ending fasttree phylogeny construction\n")
+					lfile.write("DONE\n")
+			else:
+				with open(log['log'],'w') as lfile:
+					lfile.write("WARNING: producing empty tree file with touch\n")
+					lfile.write("DONE\n")
+				#produce empty file for snakemake
+				shell("touch {output}")
+		except Exception as e:
+			with open(log['log'],'w') as lfile:
+				lfile.write("ERROR: in fasttree with exception: {}\n".format(e))
+				shell("touch {output}")
+
+#RULE 18
+rule html_phylogenie:
+    input: newick_tree="{qseqid}/target_sequences.tree", blast_table="{qseqid}/rbh_table.tsf",
+    output: html_tree="{qseqid}/target_sequences_tree.html",
+    log: shiptv_log="log/{qseqid}/shiptv.log",
+    run:
+        df = pd.read_table(input['blast_table'])
+        if len(df) > 0:
+            shell("shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}")
+        else:
+            with open(output['html_tree'], 'w') as html_output:
+                html_output.write("<p>No sequences to display</p>\n")
+            with open(log['shiptv_log'],'w') as logfile:
+                logfile.write("WARNING:There are no sequences in the tree file\n")
+                logfile.write("DONE")
+#RULE 19
+rule cdd_domain_rpsblast:
+	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/shiptv.log", qseqid=QSEQIDS)
+	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
+	output: domain_df="query_domains.tsf"
+	log: log="log/cdd_domain_rpsblast.log"
+	shell:
+		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt \"6 qseqid qlen sacc slen qstart qend sstart send qseq sseq bitscore evalue pident stitle\" -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
+
+#RULE 20
+rule query_domains_to_html_table:
+	input: query_domains="query_domains.tsf", query_domains_html_table_log="log/cdd_domain_rpsblast.log"
+	output: domain_html_table="query_domains.html"
+	log: log="log/query_domains_to_html_table.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"

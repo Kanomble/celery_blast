@@ -97,7 +97,7 @@
                     <tr>
                         {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
                             <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
-                            <td><a class="btn btn-dark disabled" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
+                            <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id remote_or_local="remote" %}">MSA and Phylogeny</a></td>
                             <td><a class="btn btn-dark disabled" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
                             <td><a class="btn btn-dark disabled" href="{% url 'synteny_dashboard' project_id=BlastProject.id %}">Synteny Detection</a> </td>
                             <td><a class="btn btn-info" href="{% url 'download_remote_archive' project_id=BlastProject.id %}">Download Project</a> </td>

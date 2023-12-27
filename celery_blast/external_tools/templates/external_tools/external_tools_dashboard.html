@@ -49,14 +49,14 @@
                         <td>
                             {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
                                 {% load static %}
-                                <a href="{% url 'load_phylogenetic_tree' project_id=project_id query_sequence_id=qseq.query_accession_id %}">
+                                <a href="{% url 'load_phylogenetic_tree' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=qseqids.remote_or_local %}">
                                     <button class="btn btn-info">View Phylogeny</button>
                                 </a>
                             {% endif %}
                         </td>
                         <td>
                             {% if qseq.phylogenetic_tree_construction_task and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-                                <a href="{% url 'load_msa' project_id=project_id query_sequence_id=qseq.query_accession_id %}">
+                                <a href="{% url 'load_msa' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=qseqids.remote_or_local %}">
                                     <button class="btn btn-info">View Multiple Sequence Alignment</button>
                                 </a>
                             {% endif %}

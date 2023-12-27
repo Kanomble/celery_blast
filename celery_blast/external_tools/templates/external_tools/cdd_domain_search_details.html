@@ -16,7 +16,7 @@
         <p style="text-align: center;font-size: small"> Monitor your CDD Domain search results
             for {{ query_id }}, {{ request.user }}!</p>
 
-        <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query_id %}">
+        <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query_id remote_or_local=remote_or_local %}">
             Delete CDD Search for: {{ query_id }}</a>
 
     </div>

@@ -29,8 +29,7 @@ class ExternalTools(models.Model):
     remote_or_local = models.CharField(
         blank=True,
         null=True,
-        max_length=10,
-        default='local')
+        max_length=10,)
 
     objects = ExternalToolsManager()
 
@@ -48,10 +47,10 @@ class ExternalTools(models.Model):
 
     def initialize_external_tools_project(self):
         try:
-            if self.associated_project:
-                blast_project = self.associated_project
-            elif self.remote_associated_project:
+            if self.remote_associated_project:
                 blast_project = self.remote_associated_project
+            elif self.associated_project:
+                blast_project = self.associated_project
             else:
                 raise Exception("either a remote nor a local project can be attachted to the external tools model instance")
             query_sequence_id_list = blast_project.get_list_of_query_sequences()

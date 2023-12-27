@@ -3,16 +3,16 @@ from django.urls import path, include
 from . import views
 
 cdd_search_urls = [
-    path('<int:project_id>/project_details/cdd_domain_search_dashboard',
+    path('<int:project_id>/project_details/<str:remote_or_local>/cdd_domain_search_dashboard',
          views.cdd_domain_search_dashboard,
          name='cdd_domain_search_dashboard'),
-    path('<int:project_id>/project_details/cdd_domain_search_dashboard/cdd_search_task',
+    path('<int:project_id>/project_details/<str:remote_or_local>/cdd_domain_search_dashboard/cdd_search_task',
          views.execute_cdd_domain_search_for_target_query,
          name='execute_cdd_domain_search'),
-    path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:query_id>/cdd_domain_search_details',
+    path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:remote_or_local>/<str:query_id>/cdd_domain_search_details',
          views.cdd_domain_search_details_view,
          name='cdd_domain_search_details'),
-    path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:query_id>/delete_cdd_domain_search',
+    path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:remote_or_local>/<str:query_id>/delete_cdd_domain_search',
          views.delete_cdd_domain_search_view,
          name='delete_cdd_domain_search'),
     path('<int:project_id>/<str:query_id>/selection_constrained_phylogeny',
@@ -69,9 +69,9 @@ phylogenetic_analysis_urls = [
          name='perform_fasttree_phylobuild_for_all_query_sequences'),
     path('<int:project_id>/<str:query_sequence_id>/phylogenetic_information',
          views.phylogenetic_information, name='phylogenetic_information'),
-    path('<int:project_id>/<str:query_sequence_id>/phylogenetic_tree',
+    path('<int:project_id>/<str:query_sequence_id>/<str:remote_or_local>/phylogenetic_tree',
          views.load_phylogenetic_tree_view, name='load_phylogenetic_tree'),
-    path('<int:project_id>/<str:query_sequence_id>/multiple_sequence_alignment',
+    path('<int:project_id>/<str:query_sequence_id>/<str:remote_or_local>/multiple_sequence_alignment',
          views.load_msa_view, name='load_msa')
 ]
 
@@ -96,7 +96,7 @@ urlpatterns = [
     path('', include(entrez_search_urls)),
     path('', include(ajax_calls)),
     path('', include(phylogenetic_analysis_urls)),
-    path('<int:project_id>/external_project_information', views.project_informations,
+    path('<int:project_id>/<str:remote_or_local>/external_project_information', views.project_informations,
          name='external_project_informations'),
     path('bokeh_task', views.bokeh_task, name="bokeh_task"),
     path('bokeh_database_task', views.bokeh_database_task, name="bokeh_database_task")

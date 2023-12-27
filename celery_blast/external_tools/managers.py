@@ -13,15 +13,21 @@ class ExternalToolsManager(models.Manager):
         try:
 
             if remote_or_local == 'local':
-                blast_project = BlastProject.objects.get(id=project_id)
-                external_tools = self.create(
-                    associated_project=blast_project)
+                if self.filter(associated_project_id=project_id).exists() == False:
+                    blast_project = BlastProject.objects.get(id=project_id)
+                    external_tools = self.create(
+                        associated_project=blast_project, remote_or_local="local")
 
-                external_tools.initialize_external_tools_project()
+                    external_tools.initialize_external_tools_project()
+                else:
+                    external_tools = self.get_external_tools_based_on_project_id(project_id, "local")
             else:
-                remote_blast_project = RemoteBlastProject.objects.get(id=project_id)
-                external_tools = self.create(
-                    remote_associated_project=remote_blast_project)
+                if self.filter(remote_associated_project_id=project_id).exists() == False:
+                    remote_blast_project = RemoteBlastProject.objects.get(id=project_id)
+                    external_tools = self.create(
+                        remote_associated_project=remote_blast_project, remote_or_local="remote")
+                else:
+                    external_tools = self.get_external_tools_based_on_project_id(project_id,"remote")
 
                 external_tools.initialize_external_tools_project()
             return external_tools
@@ -118,18 +124,20 @@ class ExternalToolsManager(models.Manager):
         
         :param project_id
             :type int
+        :param remote_or_local
+            :type str
 
         :returns query_sequence_cdd_tasks
             :type dict[str] = tuple(int,str)
     '''
 
-    def check_cdd_domain_search_task_status(self, project_id: int) -> dict:
+    def check_cdd_domain_search_task_status(self, project_id: int, remote_or_local: str) -> dict:
         try:
             query_sequence_cdd_tasks = {}
             # query sequence set
-            query_sequences = self.get_all_associated_query_sequences(project_id)
+            query_sequences = self.get_all_associated_query_sequences(project_id, remote_or_local)
             for query_sequence in query_sequences:
-                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id, project_id)
+                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id, project_id, remote_or_local)
                 if returncode == 1:
                     query_sequence_cdd_tasks[query_sequence.query_accession_id] = query_sequence. \
                                                                                       check_if_cdd_search_is_complete(), \
@@ -150,18 +158,20 @@ class ExternalToolsManager(models.Manager):
         
         :param project_id
             :type int
+        :param remote_or_local
+            :type str
         
         :returns query_sequences_rdy_for_cdd
             :type list[QuerySequence]
     '''
 
-    def get_cdd_searchable_queries(self, project_id: int) -> list:
+    def get_cdd_searchable_queries(self, project_id: int, remote_or_local:str) -> list:
         try:
             query_sequences_rdy_for_cdd = []
             # query sequence set
-            query_sequences = self.get_all_associated_query_sequences(project_id)
+            query_sequences = self.get_all_associated_query_sequences(project_id, remote_or_local)
             for query_sequence in query_sequences:
-                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id, project_id)
+                returncode = check_if_cdd_search_can_get_executed(query_sequence.query_accession_id, project_id, remote_or_local)
                 if returncode == 0:
                     if query_sequence.check_if_cdd_search_is_complete() == 'NOTEXEC':
                         query_sequences_rdy_for_cdd.append(query_sequence)
@@ -175,10 +185,13 @@ class ExternalToolsManager(models.Manager):
 class QuerySequenceManager(models.Manager):
     def create_query_sequence(self, query_sequence_id, query_sequence_info, external_tools):
         try:
-            query_sequence = self.create(
-                query_accession_id=query_sequence_id,
-                query_accession_information=query_sequence_info,
-                external_tool_for_query_sequence=external_tools)
+            if self.filter(external_tool_for_query_sequence_id=external_tools.id, query_accession_id=query_sequence_id).exists() == False:
+                query_sequence = self.create(
+                    query_accession_id=query_sequence_id,
+                    query_accession_information=query_sequence_info,
+                    external_tool_for_query_sequence=external_tools)
+            else:
+                query_sequence = self.filter(external_tool_for_query_sequence_id=external_tools.id, query_accession_id=query_sequence_id)
             return query_sequence
         except Exception as e:
             raise IntegrityError("[-] couldnt save query sequence model into database with exception : {}".format(e))

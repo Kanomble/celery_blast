@@ -27,7 +27,7 @@
                 {% if status.1 == 'not valid' %}
                     <div class="row">
                         <a class="btn btn-dark disabled"
-                           href="{% url 'execute_cdd_domain_search' project_id=project_id %}">{{ query }} <= 2 RBHs or <= 2
+                           href="{% url 'execute_cdd_domain_search' project_id=project_id remote_or_local=remote_or_local %}">{{ query }} <= 2 RBHs or <= 2
                             CDD hits</a>
                     </div>
                 {% else %}
@@ -38,7 +38,7 @@
             {% elif status.0 == 'SUCCESS' %}
                 <div class="row col-sm-2">
                     <a class="btn btn-info" id="cdd_success"
-                       href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query %}">View Results
+                       href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query remote_or_local=remote_or_local %}">View Results
                         for: {{ query }}</a>
                 </div>
             {% elif status.0 == 'PROGRESS' %}
@@ -56,7 +56,7 @@
             {% elif status.0 == 'FAILURE' %}
                 <div class="col-sm-4">
                      <a class="btn btn-danger"
-                       href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query %}"> An ERROR occurred, delete CDD Search
+                       href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query remote_or_local=remote_or_local %}"> An ERROR occurred, delete CDD Search
                         for: {{ query }}</a>
                 </div>
             {% endif %}
@@ -66,7 +66,7 @@
     {% endif %}
 
     <div class="dashboard_project_list_col">
-        <form method="post" action="{% url 'execute_cdd_domain_search' project_id=project_id %}">
+        <form method="post" action="{% url 'execute_cdd_domain_search' project_id=project_id remote_or_local=remote_or_local %}">
             {% csrf_token %}
             {{ rpsblast_settingsform.as_p }}
             <input type="submit" value="Submit" class="btn btn-dark">
@@ -87,7 +87,7 @@
                     var status = $('.progress-{{query}}'),
                         poll = function () {
                             jQuery.ajax({
-                                url: "{% url 'get_cdd_task_status_ajax_call' project_id=project_id query_id=query %}",
+                                url: "{% url 'get_cdd_task_status_ajax_call' project_id=project_id query_id=query  %}",
                                 dataType: 'json',
                                 type: 'get',
                                 success: function (data) { // check if available

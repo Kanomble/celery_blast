@@ -22,7 +22,7 @@ from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tre
     download_organism_protein_sequences_task, \
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task, \
     synteny_calculation_task, calculate_phylogeny_based_on_selection, calculate_phylogeny_based_on_database_statistics_selection
-
+from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
 
 '''synteny_dashboard_view
     
@@ -131,12 +131,20 @@ def load_synteny_view(request: WSGIRequest, project_id: int, query_sequence_id: 
         :type int
     :param query_sequence
         :type int
-
+    :param remote_or_local
+        :type str
 '''
 @login_required(login_url='login')
-def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_sequence_id: str):
+def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_sequence_id: str, remote_or_local:str):
     try:
-        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_tree.html")
+        if remote_or_local == 'local':
+            html_result_path = BLAST_PROJECT_DIR
+        elif remote_or_local == 'remote':
+            html_result_path = REMOTE_BLAST_PROJECT_DIR
+        else:
+            raise Exception("project is neither local nor remote ...")
+
+        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_tree.html", html_result_path=html_result_path)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
@@ -158,9 +166,15 @@ def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_seq
 
 
 @login_required(login_url='login')
-def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str):
+def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str, remote_or_local:str):
     try:
-        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_trimmed.html")
+        if remote_or_local == 'local':
+            html_result_path = BLAST_PROJECT_DIR
+        elif remote_or_local == 'remote':
+            html_result_path = REMOTE_BLAST_PROJECT_DIR
+        else:
+            raise Exception("project is neither local nor remote ...")
+        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_trimmed.html", html_result_path=html_result_path)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
@@ -311,9 +325,6 @@ def entrez_dashboard_view(request: WSGIRequest):
                 number_records = entrez_search_form.cleaned_data['number_records']
                 entrez_query = entrez_search_form.cleaned_data[
                     'entrez_query']  # needs an if clause to check if in db already
-
-                print("[+] HELLO from server ", entrez_search_form.cleaned_data)
-
                 entrez_search_task.delay(database,number_records, entrez_query, request.user.id)
 
                 entrez_searches = EntrezSearch.edirect_objects.get_all_entrez_searches_from_current_user(
@@ -338,10 +349,12 @@ def entrez_dashboard_view(request: WSGIRequest):
 
 # TODO documentation
 @login_required(login_url='login')
-def project_informations(request, project_id, remote_or_local="local"):
+def project_informations(request, project_id, remote_or_local:str):
     try:
         context = {}
         qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
+        print(remote_or_local)
+        print(qseqids.remote_or_local)
         context['qseqids'] = qseqids
         context['project_id'] = project_id
         return render(request, "external_tools/external_tools_dashboard.html", context)
@@ -351,11 +364,11 @@ def project_informations(request, project_id, remote_or_local="local"):
 
 # TODO documentation
 @login_required(login_url='login')
-def perform_simple_msa(request, project_id, query_sequence_id):
+def perform_simple_msa(request, project_id, query_sequence_id, remote_or_local):
     try:
         if request.method == 'POST':
             execute_multiple_sequence_alignment.delay(project_id, query_sequence_id)
-            return redirect('external_project_informations', project_id=project_id)
+            return redirect('external_project_informations', project_id=project_id, remote_or_local=remote_or_local)
         else:
             e = "There is no GET method for this view function"
             return failure_view(request, e)
@@ -364,11 +377,11 @@ def perform_simple_msa(request, project_id, query_sequence_id):
 
 
 @login_required(login_url='login')
-def perform_simple_msa_for_all_query_sequences(request, project_id):
+def perform_simple_msa_for_all_query_sequences(request, project_id, remote_or_local):
     try:
         if request.method == 'POST':
             execute_multiple_sequence_alignment_for_all_query_sequences.delay(project_id)
-            return redirect('external_project_informations', project_id=project_id)
+            return redirect('external_project_informations', project_id=project_id, remote_or_local=remote_or_local)
         else:
             e = "There is no GET method for this view function"
             return failure_view(request, e)
@@ -377,11 +390,11 @@ def perform_simple_msa_for_all_query_sequences(request, project_id):
 
 
 @login_required(login_url='login')
-def perform_fasttree_phylobuild_for_all_query_sequences(request, project_id):
+def perform_fasttree_phylobuild_for_all_query_sequences(request, project_id, remote_or_local):
     try:
         if request.method == 'POST':
             execute_fasttree_phylobuild_for_all_query_sequences.delay(project_id)
-            return redirect('external_project_informations', project_id=project_id)
+            return redirect('external_project_informations', project_id=project_id, remote_or_local=remote_or_local)
         else:
             e = "There is no GET method for this view function"
             return failure_view(request, e)
@@ -391,11 +404,11 @@ def perform_fasttree_phylobuild_for_all_query_sequences(request, project_id):
 
 # TODO documentation
 @login_required(login_url='login')
-def perform_fasttree_phylobuild(request, project_id, query_sequence_id):
+def perform_fasttree_phylobuild(request, project_id, query_sequence_id, remote_or_local):
     try:
         if request.method == 'POST':
             execute_phylogenetic_tree_building.delay(project_id, query_sequence_id)
-            return redirect('external_project_informations', project_id=project_id)
+            return redirect('external_project_informations', project_id=project_id, remote_or_local=remote_or_local)
         else:
             e = "There is no GET method for this view function"
             return failure_view(request, e)
@@ -449,8 +462,9 @@ def ajax_call_progress_entrezsearch_to_fasta(request, search_id: int):
 
 
 # view for phylogenetic dashboard
+# obsolete right now
 @login_required(login_url='login')
-def phylogenetic_information(request, project_id, query_sequence_id, remote_or_local="local"):
+def phylogenetic_information(request, project_id, query_sequence_id, remote_or_local):
     try:
         context = {}
         qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
@@ -473,21 +487,24 @@ def phylogenetic_information(request, project_id, query_sequence_id, remote_or_l
     
     :param project_id
         :type int
+    :param remote_or_local
+        :type str
 
 '''
 
 
 @login_required(login_url='login')
-def cdd_domain_search_dashboard(request, project_id):
+def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
     try:
         if request.method == "GET":
-            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id)
+            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id, remote_or_local=remote_or_local)
 
             rps_blast_settings_form = RpsBLASTSettingsForm(query_sequences_rdy_for_cdd)
             query_sequence_cdd_search_dict = ExternalTools.objects.check_cdd_domain_search_task_status(
-                project_id=project_id)
+                project_id=project_id, remote_or_local=remote_or_local)
             context = {"query_task_dict": query_sequence_cdd_search_dict,
                        "project_id": project_id}
+            context['remote_or_local'] = remote_or_local
             context['html_results'] = ''.join(get_html_results(project_id, 'query_domains.html'))
             context['rpsblast_settingsform'] = rps_blast_settings_form
             return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
@@ -513,18 +530,18 @@ def cdd_domain_search_dashboard(request, project_id):
 
 
 @login_required(login_url='login')
-def execute_cdd_domain_search_for_target_query(request, project_id: int):
+def execute_cdd_domain_search_for_target_query(request, project_id: int, remote_or_local:str):
     try:
         if request.method == "POST":
-            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id)
+            query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id, remote_or_local=remote_or_local)
 
             rps_blast_form = RpsBLASTSettingsForm(query_sequences_rdy_for_cdd, request.POST)
             if rps_blast_form.is_valid():
                 rps_blast_task_data = rps_blast_form.cleaned_data
                 query_sequence = rps_blast_task_data['query_sequence']
-                if check_if_cdd_search_can_get_executed(query_sequence, project_id) == 0:
-                    cdd_domain_search_with_rbhs_task.delay(project_id, rps_blast_task_data)
-            return redirect('cdd_domain_search_dashboard', project_id=project_id)
+                if check_if_cdd_search_can_get_executed(query_sequence, project_id, remote_or_local) == 0:
+                    cdd_domain_search_with_rbhs_task.delay(project_id, rps_blast_task_data, remote_or_local)
+            return redirect('cdd_domain_search_dashboard', project_id=project_id, remote_or_local=remote_or_local)
         else:
             return failure_view(request, "There is no other method than post for this view.")
     except Exception as e:
@@ -568,15 +585,21 @@ def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, 
 
 
 @login_required(login_url='login')
-def cdd_domain_search_details_view(request, query_id: str, project_id: int):
+def cdd_domain_search_details_view(request, query_id: str, project_id: int, remote_or_local:str):
     try:
         # query_sequence_model = QuerySequences.objects.get(query_accession_id=)
         # bokeh_plot = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
         context = {}
         context['query_id'] = query_id
         context['project_id'] = project_id
-        context['CDDSearchPCABokehPlot'] = str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
-        query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id)
+        context['remote_or_local'] = remote_or_local
+        if remote_or_local == 'local':
+            context['CDDSearchPCABokehPlot'] = str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        elif remote_or_local == 'remote':
+            context['CDDSearchPCABokehPlot'] = 'remote_projects/' + str(project_id) + '/' + query_id + '/pca_bokeh_domain_plot.html'
+        else:
+            raise Exception("[-] ERROR project neither local nor remote ...")
+        query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id, remote_or_local)
         if query_sequence[0].selection_constrained_cdd_task != None:
             if query_sequence[0].selection_constrained_cdd_task.status == 'SUCCESS':
                 context['CDDPhylogeny'] = True
@@ -600,9 +623,9 @@ def cdd_domain_search_details_view(request, query_id: str, project_id: int):
 
 
 @login_required(login_url='login')
-def delete_cdd_domain_search_view(request, query_id: str, project_id: int):
+def delete_cdd_domain_search_view(request, query_id: str, project_id: int, remote_or_local:str):
     try:
-        query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id)
+        query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id, remote_or_local)
         # the query_sequence variable is a QuerySet but should just hold one query_sequence
         if len(query_sequence) > 1:
             raise Exception("[-] There are multiple query sequences with the name {} "
@@ -664,9 +687,11 @@ def bokeh_task(request:WSGIRequest):
                 data = loads(data)
                 url = data['url'].split("/")
                 project_id = int(url[4])
-                query_id = str(url[7])
+                query_id = str(url[8])
+                remote_or_local = str(url[7])
+                #print(url)
 
-                calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0])
+                calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0], remote_or_local)
             return JsonResponse({"response": "success"}, status=200)
         else:
             return JsonResponse({"response": "No ajax request!"}, status=400)

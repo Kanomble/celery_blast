@@ -620,14 +620,15 @@ def download_selection_callback_creation(current_selection: ColumnDataSource) ->
     
     :param current_selection
         :type ColumnDataSource
+    :param remote_or_local
+        :type str
     :returns task_selection_callback
         :type CustomJS
-
 '''
 
 
-def bokeh_django_task_button(current_selection: ColumnDataSource) -> CustomJS:
-    task_selection_callback = CustomJS(args=dict(sc=current_selection), code="""
+def bokeh_django_task_button(current_selection: ColumnDataSource, remote_or_local:str) -> CustomJS:
+    task_selection_callback = CustomJS(args=dict(sc=current_selection,remote_or_local=remote_or_local), code="""
         var viewData = { 
             accessions : [],
             url : window.location.href
@@ -646,7 +647,7 @@ def bokeh_django_task_button(current_selection: ColumnDataSource) -> CustomJS:
         
         var base_url = window.location.href
         base_url = base_url.split("/")[2]
-        base_url = "http://" + base_url + "/external_tools/bokeh_task"
+        base_url = "http://" + base_url + "/external_tools/bokeh_task/" + remote_or_local 
         
         $.ajax({
             type: "POST",
@@ -833,21 +834,31 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
         :type str
     :param taxonomic_unit - keyword
         :type str
-    
+    :param remote_or_local
+        :type str
+        
     :returns return_value - 0 success, 1 failure
         :type int
 '''
 
 
-def produce_bokeh_pca_plot(project_id: int, qseqid: str,
+def produce_bokeh_pca_plot(project_id: int, qseqid: str,remote_or_local:str,
                            taxonomic_unit='class') -> int:
     try:
-        path_to_output = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/pca_bokeh_domain_plot.html'
-        path_to_query_domains = settings.BLAST_PROJECT_DIR + str(project_id) + '/query_domains.tsf'
-        path_to_domains = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/cdd_domains.tsf'
-        result_df_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/reciprocal_results_with_taxonomy.csv'
-        result_df = pd.read_csv(result_df_path, index_col=0)
-
+        if remote_or_local == 'local':
+            path_to_output = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/pca_bokeh_domain_plot.html'
+            path_to_query_domains = settings.BLAST_PROJECT_DIR + str(project_id) + '/query_domains.tsf'
+            path_to_domains = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/cdd_domains.tsf'
+            result_df_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/reciprocal_results_with_taxonomy.csv'
+            result_df = pd.read_csv(result_df_path, index_col=0)
+        elif remote_or_local == "remote":
+            path_to_output = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/pca_bokeh_domain_plot.html'
+            path_to_query_domains = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/query_domains.tsf'
+            path_to_domains = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/cdd_domains.tsf'
+            result_df_path = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/reciprocal_results_with_taxonomy.csv'
+            result_df = pd.read_csv(result_df_path, index_col=0)
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote")
         # change unknown entries to their corresponding higher taxonomic nodes
         result_df = result_df.copy()
         result_df.loc[result_df[result_df['class'] == "unknown"].index, 'class'] = \
@@ -995,24 +1006,40 @@ def get_sequence_segments(qseqid_df: pd.DataFrame) -> list:
         :type int
     :param query_sequence
         :type str
-
+    :param remote_or_local
+        :type str
+        
     :returns returncode
         :type int
 
 '''
 
 
-def write_domain_corrected_fasta_file(project_id: int, query_sequence: str) -> int:
+def write_domain_corrected_fasta_file(project_id: int, query_sequence: str, remote_or_local:str) -> int:
     try:
-        logfile_path = settings.BLAST_PROJECT_DIR + str(
-            project_id) + '/log/' + query_sequence + '/domain_corrected_fasta_file.log'
-        with open(logfile_path, "w") as logfile:
-            logfile.write("INFO: Starting to produce multiple fasta file with overlapping domains.\n")
+
+        if remote_or_local == 'local':
+            logfile_path = settings.BLAST_PROJECT_DIR + str(
+                project_id) + '/log/' + query_sequence + '/domain_corrected_fasta_file.log'
             cdd_filepath = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/cdd_domains.tsf'
             fasta_filepath = settings.BLAST_PROJECT_DIR + str(
                 project_id) + '/' + query_sequence + '/target_sequences.faa'
             domain_fasta_filepath = settings.BLAST_PROJECT_DIR + str(
                 project_id) + '/' + query_sequence + '/domain_corrected_target_sequences.faa'
+        elif remote_or_local == 'remote':
+            logfile_path = settings.REMOTE_BLAST_PROJECT_DIR + str(
+                project_id) + '/log/' + query_sequence + '/domain_corrected_fasta_file.log'
+            cdd_filepath = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/cdd_domains.tsf'
+            fasta_filepath = settings.REMOTE_BLAST_PROJECT_DIR + str(
+                project_id) + '/' + query_sequence + '/target_sequences.faa'
+            domain_fasta_filepath = settings.REMOTE_BLAST_PROJECT_DIR + str(
+                project_id) + '/' + query_sequence + '/domain_corrected_target_sequences.faa'
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote")
+
+        with open(logfile_path, "w") as logfile:
+            logfile.write("INFO: Starting to produce multiple fasta file with overlapping domains.\n")
+
             # read cdd dataframe
             logfile.write("INFO: Loading dataframe with CDD hits.\n")
             df = pd.read_table(cdd_filepath, header=None)

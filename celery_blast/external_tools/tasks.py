@@ -4,7 +4,7 @@ from subprocess import Popen, SubprocessError, TimeoutExpired, check_output
 import pandas as pd
 
 import psutil
-from blast_project.py_django_db_services import update_external_tool_with_cdd_search, get_project_by_id, \
+from blast_project.py_django_db_services import update_external_tool_with_cdd_search, get_project_by_id, get_remote_project_by_id, \
     update_blast_project_with_database_statistics_selection_task_result_model, update_domain_database_task_result_model
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -105,7 +105,7 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
 
 
 @shared_task(bind=True)
-def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:str, accession_data:dict, remote_or_local="local"):
+def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:str, accession_data:dict, remote_or_local:str):
     try:
         logger.info("starting phylogenetic inference based on selected RBHs from the CDD domain plot")
         progress_recorder = ProgressRecorder(self)
@@ -113,7 +113,12 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         logger.info("updating external tools with selection constrained cdd task")
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tools.update_selection_constrained_CDD_phylogenetic_inference(query_sequence, str(self.request.id))
-        blast_project = get_project_by_id(project_id)
+        if remote_or_local == 'local':
+            blast_project = get_project_by_id(project_id)
+        elif remote_or_local == 'remote':
+            blast_project = get_remote_project_by_id(project_id)
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote ")
         logger.info("working with post data ...")
         accessions = []
         for ind in accession_data.keys():
@@ -644,13 +649,15 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id, remote
         :type TaskResult
     :param project_id
         :type int
+    :param remote_or_local
+        :type str
     :param rps_blast_task_data -> form data 
         :type dict[str] = value
 '''
 
 
 @shared_task(bind=True)
-def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data: dict):
+def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data: dict, remote_or_local:str):
     try:
 
         progress_recorder = ProgressRecorder(self)
@@ -661,14 +668,19 @@ def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data:
         try:
 
             # project_id: int, query_sequence: str, task_id: int
-            update_external_tool_with_cdd_search(project_id, target_query, self.request.id)
+            update_external_tool_with_cdd_search(project_id, target_query, self.request.id, remote_or_local)
             progress_recorder.set_progress(25, 100, "PROGRESS")
 
         except Exception as e:
             logger.warning("ERROR: couldnt update blast project with exception: {}".format(e))
             raise Exception("ERROR: couldnt update blast project with exception: {}".format(e))
 
-        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        if remote_or_local == 'local':
+            path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR project seems to be neither local nor remote")
         path_to_cdd_db = settings.CDD_DIR
         path_to_query_file = path_to_project + target_query + '/target_sequences.faa'
         path_to_cdd_domain_search_output = path_to_project + target_query + '/cdd_domains.tsf'
@@ -693,19 +705,19 @@ def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data:
             raise SubprocessError
 
         logger.info("INFO:performing PCA analysis and build interactive visualization ...")
-        produce_bokeh_pca_plot(project_id, target_query, taxonomic_unit='phylum')
+        produce_bokeh_pca_plot(project_id, target_query, remote_or_local,taxonomic_unit='phylum')
         progress_recorder.set_progress(60, 100, "PROGRESS")
 
         logger.info("INFO:starting to write domain corrected fasta file ...")
-        write_domain_corrected_fasta_file(project_id=project_id, query_sequence=target_query)
+        write_domain_corrected_fasta_file(project_id=project_id, query_sequence=target_query, remote_or_local=remote_or_local)
         progress_recorder.set_progress(65, 100, "PROGRESS")
 
         logger.info("INFO:starting mafft multiple sequence alignment with inferred domain segments ...")
-        execute_domain_multiple_sequence_alignment(project_id, target_query)
+        execute_domain_multiple_sequence_alignment(project_id, target_query, remote_or_local)
         progress_recorder.set_progress(80, 100, "PROGRESS")
 
         logger.info("INFO:starting fasttree phylogenetic tree reconstruction with inffered domain msa ...")
-        execute_phylogenetic_tree_building_with_domains(project_id, target_query)
+        execute_phylogenetic_tree_building_with_domains(project_id, target_query, remote_or_local)
         progress_recorder.set_progress(99, 100, "PROGRESS")
 
         logger.info("INFO:DONE")
@@ -757,15 +769,23 @@ def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data:
         :type int
     :param query_sequence_id
         :type str 
+    :param remote_or_local
+        :type str
 '''
 
 
 @shared_task()
-def execute_domain_multiple_sequence_alignment(project_id: int, query_sequence_id: str):
+def execute_domain_multiple_sequence_alignment(project_id: int, query_sequence_id: str, remote_or_local:str):
     try:
         logger.info("INFO: starting mafft multiple sequence alignment with RBHs of {} and inferred domains".format(
             query_sequence_id))
-        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+
+        if remote_or_local == 'local':
+            path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote")
         path_to_query_file = path_to_project + query_sequence_id + '/domain_corrected_target_sequences.faa'
 
         target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
@@ -801,18 +821,26 @@ def execute_domain_multiple_sequence_alignment(project_id: int, query_sequence_i
         :type int
     :param query_sequence_id
         :type str
-    
+    :param remote_or_local
+        :type str    
 '''
 
 
 @shared_task()
-def execute_phylogenetic_tree_building_with_domains(project_id: int, query_sequence_id: str):
+def execute_phylogenetic_tree_building_with_domains(project_id: int, query_sequence_id: str, remote_or_local:str):
     try:
         logger.info("INFO: starting phylogenetic tree reconstruction with fasttree")
 
         logger.info("cheking if msa task succeeded for query sequence : {}".format(query_sequence_id))
 
-        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+
+        if remote_or_local == 'local':
+            path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote")
+
         path_to_msa_file = path_to_project + query_sequence_id + '/domain_corrected_target_sequences.msa'
         path_to_fasttree_output = path_to_project + query_sequence_id + '/domain_corrected_target_sequences.nwk'
         msa_status = check_if_msa_file_is_available(path_to_msa_file)

@@ -244,9 +244,14 @@ def delete_cdd_search_output(query_sequence: str, project_id: int) -> int:
 '''
 
 
-def check_if_cdd_search_can_get_executed(query_sequence: str, project_id: int) -> int:
+def check_if_cdd_search_can_get_executed(query_sequence: str, project_id: int, remote_or_local:str) -> int:
     try:
-        path_to_project_dir = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        if remote_or_local == 'local':
+            path_to_project_dir = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project_dir = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR associated external tools is neither local nor remote ...")
         path_to_query_domains = path_to_project_dir + 'query_domains.tsf'
         sequence_id_file = path_to_project_dir + query_sequence + '/' + 'target_sequence_ids.txt'
         if os.path.isfile(sequence_id_file) == False:
