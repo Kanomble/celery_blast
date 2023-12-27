@@ -505,7 +505,15 @@ def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
             context = {"query_task_dict": query_sequence_cdd_search_dict,
                        "project_id": project_id}
             context['remote_or_local'] = remote_or_local
-            context['html_results'] = ''.join(get_html_results(project_id, 'query_domains.html'))
+
+            if remote_or_local == 'local':
+                html_result_path = BLAST_PROJECT_DIR
+            elif remote_or_local == 'remote':
+                html_result_path = REMOTE_BLAST_PROJECT_DIR
+            else:
+                raise Exception("[-] ERROR project is neither local nor remote ...")
+
+            context['html_results'] = ''.join(get_html_results(project_id,'query_domains.html', html_result_path=html_result_path))
             context['rpsblast_settingsform'] = rps_blast_settings_form
             return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
         else:
