@@ -1,16 +1,3 @@
-'''plot results and update taxonomic information
-
-input: blast_results.table, config['query_sequence']
-output: genus_bars.html, blast_results.html, blast_results_with_tax.table
-
-Expands blast results table with tax information.
-Creates altair plots based on tax information.
-Produces blast results in html file.
-'''
-
-from Bio import Entrez
-import sys
-#output_file-to save the layout in file, show-display the layout , output_notebook-to configure the default output state  to generate the output in jupytor notebook.
 import pandas as pd
 import matplotlib.pyplot as plt
 from bokeh.models import Button
@@ -68,7 +55,7 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
         # RBH result dataframe
         result_data = result_data.loc[:,
                       ['order', 'class', 'phylum', 'genus', 'family', 'bitscore', 'pident', 'stitle', 'scomnames',
-                       'staxids', 'qseqid', 'sacc','slen']]  # ,'slen'
+                       'staxids', 'qseqid', 'sacc', 'slen']]  # ,'slen'
         result_data = result_data.sort_values(by=taxonomic_unit)
 
         color_dict, marker_dict = create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data)
@@ -108,6 +95,8 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
     :returns callback
         :type CustomJS
 '''
+
+
 def create_color_callback(p_legend, current_selection: ColumnDataSource, data: ColumnDataSource, color_dict: dict,
                           menu_qseqids: MultiSelect) -> MultiSelect:
     callback = CustomJS(
@@ -136,6 +125,8 @@ def create_color_callback(p_legend, current_selection: ColumnDataSource, data: C
         :type str
 
 '''
+
+
 def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str) -> MultiSelect:
     try:
         unique_tax = list(bokeh_dataframe[taxonomic_unit].unique())
@@ -175,7 +166,7 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
         taxcount_df['staxids'] = taxcount_df.index
         taxcount_df.index = pd.Index(range(len(taxcount_df)))
         taxid_to_taxonomic_unit = lambda taxid: \
-        data_selection[data_selection.staxids == taxid][taxonomic_unit].unique()[0]
+            data_selection[data_selection.staxids == taxid][taxonomic_unit].unique()[0]
         taxcount_df[taxonomic_unit] = taxcount_df.staxids.apply(taxid_to_taxonomic_unit)
         taxcount_df = pd.DataFrame(taxcount_df[taxonomic_unit].value_counts())
 
@@ -338,11 +329,13 @@ def create_color_palette_selection():
     except Exception as e:
         raise Exception("[-] ERROR couldnt create color palette selection")
 
+
 def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: Select,
                                             taxonomy_table_callback_dict: dict) -> CustomJS:
     try:
         palettes = Spectral
-        c_palette_callback = CustomJS(args=dict(sc=curr, color_menu=color_menu, tax_menu=taxonomy_table_callback_dict, pals=palettes), code="""
+        c_palette_callback = CustomJS(
+            args=dict(sc=curr, color_menu=color_menu, tax_menu=taxonomy_table_callback_dict, pals=palettes), code="""
         // the callback value is a number 3,4,5,6,7,8,9,10,11,12
         var call_back_object = cb_obj.value
 
@@ -386,7 +379,7 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
 
         var tax_unit = color_menu.value;
         var call_back_object = cb_obj.value;
-        
+
         let keys = Object.keys(sc.data)
         for(var i = 0; i < keys.length; i++){
             sc.data[keys[i]] = []
@@ -436,12 +429,15 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
     except Exception as e:
         raise Exception("[-] ERROR creating the custom js callback for the qseqid menu with exception: {}".format(e))
 
+
 '''create_unlinked_bokeh_plot
-    
+
     For documentation view the function definition for create_linked_bokeh_plot in the blast_project module
     py_database_statistics.py function.
 
 '''
+
+
 def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -> int:
     try:
         # change unknown entries to their corresponding higher taxonomic nodes
@@ -635,234 +631,41 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
                         toolbar_location='right')
 
         output_file(filename=snakemake.output['bokeh_plot'],
-                   title="BLAST Results".format(
-                      taxonomic_unit))
+                    title="BLAST Results".format(
+                        taxonomic_unit))
         save(grid)
 
         return 0
     except Exception as e:
         raise Exception("ERROR in producing bokeh plots with exception: {}".format(e))
 
-
-def add_taxonomic_information_to_db(user_email:str,log,taxids:list)->pd.DataFrame:
-    try:
-        Entrez.email = user_email
-        taxid = []
-        taxonomy = []
-        genus = []
-        superfamily = []
-        family = []
-        order = []
-        classt = []
-        phylum = []
-
-        # looping over taxids in db df
-        # looping steps for every 500 taxonomic identifier
-        end = len(taxids)
-        begin = 0
-        step = 500
-        steps = 500
-
-        log.write("INFO:Starting taxonomic analysis from 0 to {}\n".format(end))
-        while begin < end:
-            if step >= end:
-                step = end
-            splitted_ids = taxids[begin:step]
-            for attempt in range(10):
-                try:
-                    handle = Entrez.efetch(id=splitted_ids, db="taxonomy", retmode="xml")
-                    record = Entrez.read(handle)
-                    handle.close()
-                except Exception as e:
-                    if attempt == 9:
-                        raise Exception
-
-                else:
-                    for i in range(len(record)):
-                        taxonomy.append(record[i]['ScientificName'])
-                        if 'AkaTaxIds' in record[i].keys():
-                            for akaid in record[i]['AkaTaxIds']:
-                                if int(akaid) in splitted_ids:
-                                    taxid.append(akaid)
-                                    log.write("\tINFO: AkaTaxIds detected: {}\n".format(akaid))
-                                    break
-                            else:
-                                taxid.append(record[i]['TaxId'])
-                        else:
-                            taxid.append(record[i]['TaxId'])
-
-                        for j in record[i]['LineageEx']:
-                            if j['Rank'] == 'genus':
-                                genus.append(j['ScientificName'])
-                            if j['Rank'] == 'superfamily':
-                                superfamily.append(j['ScientificName'])
-                            if j['Rank'] == 'family':
-                                family.append(j['ScientificName'])
-                            if j['Rank'] == 'order':
-                                order.append(j['ScientificName'])
-                            if j['Rank'] == 'class':
-                                classt.append(j['ScientificName'])
-                            if j['Rank'] == 'phylum':
-                                phylum.append(j['ScientificName'])
-
-                        if (len(taxonomy) != len(genus)):
-                            genus.append('unknown')
-                        if (len(taxonomy) != len(superfamily)):
-                            superfamily.append('unknown')
-                        if (len(taxonomy) != len(family)):
-                            family.append('unknown')
-                        if (len(taxonomy) != len(order)):
-                            order.append('unknown')
-                        if (len(taxonomy) != len(classt)):
-                            classt.append('unknown')
-                        if (len(taxonomy) != len(phylum)):
-                            phylum.append('unknown')
-
-                        if len(record) != len(splitted_ids):
-                            missing_ids = [m_taxid for m_taxid in splitted_ids if m_taxid not in taxid]
-                            for m_taxid in missing_ids:
-                                log.write(
-                                    "WARNING: problem during fetching of taxonomic information for: {}\n".format(m_taxid))
-                                taxid.append(m_taxid)
-                                taxonomy.append('unknown')
-                                genus.append('unknown')
-                                superfamily.append('unknown')
-                                family.append('unknown')
-                                order.append('unknown')
-                                classt.append('unknown')
-                                phylum.append('unknown')
-                    break
-
-            log.write("INFO: Done with chunk: {} - {}\n".format(begin, step))
-            begin += steps
-            step += steps
-
-        columns = ["staxids", 'organism_name_taxdb', 'genus', 'family', 'superfamily', 'order', 'class', 'phylum']
-        tax_db = pd.DataFrame([taxid, taxonomy, genus, family, superfamily, order, classt, phylum])
-        tax_db = tax_db.transpose()
-        tax_db.columns = columns
-        return tax_db
-
-    except Exception as e:
-        log.write("ERROR:problem during fetching and appending taxonomic information with exception: {}\n".format(e))
-        raise Exception("ERROR during database table extension with taxonomic information with excpetion: {}".format(e))
-
-
-############################ MAIN SCRIPT ##############################
-
-RETURNCODE=4
+RETURNCODE=5
 with open(snakemake.log['log'], 'w') as logfile:
-
     try:
-        logfile.write("INFO:starting to fetch taxonomic information...\n")
 
-        #TODO obsolete?
-        queries = {}
-        queryfile = open(snakemake.input['query_file'], "r")
-        for line in queryfile.readlines():
-            if ">" in line:
-                prot_id = line.split(">")[1].split(' ')[0]
-                line = ' '.join(line.split(">")[1].split(' ')[1:]).rstrip()
-                queries[prot_id] = line
-        queryfile.close()
+
         logfile.write("INFO:trying to load blast dataframe ...\n")
-        df = pd.read_table(snakemake.input['blast_results'], delimiter="\t", header=None)
-        df.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore","slen", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
-                      "stitle"]
+        result_df = pd.read_csv(snakemake.input['blast_results'], delimiter=",", index_col=0)
+
         logfile.write("INFO:loaded BLAST dataframe ...\n")
 
-        # normalize taxonomic identifier
-        # in remote BLAST searches multiple taxids may occur, just take the first one
-        try:
-            logfile.write("INFO:trying to adjust taxonomic identifier ... \n")
-            slice_taxids = lambda taxids: taxids.split(";")[0]
-            df['staxids'] = df['staxids'].apply(slice_taxids)
-        except:
-            logfile.write("INFO:staxids column is fine, proceeding ... \n")
 
-
-        if df['staxids'].dtype != 'int':
+        if result_df['staxids'].dtype != 'int':
             logfile.write("INFO:changing staxids column datatype to int64 ... \n")
-            df['staxids'] = df['staxids'].astype('int64')
-
-        unique_taxids = list(df["staxids"].unique())
-
-        tax_df = add_taxonomic_information_to_db(snakemake.params['user_email'], logfile, unique_taxids)
-
-        if tax_df['staxids'].dtype != 'int':
-            tax_df['staxids'] = tax_df['staxids'].apply(slice_taxids)
-            tax_df['staxids'] = tax_df['staxids'].astype('int64')
-
-        result_df = df.merge(tax_df, on='staxids')
+            result_df['staxids'] = result_df['staxids'].astype('int64')
 
 
-        dataframes = []
-
-        logfile.write("INFO:parsing taxonomic information for queries\n")
-        result_df.to_csv(snakemake.output['taxonomic_table'], sep='\t')
         logfile.write("INFO:start producing interactive bokeh plots for target species families\n")
 
-        #bokeh code
+        # bokeh code
         try:
-            bokeh_function = create_unlinked_bokeh_plot(result_df,'family')
+            bokeh_function = create_unlinked_bokeh_plot(result_df, 'family')
         except Exception as e:
             logfile.write("ERROR:exception was thrown during bokeh plot creation: {}\n".format(e))
             raise Exception("[-] couldnt create bokeh plot with exception: {}".format(e))
 
         logfile.write("INFO:finished bokeh procedure\n")
 
-        pd.set_option('colheader_justify', 'left')
-        html_string = '''
-        <html>
-          <head>
-            <title>BLAST Result Table</title>
-            <!-- DataTables stylesheets-->
-            <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css" crossorigin="anonymous">
-            <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.2/css/select.dataTables.min.css" crossorigin="anonymous">
-            <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css" crossorigin="anonymous">
-          </head>
-        
-          <body>
-            <div id="blast_results_table" style="display:none">
-                {table}
-            </div>
-          </body>
-        
-            <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
-            <!-- input scripts for DataTables: https://datatables.net/ -->
-            <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
-            <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.3.2/js/dataTables.select.min.js"></script>
-            <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
-            <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
-            <script>
-            $(document).ready(function(){{
-                var table = document.getElementsByTagName('table');
-                table[0].id='myTable'
-                $('#myTable').DataTable(
-                    {{
-                        dom: 'Bfrtip',
-                        "lengthMenu": [ 100 ],
-                        buttons: [
-                            'copy',
-                            'csv',
-                            'selectAll',
-                            'selectNone',
-                            'selectRows'
-                        ],
-                        select: true
-                    }}
-                );
-                var result_table = document.getElementById('blast_results_table');
-                result_table.style.display = "block";
-            }});
-            </script>
-        
-        </html>
-        '''
-
-        # OUTPUT AN HTML FILE
-        with open(snakemake.output['html_table'], 'w') as f:
-            f.write(html_string.format(table=result_df.to_html(classes='mystyle')))
         logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))

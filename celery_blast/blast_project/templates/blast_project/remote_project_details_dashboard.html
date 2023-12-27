@@ -97,14 +97,14 @@
                     </tr>
                     <tr>
                         {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
+                            <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
                             <td><a class="btn btn-dark disabled" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
                             <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
                             <td><a class="btn btn-dark disabled" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
                             <td><a class="btn btn-dark disabled" href="{% url 'synteny_dashboard' project_id=BlastProject.id %}">Synteny Detection</a> </td>
                             <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
-                            <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
+                            <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
                             <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>
                         {% endif %}
                     </tr>
@@ -210,14 +210,14 @@
         var status = $('.progress_bar'),
         poll = function() {
             jQuery.ajax({
-                url: "{% url 'ajax_call_to_logfiles' project_id=BlastProject.id %}",
+                url: "{% url 'ajax_call_to_remote_logfiles' project_id=BlastProject.id %}",
                 dataType: 'json',
                 type: 'get',
                 success: function(data) { // check if available
                     console.log(data)
                     if(data){
                         var static_url = '{% static 'images/' %}';
-                        var reciprocal_results_url = "{% url 'reciprocal_results' project_id=BlastProject.id %}";
+                        var reciprocal_results_url = "{% url 'remote_reciprocal_results' project_id=BlastProject.id %}";
                         var query_sequence_info_url = "{% url 'send_query_sequence_information' project_id=BlastProject.id %}"
                         //ajax_call_to_project_details(
                         //    data,

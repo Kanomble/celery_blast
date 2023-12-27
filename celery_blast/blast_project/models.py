@@ -595,7 +595,7 @@ class RemoteBlastProject(models.Model):
                 snk_config_file.write('blastdb: ' + str(
                     self.r_project_forward_database) + "\n")
                 snk_config_file.write('entrez_query:' + "\n")
-                snk_config_file.write('backwarddb: ' + "\"" + "../../databases/" + str(
+                snk_config_file.write('backwarddb: ' + "\"" + "../../../databases/" + str(
                     self.r_project_backward_database.id) + "/" + self.r_project_backward_database.get_pandas_table_name() + ".database\"\n")
                 snk_config_file.write('query_sequence: ' + "\"" + self.r_project_query_sequences + "\"\n")
                 snk_config_file.write('bw_taxid: ' + str(self.r_species_name_for_backward_blast[1]) + "\n")

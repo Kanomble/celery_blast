@@ -28,6 +28,9 @@ service_urls = [
     path('<int:project_id>/remote_project_deletion', views.remote_project_delete_view, name='remote_project_deletion'),
     path('<int:project_id>/remote_project_execution', views.start_remote_reciprocal_blast_project_view, name='remote_project_execution'),
     path('<int:project_id>/project_resulttable',views.load_reciprocal_result_html_table_view,name='reciprocal_results'),
+    path('<int:project_id>/remote_project_resulttable', views.load_remote_reciprocal_result_html_table_view,
+         name='remote_reciprocal_results'),
+
     path('<int:project_id>/download_archive', views.download_project_as_zip_archive_view,
          name='download_archive'),
 ]
@@ -37,6 +40,7 @@ service_urls = [
 ajax_urls = [
     path('<int:project_id>/ajax_wp_to_links',views.ajax_wp_to_links,name='ajax_wp_to_links'),
     path('<int:project_id>/ajax_call_to_logfiles',views.ajax_call_to_logfiles,name='ajax_call_to_logfiles'),
+    path('<int:project_id>/ajax_call_to_remote_logfiles',views.ajax_call_to_remote_logfiles,name='ajax_call_to_remote_logfiles'),
     path('<int:project_id>/project_details/database_statistics/ajax_call_to_selection_task',
          views.database_selection_phylogeny_task_status,name='ajax_selection_constrained_phylogeny'),
     path('domain_database_download_progress', views.get_domain_database_download_task_status,

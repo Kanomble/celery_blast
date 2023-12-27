@@ -16,12 +16,14 @@ with open(config['query_sequence'],'r') as qseqfile:
 
 rule all:
 	input:
+		"interactive_bokeh_plot.html",
 		"blastp_fw_out.table",
 		"bw_queries_gi_list_for_blastdbcmd.txt",
 		"reciprocal_results_with_taxonomy.csv",
 		expand("{qseqid}/results_rbhs.html", qseqid=QSEQIDS),
 		"query_sequence_information.html",
-		"blastp_fw_out_reformatted.table"
+		"blastp_fw_out_reformatted.table",
+
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -158,11 +160,10 @@ rule backward_blast:
 #prepares the backward query fasta file for the backward blast
 rule reformat_blast_forward_dataframe:
 	input: fw_res="blastp_fw_out.table"
-	output: new_fw_res="blastp_fw_out_reformatted.table"
+	output: new_fw_res="blastp_fw_out_reformatted.table", all_taxids_fw_res="blastp_fw_all_taxids_reformatted.table"
 	log: log="log/reformat_blast_forward_dataframe.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/remote_searches/reformat_forward_blast_table.py"
-
 
 #RULE 6
 #extracting reciprocal best hits with pandas blast tables
@@ -190,6 +191,17 @@ rule blast_tables_to_html:
 	log: log="log/blast_tables_to_html.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/blast_tables_to_html.py"
+
+#RULE 9
+#interactive plot creation with bokeh
+rule create_interactive_plot:
+	input: blast_results="reciprocal_results_with_taxonomy.csv"
+	params: user_email=config['user_email']
+	output: bokeh_plot="interactive_bokeh_plot.html"
+	log:log="log/create_interactive_plot.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/remote_searches/bokeh_plot_for_remote_blast_project.py"
+
 
 #RULE 9
 #outputs a summary for the RBH inference and constructs directories for each query sequence

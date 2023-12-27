@@ -209,6 +209,14 @@ def get_html_results(project_id: int, filename: str, html_result_path=BLAST_PROJ
     except Exception as e:
         raise FileNotFoundError("[-] ERROR: Couldn't read file {} with Exception: {}".format(filename, e))
 
+def get_remote_html_results(project_id: int, filename: str, html_result_path=REMOTE_BLAST_PROJECT_DIR) -> list:
+    try:
+        with open(html_result_path + str(project_id) + "/" + filename) as res:
+            data = res.readlines()
+        return data
+    except Exception as e:
+        raise FileNotFoundError("[-] ERROR: Couldn't read file {} with Exception: {}".format(filename, e))
+
 
 '''html_table_exists
     Checks if the specified file exists.

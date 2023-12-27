@@ -39,9 +39,14 @@ with open(snakemake.log["log"], "w") as logfile:
                 ))
         logfile.write("INFO:done parsing original forward BLAST dataframe.\n")
         # rename original forward BLAST dataframe
-        new_fw_dataframe = pd.DataFrame.from_dict(dataframe_dict)
+        all_taxids_fw_dataframe = pd.DataFrame.from_dict(dataframe_dict)
         logfile.write("INFO:writing new forward BLAST dataframe to disc.\n")
-        new_fw_dataframe.to_csv(snakemake.output["new_fw_res"], sep="\t", index=0, header=False)
+        all_taxids_fw_dataframe.to_csv(snakemake.output["all_taxids_fw_res"], sep="\t", index=0, header=False)
+
+        fw_res['staxids'] = fw_res['staxids'].apply(lambda x: x.split(";")[0])
+        fw_res.to_csv(snakemake.output["new_fw_res"], sep="\t", index=0, header=False)
+
+
         logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR: error during reformatting forward BLAST dataframe with exception: {}\n".format(e))

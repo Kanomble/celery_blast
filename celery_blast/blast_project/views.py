@@ -15,7 +15,7 @@ from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesG
 from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
     execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
     calculate_database_statistics_task, execute_remote_reciprocal_blast_project
-from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, \
+from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, get_remote_html_results, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
     read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id
 from .py_project_creation import create_blast_project, create_remote_blast_project
@@ -429,6 +429,7 @@ def start_reciprocal_blast_project_view(request, project_id: int):
             blast_project = get_project_by_id(project_id)
             if blast_project.project_execution_snakemake_task:
                 if blast_project.project_execution_snakemake_task.status != 'FAILURE':
+                    execute_reciprocal_blast_project.delay(project_id)
                     return redirect('project_details', project_id=project_id)
                 else:
                     execute_reciprocal_blast_project.delay(project_id)
@@ -443,15 +444,16 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
             blast_project = get_remote_project_by_id(project_id)
+            print("[+] HELLO!")
             if blast_project.r_project_execution_snakemake_task:
                 if blast_project.r_project_execution_snakemake_task.status != 'FAILURE':
+                    execute_remote_reciprocal_blast_project.delay(project_id)
                     return redirect('remote_project_details', project_id=project_id)
                 else:
-                    pass
                     execute_remote_reciprocal_blast_project.delay(project_id)
             else:
-                pass
                 execute_remote_reciprocal_blast_project.delay(project_id)
+
         return redirect('remote_project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
@@ -474,6 +476,13 @@ def load_reciprocal_result_html_table_view(request, project_id):
     except Exception as e:
         return failure_view(request, e)
 
+@login_required(login_url='login')
+def load_remote_reciprocal_result_html_table_view(request, project_id):
+    try:
+        html_data = get_remote_html_results(project_id, "reciprocal_results.html")
+        return HttpResponse(html_data)
+    except Exception as e:
+        return failure_view(request, e)
 
 ''' create_taxonomic_file_view
 
@@ -888,6 +897,36 @@ def ajax_call_to_logfiles(request, project_id: int):
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+def ajax_call_to_remote_logfiles(request, project_id: int):
+    try:
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                blast_project = get_remote_project_by_id(project_id)
+                logfiles = blast_project.return_list_of_all_logfiles()
+                logfile_table = read_task_logs_summary_table()
+                logfile_table = logfile_table.loc[0:17, :]
+                queries = []
+                progress_without_subtasks = []
+                for logfile in logfiles:
+                    if len(logfile.split("/")) == 2:
+                        query = logfile.split("/")[0]
+                        if query not in queries:
+                            queries.append(query)
+                        progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
+
+                        if len(progress) == 1:
+                            progress_without_subtasks.append(progress[0])
+                    else:
+                        progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+
+                        if len(progress) == 1:
+                            progress_without_subtasks.append(progress[0])
+                progress_without_subtasks.sort()
+                return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+        return JsonResponse({"error": "POST not allowed"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
 
 '''get_domain_database_download_task_status
     

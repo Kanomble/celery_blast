@@ -344,6 +344,7 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
+- [ ] add validation for same project titles
 - [ ] add validation for entrez_queries
 - [x] fix one-way BLAST snakemake pipeline
 - [ ] add videos, links to init page
