@@ -9,7 +9,7 @@ from .py_services import check_if_cdd_search_can_get_executed
 
 
 class ExternalToolsManager(models.Manager):
-    def create_external_tools(self, project_id):
+    def create_external_tools(self, project_id:int):
         try:
             if self.filter(associated_project_id=project_id).exists() == False:
                 blast_project = BlastProject.objects.get(id=project_id)

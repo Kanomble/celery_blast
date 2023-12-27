@@ -178,7 +178,7 @@ def execute_reciprocal_blast_project(self, project_id):
                  '--cores', '1',
                  '--configfile', snakemake_config_file,
                  '--directory', snakemake_working_dir,
-                 '--keep-incomplete'], shell=False)  # -q
+                 ], shell=False)  # -q
 
             progress_recorder.set_progress(50, 100, "PROGRESS")
 
@@ -287,7 +287,7 @@ def execute_remote_reciprocal_blast_project(self, project_id):
 
             progress_recorder.set_progress(100, 100, "SUCCESS")
             # logger.info('INFO:creating external tools model')
-            # create_external_tools_after_snakemake_workflow_finishes(project_id)
+            create_external_tools_after_snakemake_workflow_finishes(project_id)
             # logger.info('INFO:update phylo and msa task with id of the reciprocal BLAST')
             # external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id)
             # external_tools.update_for_all_query_sequences_msa_task(str(self.request.id))
