@@ -54,7 +54,6 @@
                     </tr>
                 </thead>
                 <tbody id="blastProjectTableBody">
-                    <tr>
                         <td>{{BlastProject.r_project_title}}</td>
                         <td>
                             <table>
@@ -99,13 +98,12 @@
                         {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
                             <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
                             <td><a class="btn btn-dark disabled" href="{% url 'external_project_informations' project_id=BlastProject.id %}">MSA and Phylogeny</a></td>
-                            <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
                             <td><a class="btn btn-dark disabled" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id %}">CDD Domain Search</a> </td>
                             <td><a class="btn btn-dark disabled" href="{% url 'synteny_dashboard' project_id=BlastProject.id %}">Synteny Detection</a> </td>
                             <td><a class="btn btn-info" href="{% url 'download_remote_archive' project_id=BlastProject.id %}">Download Project</a> </td>
+                            <td></td>
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
                             <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
-                            <td><a class="btn btn-dark disabled" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>
                         {% endif %}
                     </tr>
                 </tbody>
@@ -121,6 +119,9 @@
                 </div>
                 <div class="col-md">
                     <button class="btn btn-dark" onclick="displayDivElement('result_graphs')" > E-Value/Taxonomy Distribution </button>
+                </div>
+                <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('interactive_bokeh_plot')" > Interactive Plot </button>
                 </div>
             </div>
         </div>
@@ -150,6 +151,7 @@
 
 {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
 
+
     <div class="dashboard_project_list_col" id="query_sequence_information" style="display: none">
         <h2 style="text-align: center">Query Sequence Information</h2>
         <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
@@ -159,6 +161,11 @@
             {{ BlastProject.read_query_information_table | safe }}
         </div>
     </div>
+
+    <div class="dashboard_project_list_col" id="interactive_bokeh_plot" style="max-height: 50%;display: none">
+        {% include BokehPlot %}
+    </div>
+
     <div class="dashboard_project_list_col" id="result_graphs" style="display: none">
         <h2 style="text-align: center"> Result Graphs </h2>
         <p style="font-size: medium; text-align: center"> <strong> Amount of hits in database organisms: </strong> Number of inferred RBHs (x-axis) in different species (y-axis) for one particular query sequence.

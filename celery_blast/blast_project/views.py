@@ -346,6 +346,13 @@ def remote_project_details_view(request, project_id: int):
         blast_project = get_remote_project_by_id(project_id)
         context = {'BlastProject': blast_project,
                    'Database': blast_project.r_project_forward_database}
+
+        if blast_project.r_project_execution_snakemake_task:
+            if blast_project.r_project_execution_snakemake_task.status == 'SUCCESS':
+                bokeh_plot_template = "blast_projects/remote_projects/" + str(project_id) + '/interactive_bokeh_plot.html'
+                context['BokehPlot'] = bokeh_plot_template
+
+
         return render(request, 'blast_project/remote_project_details_dashboard.html', context)
     except Exception as e:
         return failure_view(request, e)
