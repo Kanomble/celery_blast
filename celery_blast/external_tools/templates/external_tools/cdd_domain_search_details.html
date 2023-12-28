@@ -29,7 +29,7 @@
     </div>
     {% if CDDPhylogeny %}
     <div class="dashboard_project_list_col">
-    <a href="{% url 'load_selection_constrained_phylogeny' project_id=project_id query_id=query_id %}">
+    <a href="{% url 'load_selection_constrained_phylogeny' project_id=project_id query_id=query_id remote_or_local=remote_or_local %}">
         <button class="btn btn-info">View Phylogeny</button>
     </a>
     </div>

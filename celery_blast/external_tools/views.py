@@ -533,7 +533,8 @@ def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
     
     :param project:id
         :type int
-
+    :param remote_or_local
+        :type str
 '''
 
 
@@ -567,14 +568,21 @@ def execute_cdd_domain_search_for_target_query(request, project_id: int, remote_
         :type int
     :param query_id
         :type str
-
+    :param remote_or_local
+        :type str
 '''
 
 
 @login_required(login_url='login')
-def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, query_id: str):
+def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, query_id: str, remote_or_local:str):
     try:
-        html_data = get_html_results(project_id, query_id + '/' + "selection_sliced_domain_phylogeny.html")
+        if remote_or_local == 'local':
+            html_path = BLAST_PROJECT_DIR
+        elif remote_or_local == 'remote':
+            html_path = REMOTE_BLAST_PROJECT_DIR
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote")
+        html_data = get_html_results(project_id, query_id + '/' + "selection_sliced_domain_phylogeny.html", html_result_path=html_path)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
@@ -588,7 +596,8 @@ def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, 
         :type str
     :param project_id
         :type int
-
+    :param remote_or_local
+        :type str
 '''
 
 
@@ -627,6 +636,8 @@ def cdd_domain_search_details_view(request, query_id: str, project_id: int, remo
         :type str
     :param project_id
         :type int
+    :param remote_or_local
+        :type str
 '''
 
 
@@ -642,7 +653,7 @@ def delete_cdd_domain_search_view(request, query_id: str, project_id: int, remot
         else:
             query_sequence[0].delete_cdd_search_task_result()
             delete_cdd_search_output(query_id, project_id)
-            return redirect('cdd_domain_search_dashboard', project_id=project_id)
+            return redirect('cdd_domain_search_dashboard', project_id=project_id, remote_or_local=remote_or_local)
     except Exception as e:
         return failure_view(request, e)
 

@@ -622,13 +622,17 @@ def download_selection_callback_creation(current_selection: ColumnDataSource) ->
         :type ColumnDataSource
     :param remote_or_local
         :type str
+    :param remote_or_local
+        :type str
+    
     :returns task_selection_callback
         :type CustomJS
+    
 '''
 
 
 def bokeh_django_task_button(current_selection: ColumnDataSource, remote_or_local:str) -> CustomJS:
-    task_selection_callback = CustomJS(args=dict(sc=current_selection,remote_or_local=remote_or_local), code="""
+    task_selection_callback = CustomJS(args=dict(sc=current_selection, remote_or_local=remote_or_local), code="""
         var viewData = { 
             accessions : [],
             url : window.location.href

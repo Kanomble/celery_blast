@@ -15,7 +15,7 @@ cdd_search_urls = [
     path('<int:project_id>/project_details/cdd_domain_search_dashboard/<str:remote_or_local>/<str:query_id>/delete_cdd_domain_search',
          views.delete_cdd_domain_search_view,
          name='delete_cdd_domain_search'),
-    path('<int:project_id>/<str:query_id>/selection_constrained_phylogeny',
+    path('<int:project_id>/<str:query_id>/<str:remote_or_local>/selection_constrained_phylogeny',
          views.load_selection_constrained_phylogeny,
          name='load_selection_constrained_phylogeny'),
 ]
