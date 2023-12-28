@@ -694,7 +694,7 @@ def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int):
 
 '''
 @csrf_exempt
-def bokeh_task(request:WSGIRequest):
+def bokeh_task(request:WSGIRequest, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
@@ -707,7 +707,7 @@ def bokeh_task(request:WSGIRequest):
                 url = data['url'].split("/")
                 project_id = int(url[4])
                 query_id = str(url[8])
-                remote_or_local = str(url[7])
+                #remote_or_local = str(url[7])
                 #print(url)
 
                 calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0], remote_or_local)
@@ -724,7 +724,7 @@ def bokeh_task(request:WSGIRequest):
 
 '''
 @csrf_exempt
-def bokeh_database_task(request:WSGIRequest):
+def bokeh_database_task(request:WSGIRequest, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
@@ -736,7 +736,9 @@ def bokeh_database_task(request:WSGIRequest):
                 data = loads(data)
                 url = data['url'].split("/")
                 project_id = int(url[4])
-                calculate_phylogeny_based_on_database_statistics_selection.delay(project_id, data['accessions'][0])
+                #remote_or_local = str(url[7])
+
+                calculate_phylogeny_based_on_database_statistics_selection.delay(project_id, data['accessions'][0], remote_or_local)
             return JsonResponse({"response": "success"}, status=200)
         return JsonResponse({"response","No ajax request!"}, status=400)
     except Exception as e:

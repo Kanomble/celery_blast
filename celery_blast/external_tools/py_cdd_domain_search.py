@@ -850,7 +850,7 @@ def build_bokeh_plot(bokeh_dataframe: pd.DataFrame, domains: list, taxonomic_uni
 '''
 
 
-def produce_bokeh_pca_plot(project_id: int, qseqid: str,remote_or_local:str,
+def produce_bokeh_pca_plot(project_id: int, qseqid: str, remote_or_local:str,
                            taxonomic_unit='class') -> int:
     try:
         if remote_or_local == 'local':

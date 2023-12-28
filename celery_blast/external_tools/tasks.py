@@ -21,7 +21,7 @@ from .genbank_download_clinker_synteny import extract_assembly_ftp_paths_from_re
     download_genbank_files, write_new_genbank_file, delete_sliced_genbank_files
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, \
     slice_cdd_domain_corrected_fasta_file, slice_bw_query_fasta_file
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR
 from os.path import isdir
 from os import listdir, mkdir, remove
 from refseq_transactions.tasks import download_refseq_assembly_summary
@@ -30,14 +30,20 @@ logger = get_task_logger(__name__)
 
 
 @shared_task(bind=True)
-def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:int, accession_data:dict):
+def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:int, accession_data:dict, remote_or_local:str):
     try:
         logger.info("starting phylogenetic inference based on selected RBHs from the database statistics plot")
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
         logger.info("updating blast project with selection constrained cdd task")
-        blast_project = get_project_by_id(project_id)
-        update_blast_project_with_database_statistics_selection_task_result_model(project_id, str(self.request.id))
+
+        if remote_or_local == 'local':
+            blast_project = get_project_by_id(project_id)
+        elif remote_or_local == 'remote':
+            blast_project = get_remote_project_by_id(project_id)
+        else:
+            raise Exception("[-] ERROR project neither local nor remote")
+        update_blast_project_with_database_statistics_selection_task_result_model(project_id, str(self.request.id), remote_or_local)
         logger.info("working with post data ...")
         accessions = []
         for ind in accession_data.keys():
@@ -84,7 +90,11 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
         logger.info("generating table for shiptv metadata")
 
         reciprocal_result_table = pd.read_csv(path_to_query_subdir + '/reciprocal_results_with_taxonomy.csv' , index_col=0)
-        reciprocal_result_table = reciprocal_result_table[reciprocal_result_table.sacc_transformed.isin(accessions)]
+
+        if remote_or_local == 'local':
+            reciprocal_result_table = reciprocal_result_table[reciprocal_result_table.sacc_transformed.isin(accessions)]
+        else:
+            reciprocal_result_table = reciprocal_result_table[reciprocal_result_table.sacc.isin(accessions)]
         path_to_rbh_table = path_to_query_subdir + '/selection_sliced_rbh_table.tsf'
         reciprocal_result_table.to_csv(path_to_rbh_table, sep="\t", index=None)
 
@@ -465,7 +475,14 @@ def execute_multiple_sequence_alignment(self, project_id, query_sequence_id, rem
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tools.update_query_sequences_msa_task(query_sequence_id, str(self.request.id))
         logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
-        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+
+        if remote_or_local == 'local':
+            path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR project neither local nor remote")
+
         path_to_query_file = path_to_project + query_sequence_id + '/target_sequences.faa'
 
         target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
@@ -506,7 +523,13 @@ def execute_phylogenetic_tree_building(self, project_id, query_sequence_id, remo
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         logger.info("cheking if msa task succeeded for query sequence : {}".format(query_sequence_id))
 
-        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        if remote_or_local == 'local':
+            path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR project neither local nor remote")
+
         path_to_msa_file = path_to_project + query_sequence_id + '/target_sequences.msa'
         path_to_fasttree_output = path_to_project + query_sequence_id + '/target_sequences.nwk'
         msa_status = check_if_msa_file_is_available(path_to_msa_file)
@@ -548,7 +571,12 @@ def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id
 
         query_sequence_ids = [qseq.query_accession_id for qseq in external_tools.query_sequences.get_queryset()]
 
-        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        if remote_or_local == 'local':
+            path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR project neither local nor remote")
 
         progress = 80 / len(query_sequence_ids)
         counter = 1
@@ -597,7 +625,12 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id, remote
 
         external_tools.update_for_all_query_sequences_phylo_task(str(self.request.id))
         logger.info("updated multiple query sequence models with taskresult instance : {}".format(str(self.request.id)))
-        path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        if remote_or_local == 'local':
+            path_to_project = settings.BLAST_PROJECT_DIR + str(project_id) + '/'
+        elif remote_or_local == 'remote':
+            path_to_project = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
+        else:
+            raise Exception("[-] ERROR project neither local nor remote")
 
         query_sequence_ids = []
         for qseq in external_tools.query_sequences.get_queryset():

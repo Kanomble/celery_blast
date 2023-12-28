@@ -1370,8 +1370,8 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
 '''
 
 
-def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSource) -> CustomJS:
-    task_selection_callback = CustomJS(args=dict(sc=current_selection), code="""
+def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSource, remote_or_local:str) -> CustomJS:
+    task_selection_callback = CustomJS(args=dict(sc=current_selection, remote_or_local=remote_or_local), code="""
         var viewData = { 
             accessions : [],
             url : window.location.href
@@ -1388,7 +1388,7 @@ def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSo
 
         var base_url = window.location.href
         base_url = base_url.split("/")[2]
-        base_url = "http://" + base_url + "/external_tools/bokeh_database_task"
+        base_url = "http://" + base_url + "/external_tools/bokeh_database_task/" + remote_or_local 
         console.log(base_url)
         $.ajax({
             type: "POST",
@@ -1711,7 +1711,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             download_selection_button = Button(label="Download Selection")
             download_selection_button.js_on_click(download_selection_callback)
 
-            bokeh_task_button_callback = bokeh_database_statistics_django_task_button(Curr)
+            bokeh_task_button_callback = bokeh_database_statistics_django_task_button(Curr, 'local')
             bokeh_task_button = Button(label="Selection Constrained Phylogeny")
             bokeh_task_button.js_on_click(bokeh_task_button_callback)
 

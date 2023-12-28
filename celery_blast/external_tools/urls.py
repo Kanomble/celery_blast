@@ -98,6 +98,6 @@ urlpatterns = [
     path('', include(phylogenetic_analysis_urls)),
     path('<int:project_id>/<str:remote_or_local>/external_project_information', views.project_informations,
          name='external_project_informations'),
-    path('bokeh_task', views.bokeh_task, name="bokeh_task"),
-    path('bokeh_database_task', views.bokeh_database_task, name="bokeh_database_task")
+    path('bokeh_task/<str:remote_or_local>', views.bokeh_task, name="bokeh_task"),
+    path('bokeh_database_task/<str:remote_or_local>', views.bokeh_database_task, name="bokeh_database_task")
 ]

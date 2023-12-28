@@ -464,13 +464,23 @@ def update_domain_database_task_result_model(domain_database_id: int, task_id: i
         :type int
     :param task_id
         :type int
+    :param remote_or_local
+        :type str
 '''
-def update_blast_project_with_database_statistics_selection_task_result_model(project_id: int, task_id: int):
+def update_blast_project_with_database_statistics_selection_task_result_model(project_id: int, task_id: int, remote_or_local:str):
     try:
-        blast_project = BlastProject.objects.get(id=project_id)
-        taskresult = TaskResult.objects.get(task_id=task_id)
-        blast_project.project_database_statistics_task_selection = taskresult
-        blast_project.save()
+        if remote_or_local == 'local':
+            blast_project = BlastProject.objects.get(id=project_id)
+            taskresult = TaskResult.objects.get(task_id=task_id)
+            blast_project.project_database_statistics_task_selection = taskresult
+            blast_project.save()
+        elif remote_or_local == 'remote':
+            blast_project = RemoteBlastProject.objects.get(id=project_id)
+            taskresult = TaskResult.objects.get(task_id=task_id)
+            blast_project.r_project_database_statistics_task_selection = taskresult
+            blast_project.save()
+        else:
+            raise Exception("[-] ERROR project neither local nor remote ...")
     except Exception as e:
         raise IntegrityError(
             'problem during updating of blastproject model with task result instance exception : {}'.format(e))

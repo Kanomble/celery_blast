@@ -17,6 +17,44 @@ plt.rcParams['legend.fontsize'] = 10
 from bokeh.palettes import inferno, viridis, magma, Spectral
 from random import shuffle
 
+
+def bokeh_django_task_button(current_selection: ColumnDataSource, remote_or_local:str) -> CustomJS:
+    task_selection_callback = CustomJS(args=dict(sc=current_selection, remote_or_local=remote_or_local), code="""
+        var viewData = { 
+            accessions : [],
+            url : window.location.href
+        };
+        var jsonData = {};
+
+        for(var i = 0; i < sc.selected.indices.length; i++){
+            jsonData[i] = sc.data['sacc'][sc.selected.indices[i]]
+        }
+
+        viewData.accessions.push(jsonData);
+
+        var json = JSON.stringify(viewData);
+
+        var base_url = window.location.href
+        base_url = base_url.split("/")[2]
+        base_url = "http://" + base_url + "/external_tools/bokeh_database_task/" + remote_or_local 
+        console.log(base_url)
+        $.ajax({
+            type: "POST",
+            url: base_url,
+            data: json,
+            success: function(result){
+                console.log(result);
+                setTimeout(function(){
+                   window.location.reload();
+                }, 2000);
+            },
+            dataType: "json"
+        });
+
+
+    """)
+    return task_selection_callback
+
 def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.DataFrame) -> tuple:
     try:
         # prepare distinct colors for the specified taxonomic unit
@@ -618,14 +656,19 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
         download_selection_button = Button(label="Download Selection")
         download_selection_button.js_on_click(download_selection_callback)
 
+        bokeh_task_button_callback = bokeh_django_task_button(Curr, 'remote')
+        bokeh_task_button = Button(label="Selection Constrained Phylogeny")
+        bokeh_task_button.js_on_click(bokeh_task_button_callback)
+
         color_palette = create_color_palette_selection()
+
         color_palette_callback = create_color_palette_selection_callback(Curr, color_menu,
                                                                          taxonomy_table_callback_dict)
         color_palette.js_on_change('value', color_palette_callback)
 
         grid = gridplot([[column(p),
                           column(menu_qseqids, row(circle_size_spinner, line_size_spinner),
-                                 range_slider, download_selection_button, x_axis_menu, y_axis_menu),
+                                 range_slider, download_selection_button, bokeh_task_button, x_axis_menu, y_axis_menu),
                           column(phylum_menu, class_menu, order_menu, family_menu, genus_menu, color_menu,
                                  color_palette)]],
                         toolbar_location='right')
