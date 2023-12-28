@@ -36,8 +36,7 @@ def bokeh_django_task_button(current_selection: ColumnDataSource, remote_or_loca
         
         var base_url = window.location.href
         base_url = base_url.split("/")[2]
-        base_url = "http://" + base_url + "/external_tools/bokeh_database_task/" + remote_or_local 
-        
+        base_url = "http://" + base_url + "/external_tools/bokeh_database_task/" + remote_or_local
         $.ajax({
             type: "POST",
             url: base_url,

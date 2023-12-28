@@ -707,8 +707,6 @@ def bokeh_task(request:WSGIRequest, remote_or_local:str):
                 url = data['url'].split("/")
                 project_id = int(url[4])
                 query_id = str(url[8])
-                #remote_or_local = str(url[7])
-                #print(url)
 
                 calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0], remote_or_local)
             return JsonResponse({"response": "success"}, status=200)
@@ -729,14 +727,20 @@ def bokeh_database_task(request:WSGIRequest, remote_or_local:str):
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
             if request.method == "POST":
+
                 form_data = request.POST
                 data = form_data.dict()
                 data = data.keys()
                 data = list(data)[0]
-                data = loads(data)
+
+                try:
+                    data = loads(data)
+                except Exception as e:
+                    data += "\"}"
+                    data = loads(data)
+
                 url = data['url'].split("/")
                 project_id = int(url[4])
-                #remote_or_local = str(url[7])
 
                 calculate_phylogeny_based_on_database_statistics_selection.delay(project_id, data['accessions'][0], remote_or_local)
             return JsonResponse({"response": "success"}, status=200)

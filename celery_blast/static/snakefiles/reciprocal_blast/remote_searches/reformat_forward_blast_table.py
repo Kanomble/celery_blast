@@ -44,6 +44,9 @@ with open(snakemake.log["log"], "w") as logfile:
         all_taxids_fw_dataframe.to_csv(snakemake.output["all_taxids_fw_res"], sep="\t", index=0, header=False)
 
         fw_res['staxids'] = fw_res['staxids'].apply(lambda x: x.split(";")[0])
+        fw_res['sscinames'] = fw_res['sscinames'].apply(lambda x: x.split(";")[0])
+        fw_res['scomnames'] = fw_res['scomnames'].apply(lambda x: x.split(";")[0])
+
         fw_res.to_csv(snakemake.output["new_fw_res"], sep="\t", index=0, header=False)
 
 
