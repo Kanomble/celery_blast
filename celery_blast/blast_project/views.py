@@ -344,8 +344,13 @@ def project_details_view(request, project_id: int):
 def remote_project_details_view(request, project_id: int):
     try:
         blast_project = get_remote_project_by_id(project_id)
+        selection_task = get_database_selection_task_status(project_id, 'remote')
+
         context = {'BlastProject': blast_project,
-                   'Database': blast_project.r_project_forward_database}
+                   'Database': blast_project.r_project_forward_database,
+                   'project_id':project_id,
+                   'selection_task':selection_task
+                   }
 
         if blast_project.r_project_execution_snakemake_task:
             if blast_project.r_project_execution_snakemake_task.status == 'SUCCESS':
@@ -451,7 +456,6 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
             blast_project = get_remote_project_by_id(project_id)
-            print("[+] HELLO!")
             if blast_project.r_project_execution_snakemake_task:
                 if blast_project.r_project_execution_snakemake_task.status != 'FAILURE':
                     execute_remote_reciprocal_blast_project.delay(project_id)
@@ -747,7 +751,7 @@ def success_view(request):
 def database_statistics_dashboard(request, project_id):
     try:
         task_status = get_database_statistics_task_status(project_id)
-        selection_task_status = get_database_selection_task_status(project_id)
+        selection_task_status = get_database_selection_task_status(project_id, 'local')
 
         context = {'project_id': project_id, 'task_status': task_status}
 
@@ -790,15 +794,16 @@ def database_statistics_dashboard(request, project_id):
     
     :param project id
         :type int
-
+    :param remote_or_local
+        :type str
 '''
 @login_required(login_url='login')
-def database_selection_phylogeny_task_status(request, project_id):
+def database_selection_phylogeny_task_status(request, project_id, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
             if request.method == "GET":
-                data = get_database_selection_task_status(project_id)
+                data = get_database_selection_task_status(project_id, remote_or_local)
                 return JsonResponse({"data": data}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)
     except Exception as e:
@@ -1041,12 +1046,20 @@ def download_remote_project_as_zip_archive_view(request, project_id:int) -> Http
         :type int
     :param query_id
         :type str
-
+    :param remote_or_local
+        :type str
+        
 '''
 @login_required(login_url='login')
-def view_selection_phylogeny(request, project_id: int):
+def view_selection_phylogeny(request, project_id: int, remote_or_local:str):
     try:
-        html_data = get_html_results(project_id, "selection_sliced_phylogeny.html")
+        if remote_or_local == 'local':
+            html_path = BLAST_PROJECT_DIR
+        elif remote_or_local == 'remote':
+            html_path = REMOTE_BLAST_PROJECT_DIR
+        else:
+            raise Exception("[-] ERROR project neither local nor remote")
+        html_data = get_html_results(project_id, "selection_sliced_phylogeny.html", html_result_path=html_path)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)

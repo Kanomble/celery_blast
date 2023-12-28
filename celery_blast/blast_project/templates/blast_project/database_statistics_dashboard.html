@@ -56,7 +56,7 @@
             {% endif %}
             {% if selection_task == 'SUCCESS' %}
             <div class="col">
-                <a href="{% url 'view_selection_phylogeny' project_id=project_id %}">
+                <a href="{% url 'view_selection_phylogeny' project_id=project_id remote_or_local='local' %}">
                     <button id="success_button" class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Phylogeny </button>
                 </a>
             </div>
@@ -171,7 +171,7 @@ $(document).ready(function() {
     var status = $('.progress-{{project_id}}'),
     poll = function () {
         jQuery.ajax({
-            url: "{% url 'ajax_selection_constrained_phylogeny' project_id=project_id %}",
+            url: "{% url 'ajax_selection_constrained_phylogeny' project_id=project_id remote_or_local='local' %}",
             dataType: 'json',
             type: 'get',
             success: function (data) { // check if available

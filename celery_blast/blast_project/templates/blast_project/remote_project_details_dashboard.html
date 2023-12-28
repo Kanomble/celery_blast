@@ -123,6 +123,21 @@
                 <div class="col-md">
                     <button class="btn btn-dark" onclick="displayDivElement('interactive_bokeh_plot')" > Interactive Plot </button>
                 </div>
+
+                {% if selection_task == 'SUCCESS' %}
+                <div class="col-md">
+                    <a href="{% url 'view_selection_phylogeny' project_id=project_id remote_or_local='remote' %}">
+                        <button id="success_button" class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Phylogeny </button>
+                    </a>
+                </div>
+                {% elif selection_task == 'PROGRESS' %}
+                <div class="col-md">
+                     <button class="btn btn-info" disabled>
+                        <span class="spinner-grow spinner-grow-sm"></span>
+                        <p><span class="progress-{{ project_id }}"></span></p>
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
     {% endif %}
@@ -221,7 +236,6 @@
                 dataType: 'json',
                 type: 'get',
                 success: function(data) { // check if available
-                    console.log(data)
                     if(data){
                         var static_url = '{% static 'images/' %}';
                         var reciprocal_results_url = "{% url 'remote_reciprocal_results' project_id=BlastProject.id %}";
@@ -247,7 +261,6 @@
                     }
                  },
                 error: function() { // error logging
-                    console.log("ERROR")
                     status.text("error polling progress data")
             }
         });
@@ -315,5 +328,48 @@
         );
 
     });
+</script>
+
+<script>
+(function () {
+    var status = $('.progress-{{project_id}}'),
+    poll = function () {
+        jQuery.ajax({
+            url: "{% url 'ajax_selection_constrained_phylogeny' project_id=project_id remote_or_local='remote' %}",
+            dataType: 'json',
+            type: 'get',
+            success: function (data) { // check if available
+                //check if selection constrained phylogeny is already present
+                var success_button = document.getElementById("success_button");
+                //there is a phylogeny
+                if(success_button){
+                    clearInterval(pollInterval);
+                } else { //there is no phylpogeny
+                     if (data) { // get and check data value
+                        status.text('Processing ...'); // get and print data string
+                        if (data.data == 'SUCCESS') {
+                            status.text("DONE")
+                            clearInterval(pollInterval); // optional: stop poll function
+                            window.alert("Selection-constrained phylogenetic inference has completed; " +
+                                "the current page will now be reloaded.");
+                            window.location.reload();
+                        } else if (data.data == "ERROR") {
+                            status.text("ERROR")
+                            clearInterval(pollInterval);
+                        }
+                    }
+                }
+
+            },
+            error: function () { // error logging
+                status.text("error polling progress data")
+            }
+        });
+    },
+    pollInterval = setInterval(function () { // run function every 5000 ms
+        poll();
+    }, 5000);
+    poll(); // also run function on init
+})();
 </script>
 {% endblock %}

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from Bio import Entrez
-from blast_project.models import BlastProject
+from blast_project.models import BlastProject, RemoteBlastProject
 from bokeh.core.enums import MarkerType
 from bokeh.io import output_file, save
 from bokeh.layouts import column, gridplot, row
@@ -37,6 +37,8 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)
 
+def get_remote_project_by_id(project_id):
+    return RemoteBlastProject.objects.get(id=project_id)
 
 '''add_taxonomic_information_to_db
 
@@ -437,19 +439,33 @@ def calculate_database_statistics(project_id: int, logfile: str, user_email: str
 
     :param project_id
         :type int
-
+    :param remote_or_local
+        :type str
+        
     :return status
         :type str
 '''
 
 
-def get_database_selection_task_status(project_id: int) -> str:
+def get_database_selection_task_status(project_id: int, remote_or_local:str) -> str:
     try:
-        project = get_project_by_id(project_id)
-        if (project.project_database_statistics_task_selection):
-            task_status = str(project.project_database_statistics_task_selection.status)
+
+        if remote_or_local == 'local':
+            project = get_project_by_id(project_id)
+            if (project.project_database_statistics_task_selection):
+                task_status = str(project.project_database_statistics_task_selection.status)
+            else:
+                task_status = "NOTEXEC"
+
+        elif remote_or_local == 'remote':
+            project = get_remote_project_by_id(project_id)
+            if (project.r_project_database_statistics_task_selection):
+                task_status = str(project.r_project_database_statistics_task_selection.status)
+            else:
+                task_status = "NOTEXEC"
         else:
-            task_status = "NOTEXEC"
+            raise Exception("[-] ERROR project neither local nor remote")
+
         return task_status
     except Exception as e:
         raise Exception("ERROR during database statistics task status query with exception: {}".format(e))
@@ -1364,6 +1380,8 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
 
     :param current_selection
         :type ColumnDataSource
+    :param remote_or_local
+        :type str
     :returns task_selection_callback
         :type CustomJS
 
@@ -1389,13 +1407,11 @@ def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSo
         var base_url = window.location.href
         base_url = base_url.split("/")[2]
         base_url = "http://" + base_url + "/external_tools/bokeh_database_task/" + remote_or_local 
-        console.log(base_url)
         $.ajax({
             type: "POST",
             url: base_url,
             data: json,
             success: function(result){
-                console.log(result);
                 setTimeout(function(){
                    window.location.reload();
                 }, 2000);
