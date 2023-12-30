@@ -1,9 +1,8 @@
 import pandas as pd
 from Bio import Entrez
 from sys import exit
+from typing import TextIO
 
-Entrez.email = snakemake.params['user_email']
-ERRORCODE = 21
 
 def set_protein_assembly_file(ftp_path:str)->str:
     try:
@@ -73,23 +72,25 @@ def read_assembly(summary_file_path:str, assemblies:list)->pd.DataFrame:
         :type list[str]
     :param genbank_assemblies- assemblies starting with GCA
         :type list[str]
+    :param assembly_file_path
+        :type str
 
     :returns combined_assemblies_dataframe
         :type pd.DataFrame
 
 '''
-def read_assembly_summary_files(refseq_assemblies: list, genbank_assemblies: list) -> pd.DataFrame:
+def read_assembly_summary_files(refseq_assemblies: list, genbank_assemblies: list, assembly_file_path:str) -> pd.DataFrame:
     try:
         refseq_table = 0
         genbank_table = 0
 
         if len(refseq_assemblies) != 0:
-            refseq_file_path = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
+            refseq_file_path = assembly_file_path + 'assembly_summary_refseq.txt'
             refseq_assembly = read_assembly(refseq_file_path, refseq_assemblies)
             refseq_table = 1
 
         if len(genbank_assemblies) != 0:
-            genbank_file_path = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_genbank.txt'
+            genbank_file_path = assembly_file_path + 'assembly_summary_genbank.txt'
             genbank_assembly = read_assembly(genbank_file_path, genbank_assemblies)
             genbank_table = 1
 
@@ -112,17 +113,17 @@ def read_assembly_summary_files(refseq_assemblies: list, genbank_assemblies: lis
 
 '''read_result_dataframe
 
-    This function reads the reciprocal_results_woth_taxonomy.csv file and 
+    This function reads the RBH result file and 
     returns a list of unique protein entries (RBHs).
 
-    :param result_table_path - path to the reciprocal_results_with_taxonomy.csv file
+    :param result_table_path - path to the rbh_table.tsf file
         :type str
     :retunrs sacc_list
         :type list[str]
 '''
 def read_result_dataframe(result_table_path: str) -> list:
     try:
-        result_table = pd.read_csv(result_table_path, index_col=0)
+        result_table = pd.read_csv(result_table_path, sep="\t")
         sacc_list = list(result_table.sacc.unique())
         return sacc_list
     except Exception as e:
@@ -139,28 +140,50 @@ def read_result_dataframe(result_table_path: str) -> list:
         :type list[str]
     :param ipg_table_path - path to project directory
         :type str
-
+    :param logfile
+        :type TextIO
+    
     :returns returncode
         :type int
 '''
-def write_ipg_table(proteins: list, ipg_table_path: str) -> int:
+def write_ipg_table(proteins: list, ipg_table_path: str, logfile:TextIO) -> int:
     try:
-        search = Entrez.efetch(id=proteins, db="protein", rettype="ipg", retmode="text")
-        lines = search.readlines()
-        search.close()
-    except Exception as e:
-        raise Exception("[-] ERROR during Entrez.efetch function with exception: {}".format(e))
-
-    try:
-        # source has to be refseq or genbank (for downloading protein files)
         with open(ipg_table_path, "w") as ipgtable:
-            for line in lines:
-                ipgtable.write(line.decode())
 
+            logfile.write("INFO:starting to fetch IPG records from protein database\n")
+            end = len(proteins)
+            logfile.write("INFO:fetching IPGs from {} proteins\n".format(end))
+            logfile.write("INFO:fetching IPGs in steps of 500 protein identifier\n")
+            begin = 0
+            step = 500
+            steps = 500
+            while begin < end:
+                if step >= end:
+                    step = end
+                splitted_ids = proteins[begin:step]
+                for attempt in range(10):
+                    try:
+                        search = Entrez.efetch(id=splitted_ids, db="protein", rettype="ipg", retmode="text")
+                        lines = search.readlines()
+                        search.close()
+                    except Exception as e:
+                        if attempt == 9:
+                            logfile.write("WARNING:ten attempts for step: {}\n".format(step))
+                            raise Exception("INFO:ERROR during entrez.efetch with exception: {}".format(e))
+
+                    else:
+                        for line in lines:
+                            ipgtable.write(line.decode())
+                    break
+
+                begin += steps
+                step += steps
+            logfile.write("INFO:DONE writing IPG table\n")
         return 0
     except Exception as e:
+        logfile.write("ERROR:ERROR fetching and writing ipg table with exception: {}".format(e))
         raise Exception(
-            "[-] ERROR during writing ipgtable to disc with filepath {} and exception: {}".format(ipg_table_path, e))
+            "[-] ERROR fetching and writing ipg table with exception: {}".format(ipg_table_path, e))
 
 
 '''return_ipg_table
@@ -190,41 +213,55 @@ def return_ipg_table(ipg_table_filepath: str) -> pd.DataFrame:
     project. An Entrez.efetch search is performed (write_ipg_table function).
     It outputs a dataframe that can be used for downloading GenBank files for synteny calculation.
 
-    :param result_dataframe_path - path to reciprocal_results_with_taxonomy.csv
-        :type str
+    :param proteins
+        :type list[str]       
     :param ipg_table_path - path to the identical protein groups table
         :type str
     :param path_to_synteny_dataframe - path to the result dataframe that can be used in the synteny dashboard
         :type str
-
+    :param assembly_file_path
+        :type str
+    :param logfile
+        :type TextIO
+        
     :returns combined_result_dataframe - combination of the assembly summary tables and the ipg table
         :type pd.DataFrame
 '''
 
 
-def extract_assembly_ftp_paths_from_remote_blast_search_rbhs(result_dataframe_path: str,
+def extract_assembly_ftp_paths_from_remote_blast_search_rbhs(proteins: list,
                                                              ipg_table_path: str,
-                                                             path_to_synteny_dataframe: str) -> pd.DataFrame:
+                                                             path_to_synteny_dataframe: str,
+                                                             assembly_file_path:str,
+                                                             logfile:TextIO) -> pd.DataFrame:
     try:
-        proteins = read_result_dataframe(result_dataframe_path)
 
-        if write_ipg_table(proteins, ipg_table_path) != 0:
+
+        # loop over each
+        if write_ipg_table(proteins, ipg_table_path, logfile) != 0:
             raise Exception("entrez search for identical protein groups resulted in an error")
 
+        logfile.write("INFO:reading ipg_table.table file\n")
         ipg_table = return_ipg_table(ipg_table_path)
 
+        logfile.write("INFO:filtering ipg_table ...\n")
         # filter for refseq and genbank entries
         refseq_assemblies_table = ipg_table[ipg_table['source'] == "RefSeq"]
         genbank_assemblies_table = ipg_table[ipg_table['source'] == "INSDC"]
 
+        logfile.write("INFO:reading assembly summary files ...\n")
         # extract assembly summary information
         concat_assemblies_table = read_assembly_summary_files(list(refseq_assemblies_table.assembly_accession.unique()),
                                                               list(
-                                                                  genbank_assemblies_table.assembly_accession.unique()))
+                                                                  genbank_assemblies_table.assembly_accession.unique()),
+                                                              assembly_file_path)
+        logfile.write("INFO:merging ipg_table and assembly_summary_table on assembly_accession column\n")
         # merge dataframes
         ipg_table = ipg_table[['protein', 'assembly_accession', 'source']]
         concat_assemblies_table = concat_assemblies_table.merge(ipg_table, left_on="assembly_accession",
                                                                 right_on="assembly_accession")
+
+        logfile.write("INFO:filering assembly_table ...\n")
         concat_assemblies_table = concat_assemblies_table.dropna()
         concat_assemblies_table = concat_assemblies_table.drop_duplicates(subset=["assembly_accession", "protein"],
                                                                           keep="first")
@@ -234,22 +271,43 @@ def extract_assembly_ftp_paths_from_remote_blast_search_rbhs(result_dataframe_pa
         columns = list(concat_assemblies_table.columns)
         concat_assemblies_table = concat_assemblies_table.sort_values(by="taxid").reset_index()
         concat_assemblies_table = concat_assemblies_table[columns]
+        logfile.write("INFO:writing assembly file to disc ...\n")
         # save dataframe to disc
         concat_assemblies_table.to_csv(path_to_synteny_dataframe)
+
     except Exception as e:
         raise Exception(
             "[-] ERROR during extraction of FTP-paths for remote BLAST project RBHs with exception: {}".format(e))
 
 
 try:
+    Entrez.email = snakemake.params['user_email']
+    ERRORCODE = 21
+
     with open(snakemake.log['log'],"w") as logfile:
+        try:
+            logfile.write("INFO:start to fetch identical protein groups (ipgs) from RBHs\n")
+            logfile.write("INFO:setting up variables ...\n")
+            assembly_file_path = snakemake.params['assembly_file_path']
+            ipg_table_path = snakemake.output['ipg_table_path']
+            result_dataframe_path = snakemake.input['result_dataframe']
+            path_to_assembly_dataframe = snakemake.output['genome_assembly_table']
+            logfile.write("INFO:starting procedure with following variables:\n")
+            logfile.write("\t{}\n\t{}\n\t{}\n\t{}\n".format(
+                "assembly_file_path:{}".format(assembly_file_path),
+                "ipg_table_path:{}".format(ipg_table_path),
+                "result_dataframe_path:{}".format(result_dataframe_path),
+                "path_to_assembly_datafrane:{}".format(path_to_assembly_dataframe)
+            ))
 
+            logfile.write("INFO:reading RBH table file\n")
+            proteins = read_result_dataframe(result_dataframe_path)
 
-        REFSEQ_ASSEMBLY_FILE = snakemake.params['assembly_file_path']
-        IPG_TABLE_PATH = snakemake.output['ipg_table_path']
-        RESULT_DATAFRAME_PATH = snakemake.input['result_dataframe']
-        PATH_TO_ASSEMBLY_DATAFRAME = snakemake.output['assembly_file_path']
-
-        extract_assembly_ftp_paths_from_remote_blast_search_rbhs(RESULT_DATAFRAME_PATH, IPG_TABLE_PATH, PATH_TO_ASSEMBLY_DATAFRAME)
+            extract_assembly_ftp_paths_from_remote_blast_search_rbhs(proteins, ipg_table_path, path_to_assembly_dataframe, assembly_file_path, logfile)
+            logfile.write("DONE\n")
+        except Exception as e:
+            logfile.write("ERROR: ERROR with exception: {}\n".format(e))
+            raise Exception(e)
 except Exception as e:
+
     exit(ERRORCODE)

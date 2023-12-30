@@ -26,7 +26,8 @@ rule all:
 		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
 		"query_domains.tsf", "query_domains.html",
 		expand("{qseqid}/target_sequences_trimmed.html",qseqid=QSEQIDS),
-		expand("{qseqid}/target_sequences_tree.html",qseqid=QSEQIDS)
+		expand("{qseqid}/target_sequences_tree.html",qseqid=QSEQIDS),
+		expand("{qseqid}/genome_assembly_table.csv", qseqid=QSEQIDS)
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -388,8 +389,9 @@ rule query_domains_to_html_table:
 
 
 rule extract_assembly_ftp_paths_from_rbhs:
-	input: result_dataframe = "reciprocal_results_with_taxonomy.csv"
-	output: ipg_table_path = "ipg_table.table", synteny_file_path = "genome_assembly_table.csv"
+	input: result_dataframe = "{qseqid}/rbh_table.tsf"
+	output: ipg_table_path = "{qseqid}/ipg_table.table", genome_assembly_table = "{qseqid}/genome_assembly_table.csv"
 	params: user_email=config['user_email'], assembly_file_path="../../../../media/databases/refseq_summary_file/"
+	log: log="log/{qseqid}/extract_assembly_ftp_paths_from_rbhs.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/remote_searches/extract_assembly_ftp_paths_from_rbhs.py"
