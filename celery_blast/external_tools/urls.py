@@ -79,17 +79,18 @@ phylogenetic_analysis_urls = [
 ]
 
 synteny_urls = [
-    path('<int:project_id>/synteny_dashboard', views.synteny_dashboard_view, name='synteny_dashboard'),
-    path('<int:project_id>/<str:query_sequence>/synteny_calculation_dashboard_ajax_call',
-         views.ajax_call_for_synteny_calculation_selector_table,
-         name="ajax_call_for_synteny_calculation_selector_table"),
-    path('<int:project_id>/<str:query_sequence>/synteny_calculation_dashboard',
+    path('<int:project_id>/<str:remote_or_local>/synteny_dashboard', views.synteny_dashboard_view, name='synteny_dashboard'),
+
+    path('<int:project_id>/<str:remote_or_local>/<str:query_sequence>/synteny_calculation_dashboard_ajax_call',
+         views.ajax_call_for_synteny_calculation_selector_table, name="ajax_call_for_synteny_calculation_selector_table"),
+
+    path('<int:project_id>/<str:remote_or_local>/<str:query_sequence>/synteny_calculation_dashboard',
          views.synteny_calculation_dashboard_view,
          name="synteny_calculation_dashboard_view"),
-    path("<int:project_id>/<str:query_sequence>/calculate_synteny_form_submit_ajax",
+    path("<int:project_id>/<str:remote_or_local>/<str:query_sequence>/calculate_synteny_form_submit_ajax",
          views.calculate_synteny_form_submit_ajax,
          name="calculate_synteny_form_submit_ajax"),
-    path('<int:project_id>/<str:query_sequence_id>/clinker_synteny_plot',
+    path('<int:project_id>/<str:remote_or_local>/<str:query_sequence_id>/clinker_synteny_plot',
          views.load_synteny_view, name='load_synteny')
 ]
 

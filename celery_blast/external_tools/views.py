@@ -30,10 +30,11 @@ from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
     
 '''
 @login_required(login_url='login')
-def synteny_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local="local"):
+def synteny_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local:str):
     try:
         context = {}
         qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
+        context['remote_or_local'] = remote_or_local
         context['qseqids'] = qseqids
         context['project_id'] = project_id
         return render(request, "external_tools/synteny_detection_dashboard.html", context)
@@ -49,9 +50,10 @@ def synteny_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local=
 
 '''
 @login_required(login_url='login')
-def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, query_sequence:str):
+def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local:str, query_sequence:str):
     try:
         context = {}
+        context['remote_or_local'] = remote_or_local
         context['project_id'] = project_id
         context['query_sequence'] = query_sequence
         return render(request, 'external_tools/synteny_calculation.html', context)
@@ -69,17 +71,19 @@ def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, quer
         :type int
     :param query_sequence
         :type str
-    
+    :param remote_or_local
+        :type str
+        
     :returns table_data (as json_data)
         :type Json
 '''
 @csrf_exempt
-def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, project_id:int, query_sequence:str):
+def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, project_id:int, remote_or_local:str, query_sequence:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
             if request.method == "GET":
-                table_data = read_query_sequence_rbh_table(project_id, query_sequence)
+                table_data = read_query_sequence_rbh_table(project_id, query_sequence, remote_or_local)
                 return JsonResponse({"data": table_data}, status=200)
             else:
                 return JsonResponse({"error": "POST requests are not allowed"}, status=400)
@@ -113,7 +117,7 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
     This function returns the clinker result plot as an standalone html document.
 '''
 @login_required(login_url='login')
-def load_synteny_view(request: WSGIRequest, project_id: int, query_sequence_id: str):
+def load_synteny_view(request: WSGIRequest, project_id: int, remote_or_local:str, query_sequence_id: str):
     try:
         html_data = get_html_results(project_id, query_sequence_id + '/' + "clinker_result_plot.html")
         return HttpResponse(html_data)

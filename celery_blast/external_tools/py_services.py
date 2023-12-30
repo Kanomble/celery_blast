@@ -110,11 +110,13 @@ def slice_cdd_domain_corrected_fasta_file(path_to_query_subdir:str, path_to_fast
         :type int
     :param qseqid 
         :type str
-    
+    :param remote_or_local
+        :type str
+        
     :returns json
         :type json
 '''
-def read_query_sequence_rbh_table(project_id:int, qseqid:str):
+def read_query_sequence_rbh_table(project_id:int, qseqid:str, remote_or_local:str):
     try:
         target_table_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/rbh_table.tsf'
         if os.path.isfile(target_table_path) == False:

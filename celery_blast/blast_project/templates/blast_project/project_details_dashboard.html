@@ -105,7 +105,7 @@
                             <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a> </td>
                             <td><a class="btn btn-dark" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id remote_or_local="local" %}">CDD Domain Search</a> </td>
                             {% if BlastProject.project_forward_database.uploaded_files == False %}
-                                <td><a class="btn btn-dark" href="{% url 'synteny_dashboard' project_id=BlastProject.id %}">Synteny Detection</a> </td>
+                                <td><a class="btn btn-dark" href="{% url 'synteny_dashboard' project_id=BlastProject.id remote_or_local="local"%}">Synteny Detection</a> </td>
                             {% endif %}
                             <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
 
