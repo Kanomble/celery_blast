@@ -1,3 +1,8 @@
+# NEWS
+
+CATHI is now also available for remote reciprocal BLAST searches, without the need for downloading BLAST databases.
+You just need to provide the backward BLAST genome, which is one protein FASTA file.
+
 # Installation Issues
 
 There might be some installation issues, if you need help to set up Docker and CATHI: write a mail to lukas.becker@hhu.de and we can arrange a meeting.
@@ -344,6 +349,11 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
+- [ ] add progress visualization for CDD selection constrained phylogeny
+- [ ] fix endless polling of progress for selection sliced phylogeny in remote BLAST projects
+- [ ] fix polling of progress data for CDD remote searches
+- [ ] display logfiles within the details dashboard
+  - enable correct error handling - e.g. no hits etc.
 - [ ] refactor calculation of database normalized tables
   - seems to be zero in some cases (which is wrong)
 - [ ] add validation for same project titles

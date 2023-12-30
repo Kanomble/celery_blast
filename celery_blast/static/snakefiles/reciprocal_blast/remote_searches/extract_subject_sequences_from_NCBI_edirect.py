@@ -40,11 +40,13 @@ with open(snakemake.log['log'],"w") as logfile:
             begin += steps
             step += steps
 
+
         with open(snakemake.output['fasta_file'], 'w') as output:
             for record in records:
                 for rec in record:
-                    output.write('>' + rec['GBSeq_locus'] + ' ' + rec['GBSeq_definition'] + "\n")
+                    output.write('>' + rec['GBSeq_primary-accession'] + ' ' + rec['GBSeq_definition'] + "\n")
                     output.write(rec['GBSeq_sequence'] + "\n")
+
 
         logfile.write('INFO: The fasta file {} has been created.\n'.format(snakemake.output['fasta_file']))
         logfile.write("DONE")

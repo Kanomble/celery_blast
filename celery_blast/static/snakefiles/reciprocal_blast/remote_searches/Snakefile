@@ -93,7 +93,7 @@ rule fw_result_processing:
 rule bw_query_preparation:
 	input: gi_list="bw_queries_gi_list_for_blastdbcmd.txt", fw_result_processing_logs="log/fw_result_processing.log"
 	output: fasta_file="bw_queries.faa"
-	params: user_email=config['user_email']
+	params: user_email=config['user_email'], database=config['blastdb']
 	log: log="log/bw_query_preparation.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/remote_searches/extract_subject_sequences_from_NCBI_edirect.py"
@@ -385,3 +385,11 @@ rule query_domains_to_html_table:
 	log: log="log/query_domains_to_html_table.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"
+
+
+rule extract_assembly_ftp_paths_from_rbhs:
+	input: result_dataframe = "reciprocal_results_with_taxonomy.csv"
+	output: ipg_table_path = "ipg_table.table", synteny_file_path = "genome_assembly_table.csv"
+	params: user_email=config['user_email'], assembly_file_path="../../../../media/databases/refseq_summary_file/"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/remote_searches/extract_assembly_ftp_paths_from_rbhs.py"
