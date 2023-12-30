@@ -30,19 +30,31 @@
                 <table class="table table-hover" id="rbh_result_dataframe">
                     <thead>
                     <tr>
-                        <th>Index</th>
-                        <th>Subject Sequence</th>
-                        <th>Query Sequence</th>
-                        <th>Bitscore</th>
-                        <th>Identitiy</th>
-                        <th>E-Value</th>
-                        <th>Length</th>
-                        <th>Info</th>
-                        <th>Phylum</th>
-                        <th>Class</th>
-                        <th>Order</th>
-                        <th>Family</th>
-                        <th>Genus</th>
+                        {% if remote_or_local == "local" %}
+                            <th>Index</th>
+                            <th>Subject Sequence</th>
+                            <th>Query Sequence</th>
+                            <th>Bitscore</th>
+                            <th>Identitiy</th>
+                            <th>E-Value</th>
+                            <th>Length</th>
+                            <th>Info</th>
+                            <th>Phylum</th>
+                            <th>Class</th>
+                            <th>Order</th>
+                            <th>Family</th>
+                            <th>Genus</th>
+                        {% elif remote_or_local == "remote" %}
+                            <th>Index</th>
+                            <th>Assembly Accession</th>
+                            <th>Organism Name</th>
+                            <th>Taxonomic ID</th>
+                            <th>Species Taxonomic ID</th>
+                            <th>Assembly Level</th>
+                            <th>FTP Path</th>
+                            <th>Protein</th>
+                            <th>Source</th>
+                        {% endif %}
                     </tr>
                     </thead>
                     <tbody>
@@ -62,6 +74,35 @@
 {% block scripts %}
     <script>
         $(document).ready(function () {
+
+            if("{{ remote_or_local }}" == "local"){
+                var tab_columns = [
+                    {"data": 'index'},
+                    {"data": 'sseqid'},
+                    {"data": 'qseqid'},
+                    {"data": 'bitscore'},
+                    {"data": 'pident'},
+                    {"data": 'evalue'},
+                    {"data": 'slen'},
+                    {"data": 'query_info'},
+                    {"data": 'phylum'},
+                    {"data": 'class'},
+                    {"data": 'order'},
+                    {"data": 'family'},
+                    {"data": 'genus'}]
+            } else {
+                  var tab_columns = [
+                    {"data": 'index'},
+                    {"data": 'assembly_accession'},
+                    {"data": 'organism_name'},
+                    {"data": 'taxid'},
+                    {"data": 'species_taxid'},
+                    {"data": 'assembly_level'},
+                    {"data": 'ftp_path'},
+                    {"data": 'protein'},
+                    {"data": 'source'}]
+            }
+
             var table = $('#rbh_result_dataframe').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
@@ -79,20 +120,7 @@
                     "type": "GET",
                     "dataSrc": "data",
                 },
-                "columns": [
-                    {"data": 'index'},
-                    {"data": 'sseqid'},
-                    {"data": 'qseqid'},
-                    {"data":"bitscore"},
-                    {"data": 'pident'},
-                    {"data": 'evalue'},
-                    {"data": 'slen'},
-                    {"data": 'query_info'},
-                    {"data": 'phylum'},
-                    {"data": 'class'},
-                    {"data": 'order'},
-                    {"data": 'family'},
-                    {"data": 'genus'}],
+                "columns": tab_columns,
                 "deferRender": true
             });
 

@@ -103,7 +103,7 @@ def slice_cdd_domain_corrected_fasta_file(path_to_query_subdir:str, path_to_fast
 '''read_query_sequence_tbh_table
     
     This function is executed after pressing the calculate synteny button within the synteny dashboard.
-    It loads the rbh table for the specified query sequence id as a json dictionary.
+    It loads the rbh table or for remote projects the genome assembly table for the specified query sequence id as a json dictionary.
     The json dictionary will be rendered by the DataTables library.
     
     :param project_id
@@ -118,14 +118,24 @@ def slice_cdd_domain_corrected_fasta_file(path_to_query_subdir:str, path_to_fast
 '''
 def read_query_sequence_rbh_table(project_id:int, qseqid:str, remote_or_local:str):
     try:
-        target_table_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/rbh_table.tsf'
-        if os.path.isfile(target_table_path) == False:
-            raise Exception("{} does not exist!".format(target_table_path))
+        if remote_or_local == "local":
+            target_table_path = settings.BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/rbh_table.tsf'
+            if os.path.isfile(target_table_path) == False:
+                raise Exception("{} does not exist!".format(target_table_path))
+            else:
+                table = pd.read_csv(target_table_path, sep="\t", header=0)
+        elif remote_or_local == "remote":
+            target_table_path = settings.REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/' + qseqid + '/genome_assembly_table.csv'
+            if os.path.isfile(target_table_path) == False:
+                raise Exception("{} does not exist!".format(target_table_path))
+            else:
+                table = pd.read_csv(target_table_path, index_col=0, header=0)
         else:
-            table = pd.read_csv(target_table_path, sep="\t", header=0)
-            json_records = table.reset_index().to_json(orient='records')
-            json_data = json.loads(json_records)
-            return json_data
+            raise Exception("project is neither local nor remote ...")
+
+        json_records = table.reset_index().to_json(orient='records')
+        json_data = json.loads(json_records)
+        return json_data
     except Exception as e:
         raise Exception("[-] ERROR during reading of query sequence rbh table:"
                         " {} - {} with exception: {}".format(project_id, qseqid, e))

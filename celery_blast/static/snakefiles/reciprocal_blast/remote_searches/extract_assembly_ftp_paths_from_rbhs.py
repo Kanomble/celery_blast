@@ -258,6 +258,9 @@ def extract_assembly_ftp_paths_from_remote_blast_search_rbhs(proteins: list,
         logfile.write("INFO:merging ipg_table and assembly_summary_table on assembly_accession column\n")
         # merge dataframes
         ipg_table = ipg_table[['protein', 'assembly_accession', 'source']]
+        ipg_table['protein'] = ipg_table.protein.apply(lambda x: x.split(".")[0])
+        ipg_table = ipg_table[ipg_table.protein.isin(proteins)]
+
         concat_assemblies_table = concat_assemblies_table.merge(ipg_table, left_on="assembly_accession",
                                                                 right_on="assembly_accession")
 
