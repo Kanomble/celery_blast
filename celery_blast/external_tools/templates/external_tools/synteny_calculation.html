@@ -74,8 +74,8 @@
 {% block scripts %}
     <script>
         $(document).ready(function () {
-
-            if("{{ remote_or_local }}" == "local"){
+            var rOrl = "{{ remote_or_local }}"
+            if(rOrl === "local"){
                 var tab_columns = [
                     {"data": 'index'},
                     {"data": 'sseqid'},
@@ -141,9 +141,16 @@
                     if(confirm("Please confirm for downloading genbank files and calculating synteny plot.")){
                         var objects = table.rows('.selected').data();
                         var jsonArr = {};
-                        for (var i = 0; i < selected_rows_length; i++) {
-                            jsonArr[objects[i].index] = objects[i].sseqid;
+                        if(rOrl === "local"){
+                            for (var i = 0; i < selected_rows_length; i++) {
+                                jsonArr[objects[i].index] = objects[i].sseqid;
+                            }
+                        } else {
+                            for (var i = 0; i < selected_rows_length; i++) {
+                                jsonArr[objects[i].index] = objects[i].protein;
+                            }
                         }
+
                         $.ajax({
                             type: "POST",
                             url: "{% url 'calculate_synteny_form_submit_ajax' project_id=project_id query_sequence=query_sequence remote_or_local=remote_or_local %}",

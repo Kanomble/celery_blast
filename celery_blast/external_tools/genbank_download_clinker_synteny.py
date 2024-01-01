@@ -5,7 +5,7 @@ import pandas as pd
 from os.path import isfile, isdir
 from os import remove, listdir
 import subprocess
-from celery_blast.settings import BLAST_PROJECT_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
 
 '''extract_gene_cluster_by_one_sequence
 
@@ -24,15 +24,26 @@ from celery_blast.settings import BLAST_PROJECT_DIR
         :type str
     :param project_id
         :type int
-    
+    :param remote_or_local
+        :type str
+        
     :returns returncode
         :type int
 
 '''
-def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath: str, newfilename: str, project_id:int)->int:
+def extract_gene_cluster_by_one_sequence(sequence: str, limits: int,
+                                         gbfilepath: str, newfilename: str,
+                                         project_id:int, remote_or_local:str)->int:
     try:
+
         filename = newfilename.split("/")[-1].split(".")[0]
-        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + filename + '.log'
+        if remote_or_local == "local":
+            logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + filename + '.log'
+        elif remote_or_local == "remote":
+            logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/log/' + filename + '.log'
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote ...")
+
         with open(logfile, 'w') as log:
             try:
                 log.write("INFO:START parsing genbank file\n")
@@ -167,43 +178,75 @@ def extract_gene_cluster_by_one_sequence(sequence: str, limits: int, gbfilepath:
         :type str
     :param result_data_path - project directory
         :type str
-    :param: genome_assemblies - user specified genome assembly to download
-        :type list
+    :param: genome_assemblies - user specified protein ids - key:index, value:protein
+        :type dict
     :param query_sequence
         :type str
         
     :returns sequence_id_to_ftp_path
         :type dict
 '''
-def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path:str, result_data_path:str,genome_assemblies:list, project_id:int, query_sequence:str)->dict:
+def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path:str,
+                                                              result_data_path:str,
+                                                              genome_assemblies:dict,
+                                                              project_id:int,
+                                                              query_sequence:str,
+                                                              remote_or_local:str)->dict:
     try:
-        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_ftp_path_extraction.log'
+
+        if remote_or_local == "local":
+            logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_ftp_path_extraction.log'
+        elif remote_or_local == "remote":
+            logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_ftp_path_extraction.log'
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote ...")
+
         with open(logfile, 'w') as log:
             try:
+                log.write("INFO:extracting user provided RBH information\n")
                 log.write("INFO:Trying to extract assemblies from reciprocal result dataframe and database table\n")
                 log.write("INFO:Number of assemblies to download: {}\n".format(len(genome_assemblies)))
-                result_table = pd.read_csv(result_data_path, index_col=0)
-                result_table = result_table[result_table.qseqid == query_sequence]
-                database_table = pd.read_csv(database_table_path, index_col=0)
-                sequence_id_to_ftp_path = {}
-                database_table = database_table.rename(columns={"taxid":"staxids"})
-                log.write("INFO:merging database table with sliced result table\n")
-                result_selection = result_table[result_table.sacc.isin(genome_assemblies)]
-                def check_assembly_column(x: str, assemblies: list) -> bool:
-                    for assembly in assemblies:
-                        if x in assembly:
-                            return True
-                    return False
 
-                database_table = database_table[
-                    database_table.assembly_accession.apply(lambda x: check_assembly_column(x, genome_assemblies))]
-                database_table = database_table.merge(result_selection, on="staxids")
-                database_table = database_table[['assembly_accession', 'staxids', 'organism_name', 'ftp_path', 'sacc_transformed']]
-                # this will drop potential paralogous sequences
-                # database_table = database_table.drop_duplicates(subset="ftp_path", keep="first")
-                log.write("INFO:done merging result tables ...\n")
+                if remote_or_local == "local":
+                    log.write("INFO:working on local BLAST project\n")
+                    assemblies = []
+                    for prot_id in genome_assemblies.keys():
+                        assemblies.append(genome_assemblies[prot_id])
+
+                    result_table = pd.read_csv(result_data_path, index_col=0)
+                    result_table = result_table[result_table.qseqid == query_sequence]
+                    database_table = pd.read_csv(database_table_path, index_col=0)
+                    database_table = database_table.rename(columns={"taxid":"staxids"})
+                    log.write("INFO:merging database table with sliced result table\n")
+                    result_selection = result_table[result_table.sacc.isin(genome_assemblies)]
+                    def check_assembly_column(x: str, assemblies: list) -> bool:
+                        for assembly in assemblies:
+                            if x in assembly:
+                                return True
+                        return False
+
+                    database_table = database_table[
+                        database_table.assembly_accession.apply(lambda x: check_assembly_column(x, assemblies))]
+                    database_table = database_table.merge(result_selection, on="staxids")
+                    database_table = database_table[['assembly_accession', 'staxids', 'organism_name', 'ftp_path', 'sacc_transformed']]
+                    # this will drop potential paralogous sequences
+                    # database_table = database_table.drop_duplicates(subset="ftp_path", keep="first")
+                    log.write("INFO:done merging result tables ...\n")
+                elif remote_or_local == "remote":
+                    log.write("INFO:working on remote BLAST project\n")
+                    database_file_path = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/genome_assembly_table.csv'
+                    if isfile(database_file_path) == False:
+                        log.write("ERROR:there is no file for the path: {}\n".format(database_file_path))
+                    else:
+                        database_table = pd.read_csv(database_file_path, index_col = 0, header = 0)
+                        database_table = database_table.iloc[list(genome_assemblies.keys())]
+                        database_table = database_table.rename(columns={"protein":"sacc_transformed"})
+                else:
+                    raise Exception("[-] ERROR project is neither local nor remote")
+
+
                 log.write("INFO:building result dictionary for {} target sequences\n".format(len(database_table.sacc_transformed)))
-
+                sequence_id_to_ftp_path = {}
                 for seqid, ftp_path in zip(database_table.sacc_transformed, database_table.ftp_path):
                     log.write("INFO:ftp_path = {}\n".format(ftp_path))
                     genbank_path = '/'.join(ftp_path.split("/")[0:-1])
@@ -234,13 +277,26 @@ def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_pat
         :type dict
     :param output_filepath - output directory (e.g. blast_projects/2/clinker_synteny)
         :type str
+    :param remote_or_local
+        :type str
+    :param project_id
+        :type int
         
     :returns downloaded_files
         :type list[str]
 '''
-def download_genbank_files(sequence_id_to_ftp_path: dict, output_filepath: str, project_id:int) -> list:
+def download_genbank_files(sequence_id_to_ftp_path: dict,
+                           output_filepath: str,
+                           remote_or_local: str,
+                           project_id:int) -> list:
     try:
-        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + "genbank_file_download.log"
+        if remote_or_local == "local":
+            logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_file_download.log'
+        elif remote_or_local == "remote":
+            logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_file_download.log'
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote ...")
+
         with open(logfile, 'w') as log:
             genbank_filelist = []
             try:
@@ -297,20 +353,37 @@ def download_genbank_files(sequence_id_to_ftp_path: dict, output_filepath: str, 
         :type int
     :param query_sequence - used to build file and directory paths
         :type str 
+    :param project_id
+        :type int
+    :param remote_or_local
+        :type str
 '''
-def write_new_genbank_file(sequence_id_to_ftp_path:dict, data_path:str, limit:int, query_sequence:str, project_id:int)->dict:
+def write_new_genbank_file(sequence_id_to_ftp_path:dict,
+                           data_path:str,
+                           limit:int,
+                           query_sequence:str,
+                           project_id:int,
+                           remote_or_local:str)->dict:
     try:
-        logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + "genbank_file_writing.log"
+        if remote_or_local == "local":
+            logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_file_writing.log'
+            project_dir = BLAST_PROJECT_DIR
+        elif remote_or_local == "remote":
+            logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/log/' + 'genbank_file_writing.log'
+            project_dir = REMOTE_BLAST_PROJECT_DIR
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote ...")
         with open(logfile, 'w') as log:
             log.write("INFO:starting to parse genbank files\n")
             for sequence in sequence_id_to_ftp_path.keys():
                 for ftp_path in sequence_id_to_ftp_path[sequence]:
-                    output_file = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/' + ftp_path.split("/")[-1].split(".gz")[0] + '_sliced_gb_file.gbk'
+                    output_file =  project_dir + str(project_id) + '/' + query_sequence + '/' + ftp_path.split("/")[-1].split(".gz")[0] + '_sliced_gb_file.gbk'
                     genbank_file = data_path + '/' + ftp_path.split("/")[-1].split(".gz")[0]
                     log.write("INFO:trying to read genbank file at: {}\nINFO:write new genbank file into: {}\n"
                               .format(genbank_file, output_file))
                     if isfile(genbank_file) == True and isfile(output_file) == False:
-                        retcode = extract_gene_cluster_by_one_sequence(sequence, limit, genbank_file, output_file, project_id)
+                        retcode = extract_gene_cluster_by_one_sequence(sequence, limit, genbank_file,
+                                                                       output_file, project_id, remote_or_local)
                         if retcode != 0:
                             raise Exception("[-] ERROR during extraction of gene clusters retcode: {}".format(retcode))
                     else:
@@ -328,13 +401,21 @@ def write_new_genbank_file(sequence_id_to_ftp_path:dict, data_path:str, limit:in
         :type int
     :param query_sequence
         :type str
+    :param remote_or_local
+        :type str
     
     :returns returncode - 1 FAILURE, 0 SUCCESS
         :type int
 '''
-def delete_sliced_genbank_files(project_id:int, query_sequence:str)->int:
+def delete_sliced_genbank_files(project_id:int, query_sequence:str, remote_or_local:str)->int:
     try:
-        path_to_query_sequence = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence +'/'
+        if remote_or_local == "local":
+            path_to_query_sequence = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence +'/'
+        elif remote_or_local == "remote":
+            path_to_query_sequence = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
+        else:
+            raise Exception("[-] ERROR project neither local nor remote ...")
+
         if isdir(path_to_query_sequence) == True:
             files = listdir(path_to_query_sequence)
             for file in files:

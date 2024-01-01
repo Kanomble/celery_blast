@@ -107,6 +107,7 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
             if request.method == "POST":
                 form_data = request.POST
                 data = form_data.dict()
+                #{'0': 'ARV18906.1_GCA_002163715.1_ASM216371v1', '1': 'OGO98856.1_GCA_001795455.1_ASM179545v1'}
                 synteny_calculation_task.delay(project_id, query_sequence, data, remote_or_local)
         return JsonResponse({"response": "success"}, status=200)
     except Exception as e:
@@ -119,7 +120,12 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
 @login_required(login_url='login')
 def load_synteny_view(request: WSGIRequest, project_id: int, remote_or_local:str, query_sequence_id: str):
     try:
-        html_data = get_html_results(project_id, query_sequence_id + '/' + "clinker_result_plot.html")
+        if remote_or_local == "local":
+            html_data = get_html_results(project_id, query_sequence_id + '/' + "clinker_result_plot.html")
+        elif remote_or_local == "remote":
+            html_data = get_html_results(project_id, query_sequence_id + '/' + "clinker_result_plot.html", REMOTE_BLAST_PROJECT_DIR)
+        else:
+            html_data = "ERROR: project is neither local nor remote ...\n"
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)

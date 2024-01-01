@@ -192,39 +192,55 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
 @shared_task(bind=True)
 def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:dict, remote_or_local:str):
     try:
-        logger.info("starting synteny calculation task for query sequence: {} in project {}".format(query_sequence, project_id))
+        logger.info("starting synteny calculation task for query sequence: {} in {} project {}".format(query_sequence,
+                                                                                                       remote_or_local,
+                                                                                                       project_id))
         progress_recorder = ProgressRecorder(self)
         progress_recorder.set_progress(0, 100, "PROGRESS")
 
-        returncode = delete_sliced_genbank_files(project_id, query_sequence)
+
+        returncode = delete_sliced_genbank_files(project_id, query_sequence, remote_or_local)
         if returncode == 1:
-            logger.warning("there is no directory for the given project_id: {} and query_sequence: {}".format(project_id,query_sequence))
+            logger.warning("there is no directory for the given project_id: {} and query_sequence: {}".format(project_id,
+                                                                                                              query_sequence))
             return 1
+
         external_tools = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
         external_tools.update_query_sequences_synteny_calculation_task(query_sequence, str(self.request.id))
-        blast_project = get_project_by_id(project_id)
+
+        if remote_or_local == "local":
+            blast_project = get_project_by_id(project_id)
+            forward_database = blast_project.project_forward_database
+            database_table_path = forward_database.path_to_database_file + '/'
+            database_table_path += forward_database.get_pandas_table_name()
+            database_genbank_file_path = forward_database.path_to_database_file + '/synteny_analysis'
+            working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
+        elif remote_or_local == "remote":
+            blast_project = get_remote_project_by_id(project_id)
+            database_table_path = "NO_LOCAL_DB"
+            database_genbank_file_path = blast_project.get_project_dir() + "/synteny_analysis"
+            working_directory = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote ...")
 
         result_data_path = blast_project.get_project_dir() + '/reciprocal_results.csv'
-        target_rbhs = []
-        for key in rbh_dict.keys():
-            target_rbhs.append(rbh_dict[key])
-        forward_database = blast_project.project_forward_database
-        database_table_path = forward_database.path_to_database_file + '/'
-        database_table_path += forward_database.get_pandas_table_name()
-
-        database_genbank_file_path = forward_database.path_to_database_file + '/synteny_analysis'
         sequence_id_to_ftp_path_dict = extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_path,
                                                                                                  result_data_path,
-                                                                                                 target_rbhs, project_id,
-                                                                                                 query_sequence)
+                                                                                                 rbh_dict,
+                                                                                                 project_id,
+                                                                                                 query_sequence,
+                                                                                                 remote_or_local)
         progress_recorder.set_progress(20, 100, "PROGRESS")
 
         if isdir(database_genbank_file_path) == False:
-            logger.info("creating synteny analysis folder for forward database: {} with filepath: {}".format(forward_database.database_name, forward_database.path_to_database_file))
+            logger.info("creating synteny analysis folder with filepath: {}".format(database_genbank_file_path))
             mkdir(database_genbank_file_path)
 
         logger.info("starting download of genbank files ...")
-        genbank_filelist = download_genbank_files(sequence_id_to_ftp_path_dict,database_genbank_file_path, project_id)
+        genbank_filelist = download_genbank_files(sequence_id_to_ftp_path_dict,
+                                                  database_genbank_file_path,
+                                                  remote_or_local,
+                                                  project_id)
         if len(genbank_filelist) == 0:
             logger.warning("there are genbank files left")
         else:
@@ -232,10 +248,10 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
 
             logger.info("done downloading starting to slice genbank file entries for synteny analysis")
             returncode = write_new_genbank_file(sequence_id_to_ftp_path_dict,
-                                                database_genbank_file_path, 15, query_sequence, project_id)
+                                                database_genbank_file_path,
+                                                15, query_sequence, project_id, remote_or_local)
 
             logger.info("trying to execute clinker")
-            working_directory = BLAST_PROJECT_DIR + str(project_id) + '/' + query_sequence + '/'
             logger.info("executing clinker in working directory: {}".format(working_directory))
             cmd = "clinker "+working_directory+'*.gbk'+" -p "+working_directory+'clinker_result_plot.html'+' -i 0.25'
             proc = Popen(cmd, shell=True)
