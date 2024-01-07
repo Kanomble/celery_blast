@@ -6,18 +6,19 @@
 
 {% block infoheader %} Synteny Inference {% endblock %}
 
-{% block page_header %}
-    <div style="overflow-x: hidden; text-align: center;">
-        Synteny Detection Dashboard
-        <p style="text-align: center;font-size: small"> Download GenBank
-            files for selected RBHs and search for syntenic regions, {{ request.user }}!</p>
-    </div>
+{% block header %}
 {% endblock %}
-
 {% block page_description %}
     <h2> Synteny Detection Dashboard </h2>
 {% endblock %}
 {% block content %}
+
+    <div class="dashboard_project_list_col">
+        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Synteny Detection Dashboard </b></h2>
+        <p style="text-align: center;font-size: small"> Download GenBank
+            files for selected RBHs and search for syntenic regions.</p>
+    </div>
+
     <div class="dashboard_project_list_col">
         <div class="table-responsive">
             <table class="table table-hover" id="externalTools">
