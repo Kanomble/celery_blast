@@ -31,9 +31,10 @@ from refseq_transactions.py_refseq_transactions import get_downloaded_databases
 from external_tools.tasks import setup_cathi_download_cdd_refseq_genbank_assembly_files
 from Bio import Entrez
 from os.path import isfile
+from os import remove
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR, TAXONOMIC_NODES
 
 '''setup_cathi_view
 
@@ -1070,3 +1071,47 @@ def view_selection_phylogeny(request, project_id: int, remote_or_local:str):
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
+
+'''view_taxonomic_node_file
+    
+    Returns the taxonomic node file as text file.
+    
+    :param taxonomic_node_file
+        :type str
+'''
+@login_required(login_url='login')
+def view_taxonomic_node_file(request, taxonomic_node_file:str):
+    try:
+        taxonomic_node_file_path = TAXONOMIC_NODES + taxonomic_node_file
+        if isfile(taxonomic_node_file_path):
+            with open(taxonomic_node_file_path,"r") as tfile:
+                file_data = tfile.read()
+            response = HttpResponse(file_data, content_type="text/plain")
+            response["Content-Disposition"] = "attachment; filename={}".format(taxonomic_node_file)
+            return response
+        else:
+            raise Exception("[-] ERROR selected taxonomic_node_file: {} not found with path: {}".format(
+                taxonomic_node_file, taxonomic_node_file_path))
+    except Exception as e:
+        return failure_view(request, e)
+
+'''delete_taxonomic_node_file
+
+    This function deletes the selected taxonomic node file.
+    
+    :param taxonomic_node_file
+        :type str
+
+'''
+@login_required(login_url="login")
+def delete_taxonomic_node_file(request, taxonomic_node_file:str):
+    try:
+        taxonomic_node_file_path = TAXONOMIC_NODES + taxonomic_node_file
+        if isfile(taxonomic_node_file_path):
+            remove(taxonomic_node_file_path)
+            return redirect("species_taxids")
+        else:
+            raise Exception("[-] ERROR selected taxonomic_node_file: {} not found with path: {}".format(
+                taxonomic_node_file, taxonomic_node_file_path))
+    except Exception as e:
+        return failure_view(request,e)

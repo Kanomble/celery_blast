@@ -9,10 +9,12 @@
 {% block infoheader %} Create Taxonomic Files {% endblock %}
 {% block page_description %}
 Create a taxonomic nodes file by utilization of the get_species_taxids.sh script from the NCBI E-Direct tool suite.
+The created file can be used during the creation of local BLAST databases. By using the selected file, the refseq or genbank
+assembly summary files will be filtered based on the taxonomic identifier.
 {% endblock %}
 
 {% block content %}
-    <hr>
+    <br>
     <!-- post form input fields: species_name and user_email -->
     <div class="container-fluid" id="post_form_container">
         <form method="post" onsubmit="showLoader('loading_div','post_form_container')">
@@ -49,18 +51,57 @@ Create a taxonomic nodes file by utilization of the get_species_taxids.sh script
         </form>
     </div>
 
+    <br>
     <hr>
-
+    <br>
     <!-- list of available taxonomic node files (.taxids) -->
-    <div class="container-fluid">
+    <div class="dashboard_project_list_col">
 
-        <ul class="list-group">
-            <li class="list-group-item" id="taxonomy-files-header"> Currently Available Taxonomic Node Files </li>
-            {% for taxfile in taxid_files %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">{{taxfile.0}}<span class="badge badge-primary badge-pill">{{ taxfile.1 }}</span></li>
-            {% endfor %}
-        </ul>
+        <div class="table-responsive">
+            <table class="table table-hover" id="taxonomic_nodes_table">
+                    <thead>
+                        <tr>
+                            <th>Taxonomic Node Filename</th>
+                            <th>Download Button</th>
+                           <!--  <th>Timestamp</th> -->
+                            <th>Delete Button</th>
+                            <th>Entries</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taxonomic_nodes_table_body">
+                        {% for taxfile in taxid_files %}
+                            <tr>
+                                <td>{{taxfile.0}}</td>
+                                <td>
+                                    <button class="btn btn-info">
+                                        <a href="{% url 'view_taxonomic_node_file' taxonomic_node_file=taxfile.0 %}"
+                                                              style="text-decoration: none;color: black">
+                                            Download File
+                                        </a>
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger">
+                                        <a href="{% url 'delete_taxonomic_node_file' taxonomic_node_file=taxfile.0 %}"
+                                                              style="text-decoration: none;color: black">
+                                            Delete File
+                                        </a>
+                                    </button>
+                                </td>
+                                <td>
+                                    {{ taxfile.1 }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        </div>
     </div>
-
 {% endblock %}
-
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#taxonomic_nodes_table').DataTable();
+    });
+</script>
+{% endblock %}

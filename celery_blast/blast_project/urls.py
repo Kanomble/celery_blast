@@ -17,6 +17,9 @@ service_urls = [
     path('<str:selected_table>/datatable_view', views.active_table_view, name='active_table_view'),
 
     path('create_taxonomic_file', views.create_taxonomic_file_view, name='species_taxids'),
+    path('view_taxonomic_node_file/<str:taxonomic_node_file>', views.view_taxonomic_node_file, name="view_taxonomic_node_file"),
+    path('delete_taxonomic_node_file/<str:taxonomic_node_file>', views.delete_taxonomic_node_file,
+         name="delete_taxonomic_node_file"),
     path('upload_genomes/',views.upload_genome_view,name='upload_genomes'),
     path('upload_multiple_genomes/', views.upload_multiple_genomes_view, name='upload_multiple_genomes'),
 
