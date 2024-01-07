@@ -1,33 +1,33 @@
-logfile	returncode	progress
-forward_blast.log	1	5.0
-fw_result_processing.log	2	10.0
-bw_query_preparation.log	3	15.0
-backward_blast.log	4	20.0
-reciprocal_best_hits.log	5	25.0
-blast_tables_to_csv.log	6	30.0
-blast_tables_to_html.log	7	40.0
-build_folders_with_hit_info_for_each_qseqid.log	8	50.0
-{qseqid}/extract_subject_sequences_from_database.log	9	55.0
-check_if_query_sequence_is_in_target_sequences_faa.log	16	60.0
-blast_tables_to_plots.log	10	65.0
-query_sequences_to_html_table.log	11	70.0
-{qseqid}/msa.log	12	75.0
-{qseqid}/phylogeny.log	13	80.0
-cdd_domain_rpsblast.log	16	95.0
-query_domains_to_html_table.log	17	100.0
-calculate_database_statistics.log	0	0
-genus_extract_taxonomic_information.log	0	0
-family_extract_taxonomic_information.log	0	0
-order_extract_taxonomic_information.log	0	0
-class_extract_taxonomic_information.log	0	0
-phylum_extract_taxonomic_information.log	0	0
-genus_tax_counts_to_db_statistics_tables.log	0	0
-family_tax_counts_to_db_statistics_tables.log	0	0
-order_tax_counts_to_db_statistics_tables.log	0	0
-class_tax_counts_to_db_statistics_tables.log	0	0
-phylum_tax_counts_to_db_statistics_tables.log	0	0
-genus_database_statistics_to_altair_plots.log	0	0
-family_database_statistics_to_altair_plots.log	0	0
-order_database_statistics_to_altair_plots.log	0	0
-class_database_statistics_to_altair_plots.log	0	0
-phylum_database_statistics_to_altair_plots.log	0	0
+logfile,returncode,progress
+forward_blast.log,1,5.0
+fw_result_processing.log,2,10.0
+bw_query_preparation.log,3,15.0
+backward_blast.log,4,20.0
+reciprocal_best_hits.log,5,25.0
+blast_tables_to_csv.log,6,30.0
+blast_tables_to_html.log,7,40.0
+build_folders_with_hit_info_for_each_qseqid.log,8,50.0
+{qseqid}/extract_subject_sequences_from_database.log,9,55.0
+check_if_query_sequence_is_in_target_sequences_faa.log,16,60.0
+blast_tables_to_plots.log,10,65.0
+query_sequences_to_html_table.log,11,70.0
+{qseqid}/msa.log,12,75.0
+{qseqid}/phylogeny.log,13,80.0
+cdd_domain_rpsblast.log,16,95.0
+query_domains_to_html_table.log,17,100.0
+calculate_database_statistics.log,0,0
+genus_extract_taxonomic_information.log,0,0
+family_extract_taxonomic_information.log,0,0
+order_extract_taxonomic_information.log,0,0
+class_extract_taxonomic_information.log,0,0
+phylum_extract_taxonomic_information.log,0,0
+genus_tax_counts_to_db_statistics_tables.log,0,0
+family_tax_counts_to_db_statistics_tables.log,0,0
+order_tax_counts_to_db_statistics_tables.log,0,0
+class_tax_counts_to_db_statistics_tables.log,0,0
+phylum_tax_counts_to_db_statistics_tables.log,0,0
+genus_database_statistics_to_altair_plots.log,0,0
+family_database_statistics_to_altair_plots.log,0,0
+order_database_statistics_to_altair_plots.log,0,0
+class_database_statistics_to_altair_plots.log,0,0
+phylum_database_statistics_to_altair_plots.log,0,0

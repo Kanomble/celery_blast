@@ -37,15 +37,23 @@ def download_project_directory(directory:str)->FileWrapper:
     This function loads the task_logfile.txt file into a pandas dataframe.
     It is used within the project_details view to track the progress of the snakemake pipeline.
     
+    :param remote_or_local
+        :type str
+        
     :returns logfiles_table
         :type pd.DataFrame
 '''
 
 
-def read_task_logs_summary_table() -> pd.DataFrame:
+def read_task_logs_summary_table(remote_or_local:str) -> pd.DataFrame:
     try:
-        data_path = BLAST_PROJECT_DIR + 'task_logfiles'
-        logfiles_table = pd.read_table(data_path, sep="\t", header=0)
+        if remote_or_local == "local":
+            data_path = BLAST_PROJECT_DIR + 'task_logfiles'
+        elif remote_or_local == "remote":
+            data_path = REMOTE_BLAST_PROJECT_DIR + 'task_logfiles'
+        else:
+            raise Exception("[-] project is neither local nor remote ...")
+        logfiles_table = pd.read_table(data_path, sep=",", header=0)
         return logfiles_table
     except Exception as e:
         raise Exception("[-] ERROR reading task_logfile.txt file in {} with exception: {}".format(data_path, e))

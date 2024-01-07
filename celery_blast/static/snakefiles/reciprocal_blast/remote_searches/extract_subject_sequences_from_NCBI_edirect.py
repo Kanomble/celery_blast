@@ -1,4 +1,7 @@
 from Bio import Entrez
+from sys import exit
+
+ERRORCODE = 3
 
 with open(snakemake.log['log'],"w") as logfile:
     try:
@@ -51,5 +54,5 @@ with open(snakemake.log['log'],"w") as logfile:
         logfile.write('INFO: The fasta file {} has been created.\n'.format(snakemake.output['fasta_file']))
         logfile.write("DONE")
     except Exception as e:
-        logfile.write("INFO: exception during extraction of subject sequences with BioPython: {}.\n".format(e))
-        raise Exception("[-] ERROR during subject sequence download with exception: {}".format(e))
+        logfile.write("ERROR: exception during extraction of subject sequences with BioPython: {}.\n".format(e))
+        exit(ERRORCODE)

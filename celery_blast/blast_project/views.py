@@ -884,27 +884,30 @@ def ajax_call_to_logfiles(request, project_id: int):
         if is_ajax:
             if request.method == "GET":
                 blast_project = get_project_by_id(project_id)
-                logfiles = blast_project.return_list_of_all_logfiles()
-                logfile_table = read_task_logs_summary_table()
-                logfile_table = logfile_table.loc[0:17, :]
-                queries = []
-                progress_without_subtasks = []
-                for logfile in logfiles:
-                    if len(logfile.split("/")) == 2:
-                        query = logfile.split("/")[0]
-                        if query not in queries:
-                            queries.append(query)
-                        progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
+                if blast_project.project_execution_snakemake_task.status != "SUCCESS":
+                    logfiles = blast_project.return_list_of_all_logfiles()
+                    logfile_table = read_task_logs_summary_table("local")
+                    logfile_table = logfile_table.loc[0:17, :]
+                    queries = []
+                    progress_without_subtasks = []
+                    for logfile in logfiles:
+                        if len(logfile.split("/")) == 2:
+                            query = logfile.split("/")[0]
+                            if query not in queries:
+                                queries.append(query)
+                            progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
 
-                        if len(progress) == 1:
-                            progress_without_subtasks.append(progress[0])
-                    else:
-                        progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+                            if len(progress) == 1:
+                                progress_without_subtasks.append(progress[0])
+                        else:
+                            progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
 
-                        if len(progress) == 1:
-                            progress_without_subtasks.append(progress[0])
-                progress_without_subtasks.sort()
-                return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+                            if len(progress) == 1:
+                                progress_without_subtasks.append(progress[0])
+                    progress_without_subtasks.sort()
+                    return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+                elif blast_project.project_execution_snakemake_task.status == "SUCCESS":
+                    return JsonResponse({"progress": 100}, status=200)
         return JsonResponse({"error": "POST not allowed"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
@@ -915,27 +918,31 @@ def ajax_call_to_remote_logfiles(request, project_id: int):
         if is_ajax:
             if request.method == "GET":
                 blast_project = get_remote_project_by_id(project_id)
-                logfiles = blast_project.return_list_of_all_logfiles()
-                logfile_table = read_task_logs_summary_table()
-                logfile_table = logfile_table.loc[0:17, :]
-                queries = []
-                progress_without_subtasks = []
-                for logfile in logfiles:
-                    if len(logfile.split("/")) == 2:
-                        query = logfile.split("/")[0]
-                        if query not in queries:
-                            queries.append(query)
-                        progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
 
-                        if len(progress) == 1:
-                            progress_without_subtasks.append(progress[0])
-                    else:
-                        progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+                if blast_project.r_project_execution_snakemake_task.status != 'SUCCESS':
 
-                        if len(progress) == 1:
-                            progress_without_subtasks.append(progress[0])
-                progress_without_subtasks.sort()
-                return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+                    logfiles = blast_project.return_list_of_all_logfiles()
+                    logfile_table = read_task_logs_summary_table("remote")
+                    queries = []
+                    progress_without_subtasks = []
+                    for logfile in logfiles:
+                        if len(logfile.split("/")) == 2:
+                            query = logfile.split("/")[0]
+                            if query not in queries:
+                                queries.append(query)
+                            progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
+
+                            if len(progress) == 1:
+                                progress_without_subtasks.append(progress[0])
+                        else:
+                            progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+
+                            if len(progress) == 1:
+                                progress_without_subtasks.append(progress[0])
+                    progress_without_subtasks.sort()
+                    return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+                elif blast_project.r_project_execution_snakemake_task.status == 'SUCCESS':
+                    return  JsonResponse({"progress":100},status=200)
         return JsonResponse({"error": "POST not allowed"}, status=200)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)

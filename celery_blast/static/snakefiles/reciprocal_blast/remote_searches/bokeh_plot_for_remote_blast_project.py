@@ -16,7 +16,8 @@ from bokeh.core.enums import MarkerType
 plt.rcParams['legend.fontsize'] = 10
 from bokeh.palettes import inferno, viridis, magma, Spectral
 from random import shuffle
-
+from sys import exit
+ERRORCODE = 9
 
 def bokeh_django_task_button(current_selection: ColumnDataSource, remote_or_local:str) -> CustomJS:
     task_selection_callback = CustomJS(args=dict(sc=current_selection, remote_or_local=remote_or_local), code="""
@@ -710,4 +711,4 @@ with open(snakemake.log['log'], 'w') as logfile:
         logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR:{}\n".format(e))
-        sys.exit(RETURNCODE)
+        exit(RETURNCODE)

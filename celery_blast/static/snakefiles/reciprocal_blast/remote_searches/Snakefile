@@ -231,7 +231,7 @@ rule query_sequences_to_html_table:
 
 #RULE 12
 #extracts sequences of RBHs from the forward database
-rule extract_subject_sequences_from_database:
+rule extract_rbh_sequences:
 	input: target_ids="{qseqid}/target_sequence_ids.txt", target_fasta="bw_queries.faa", build_folders_with_hit_info_for_each_qseqid_log="log/build_folders_with_hit_info_for_each_qseqid.log"
 	output: "{qseqid}/target_sequences_raw.faa"
 	log: log="log/{qseqid}/extract_subject_sequences_from_database.log"
@@ -387,7 +387,7 @@ rule query_domains_to_html_table:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"
 
-
+#RULE 21
 rule extract_assembly_ftp_paths_from_rbhs:
 	input: result_dataframe = "{qseqid}/rbh_table.tsf"
 	output: ipg_table_path = "{qseqid}/ipg_table.table", genome_assembly_table = "{qseqid}/genome_assembly_table.csv"

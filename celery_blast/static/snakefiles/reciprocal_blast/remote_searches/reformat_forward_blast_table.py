@@ -1,4 +1,6 @@
 import pandas as pd
+from sys import exit
+ERRORCODE = 5
 
 with open(snakemake.log["log"], "w") as logfile:
     try:
@@ -59,5 +61,4 @@ with open(snakemake.log["log"], "w") as logfile:
         logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR: error during reformatting forward BLAST dataframe with exception: {}\n".format(e))
-        raise Exception("[-] ERROR during reformatting forward BLAST dataframe with exception: {}".format(e))
-
+        exit(ERRORCODE)
