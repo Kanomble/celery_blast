@@ -16,7 +16,8 @@ from django.views.decorators.csrf import csrf_exempt
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
 from .forms import EntrezSearchForm, RpsBLASTSettingsForm
 from .models import ExternalTools, EntrezSearch, QuerySequences
-from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results, read_query_sequence_rbh_table
+from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results, \
+    read_query_sequence_rbh_table
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building, \
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
     download_organism_protein_sequences_task, \
@@ -24,7 +25,7 @@ from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tre
     synteny_calculation_task, calculate_phylogeny_based_on_selection, calculate_phylogeny_based_on_database_statistics_selection
 from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
 
-'''synteny_dashboard_view
+'''synteny_dashboard_view 
     
     This view function returns the synteny dashboard after successful pipeline execution.
     
@@ -363,8 +364,6 @@ def project_informations(request, project_id, remote_or_local:str):
     try:
         context = {}
         qseqids = ExternalTools.objects.get_external_tools_based_on_project_id(project_id, remote_or_local)
-        print(remote_or_local)
-        print(qseqids.remote_or_local)
         context['qseqids'] = qseqids
         context['project_id'] = project_id
         return render(request, "external_tools/external_tools_dashboard.html", context)
@@ -629,12 +628,46 @@ def cdd_domain_search_details_view(request, query_id: str, project_id: int, remo
         query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id,query_id, remote_or_local)
         if query_sequence[0].selection_constrained_cdd_task != None:
             if query_sequence[0].selection_constrained_cdd_task.status == 'SUCCESS':
-                context['CDDPhylogeny'] = True
+                context['CDDPhylogeny'] = 'SUCCESS'
+            elif query_sequence[0].selection_constrained_cdd_task.status == 'PROGRESS':
+                context['CDDPhylogeny'] = 'PROGRESS'
+            else:
+                context['CDDPhylogeny'] = 'ERROR'
         #external_tools.update_selection_constrained_CDD_phylogenetic_inference(query_sequence, str(self.request.id))
         return render(request, "external_tools/cdd_domain_search_details.html", context)
     except Exception as e:
         return failure_view(request, e)
 
+'''get_selection_constrained_cdd_phylogeny_task_status
+    
+    Ajax call to selection constrained CDD phylogeny task status.
+    
+    :param project_id
+        :type int
+    :param query_id
+        :type str
+    :param remote_or_local
+        :type str
+'''
+@login_required(login_url="login")
+def get_selection_constrained_cdd_phylogeny_task_status(request, project_id:int,query_id:str, remote_or_local:str):
+    try:
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id,
+                                                                                     remote_or_local)
+                if query_sequence[0].selection_constrained_cdd_task != None:
+                    if query_sequence[0].selection_constrained_cdd_task.status == 'SUCCESS':
+                        task_status = 'SUCCESS'
+                    elif query_sequence[0].selection_constrained_cdd_task.status == 'PROGRESS':
+                        task_status = 'PROGRESS'
+                    else:
+                        task_status = 'ERROR'
+                return JsonResponse({"data": task_status}, status=200)
+        return JsonResponse({"ERROR": "NOT OK"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
 
 '''delete_cdd_domain_search_view
 
@@ -678,6 +711,8 @@ def delete_cdd_domain_search_view(request, query_id: str, project_id: int, remot
         :type str
     :param project_id
         :type int
+    :param remote_or_local
+        :type str
     
     :returns JsonResponse
 
@@ -685,12 +720,12 @@ def delete_cdd_domain_search_view(request, query_id: str, project_id: int, remot
 
 
 @login_required(login_url='login')
-def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int):
+def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
             if request.method == "GET":
-                query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id)[0]
+                query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id, remote_or_local)[0]
                 data = query_sequence.cdd_domain_search_task.result
                 return JsonResponse({"data": loads(data)}, status=200)
         return JsonResponse({"ERROR": "NOT OK"}, status=200)

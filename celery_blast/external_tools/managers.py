@@ -79,7 +79,7 @@ class ExternalToolsManager(models.Manager):
             :type django.db.models.query.QuerySet
     '''
 
-    def get_associated_query_sequence(self, project_id: int, query_sequence: str, remote_or_local):
+    def get_associated_query_sequence(self, project_id: int, query_sequence: str, remote_or_local:str):
         try:
             external_tools = self.get_external_tools_based_on_project_id(project_id, remote_or_local)
             query_sequence = mdl.QuerySequences.objects.filter(external_tool_for_query_sequence=external_tools,

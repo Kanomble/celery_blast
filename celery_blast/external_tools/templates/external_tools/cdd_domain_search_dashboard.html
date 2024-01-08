@@ -21,47 +21,52 @@
 {% endblock %}
 {% block content %}
     {% if query_task_dict.items|length > 0 %}
-    <div class="dashboard_project_list_col" style="overflow-x: hidden">
-        {% for query, status in query_task_dict.items %}
-            {% if status.0 == 'NOTEXEC' %}
-                {% if status.1 == 'not valid' %}
-                    <div class="row">
-                        <a class="btn btn-dark disabled"
-                           href="{% url 'execute_cdd_domain_search' project_id=project_id remote_or_local=remote_or_local %}">{{ query }} <= 2 RBHs or <= 2
-                            CDD hits</a>
+    <div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
+            <h3 class="col_header" style="text-align: center"> CDD Domain Search Task Overview </h3>
+            <p style="text-align: center;font-size: small"> Monitor your CDD Domain Searches </p>
+            {% for query, status in query_task_dict.items %}
+            <div class="row" style="text-align:center;justify-content: center;">
+                {% if status.0 == 'NOTEXEC' %}
+                    {% if status.1 == 'not valid' %}
+                        <div class="col">
+                            <a class="btn btn-info disabled"
+                               href="{% url 'execute_cdd_domain_search' project_id=project_id remote_or_local=remote_or_local %}">There are not enough conserved domains for {{ query }}.</a>
+                        </div>
+                    {% else %}
+                        <div class="col">
+                             <p> CDD search for: {{ query }} not executed.</p>
+                        </div>
+                    {% endif %}
+                {% elif status.0 == 'SUCCESS' %}
+                    <div class="col">
+                        <a class="btn btn-info" id="cdd_success"
+                           href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query remote_or_local=remote_or_local %}">View Results
+                            for: {{ query }}</a>
                     </div>
-                {% else %}
-                    <div class="row">
-                         <p> CDD search for: {{ query }} not executed.</p>
+                    <div class="col">
+                         <a class="btn btn-danger"
+                           href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query remote_or_local=remote_or_local %}"> Delete CDD search
+                            for: {{ query }}</a>
+                    </div>
+                {% elif status.0 == 'PROGRESS' %}
+                        <div class="col">
+                             <p> CDD search for: {{ query }}</p>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-success" disabled>
+                                <span class="spinner-grow spinner-grow-sm"></span>
+                                <p><span class="progress-{{ query }}"></span></p>
+                            </button>
+                        </div>
+                {% elif status.0 == 'FAILURE' %}
+                    <div class="col">
+                         <a class="btn btn-danger"
+                           href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query remote_or_local=remote_or_local %}"> An ERROR occurred, delete CDD Search
+                            for: {{ query }}</a>
                     </div>
                 {% endif %}
-            {% elif status.0 == 'SUCCESS' %}
-                <div class="row col-sm-2">
-                    <a class="btn btn-info" id="cdd_success"
-                       href="{% url 'cdd_domain_search_details' project_id=project_id query_id=query remote_or_local=remote_or_local %}">View Results
-                        for: {{ query }}</a>
-                </div>
-            {% elif status.0 == 'PROGRESS' %}
-                <div class="row">
-                    <div class="col-sm-2">
-                         <p> CDD search for: {{ query }}</p>
-                    </div>
-                    <div class="col-sm-2">
-                        <button class="btn btn-success" disabled>
-                            <span class="spinner-grow spinner-grow-sm"></span>
-                            <p><span class="progress-{{ query }}"></span></p>
-                        </button>
-                    </div>
-                </div>
-            {% elif status.0 == 'FAILURE' %}
-                <div class="col-sm-4">
-                     <a class="btn btn-danger"
-                       href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query remote_or_local=remote_or_local %}"> An ERROR occurred, delete CDD Search
-                        for: {{ query }}</a>
-                </div>
-            {% endif %}
-        <br>
-        {% endfor %}
+            </div>
+            {% endfor %}
     </div>
     {% endif %}
 
@@ -87,7 +92,7 @@
                     var status = $('.progress-{{query}}'),
                         poll = function () {
                             jQuery.ajax({
-                                url: "{% url 'get_cdd_task_status_ajax_call' project_id=project_id query_id=query  %}",
+                                url: "{% url 'get_cdd_task_status_ajax_call' project_id=project_id query_id=query remote_or_local=remote_or_local  %}",
                                 dataType: 'json',
                                 type: 'get',
                                 success: function (data) { // check if available
@@ -99,7 +104,7 @@
                                             status.text("DONE - refresh the page")
                                             clearInterval(pollInterval); // optional: stop poll function
                                         } else if (data.data.progress != "PROGRESS") {
-                                            status.text(data.data.progress)
+                                            status.text(data.data.current + "%")
                                             clearInterval(pollInterval);
                                         }
 
