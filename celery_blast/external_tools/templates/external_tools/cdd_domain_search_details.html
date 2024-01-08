@@ -8,32 +8,38 @@
 
 {% block page_description %}
 {% endblock %}
-
-{% block page_header %}
-    <div style="overflow-x: hidden; text-align: center;">
-        CDD Domain Search Details
-        <br>
-        <p style="text-align: center;font-size: small"> Monitor your CDD Domain search results
-            for {{ query_id }}, {{ request.user }}!</p>
-
-        <a class="btn btn-danger" href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query_id remote_or_local=remote_or_local %}">
-            Delete CDD Search for: {{ query_id }}</a>
-
-    </div>
+{% block header %}
 {% endblock %}
 
 {% block content %}
-    <div class="">
-        {% include CDDSearchPCABokehPlot %}
+    <div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
+            <h3 class="col_header" style="text-align: center"> CDD Domain Search Details </h3>
+            <p style="text-align: center;font-size: small"> Monitor your CDD Domain search results
+                for {{ query_id }}, {{ request.user }}!</p>
+             <div class="row" style="text-align:center;justify-content: center;">
+                <div class="col">
+                     <a href="{% url 'delete_cdd_domain_search' project_id=project_id query_id=query_id remote_or_local=remote_or_local %}">
+                        <button class="btn btn-danger" style="height: 80px;width: 180px; margin-right: 5px">
+                            Delete CDD Search for: {{ query_id }}
+                        </button>
+                     </a>
+                </div>
+                {% if CDDPhylogeny %}
+                    <div class="col">
+                        <a href="{% url 'load_selection_constrained_phylogeny' project_id=project_id query_id=query_id remote_or_local=remote_or_local %}">
+                            <button class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px" >
+                                View Phylogeny
+                            </button>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+    </div>
 
+
+    <div>
+        {% include CDDSearchPCABokehPlot %}
     </div>
-    {% if CDDPhylogeny %}
-    <div class="dashboard_project_list_col">
-    <a href="{% url 'load_selection_constrained_phylogeny' project_id=project_id query_id=query_id remote_or_local=remote_or_local %}">
-        <button class="btn btn-info">View Phylogeny</button>
-    </a>
-    </div>
-    {% endif %}
 {% endblock %}
 {% block scripts %}
 {% endblock %}
