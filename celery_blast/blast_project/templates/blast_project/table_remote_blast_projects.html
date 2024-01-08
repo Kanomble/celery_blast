@@ -15,6 +15,7 @@
 
 {% block content %}
 <div class="dashboard_project_list_col">
+    <h3 class="col_header" style="text-align: center"> Reciprocal BLAST Projects With Remote Databases </h3>
     <div class="table-responsive" >
         <table class="table table-hover scrollbar scrollbar-black bordered-black square thin" id="blastProjectTable">
                 <thead>
@@ -22,7 +23,7 @@
                         <th>Project Title</th>
                         <th>Forward Database</th>
                         <th>Backward Database</th>
-                        <!-- <th>Timestamp</th> -->
+                        <th>Timestamp</th>
                         <th>Project Details</th>
                     </tr>
                 </thead>
@@ -30,9 +31,9 @@
                     {% for project in blast_projects %}
                         <tr>
                             <td>{{project.r_project_title}}</td>
-                            <td>{{project.r_project_forward_database.database_name}}</td>
+                            <td>{{project.r_project_forward_database}}</td>
                             <td>{{project.r_project_backward_database.database_name}}</td>
-                            <!-- <td>{{ project.r_timestamp|date:'d.m.Y, h:m:s' }}</td> -->
+                            <td>{{ project.r_timestamp|date:'d.m.Y, h:m:s' }}</td>
                             <td>
                                  <form class="col"
                                        action="{% url 'remote_project_details' project_id=project.id%}"

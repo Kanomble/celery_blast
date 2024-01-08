@@ -15,12 +15,13 @@
 
 {% block content %}
 <div class="dashboard_project_list_col">
+<h3 class="col_header" style="text-align: center"> Available Local BLAST Databases </h3>
 <div class="table-responsive">
     <table class="table table-hover" id="activeDatabasesTable">
             <thead>
                 <tr>
                     <th>Database Name</th>
-                   <!--  <th>Creation Timestamp</th>-->
+                    <th>Timestamp</th>
                     <th>Assembly Entries</th>
                     <th>Assembly Levels</th>
                     <th>Database Details</th>
@@ -31,7 +32,7 @@
                 {% for database in ActiveBlastDatabases %}
                     <tr>
                         <td>{{database.database_name}}</td>
-                       <!--  <td>{{database.timestamp |date:'d.m.Y, h:m:s'}}</td> -->
+                        <td>{{database.timestamp |date:'d.m.Y, h:m:s'}}</td>
                         <td>{{database.assembly_entries}}</td>
                         <td>
                         <table>
