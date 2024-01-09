@@ -22,8 +22,21 @@ with open(snakemake.log["log"], "w") as logfile:
             for taxids, sscinames, scomnames in zip(fw_res.staxids, fw_res.sscinames, fw_res.scomnames):
                 try:
                     taxid_list = taxids.split(";")
-                    scinames_list = sscinames.split(";")
-                    scomnames_list = scomnames.split(";")
+
+                    if type(sscinames) != float:
+                        scinames_list = sscinames.split(";")
+                    else:
+                        scinames_list = []
+                        for val in range(len(taxid_list)):
+                            scinames_list.append("unknown")
+
+                    if type(scomnames) != float:
+                        scomnames_list = scomnames.split(";")
+                    else:
+                        scomnames_list = []
+                        for val in range(len(taxid_list)):
+                            scomnames_list.append("unknown")
+
                     if len(taxid_list) == len(scinames_list) == len(scomnames_list):
                         temp_df = fw_res.iloc[counter]
                         for taxid, sciname, comname in zip(taxid_list, scinames_list, scomnames_list):
@@ -41,6 +54,7 @@ with open(snakemake.log["log"], "w") as logfile:
                     logfile.write("WARNING: error in row: {}\n".format(
                         counter
                     ))
+                    counter += 1
             logfile.write("INFO:done parsing original forward BLAST dataframe.\n")
             # rename original forward BLAST dataframe
             all_taxids_fw_dataframe = pd.DataFrame.from_dict(dataframe_dict)
@@ -48,8 +62,8 @@ with open(snakemake.log["log"], "w") as logfile:
             all_taxids_fw_dataframe.to_csv(snakemake.output["all_taxids_fw_res"], sep="\t", index=0, header=False)
 
             fw_res['staxids'] = fw_res['staxids'].apply(lambda x: x.split(";")[0])
-            fw_res['sscinames'] = fw_res['sscinames'].apply(lambda x: x.split(";")[0])
-            fw_res['scomnames'] = fw_res['scomnames'].apply(lambda x: x.split(";")[0])
+            fw_res['sscinames'] = fw_res['sscinames'].apply(lambda x: x.split(";")[0] if type(x) != float else "unknown")
+            fw_res['scomnames'] = fw_res['scomnames'].apply(lambda x: x.split(";")[0] if type(x) != float else "unknown")
 
         else:
             logfile.write("INFO:staxids column dtype is int - one taxid per row.\n")
