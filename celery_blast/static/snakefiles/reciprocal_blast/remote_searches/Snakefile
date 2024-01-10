@@ -25,9 +25,16 @@ rule all:
 		"blastp_fw_out_reformatted.table",
 		expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),
 		"query_domains.tsf", "query_domains.html",
-		expand("{qseqid}/target_sequences_trimmed.html",qseqid=QSEQIDS),
-		expand("{qseqid}/target_sequences_tree.html",qseqid=QSEQIDS),
-		expand("{qseqid}/genome_assembly_table.csv", qseqid=QSEQIDS)
+		expand("{qseqid}/msa_phylo_rbh_table.tsf",qseqid=QSEQIDS),
+		expand("{qseqid}/msa_phylo_sequences.faa",qseqid=QSEQIDS),
+		expand("{qseqid}/msa_phylo_sequences.msa", qseqid=QSEQIDS),
+
+		expand("{qseqid}/msa_phylo_sequences_trimmed.msa", qseqid=QSEQIDS),
+		expand("{qseqid}/msa_phylo_sequences_trimmed.html", qseqid=QSEQIDS),
+
+		expand("{qseqid}/msa_phylo_sequences.tree", qseqid=QSEQIDS),
+		expand("{qseqid}/msa_phylo_sequences.html", qseqid=QSEQIDS)
+
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -174,6 +181,7 @@ rule reformat_blast_forward_dataframe:
 rule reciprocal_best_hits:
 	input: bw_res="blastp_bw_out.table", fw_res="blastp_fw_out_reformatted.table", reformatting_log="log/reformat_blast_forward_dataframe.log"
 	output: rec_best_hits="reciprocal_best_hits_protein_ids.txt"
+	params: bitscore_filter=config["bitscore_filter"]
 	log: log="log/reciprocal_best_hits.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/extract_reciprocal_best_hits.py"
@@ -275,50 +283,88 @@ rule check_if_query_sequence_is_in_target_sequences_faa:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/check_if_query_sequence_is_in_target_sequences_faa.py"
 
+rule extract_target_sequences_for_phylogeny:
+	input: target_fasta="{qseqid}/target_sequences.faa",rec_res_table="{qseqid}/rbh_table.tsf", query_sequences_to_html_table_log="log/query_sequences_to_html_table.log"
+	output: msa_phylo_sequences="{qseqid}/msa_phylo_sequences.faa", msa_phylo_blast_table="{qseqid}/msa_phylo_rbh_table.tsf"
+	params: max_sequences=config['max_rbhs_for_phylo']
+	log: log="log/{qseqid}/extract_target_sequences_for_phylogeny.log"
+	run:
+		with open(log['log'],'a') as lfile:
+			lfile.write("INFO:reading forward BLAST table and filter table based on max_sequences parameter: {}\n".format(
+				params.max_sequences
+			))
+			# load RBH result dataframe and slice the bitscore sorted dataframe based on the max max_sequences param
+			fw_df = pd.read_table(input.rec_res_table)
+			if len(fw_df) > int(params.max_sequences):
+				lfile.write("INFO:sorting BLAST table by bitscore with {} entries ...\n".format(len(fw_df)))
+				fw_df = fw_df.sort_values(by="bitscore",ascending=False)
+				lfile.write("INFO:applying threshold for the maximal number of sequences for MSA and Phylogeny ...\n")
+				fw_df = fw_df[0:int(params.max_sequences)]
+				lfile.write("INFO:after filtering {} sequences remain...\n".format(len(fw_df)))
+
+			lfile.write("INFO:writing blast table for aligning with leafs in the phylogeny...\n")
+			fw_df.to_csv(output.msa_phylo_blast_table,sep="\t", index=False)
+			target_sequences = fw_df.sacc.to_list()
+
+			#check if target sequence file is empty (or just contains the query sequence)
+			#if this is the case, there is no need for producing a msa
+			with open(input.target_fasta,'r') as infile:
+				lines = infile.readlines()
+				with open(output.msa_phylo_sequences,"w") as target_file:
+					for line in lines:
+						if line.startswith(">"):
+							acc = line.split(" ")[0].split(">")[1]
+							if acc in target_sequences:
+								switch = True
+							else:
+								switch = False
+						if switch == True:
+							target_file.write(line)
 
 #RULE 14
 #this rule shouldn't throw exceptions, if an error occurs an empty file is created
 rule conduct_multiple_sequence_alignment_mafft:
-	input: target_fasta="{qseqid}/target_sequences.faa", query_sequences_to_html_table_log="log/query_sequences_to_html_table.log"
-	output: "{qseqid}/target_sequences.msa"
+	input: msa_phylo_sequences="{qseqid}/msa_phylo_sequences.faa"
+	output: target_sequences="{qseqid}/msa_phylo_sequences.msa"
 	log: log="log/{qseqid}/msa.log"
 	run:
-		execute_mafft=True
-		#check if target sequence file is empty (or just contains the query sequence)
-		#if this is the case, there is no need for producing a msa
-		with open(input[0],'r') as infile:
-			if len(infile.readlines()) <= 1:
-				execute_mafft=False
-		try:
-			if execute_mafft==True:
-				#mafft execution
-				mafft=shell("mafft --auto {input.target_fasta} > {output} 2> {log}")
-				with open(log['log'],'a') as lfile:
+		with open(log['log'],'a') as lfile:
+			execute_mafft=True
+			lfile.write("INFO:starting multiple sequence alignment procedure with mafft...\n")
+			#check if target sequence file is empty (or just contains the query sequence)
+			#if this is the case, there is no need for producing a msa
+			with open(input[0],'r') as infile:
+				if len(infile.readlines()) <= 1:
+					lfile.write("WARNING:there are not enough sequences in the FASTA file for mafft...\n")
+					execute_mafft=False
+			try:
+				if execute_mafft==True:
+					#mafft execution
+					mafft=shell("mafft --auto {input.msa_phylo_sequences} > {output} 2> {log}")
 					lfile.write("INFO:ending mafft multiple sequence alignment\n")
 					lfile.write("DONE")
-			else:
-				with open(log['log'],'w') as lfile:
+				else:
 					lfile.write("WARNING: producing empty alignment file with touch\n")
+					#produce empty file for snakemake
+					shell("touch {output}")
 					lfile.write("DONE\n")
-				#produce empty file for snakemake
-				shell("touch {output}")
-		except Exception as e:
-			with open(log['log'],'w') as lfile:
-				lfile.write("ERROR: in mafft with exception: {}\n".format(e))
-				shell("touch {output}")
+			except Exception as e:
+				with open(log['log'],'w') as lfile:
+					lfile.write("ERROR: in mafft with exception: {}\n".format(e))
+					shell("touch {output}")
 
 #RULE 15
 rule trimal:
-	input: target_msa="{qseqid}/target_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
-	output: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
+	input: target_msa="{qseqid}/msa_phylo_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
+	output: trimmed_sequences="{qseqid}/msa_phylo_sequences_trimmed.msa"
 	log: trimal_log="log/{qseqid}/trimal.log"
 	shell:
 		"trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}"
 
 #RULE 16
 rule display_alignment:
-	input: trimmed_sequences="{qseqid}/target_sequences_trimmed.msa"
-	output: html_output="{qseqid}/target_sequences_trimmed.html"
+	input: trimmed_sequences="{qseqid}/msa_phylo_sequences_trimmed.msa"
+	output: html_output="{qseqid}/msa_phylo_sequences_trimmed.html"
 	log: display_alignment_log="log/{qseqid}/mview.log"
 	shell:
 		"mview -in fasta -html head -moltype aa -css on -coloring any -consensus on -sort cov {input.trimmed_sequences} > {output.html_output} 2> {log.display_alignment_log}"
@@ -326,8 +372,8 @@ rule display_alignment:
 #RULE 17
 #this rule shouldn't throw exceptions, if an error occurs an empty file is created
 rule conduct_phylogeny_fast_tree:
-	input: target_msa="{qseqid}/target_sequences_trimmed.msa"
-	output: "{qseqid}/target_sequences.tree"
+	input: target_msa="{qseqid}/msa_phylo_sequences_trimmed.msa"
+	output: "{qseqid}/msa_phylo_sequences.tree"
 	log: log="log/{qseqid}/phylogeny.log"
 	run:
 		#check if multiple sequence alignment has entries
@@ -357,8 +403,8 @@ rule conduct_phylogeny_fast_tree:
 
 #RULE 18
 rule html_phylogenie:
-    input: newick_tree="{qseqid}/target_sequences.tree", blast_table="{qseqid}/rbh_table.tsf",
-    output: html_tree="{qseqid}/target_sequences_tree.html",
+    input: newick_tree="{qseqid}/msa_phylo_sequences.tree", blast_table="{qseqid}/msa_phylo_rbh_table.tsf",
+    output: html_tree="{qseqid}/msa_phylo_sequences.html",
     log: shiptv_log="log/{qseqid}/shiptv.log",
     run:
         df = pd.read_table(input['blast_table'])

@@ -1,8 +1,10 @@
 '''extract_reciprocal_best_hits
 This script extracts reciprocal best hits (RBHs).
-Based on the blast_fw_df (forward blast) and blast_bw_df (backward blast) output files of the rules:
+Based on the blast_fw_df (forward blast) and blast_bw_df (backward blast) output files of the rules for the
 forward_blast and backward_blast, RBHs are inferred.
 The inference is based on the pandas merge function.
+Before RBH inference the forward dataframe is filtered based on the user provided bitscore threshold,
+the default threshold is 50.
 The columns for the qseqid and targetid as well as the corresponding taxid column are used for the merge comparison.
 '''
 import pandas as pd
@@ -12,9 +14,18 @@ try:
     with open(snakemake.log['log'],'w') as logfile:
         forward_df = pd.read_table(snakemake.input['fw_res'],header=None)
         forward_df[7] = forward_df[7].map(lambda line : line.split('.')[0])
-        forward_df = pd.DataFrame([forward_df[0][:],forward_df[7][:], forward_df[8][:]]).transpose()
         logfile.write("INFO:starting to extract reciprocal best hits (RBHs) from blast output tables\n")
         logfile.write("INFO:loaded forward dataframe into pandas with length {}\n".format(len(forward_df)))
+
+        #apply bitscore filter
+        if len(forward_df) <= 0:
+            logfile.write("WARNING:there are no hits in the forward BLAST table...\n")
+        else:
+            forward_df = forward_df[forward_df[4] >= snakemake.params['bitscore_filter']]
+            if len(forward_df) <= 0:
+                logfile.write("WARNING:after applying the bitscore filter there are no hits in the forward BLAST table...\n")
+
+        forward_df = pd.DataFrame([forward_df[0][:],forward_df[7][:], forward_df[8][:]]).transpose()
         backward_df = pd.read_table(snakemake.input['bw_res'],header=None)
         backward_df[7] = backward_df[7].map(lambda line : line.split('.')[0])
         backward_df = pd.DataFrame([backward_df[0][:],backward_df[7][:], backward_df[8][:]]).transpose()
@@ -36,11 +47,12 @@ try:
             logfile.write("\tINFO:found {} RBHs\n".format(len(qseq_result_df)))
             result_df = pd.concat([result_df,qseq_result_df],ignore_index=True)
 
-        #returncode for no reciprocal hits
+        # returncode for no reciprocal hits
         if len(result_df['targetid']) == 0:
             logfile.write("ERROR:there are no reciprocal best hits for the provided query sequences\n")
             exit(ERRORCODE)
         logfile.write("INFO:generating RBH output table with following headers, separated by a tab: forward_genome_id\tbackward_genome_id\tstaxids\n")
+        # generating output file
         with open(snakemake.output['rec_best_hits'],'w') as recfile:
             recfile.write("forward_genome_id\tbackward_genome_id\tstaxids\n")
             for targetid, qseqid,taxid in zip(result_df['targetid'],result_df['qseqid'],result_df['taxid_y']):
