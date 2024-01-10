@@ -32,7 +32,7 @@ with open(snakemake.log['log'],'w') as logfile:
             logfile.write("\tINFO:slicing target RBH dataframe by defined maximum sequences for MSA and phylo task: {}\n".format(
                 snakemake.config['max_rbhs_for_phylo']
             ))
-            target_df = target_df.sort_values(by='bitscore', ascending=False)[:int(snakemake.config['max_rbhs_for_phylo'])].sort_index().copy()
+            target_df = target_df.sort_values(by='bitscore', ascending=False).sort_index().copy()
             logfile.write("\t\tINFO:constructing tab separated file ... \n")
             cols = ['sacc', 'qseqid', 'bitscore', 'pident', 'evalue', 'slen', 'query_info', 'phylum', 'class',
                     'order', 'family', 'genus']

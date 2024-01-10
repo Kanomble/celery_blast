@@ -23,7 +23,7 @@ from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tre
     download_organism_protein_sequences_task, \
     entrez_search_task, download_entrez_search_associated_protein_sequences, cdd_domain_search_with_rbhs_task, \
     synteny_calculation_task, calculate_phylogeny_based_on_selection, calculate_phylogeny_based_on_database_statistics_selection
-from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
+from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR, ESEARCH_OUTPUT
 
 '''synteny_dashboard_view 
     
@@ -155,7 +155,7 @@ def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_seq
         else:
             raise Exception("project is neither local nor remote ...")
 
-        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_tree.html", html_result_path=html_result_path)
+        html_data = get_html_results(project_id, query_sequence_id + '/' + "msa_phylo_sequences.html", html_result_path=html_result_path)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
@@ -185,7 +185,7 @@ def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str,
             html_result_path = REMOTE_BLAST_PROJECT_DIR
         else:
             raise Exception("project is neither local nor remote ...")
-        html_data = get_html_results(project_id, query_sequence_id + '/' + "target_sequences_trimmed.html", html_result_path=html_result_path)
+        html_data = get_html_results(project_id, query_sequence_id + '/' + "msa_phylo_sequences_trimmed.html", html_result_path=html_result_path)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
@@ -215,7 +215,7 @@ def view_downloaded_sequences(request: WSGIRequest, search_id: int):
 def view_downloaded_organism_sequences(request: WSGIRequest, search_id: int, organism_download: str):
     # creates a file download button to the search_details.html to download the result file of the download_protein_by_organisms_from_entrez_search view
     try:
-        filepath = "media/esearch_output/" + str(search_id) + "/" + str(organism_download) + ".faa"
+        filepath = ESEARCH_OUTPUT + str(search_id) + "/" + str(organism_download) + ".faa"
         if os.path.isfile(filepath):
             with open(filepath, 'r') as download_file:
                 content = [str(line) for line in download_file.readlines()]

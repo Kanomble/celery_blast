@@ -33,7 +33,8 @@ rule all:
 		expand("{qseqid}/msa_phylo_sequences_trimmed.html", qseqid=QSEQIDS),
 
 		expand("{qseqid}/msa_phylo_sequences.tree", qseqid=QSEQIDS),
-		expand("{qseqid}/msa_phylo_sequences.html", qseqid=QSEQIDS)
+		expand("{qseqid}/msa_phylo_sequences.html", qseqid=QSEQIDS),
+		expand("{qseqid}/genome_assembly_table.csv", qseqid=QSEQIDS)
 
 
 #RULE 1
