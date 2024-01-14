@@ -31,10 +31,11 @@ rule all:
 
 		expand("{qseqid}/msa_phylo_sequences_trimmed.msa", qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences_trimmed.html", qseqid=QSEQIDS),
-
 		expand("{qseqid}/msa_phylo_sequences.tree", qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences.html", qseqid=QSEQIDS),
-		expand("{qseqid}/genome_assembly_table.csv", qseqid=QSEQIDS)
+		expand("{qseqid}/genome_assembly_table.csv", qseqid=QSEQIDS),
+		"plot_amount_hits_of_target_taxon.png",
+		"plot_evalue_distribution.png"
 
 
 #RULE 1
@@ -442,3 +443,12 @@ rule extract_assembly_ftp_paths_from_rbhs:
 	log: log="log/{qseqid}/extract_assembly_ftp_paths_from_rbhs.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/remote_searches/extract_assembly_ftp_paths_from_rbhs.py"
+
+#RULE 22
+#creates plots for the visualization of pipeline results
+rule blast_tables_to_plots:
+	input: fw_res="blastp_fw_out_reformatted.table", rec_res="reciprocal_best_hits_protein_ids.txt",query_file=config['query_sequence']
+	output: taxids_hits_plot="plot_amount_hits_of_target_taxon.png",evalue_plot="plot_evalue_distribution.png"
+	log: log="log/blast_tables_to_plots.log"
+	script:
+		  "../../../../static/snakefiles/reciprocal_blast/plot_reciprocal_results.py"

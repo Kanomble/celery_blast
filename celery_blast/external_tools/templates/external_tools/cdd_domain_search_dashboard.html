@@ -22,19 +22,20 @@
 {% block content %}
     {% if query_task_dict.items|length > 0 %}
     <div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
-            <h3 class="col_header" style="text-align: center"> CDD Domain Search Task Overview </h3>
+            <h3 class="col_header" style="text-align: center"> CDD - Domain Search Task Overview </h3>
             <p style="text-align: center;font-size: small"> Monitor your CDD Domain Searches </p>
             {% for query, status in query_task_dict.items %}
             <div class="row" style="text-align:center;justify-content: center;">
                 {% if status.0 == 'NOTEXEC' %}
                     {% if status.1 == 'not valid' %}
-                        <div class="col">
-                            <a class="btn btn-info disabled"
-                               href="{% url 'execute_cdd_domain_search' project_id=project_id remote_or_local=remote_or_local %}">There are not enough conserved domains for {{ query }}.</a>
+                        <div class="col" style="padding: 10px">
+                            <a class="btn btn-warning disabled"
+                               href="{% url 'execute_cdd_domain_search' project_id=project_id remote_or_local=remote_or_local %}">There are not enough CDs for {{ query }}.</a>
                         </div>
+
                     {% else %}
-                        <div class="col">
-                             <p> CDD search for: {{ query }} not executed.</p>
+                        <div class="col" style="padding: 10px">
+                             <p class="btn btn-light disabled"> CDD search for: {{ query }} not executed.</p>
                         </div>
                     {% endif %}
                 {% elif status.0 == 'SUCCESS' %}
@@ -105,7 +106,6 @@
                                             clearInterval(pollInterval); // optional: stop poll function
                                         } else if (data.data.progress != "PROGRESS") {
                                             status.text(data.data.current + "%")
-                                            clearInterval(pollInterval);
                                         }
 
                                     }

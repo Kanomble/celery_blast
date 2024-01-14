@@ -126,7 +126,7 @@
 
                 {% if selection_task == 'SUCCESS' %}
                 <div class="col-md">
-                    <a href="{% url 'view_selection_phylogeny' project_id=project_id remote_or_local='remote' %}">
+                    <a href="{% url 'view_selection_phylogeny' project_id=project_id remote_or_local='remote' %}" target="_blank">
                         <button id="success_button" class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Phylogeny </button>
                     </a>
                 </div>
@@ -236,6 +236,7 @@
                 dataType: 'json',
                 type: 'get',
                 success: function(data) { // check if available
+
                     if(data){
                         var progress_bar = document.getElementById('progress_bar');
                         var progress_container = document.getElementsByClassName('progress')[0];
@@ -343,7 +344,7 @@
                             clearInterval(pollInterval); // optional: stop poll function
                             window.alert("Selection-constrained phylogenetic inference has completed; " +
                                 "the current page will now be reloaded.");
-                            //window.location.reload();
+                            window.location.reload();
                         } else if (data.data == "ERROR") {
                             status.text("ERROR")
                             clearInterval(pollInterval);

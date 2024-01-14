@@ -309,6 +309,7 @@ try:
             extract_assembly_ftp_paths_from_remote_blast_search_rbhs(proteins, ipg_table_path, path_to_assembly_dataframe, assembly_file_path, logfile)
             logfile.write("DONE\n")
         except Exception as e:
+            #DtypeWarning: Columns (34,35,36) have mixed types.Specify dtype option on import or set low_memory=False.
             logfile.write("ERROR: ERROR with exception: {}\n".format(e))
             raise Exception(e)
 except Exception as e:

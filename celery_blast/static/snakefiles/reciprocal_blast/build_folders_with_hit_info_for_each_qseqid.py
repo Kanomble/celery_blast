@@ -107,7 +107,11 @@ with open(snakemake.log['log'],'w') as logfile:
                          x=range(1, len(target_df.groupby('scomnames').size().index[0:12]) + 1))
             ax[1, 1].set_xticks(range(1, len(target_df.groupby('scomnames').size().index[0:12]) + 1))
             ax[1, 1].set_xticklabels(target_df.groupby('scomnames').size().index[0:12], rotation=90)
-            plt.tight_layout()
+
+            try:
+                plt.tight_layout()
+            except Exception as e:
+                logfile.write("\t\tWARNING:can't use  the plt.tight_layout() function with exception: {}\n".format(e))
 
             logfile.write("\t\tINFO:saving plots to project directory\n")
             result_statistics=str(query)+ "/basic_statistics.png"

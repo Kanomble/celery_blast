@@ -22,6 +22,7 @@ with open(snakemake.log[0],'w') as logfile:
         fw_res['sacc'] = fw_res['sacc'].map(lambda line: line.split('.')[0])
         rec_prot = rec_prot.rename(columns={"forward_genome_id": "sacc"})
         rec_prot = rec_prot.rename(columns={"backward_genome_id": "qseqid"})
+
         logfile.write("INFO:merging forward BLAST dataframe with reciprocal results dataframe\n")
         result_data = rec_prot.merge(fw_res,how='inner', on=['sacc','qseqid','staxids'])
         #the backward blast is currently limited to output only the best match, but the best match can contain several hsps,
