@@ -128,7 +128,7 @@ $(document).ready(function() {
 
     var url = '{% url 'ajax_call_for_taxonomic_unit' project_id=project_id taxonomic_unit="class" %}'
     var table = document.getElementById("class_table");
-    if(table.rows.length <= 0) {
+    if(table) {
         $.ajax({
             type: "GET",
             url: url,

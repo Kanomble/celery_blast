@@ -1380,6 +1380,8 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
 
     :param current_selection
         :type ColumnDataSource
+    :param overall
+        :type ColumnDataSource
     :param remote_or_local
         :type str
     :returns task_selection_callback
@@ -1388,7 +1390,7 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
 '''
 
 
-def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSource, remote_or_local:str) -> CustomJS:
+def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSource,remote_or_local:str)->CustomJS:
     task_selection_callback = CustomJS(args=dict(sc=current_selection, remote_or_local=remote_or_local), code="""
         var viewData = { 
             accessions : [],
@@ -1396,8 +1398,14 @@ def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSo
         };
         var jsonData = {};
         
-        for(var i = 0; i < sc.selected.indices.length; i++){
-            jsonData[i] = sc.data['sacc_transformed'][sc.selected.indices[i]]
+        if(sc.selected.indices.length != 0){
+            for(var i = 0; i < sc.selected.indices.length; i++){
+                jsonData[i] = sc.data['sacc_transformed'][sc.selected.indices[i]]
+            }        
+        } else {
+            for(var i = 0; i < sc.data['sacc_transformed'].length; i++){
+                jsonData[i] = sc.data['sacc_transformed'][i]                         
+            } 
         }
 
         viewData.accessions.push(jsonData);
@@ -1418,7 +1426,6 @@ def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSo
             },
             dataType: "json"
         });
-
 
     """)
     return task_selection_callback
@@ -1697,6 +1704,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                     table_data.data['# Different Organisms In Selection'].push(tab_dict_org_counter[key])
                 }
                 table_data.change.emit();
+                sc.change.emit();
                 """)
 
             Curr.selected.js_on_change('indices', selection_callback)
@@ -1704,12 +1712,21 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
             download_selection_callback = CustomJS(args=dict(sc=Curr, tax_unit=taxonomic_unit), code="""
                 var temp = []
                 var csvFileData = []
-                for(var i = 0; i < sc.selected.indices.length; i++){
-                    temp = [sc.data['qseqid'][sc.selected.indices[i]],
-                            sc.data['sacc_transformed'][sc.selected.indices[i]],
-                            sc.data['staxids'][sc.selected.indices[i]]]
-                    csvFileData.push(temp)
-                }
+                if(sc.selected.indices.length != 0){
+                    for(var i = 0; i < sc.data.length; i++){
+                        temp = [sc.data['qseqid'][sc.selected.indices[i]],
+                                sc.data['sacc_transformed'][sc.selected.indices[i]],
+                                sc.data['staxids'][sc.selected.indices[i]]]
+                        csvFileData.push(temp)
+                    }
+                } else {
+                    for(var i = 0; i < sc.data['sacc_transformed'].length; i++){
+                        temp = [sc.data['qseqid'][i],
+                                sc.data['sacc_transformed'][i],
+                                sc.data['staxids'][i]]
+                        csvFileData.push(temp);
+                    }                          
+                } 
                 //define the heading for each row of the data  
                 var csv = `qseqid,sacc,staxids\n`;  
                 //merge the data with CSV  
@@ -1721,7 +1738,6 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 var file = new File([csv], "selection.csv" ,{type: "octet/stream"});
                 var url = URL.createObjectURL(file);
                 window.location.assign(url);
-                URL.revokeObjectUrl(url);
             """)
 
             download_selection_button = Button(label="Download Selection")

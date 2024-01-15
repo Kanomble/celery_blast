@@ -26,10 +26,17 @@ def bokeh_django_task_button(current_selection: ColumnDataSource, remote_or_loca
             url : window.location.href
         };
         var jsonData = {};
-
-        for(var i = 0; i < sc.selected.indices.length; i++){
-            jsonData[i] = sc.data['sacc'][sc.selected.indices[i]]
+        
+        if(sc.selected.indices.length != 0){
+            for(var i = 0; i < sc.selected.indices.length; i++){
+                jsonData[i] = sc.data['sacc'][sc.selected.indices[i]]
+            }        
+        } else {
+            for(var i = 0; i < sc.data['sacc'].length; i++){
+                jsonData[i] = sc.data['sacc'][i]                         
+            } 
         }
+
 
         viewData.accessions.push(jsonData);
 
@@ -351,6 +358,7 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
                         }
 
                         sc.change.emit();
+                        
                         """)
     return tax_menu_callback
 
@@ -632,12 +640,23 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
         download_selection_callback = CustomJS(args=dict(sc=Curr, tax_unit=taxonomic_unit), code="""
             var temp = []
             var csvFileData = []
-            for(var i = 0; i < sc.selected.indices.length; i++){
-                temp = [sc.data['qseqid'][sc.selected.indices[i]],
-                        sc.data['sacc'][sc.selected.indices[i]],
-                        sc.data['staxids'][sc.selected.indices[i]]]
-                csvFileData.push(temp)
-            }
+            
+            if(sc.selected.indices.length != 0){
+                for(var i = 0; i < sc.data.length; i++){
+                    temp = [sc.data['qseqid'][sc.selected.indices[i]],
+                            sc.data['sacc'][sc.selected.indices[i]],
+                            sc.data['staxids'][sc.selected.indices[i]]]
+                    csvFileData.push(temp)
+                }
+            } else {
+                for(var i = 0; i < sc.data['sacc'].length; i++){
+                    temp = [sc.data['qseqid'][i],
+                            sc.data['sacc'][i],
+                            sc.data['staxids'][i]]
+                    csvFileData.push(temp);
+                }                          
+            } 
+            
             //define the heading for each row of the data  
             var csv = `qseqid,sacc,staxids\n`;  
             //merge the data with CSV  
@@ -649,7 +668,6 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
             var file = new File([csv], "selection.csv" ,{type: "octet/stream"});
             var url = URL.createObjectURL(file);
             window.location.assign(url);
-            URL.revokeObjectUrl(url);
         """)
 
         download_selection_button = Button(label="Download Selection")
