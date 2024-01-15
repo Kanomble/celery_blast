@@ -410,12 +410,11 @@ class EntrezSearch(models.Model):
         try:
             paper["AssemblyStatus"].value_counts().plot.bar()
             plt.xticks(rotation=0)
-            plt.ylabel("Result entrys")
+            plt.ylabel("Result Entries")
             plt.xlabel("Assembly level")
             plt.savefig('static/images/edirect_dashboard/hist.png')
             return 0
         except Exception as e:
-            print('No Hist createable with error: {}'.format(e))
             return 1
 
     def get_paper_content(self):
@@ -431,20 +430,6 @@ class EntrezSearch(models.Model):
         paper = paper.render(render_links=True, uuid="searchResultTable")
         return paper
 
-    def get_stat_columns_length(self):
-        paper = pd.read_table(self.file_name, header=None, error_bad_lines=False, warn_bad_lines=False)
-        stat_col_lst = ["Slen"]
-        if paper.columns.isin(stat_col_lst).any() == True:
-            cols = paper.columns.isin(cols)
-            stat_cols = 0
-            for i in cols:
-                if i == True:
-                    stat_cols += 1
-        return stat_cols
-
-    def get_paper_number(self):
-        return len(pd.read_table(self.file_name, header=None, error_bad_lines=False, warn_bad_lines=False))
-
     def get_organisms(self):
         paper = self.get_pandas_table()
         paper['Organism'] = paper['Organism'].apply(lambda x: str(x).split("/")[0])
@@ -454,7 +439,7 @@ class EntrezSearch(models.Model):
         return oragnism_list
 
     def update_paper_entries(self):
-        paper_entries = len(pd.read_table(self.file_name, header=None, error_bad_lines=False, warn_bad_lines=False))
+        paper_entries = len(self.get_pandas_table())
         self.paper_entries = paper_entries
         self.save()
         return paper_entries
