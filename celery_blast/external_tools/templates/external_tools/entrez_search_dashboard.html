@@ -106,10 +106,10 @@
                             <td>
                                 <a href="https://www.ncbi.nlm.nih.gov/{{ search.database }}/?term={{ search.entrez_query }}">{{ search.entrez_query }}</a>
                             </td>
-                            <td> {{ search.paper_entries }}</td>
+                            <td> <p id="search-task-entries-{{search.search_task_result.id}}"> {{ search.paper_entries }} </p> </td>
                             <td>{{ search.timestamp|date:'d.m.Y, h:m:s' }}</td>
 
-                            <td> {{ search.search_task_result.status }} </td>
+                            <td> <p id="search-task-status-{{search.search_task_result.id}}">{{ search.search_task_result.status }}</p> </td>
 
                             {% if search.search_task_result.status == 'SUCCESS' %}
                                 <td>
@@ -139,7 +139,17 @@
                                 </td>
                             {% endif %}
                             {% if search.search_task_result.status == 'PROGRESS' %}
-                                <td> loading ... </td>
+                                <td>
+                                    <a href="{% url 'search_details' search_id=search.id %}"
+                                       id="search-task-link-{{search.search_task_result.id}}" style="display: none">
+                                        <button class="btn btn-dark">
+                                            Result-Table
+                                        </button>
+                                    </a>
+                                    <span id="search-task-loading-{{search.search_task_result.id}}" class="spinner-grow spinner-grow-sm">
+                                    </span>
+
+                                </td>
                                 <td>
                                     <button class="btn btn-danger" disabled>
                                         <s>Delete-Search</s>
@@ -167,5 +177,46 @@
         });
     </script>
 
+    {% for search in EntrezSearches %}
+        {% if search.search_task_result.status == 'PROGRESS' %}
+            <script>
+                (function () {
+                    var search_task_id_element =  document.getElementById('search-task-link-{{search.search_task_result.id}}');
+                    var search_task_id_loading_element = document.getElementById('search-task-loading-{{search.search_task_result.id}}');
+                    var search_task_status = document.getElementById('search-task-status-{{ search.search_task_result.id }}');
+                    var search_task_entries = document.getElementById('search-task-entries-{{search.search_task_result.id}}');
+                    poll = function () {
+                        jQuery.ajax({
+                            url: "{% url 'ajax_entrez_search_progress' search_id=search.id %}",
+                            dataType: 'json',
+                            type: 'get',
+                            success: function (data) { // check if available
+                                if (data) { // get and check data value
+                                    console.log(data.data)
+                                    if (data.data == "SUCCESS") {
+                                        search_task_id_element.style = "display: block;";
+                                        search_task_id_loading_element.style = "display: none;";
+                                        search_task_status.textContent = 'SUCCESS';
+                                        search_task_entries.textContent = 'pls. reload';
+                                        clearInterval(pollInterval); // optional: stop poll function
+                                    } else if (data.data == "ERROR") {
+                                        clearInterval(pollInterval);
+                                    }
+
+                                }
+                            },
+                            error: function () { // error logging
+                                search_task_id_loading_element.text("error polling progress data")
+                            }
+                        });
+                    },
+                    pollInterval = setInterval(function () { // run function every 5000 ms
+                        poll();
+                    }, 5000);
+                poll(); // also run function on init
+            })();
+            </script>
+        {% endif %}
+    {% endfor %}
 {% endblock %}
 

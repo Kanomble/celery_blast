@@ -669,6 +669,26 @@ def get_selection_constrained_cdd_phylogeny_task_status(request, project_id:int,
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+'''get_entrez_search_progress
+    Ajax call to entrez search task.
+    
+    :param search_id
+        :type int
+'''
+@login_required(login_url="login")
+def get_entrez_search_progress(request, search_id:int):
+    try:
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                entrez_search = EntrezSearch.objects.get(id=search_id)
+                task_status = entrez_search.search_task_result.status
+                return JsonResponse({"data": task_status}, status=200)
+        return JsonResponse({"data": "ERROR"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
+
+
 '''delete_cdd_domain_search_view
 
     Function for deletion of the cdd_domain_search_task celery task result database object and all 

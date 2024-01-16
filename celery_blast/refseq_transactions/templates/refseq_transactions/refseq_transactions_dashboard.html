@@ -105,33 +105,33 @@
                 (function () {
                     var status = $('.progress-{{database.id}}'),
                         poll = function () {
-                            jQuery.ajax({
-                                url: "{% url 'ajax_call_progress' database_id=database.id %}",
-                                dataType: 'json',
-                                type: 'get',
-                                success: function (data) { // check if available
-                                    if (data) { // get and check data value
-                                        status.text(data.progress); // get and print data string
-                                        //console.log(data.progress)
-                                        if (data.progress > 99) {
-                                            status.text("DONE")
-                                            clearInterval(pollInterval); // optional: stop poll function
-                                        } else if (data.progress == "ERROR") {
-                                            clearInterval(pollInterval);
-                                        }
-
+                        jQuery.ajax({
+                            url: "{% url 'ajax_call_progress' database_id=database.id %}",
+                            dataType: 'json',
+                            type: 'get',
+                            success: function (data) { // check if available
+                                if (data) { // get and check data value
+                                    status.text(data.progress); // get and print data string
+                                    //console.log(data.progress)
+                                    if (data.progress > 99) {
+                                        status.text("DONE")
+                                        clearInterval(pollInterval); // optional: stop poll function
+                                    } else if (data.progress == "ERROR") {
+                                        clearInterval(pollInterval);
                                     }
-                                },
-                                error: function () { // error logging
-                                    status.text("error polling progress data")
+
                                 }
-                            });
-                        },
-                        pollInterval = setInterval(function () { // run function every 5000 ms
-                            poll();
-                        }, 5000);
-                    poll(); // also run function on init
-                })();
+                            },
+                            error: function () { // error logging
+                                status.text("error polling progress data")
+                            }
+                        });
+                    },
+                    pollInterval = setInterval(function () { // run function every 5000 ms
+                        poll();
+                    }, 5000);
+                poll(); // also run function on init
+            })();
             </script>
         {% endfor %}
     {% endif %}

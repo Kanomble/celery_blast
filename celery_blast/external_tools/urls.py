@@ -53,7 +53,10 @@ ajax_calls = [
          name="get_cdd_task_status_ajax_call"),
     path('<int:project_id>/<str:query_id>/<str:remote_or_local>/cdd_domain_search_selection_constrained_phylogeny/ajax_selection_constrained_cdd_phylogeny',
          views.get_selection_constrained_cdd_phylogeny_task_status, name='ajax_selection_constrained_cdd_phylogeny'
-         )
+         ),
+    path('<int:search_id>/ajax_search_progress',
+         views.get_entrez_search_progress,
+         name="ajax_entrez_search_progress"),
 ]
 
 phylogenetic_analysis_urls = [
