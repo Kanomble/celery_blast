@@ -47,14 +47,30 @@
                                    View Synteny
                                 </a>
                             </td>
+                            <td>
+                              <a class="btn btn-danger" rel="noreferrer noopener" target="_blank" href="{% url 'delete_synteny' project_id=project_id remote_or_local=remote_or_local query_sequence_id=qseq.query_accession_id %}">
+                                   Delete Synteny
+                                </a>
+                            </td>
                         {% elif qseq.check_if_synteny_calculation_task_is_complete == 'PROGRESS' %}
                             <td>
-                                <a class="btn btn-dark disabled" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id remote_or_local=remote_or_local query_sequence=qseq.query_accession_id %}">
-                                   Task in progress!
+                                <button class="btn btn-dark disabled" id='synteny-calculation-progress-{{ qseq.query_accession_id }}' style="display: block">
+                                  <span class="spinner-grow spinner-grow-sm">
+                                </span>
+                                    Progress
+                                </button>
+                               <a class="btn btn-dark" style="display: none;" id='synteny-calculation-button-{{ qseq.query_accession_id }}'
+                                  href="{% url 'synteny_calculation_dashboard_view' project_id=project_id remote_or_local=remote_or_local query_sequence=qseq.query_accession_id %}">
+                                   Calculate Synteny
                                 </a>
                             </td>
                             <td>
-                                <a class="btn btn-dark disabled" href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=remote_or_local %}">
+                                <a class="btn btn-dark disabled" id='synteny-view-button-disabled-{{ qseq.query_accession_id }}'
+                                   href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=remote_or_local %}" style="display: block">
+                                   View Synteny
+                                </a>
+                                <a class="btn btn-dark" id='synteny-view-button-{{ qseq.query_accession_id }}'
+                                   href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=remote_or_local %}" style="display: none">
                                    View Synteny
                                 </a>
                             </td>
@@ -85,4 +101,50 @@
         $('#synteny_dashboard').DataTable();
     });
 </script>
+
+    {% for qseq in qseqids.query_sequences.get_queryset %}
+        {% if qseq.check_if_synteny_calculation_task_is_complete == 'PROGRESS' %}
+            <script>
+                (function () {
+                    var synteny_view_button_disabled =  document.getElementById('synteny-view-button-disabled-{{ qseq.query_accession_id }}');
+                    var synteny_view_button = document.getElementById('synteny-view-button-{{ qseq.query_accession_id }}');
+                    var synteny_calculation_disabled = document.getElementById('synteny-calculation-progress-{{ qseq.query_accession_id }}');
+                    var synteny_calculation = document.getElementById('synteny-calculation-button-{{ qseq.query_accession_id }}');
+                    poll = function () {
+                        jQuery.ajax({
+                            url: "{% url 'ajax_synteny_progress' project_id=project_id remote_or_local=remote_or_local query_sequence=qseq.query_accession_id %}",
+                            dataType: 'json',
+                            type: 'get',
+                            success: function (data) { // check if available
+                                if (data) { // get and check data value
+                                    console.log(data.data)
+                                    if (data.data == "SUCCESS") {
+                                        synteny_view_button_disabled.style = "display: none;";
+                                        synteny_view_button.style = "display: block;";
+                                        synteny_calculation_disabled.style = "display: none;";
+                                        synteny_calculation.style = "display: block;";
+                                        clearInterval(pollInterval); // optional: stop poll function
+                                    } else if (data.data == "ERROR") {
+                                        synteny_view_button_disabled.textContent = "ERROR";
+                                        synteny_calculation_disabled.style = "display: none;";
+                                        synteny_calculation.style = "display: block;";
+                                        clearInterval(pollInterval);
+                                    }
+
+                                }
+                            },
+                            error: function () { // error logging
+                                synteny_view_button_disabled.textContent = "AJAX CALL FAILURE";
+                            }
+                        });
+                    },
+                    pollInterval = setInterval(function () { // run function every 5000 ms
+                        poll();
+                    }, 5000);
+                poll(); // also run function on init
+            })();
+            </script>
+        {% endif %}
+    {% endfor %}
+
 {% endblock %}

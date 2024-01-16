@@ -689,6 +689,26 @@ def get_entrez_search_progress(request, search_id:int):
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
 
+'''ajax_synteny_progress
+project_id=project_id remote_or_local=remote_or_local query_sequence=qseq.query_accession_id
+'''
+@login_required(login_url="login")
+def ajax_synteny_progress(request,project_id:int,remote_or_local:str,query_sequence:str):
+    try:
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            if request.method == "GET":
+                print("hello")
+                query_sequences = ExternalTools.objects.get_associated_query_sequence(project_id,
+                                                                                     query_sequence,
+                                                                                     remote_or_local)
+                print(query_sequence)
+                task_status = query_sequences[0].synteny_calculation_task.status
+                return JsonResponse({"data": task_status}, status=200)
+        return JsonResponse({"data": "ERROR"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": "{}".format(e)}, status=400)
+
 '''delete_cdd_domain_search_view
 
     Function for deletion of the cdd_domain_search_task celery task result database object and all 

@@ -57,6 +57,8 @@ ajax_calls = [
     path('<int:search_id>/ajax_search_progress',
          views.get_entrez_search_progress,
          name="ajax_entrez_search_progress"),
+    path('<int:project_id>/<str:remote_or_local>/<str:query_sequence>/ajax_synteny_progress',
+         views.ajax_synteny_progress, name='ajax_synteny_progress')
 ]
 
 phylogenetic_analysis_urls = [
@@ -97,7 +99,7 @@ synteny_urls = [
          views.calculate_synteny_form_submit_ajax,
          name="calculate_synteny_form_submit_ajax"),
     path('<int:project_id>/<str:remote_or_local>/<str:query_sequence_id>/clinker_synteny_plot',
-         views.load_synteny_view, name='load_synteny')
+         views.load_synteny_view, name='load_synteny'),
 ]
 
 urlpatterns = [

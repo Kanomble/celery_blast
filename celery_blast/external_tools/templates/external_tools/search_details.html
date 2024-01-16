@@ -104,11 +104,11 @@
 {% block scripts %}
     <script>
         function toggleText() {
-            var x = document.getElementById("Organism_list");
-            if (x.style.display === "none") {
-                x.style.display = "block";
+            var organisms = document.getElementById("Organism_list");
+            if (organisms.style.display === "none") {
+                organisms.style.display = "block";
             } else {
-                x.style.display = "none";
+                organisms.style.display = "none";
             }
         }
     </script>
@@ -138,8 +138,6 @@
                         success: function (data) { // check if available
                             if (data) { // get and check data value
                                 //status.text(data.progress); // get and print data string
-                                console.log(data.progress)
-
                                 if (data.progress == "SUCCESS") {
                                     divElement.style.display = "none";
                                     divElementToShow.style.display = "block";
