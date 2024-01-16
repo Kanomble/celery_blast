@@ -151,9 +151,17 @@
 
                                 </td>
                                 <td>
-                                    <button class="btn btn-danger" disabled>
+                                    <button id="search-delete-button-disabled-{{search.search_task_result.id}}"
+                                            class="btn btn-danger" disabled style="display: block">
                                         <s>Delete-Search</s>
                                     </button>
+
+                                    <a href="{% url 'search_delete' search_id=search.id %}"
+                                       id="search-delete-button-{{search.search_task_result.id}}" style="display: none;">
+                                        <button class="btn btn-danger">
+                                            Delete-Search
+                                        </button>
+                                    </a>
                                 </td>
                             {% endif %}
                         </tr>
@@ -185,6 +193,8 @@
                     var search_task_id_loading_element = document.getElementById('search-task-loading-{{search.search_task_result.id}}');
                     var search_task_status = document.getElementById('search-task-status-{{ search.search_task_result.id }}');
                     var search_task_entries = document.getElementById('search-task-entries-{{search.search_task_result.id}}');
+                    var search_task_delete_disabled = document.getElementById("search-delete-button-disabled-{{search.search_task_result.id}}");
+                    var search_task_delete_button = document.getElementById("search-delete-button-{{search.search_task_result.id}}");
                     poll = function () {
                         jQuery.ajax({
                             url: "{% url 'ajax_entrez_search_progress' search_id=search.id %}",
@@ -198,15 +208,22 @@
                                         search_task_id_loading_element.style = "display: none;";
                                         search_task_status.textContent = 'SUCCESS';
                                         search_task_entries.textContent = 'pls. reload';
+
+                                        search_task_delete_disabled.style = "display: none;";
+                                        search_task_delete_button.style = "display: block;";
                                         clearInterval(pollInterval); // optional: stop poll function
                                     } else if (data.data == "ERROR") {
+                                        search_task_status.textContent = 'FAILURE';
+                                        search_task_delete_disabled.style = "display: none;";
+                                        search_task_delete_button.style = "display: block;";
+                                        search_task_id_loading_element.style = "display: none;";
                                         clearInterval(pollInterval);
                                     }
 
                                 }
                             },
                             error: function () { // error logging
-                                search_task_id_loading_element.text("error polling progress data")
+                                search_task_id_loading_element.textContent = "error polling progress data";
                             }
                         });
                     },

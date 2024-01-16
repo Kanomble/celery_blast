@@ -53,7 +53,7 @@
                     <tr>
                         <th>Organisms</th>
                         <th>Progress</th>
-                        <th>Start download/ download</th>
+                        <th>1st Download Sequences / 2nd Download Sequence File</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,17 +65,17 @@
                                 <td>
                                     <a href="{% url 'view_downloaded_organism_sequences' organism_download=organism_task search_id=EntrezSearch.id %}"
                                        download="{{ result.0 }}sequences.faa">
-                                        <button class="btn btn-dark">Download Database</button>
+                                        <button class="btn btn-dark">Download Sequence File</button>
                                     </a>
                                 </td>
                             {% elif result.1 == "PROGRESS" or result.1 == "FAILTURE" %}
                                 <td>
-                                    <button class="btn btn-dark" disabled>Downloading Database</button>
+                                    <button class="btn btn-dark" disabled>Download Sequence File</button>
                                 </td>
                             {% elif result.1 == "" %}
                                 <td>
                                     <a href="{% url 'download_protein_organisms' organism_download=result.0 search_id=EntrezSearch.id %}">
-                                        <button class="btn btn-dark">Start Download</button>
+                                        <button class="btn btn-dark">Download Sequences</button>
                                     </a>
                                 </td>
                             {% endif %}
