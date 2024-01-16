@@ -225,7 +225,8 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         # protein identifier have been uploaded
         elif query_sequences != '' and query_file is None:
             # check string for invalid characters
-            query_sequences = query_sequences.split(',')
+            query_sequences = query_sequences.replace(" ", "").split(',')
+            query_sequences = [qseq.split(".")[0] for qseq in query_sequences]
             try:
                 proteins, errors = fetch_protein_records(query_sequences, user_email)
                 if len(errors) > 0:
