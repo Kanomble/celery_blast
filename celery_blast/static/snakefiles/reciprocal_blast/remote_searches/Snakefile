@@ -45,33 +45,74 @@ rule forward_blast:
 	input: queries=config['query_sequence']
 	output: results="blastp_fw_out.table"
 	params: word_size=config['fw_word_size'], e_value=config['fw_e_value'], num_alignments=config['fw_num_alignments'], num_threads=config['fw_num_threads'], database=config['blastdb'], entrez_query=config['entrez_query']
-	log: log="log/forward_blast.log"
+	log: log="log/forward_blast.log", log_blastp="log/log_blastp_forward_blast.log"
 	run:
 		with open(log[0], "w") as logfile:
 			try:
 				logfile.write("INFO:starting forward blast search against: {}\n".format(params.database))
-				if(params.entrez_query.strip() != "" and params.entrez_query.strip() != "all[organism]"):
-					entrez_query = params.entrez_query.strip()
-					cmd_string = "blastp" + " -db "+params.database+\
-					" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\""\
-					" -out "+output.results+\
-					" -word_size "+str(params.word_size)+\
-					" -evalue "+str(params.e_value)+\
-					" -num_alignments "+str(params.num_alignments)+\
-					" -query "+input.queries+\
-					" -remote"+\
-					" -entrez_query \""+entrez_query+"\""
+
+				logfile.write("INFO:reading query file ...\n")
+				query_dict = {}
+				with open(input[0],"r") as qfile:
+					for line in qfile.readlines():
+						if line.startswith(">"):
+							header = line
+							if line not in list(query_dict.keys()):
+								query_dict[line] = ""
+						else:
+							if header:
+								query_dict[header] += line
+				logfile.write("INFO:writing temporary query files and conducting blast searches:\n")
+				logfile.write("INFO:temporary query files are named temp_fw_seq_{index}.faa.\n"
+							  "The index is the index number of the header of the query sequence within the provided query file.\n")
+				logfile.write("INFO:BLAST searches are conducted on a each single file to prevent errors raised by the NCBI servers.\n")
+				logfile.write("INFO:this likely occurs if the search is not restricted to any particular taxon.\n")
+				for index, header in enumerate(query_dict.keys()):
+					logfile.write("\tINFO:working with query file: {}\n".format(header.split(" ")[0].split(">")[1]))
+					with open("temp_fw_seq_{}.faa".format(index),"w") as tempfile:
+						tempfile.write(header)
+						tempfile.write(query_dict[header])
+
+				inter_blast_out = open("blast.table",'w')
+				for index, header in enumerate(query_dict.keys()):
+					if (params.entrez_query.strip() != "" and params.entrez_query.strip() != "all[organism]"):
+						entrez_query = params.entrez_query.strip()
+						cmd_string = "blastp" + " -db " + params.database + \
+									 " -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\"" \
+									 " -out " + "current_search_fw_blast.table" + \
+									 " -word_size " + str(params.word_size) + \
+									 " -evalue " + str(params.e_value) + \
+									 " -num_alignments " + str(params.num_alignments) + \
+									 " -query " + "temp_fw_seq_{}.faa".format(index) + \
+									 " -remote" + \
+									 " -entrez_query \"" + entrez_query + "\"" + " 2> {log.log_blastp}"
+					elif (params.entrez_query.strip() == "all[organism]"):
+						cmd_string = "blastp" + " -db " + params.database + \
+									 " -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\"" \
+									 " -out " + "current_search_fw_blast.table" + \
+									 " -word_size " + str(params.word_size) + \
+									 " -evalue " + str(params.e_value) + \
+									 " -num_alignments " + str(params.num_alignments) + \
+									 " -query " + "temp_fw_seq_{}.faa".format(index) + \
+									 " -remote" + " 2> {log.log_blastp}"
+					logfile.write("INFO: cmd string for the forward blast:\n")
+					logfile.write("\tINFO: {}\n".format(cmd_string))
+
+					# BLAST search!
 					shell(cmd_string)
-				elif(params.entrez_query.strip() == "all[organism]"):
-					cmd_string = "blastp" + " -db "+params.database+\
-					" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\""\
-					" -out "+output.results+\
-					" -word_size "+str(params.word_size)+\
-					" -evalue "+str(params.e_value)+\
-					" -num_alignments "+str(params.num_alignments)+\
-					" -query "+input.queries+\
-					" -remote"
-					shell(cmd_string)
+
+					with open("current_search_fw_blast.table",'r') as interfilename:
+						for line in interfilename.readlines():
+							inter_blast_out.write(line)
+					logfile.write("\tINFO:DONE\n")
+					logfile.write("\tINFO:deleting intermediate files ...\n")
+					shell("rm current_search_fw_blast.table")
+					shell("rm temp_fw_seq_{}.faa".format(index))
+
+				inter_blast_out.close()
+				logfile.write("INFO:renaming blast.table to snakemake output: blastp_fw_out.table\n")
+				#changing output filename to snakemake output name
+				shell("mv blast.table {output.results}")
 				logfile.write("DONE\n")
 			except Exception as e:
 				logfile.write("ERROR: Exception occurred during remote blast search: {}\n".format(e))

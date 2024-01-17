@@ -68,12 +68,12 @@
 
                         <td>
                             {% if BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
-                            <form class="col"
-                                   action="#"
-                                   method="POST">
-                                {% csrf_token %}
-                                <input type="submit" value="Execute Snakemake" class="btn btn-primary disabled">
-                            </form>
+
+                                <button class="btn btn-primary disabled">
+                                    Loading ...
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                </button>
+
                             {% else %}
                                 <form class="col"
                                    action="{% url 'remote_project_execution' project_id=BlastProject.id%}"

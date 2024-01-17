@@ -63,8 +63,8 @@
 
 
     <div class="form-group">
-        <label for="r_entrez_query">Optional Query For Limiting BLAST Searches By Taxonomy - <a href="https://blast.ncbi.nlm.nih.gov/doc/blast-topics/blastsearchparams.html#limit-by-entrez-query"> Entrez Query Examples </a> </label>
-        <input type="text" class="form-control" id="r_entrez_query" name="r_entrez_query">
+        <label for="r_entrez_query">Optional Query For Limiting BLAST Searches By Taxonomy - Example: cyanophycae[organism] OR pseudomonadota[organism]- <a href="https://blast.ncbi.nlm.nih.gov/doc/blast-topics/blastsearchparams.html#limit-by-entrez-query"> Entrez Query Examples </a> </label>
+        <input type="text" class="form-control" id="r_entrez_query" name="r_entrez_query" value="all[organism]">
         {% if RemoteProjectCreationForm.r_entrez_query.errors %}
             <div class="alert alert-danger">
                 <strong>{{ RemoteProjectCreationForm.r_entrez_query.errors }}</strong>
