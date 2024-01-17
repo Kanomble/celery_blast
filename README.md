@@ -349,6 +349,9 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
+- [ ] fix evalue in axis changing within bokeh plots
+- [ ] rework blast project detail pages
+- [ ] rework progress tracking of remote projects
 - [X] add progress visualization for CDD selection constrained phylogeny
 - [X] fix endless polling of progress for selection sliced phylogeny in remote BLAST projects
 - [X] fix polling of progress data for CDD remote searches

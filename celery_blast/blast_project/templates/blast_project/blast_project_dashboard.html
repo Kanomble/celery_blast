@@ -86,20 +86,43 @@
         </p>
         <div class="row justify-content-md-center" style="text-align: center">
             <div class="col-md">
-                <button class="btn btn-info">Sequence Search</button>
+                <button class="btn btn-dark" onclick="displayDivElement('overview')">1. Overview</button>
 
             </div>
             <div class="col-md">
-                <button class="btn btn-info">Sequence Search</button>
+                <button class="btn btn-dark">2. </button>
             </div>
             <div class="col-md">
-                <button class="btn btn-info">Sequence Search</button>
+                <button class="btn btn-dark">Sequence Search</button>
             </div>
             <div class="col-md">
-                <button class="btn btn-info">Sequence Search</button>
+                <button class="btn btn-dark">Sequence Search</button>
             </div>
         </div>
+    </div>
 
+    <div id="overview" class="dashboard_project_list_col" style="overflow-x: hidden;display: none;">
+        <h3  class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Overview Section - What can you do with CATHI?  </h3>
+        <div class="row" style="text-align:center;justify-content: center;">
+            <p style="font-size: large; text-align: left">
+                CATHI can aid researchers in the identification of possible target sequences and to elucidate the
+                evolutionary background of those query sequences by generating interactive result graphs and tables.
+                <br>
+                <br>
+                Press the button to view an example interactive visualization. <button class="btn btn-dark" onclick="displayDivElement('bokeh_example')"> Plot Example</button>
+                <br>
+            </p>
+        </div>
+        <div class="row" style="text-align:center;justify-content: center;"  id="bokeh_example">
+            {% include "blast_project/interactive_bokeh_plot_example.html" %}
+            <p style="font-size: large; text-align: left">
+                <br>
+                You can filter the reciprocal best hits (RBHs) based on their taxonomic identity by clicking on the taxonomy
+                field names of the right selection menus. In addition, you can select multiple query sequences, change the x- and y-axis
+                attributes, download selected sequences or conduct a phylogenetic inference.
+                <br>
+            </p>
+        </div>
     </div>
 
 {% endblock %}
