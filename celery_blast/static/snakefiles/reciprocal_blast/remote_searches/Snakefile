@@ -50,8 +50,8 @@ rule forward_blast:
 		with open(log[0], "w") as logfile:
 			try:
 				logfile.write("INFO:starting forward blast search against: {}\n".format(params.database))
-				if(params.entrez_query != ""):
-					entrez_query = params.entrez_query
+				if(params.entrez_query.strip() != "" and params.entrez_query.strip() != "all[organism]"):
+					entrez_query = params.entrez_query.strip()
 					cmd_string = "blastp" + " -db "+params.database+\
 					" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\""\
 					" -out "+output.results+\
@@ -62,7 +62,7 @@ rule forward_blast:
 					" -remote"+\
 					" -entrez_query \""+entrez_query+"\""
 					shell(cmd_string)
-				else:
+				elif(params.entrez_query.strip() == "all[organism]"):
 					cmd_string = "blastp" + " -db "+params.database+\
 					" -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\""\
 					" -out "+output.results+\

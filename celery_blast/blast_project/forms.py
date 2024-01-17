@@ -362,7 +362,7 @@ class SymBLASTProjectSettingsForm(forms.Form):
         label="Bitscore threshold", initial=50
     )
     max_amount_of_rbh_for_msa_and_phylogeny = forms.IntegerField(
-        label="Maximum number of sequences to use for phylogenetic inference", initial=10000
+        label="Maximum number of sequences to use for phylogenetic inference", initial=500
     )
     # documentation of trimal options: http://trimal.cgenomics.org/use_of_the_command_line_trimal_v1.2
     trimal_gt = forms.FloatField(
@@ -468,7 +468,9 @@ class RemoteProjectCreationForm(forms.Form):
 
     r_entrez_query = forms.CharField(
         max_length=500,
-        required=False,
+        required=True,
+        error_messages={'required':"Add taxonomic groups for which you would like to infer orthologs e.g.: eubacteria[organism] OR mammalia[organism].\n"
+                                   "Check the syntax by clicking the link above.\nIf you want to search within the whole database add the query: all[organism]."}
     )
 
     def __init__(self, user, *args, **kwargs):
