@@ -104,6 +104,11 @@
                             <td></td>
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
                             <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
+                            {% if BokehPlot %}
+                                <td class="col-md">
+                                    <a class="btn btn-dark" onclick="displayDivElement('interactive_bokeh_plot')" > Interactive Plot </a>
+                                </td>
+                            {% endif %}
                         {% endif %}
                     </tr>
                 </tbody>
@@ -218,7 +223,12 @@
 
         </div>
     </div>
+    {% elif BokehPlot %}
+        <div class="dashboard_project_list_col" id="interactive_bokeh_plot" style="max-height: 50%;display: none">
+            {% include BokehPlot %}
+        </div>
     {% endif %}
+
 {% endblock %}
 
 

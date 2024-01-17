@@ -354,10 +354,13 @@ def remote_project_details_view(request, project_id: int):
                    }
 
         if blast_project.r_project_execution_snakemake_task:
-            if blast_project.r_project_execution_snakemake_task.status == 'SUCCESS':
-                bokeh_plot_template = "blast_projects/remote_projects/" + str(project_id) + '/interactive_bokeh_plot.html'
-                context['BokehPlot'] = bokeh_plot_template
+            bokeh_plot_template = 'blast_projects/remote_projects/' + str(project_id) + '/interactive_bokeh_plot.html'
+            bokeh_file_location = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/interactive_bokeh_plot.html'
 
+            if blast_project.r_project_execution_snakemake_task.status == 'SUCCESS':
+                context['BokehPlot'] = bokeh_plot_template
+            elif isfile(bokeh_file_location):
+                context['BokehPlot'] = bokeh_plot_template
 
         return render(request, 'blast_project/remote_project_details_dashboard.html', context)
     except Exception as e:
