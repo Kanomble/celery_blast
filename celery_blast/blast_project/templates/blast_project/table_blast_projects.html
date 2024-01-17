@@ -24,6 +24,8 @@
                         <th>Forward Database</th>
                         <th>Backward Database</th>
                         <th>Timestamp</th>
+                        <th>Project Status</th>
+                        <th>Delete Project</th>
                         <th>Project Details</th>
                     </tr>
                 </thead>
@@ -34,6 +36,34 @@
                             <td>{{project.project_forward_database.database_name}}</td>
                             <td>{{project.project_backward_database.database_name}}</td>
                             <td>{{ project.timestamp|date:'d.m.Y, h:m:s' }}</td>
+                            {% if project.project_execution_snakemake_task %}
+                                <td>{{ project.project_execution_snakemake_task.status }}</td>
+                                {% if project.project_execution_snakemake_task.status == "SUCCESS" %}
+                                    <td>
+                                        <form class="col"
+                                               action="{% url 'project_deletion' project_id=project.id %}"
+                                               method="POST">
+                                            {% csrf_token %}
+                                            <input type="submit" value="Delete Blast Project" class="btn btn-danger">
+                                        </form>
+                                    </td>
+                                {% elif project.project_execution_snakemake_task.status == "PROGRESS" %}
+                                    <td>
+                                        <button class="btn btn-danger disabled">Delete Blast Project</button>
+                                    </td>
+                                {% else %}
+                                    <td>
+                                        <form class="col"
+                                               action="{% url 'project_deletion' project_id=project.id %}"
+                                               method="POST">
+                                            {% csrf_token %}
+                                            <input type="submit" value="Delete Failed Blast Project" class="btn btn-danger disabled">
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            {% else %}
+                                <td>Pipeline Not Started</td>
+                            {% endif %}
                             <td>
                                  <form class="col"
                                        action="{% url 'project_details' project_id=project.id%}"

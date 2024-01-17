@@ -198,7 +198,7 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
 
             return returncode
         elif database == "pubmed":
-            cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efetch -format fasta > {}'.format(
+            cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efetch -format fasta -start 1 -stop 100 > {}'.format(
                 entrez_query, target_fasta_file_path)
             process = Popen(cmd, shell=True)
             returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)

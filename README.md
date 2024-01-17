@@ -349,9 +349,9 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
-- [ ] add progress visualization for CDD selection constrained phylogeny
-- [ ] fix endless polling of progress for selection sliced phylogeny in remote BLAST projects
-- [ ] fix polling of progress data for CDD remote searches
+- [X] add progress visualization for CDD selection constrained phylogeny
+- [X] fix endless polling of progress for selection sliced phylogeny in remote BLAST projects
+- [X] fix polling of progress data for CDD remote searches
 - [ ] display logfiles within the details dashboard
   - enable correct error handling - e.g. no hits etc.
 - [ ] refactor calculation of database normalized tables
@@ -361,10 +361,12 @@ This allows interaction with the associated celery task and can be used for disp
 - [x] fix one-way BLAST snakemake pipeline
 - [ ] add videos, links to init page
 - [ ] add option to filter for genomes directly within the refseq/genbank assembly summary files
-- [ ] add option to selection contrained phylogeny just with selection based on taxonomic units
+- [X] add option to selection contrained phylogeny just with selection based on taxonomic units
 - [ ] add setup option after installation -> directly download CDD/refseq/genbank assembly summary files (maybe add a wizard)
 - [ ] add error message if filtered database table is empty 
 - [ ] add error message if there are 0 hits within the forward blast dataframe
+- [ ] add rpsbproc utility for initial CDD searches
+  - [ ] searches for the PCA can still be done with the table output that has to get generated in an additional search
 
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
