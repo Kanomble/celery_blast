@@ -576,8 +576,8 @@ class RemoteProjectCreationForm(forms.Form):
 
                 if len(header) > 20:
                     self.add_error('r_query_sequence_file',
-                                   'You try to infer orthologs for more than 300 query sequences,'
-                                   ' this is not allowed, consider to separate the query sequences.')
+                                   'You try to infer orthologs for more than 20 query sequences,'
+                                   ' this is not allowed with remote BLAST searches, consider to separate the query sequences or use the local pipeline.')
                 else:
                     valid = check_if_sequences_are_in_database(backward_db.id, header)
                     if valid != True:

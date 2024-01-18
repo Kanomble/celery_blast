@@ -57,7 +57,7 @@
                                                action="{% url 'project_deletion' project_id=project.id %}"
                                                method="POST">
                                             {% csrf_token %}
-                                            <input type="submit" value="Delete Failed Blast Project" class="btn btn-danger disabled">
+                                            <input type="submit" value="Delete Failed Blast Project" class="btn btn-danger">
                                         </form>
                                     </td>
                                 {% endif %}

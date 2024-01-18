@@ -313,5 +313,4 @@ try:
             logfile.write("ERROR: ERROR with exception: {}\n".format(e))
             raise Exception(e)
 except Exception as e:
-
     exit(ERRORCODE)

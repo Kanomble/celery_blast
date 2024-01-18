@@ -27,7 +27,6 @@ services:
       - ./celery_blast:/blast/reciprocal_blast
     expose:
       - 8000
-      - 5860-5870
 
   celery_worker:
     image: kanomble/rec_blast_base_image:2.7
@@ -90,7 +89,6 @@ services:
       - ./data:/blast/reciprocal_blast/media
     ports:
       - 1337:80
-      - 5860-5870:5860-5870
     depends_on:
       - web
     networks:
