@@ -27,6 +27,8 @@ services:
       - ./celery_blast:/blast/reciprocal_blast
     expose:
       - 8000
+    ports:
+      - "5860-5870:5860-5870"
 
   celery_worker:
     image: kanomble/rec_blast_base_image:2.7
