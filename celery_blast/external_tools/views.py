@@ -13,7 +13,8 @@ from django.shortcuts import render, redirect, HttpResponse
 from django_celery_results.models import TaskResult
 from django.views.decorators.csrf import csrf_exempt
 
-from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id
+from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id, \
+    download_selected_proteins
 from .forms import EntrezSearchForm, RpsBLASTSettingsForm
 from .models import ExternalTools, EntrezSearch, QuerySequences
 from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results, \
@@ -832,3 +833,30 @@ def bokeh_database_task(request:WSGIRequest, remote_or_local:str):
         return JsonResponse({"response","No ajax request!"}, status=400)
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
+
+'''download_selected_proteins_view
+    
+    This view triggers the download of the selected protein asseccions. 
+    
+    :param request
+        :type WSGIRequest
+'''
+@csrf_exempt
+@login_required(login_url="login")
+def download_selected_proteins_view(request:WSGIRequest):
+    try:
+        if request.method == "POST":
+            form_data = request.POST
+            data = form_data.dict()
+            user_email = request.user.email
+            protein_string = download_selected_proteins(data, user_email)
+
+            response = HttpResponse(protein_string, content_type='text/plain')
+            response['Content-Disposition'] = 'inline; filename="proteins.faa"'
+            response['X-Content-Type-Options'] = 'nosniff'
+            response['Content-Disposition'] = 'attachment; filename="proteins.faa"'
+            return response
+        else:
+            return failure_view("There is no GET request for this view function ...")
+    except Exception as e:
+        raise failure_view(e)

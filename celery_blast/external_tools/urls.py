@@ -35,6 +35,7 @@ entrez_search_urls = [
          views.view_downloaded_organism_sequences, name='view_downloaded_organism_sequences'),
     path('<int:search_id>/<str:organism_download>/download_protein_organisms',
          views.download_protein_by_organisms_from_entrez_search, name='download_protein_organisms'),
+    path('download_selected_proteins', views.download_selected_proteins_view, name='download_selected_proteins')
 ]
 
 ajax_calls = [
@@ -58,7 +59,7 @@ ajax_calls = [
          views.get_entrez_search_progress,
          name="ajax_entrez_search_progress"),
     path('<int:project_id>/<str:remote_or_local>/<str:query_sequence>/ajax_synteny_progress',
-         views.ajax_synteny_progress, name='ajax_synteny_progress')
+         views.ajax_synteny_progress, name='ajax_synteny_progress'),
 ]
 
 phylogenetic_analysis_urls = [

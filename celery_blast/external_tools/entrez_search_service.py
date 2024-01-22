@@ -419,3 +419,40 @@ def save_entrez_search_model(database: str, entrez_query: str, file_name: str, t
     except Exception as e:
         raise IntegrityError(
             "[-] An error occcurred during saving the edirect search object into the database: {}".format(e))
+
+
+'''download_selected_proteins
+        
+    This function uses the Bioypthon Entrez module to download the selected proteins.
+    
+    :param data - dynamic form data (search_details.html)
+        :type dict
+    :param user_email
+        :type str
+        
+    :returns proteins
+        :type str
+'''
+def download_selected_proteins(data:dict, user_email:str)->str:
+    try:
+        Entrez.email = user_email
+
+        proteins = []
+        for key in data.keys():
+            proteins.append(data[key])
+
+        handle = Entrez.efetch(db="protein", id=proteins, retmode="xml")
+        records = Entrez.read(handle)
+        handle.close()
+
+        proteins = ""
+        for rec in records:
+            proteins += ">"
+            proteins += rec['GBSeq_accession-version']
+            proteins += "\n"
+            proteins += rec['GBSeq_sequence']
+            proteins += "\n"
+
+        return proteins
+    except Exception as e:
+        raise Exception("[-] ERROR during fetching protein sequences with exception: {}".format(e))

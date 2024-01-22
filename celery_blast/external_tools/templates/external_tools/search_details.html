@@ -18,8 +18,8 @@
         <div class="dashboard_project_list_col" id="fasta_download_1" style="display: block">
             <h2 style="text-align: center; font-family: 'Courier New'"><b> Entrez Search Details </b></h2>
             <a href="{% url 'download_protein_accessions' search_id=EntrezSearch.id %}">
-                <button class="btn btn-dark" style="position: absolute;top: 10px; right: 10px;">Download Associated
-                    Protein Accessions
+                <button class="btn btn-dark" style="position: absolute;top: 10px; right: 10px;">Download All Associated
+                    Proteins
                 </button>
             </a>
         </div>
@@ -89,7 +89,17 @@
 
 
     <div class="dashboard_project_list_col" id="entrez_table" style="display: none">
-        {{ HtmlTable | safe }}
+        {% if EntrezSearch.database == "protein" %}
+        <form action="#" method="POST" enctype="multipart/form-data" id="entriesSelected">
+            {% csrf_token %}
+                {{ HtmlTable | safe }}
+            <br><br>
+            <button id="button" class="btn btn-dark">Download Selected Proteins</button>
+            <br><br>
+        </form>
+        {% else %}
+            {{ HtmlTable | safe }}
+        {% endif %}
     </div>
 
     {% if EntrezSearch.database == 'assembly' %}
@@ -115,10 +125,58 @@
 
     <script>
         $(document).ready(function() {
-            $('#T_searchResultTable').DataTable();
+            var table = $('#T_searchResultTable').DataTable();
             var entrez_table = document.getElementById("entrez_table");
             entrez_table.style.display = "block";
             $('#organism_table').DataTable();
+
+            {% if EntrezSearch.database == "protein" %}
+                $('#T_searchResultTable tbody').on('click', 'tr', function () {
+                    $(this).toggleClass('selected');
+                });
+
+                $('#button').click(function (e) {
+                    e.preventDefault();
+                    var selected_rows_length = table.rows('.selected').data().length;
+                    if(selected_rows_length > 10){
+                        alert("The maximum number of selected proteins should not exceed 10.");
+                        return 1;
+                    } else {
+                        if(confirm("Please confirm the download operation ...")){
+                            var objects = table.rows('.selected').data();
+                            var jsonArr = {};
+
+                            for (var i = 0; i < selected_rows_length; i++) {
+                                console.log(objects[i][2])
+                                jsonArr[i] = objects[i][2];
+                            }
+
+                            var url = "{% url 'download_selected_proteins' %}"
+                            // Create a form element
+                            var form = $('<form>', {
+                                'method': 'POST', // Change to 'GET' if needed
+                                'action': url
+                            });
+
+                            // Add hidden input fields for your data
+                            $.each(jsonArr, function (key, value) {
+                                form.append($('<input>', {
+                                    'type': 'hidden',
+                                    'name': key, // Change to a suitable name
+                                    'value': value
+                                }));
+                            });
+
+                            // Append the form to the document body
+                            form.appendTo('body');
+
+                            // Submit the form
+                            form.submit();
+                        }
+                    }
+                })
+            {% endif %}
+
         });
     </script>
 
@@ -161,12 +219,12 @@
                     }, 5000);
                 poll(); // also run function on init
             })();
+
         {% elif DownloadTaskSuccess == 0 %}
             var divElementToHide = document.getElementById("fasta_download_1")
             var divElementToShow = document.getElementById("fasta_download_3")
             divElementToHide.style.display = "none";
             divElementToShow.style.display = "block";
         {% endif %}
-
     </script>
 {% endblock %}
