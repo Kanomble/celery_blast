@@ -137,6 +137,8 @@
 
                 $('#button').click(function (e) {
                     e.preventDefault();
+
+                    // Check amount of selected entries
                     var selected_rows_length = table.rows('.selected').data().length;
                     if(selected_rows_length > 10){
                         alert("The maximum number of selected proteins should not exceed 10.");
@@ -147,11 +149,12 @@
                             var jsonArr = {};
 
                             for (var i = 0; i < selected_rows_length; i++) {
-                                console.log(objects[i][2])
                                 jsonArr[i] = objects[i][2];
                             }
 
+                            // Create the URL string
                             var url = "{% url 'download_selected_proteins' %}"
+
                             // Create a form element
                             var form = $('<form>', {
                                 'method': 'POST', // Change to 'GET' if needed

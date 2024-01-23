@@ -424,6 +424,7 @@ def save_entrez_search_model(database: str, entrez_query: str, file_name: str, t
 '''download_selected_proteins
         
     This function uses the Bioypthon Entrez module to download the selected proteins.
+    The function returns a FASTA file content as one string. 
     
     :param data - dynamic form data (search_details.html)
         :type dict

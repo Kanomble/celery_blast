@@ -836,7 +836,7 @@ def bokeh_database_task(request:WSGIRequest, remote_or_local:str):
 
 '''download_selected_proteins_view
     
-    This view triggers the download of the selected protein asseccions. 
+    This view triggers the download of the selected protein accessions. 
     
     :param request
         :type WSGIRequest
