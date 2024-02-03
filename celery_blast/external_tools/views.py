@@ -218,8 +218,6 @@ def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_seq
         :type int
 
 '''
-
-
 @login_required(login_url='login')
 def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str, remote_or_local:str):
     try:
@@ -327,7 +325,7 @@ def search_detail_view(request: WSGIRequest, search_id: int):
 
 @login_required(login_url='login')
 def download_proteins_from_entrez_search(request: WSGIRequest, search_id: int):
-    # starts a task that downloads the associated protein sequences in the  entrez search results page
+    # starts a task that downloads the associated protein sequences in the entrez search results page
     # if the entrezsearch is of the protein or pubmed database
     try:
         download_entrez_search_associated_protein_sequences.delay(search_id)
@@ -338,7 +336,7 @@ def download_proteins_from_entrez_search(request: WSGIRequest, search_id: int):
 
 @login_required(login_url='login')
 def download_protein_by_organisms_from_entrez_search(request: WSGIRequest, search_id: int, organism_download: str):
-    # starts a task that downloads the protein sequences in the entrez search results page of an choosen organism that is selected
+    # starts a task that downloads the protein sequences in the entrez search results page of a chosen organism that is selected
     try:
         email = request.user.email
         download_organism_protein_sequences_task.delay(search_id, organism_download, email)
@@ -544,8 +542,6 @@ def phylogenetic_information(request, project_id, query_sequence_id, remote_or_l
         :type str
 
 '''
-
-
 @login_required(login_url='login')
 def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
     try:
@@ -589,8 +585,6 @@ def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
     :param remote_or_local
         :type str
 '''
-
-
 @login_required(login_url='login')
 def execute_cdd_domain_search_for_target_query(request, project_id: int, remote_or_local:str):
     try:
@@ -624,8 +618,6 @@ def execute_cdd_domain_search_for_target_query(request, project_id: int, remote_
     :param remote_or_local
         :type str
 '''
-
-
 @login_required(login_url='login')
 def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, query_id: str, remote_or_local:str):
     try:
@@ -652,8 +644,6 @@ def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, 
     :param remote_or_local
         :type str
 '''
-
-
 @login_required(login_url='login')
 def cdd_domain_search_details_view(request, query_id: str, project_id: int, remote_or_local:str):
     try:
@@ -714,6 +704,7 @@ def get_selection_constrained_cdd_phylogeny_task_status(request, project_id:int,
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
 '''get_entrez_search_progress
+
     Ajax call to entrez search task.
     
     :param search_id
@@ -734,19 +725,30 @@ def get_entrez_search_progress(request, search_id:int):
 
 
 '''ajax_synteny_progress
-project_id=project_id remote_or_local=remote_or_local query_sequence=qseq.query_accession_id
+    
+    This function polls the server for displaying the progress of an associated synteny task.
+    The synteny task is a celery task object saved within a query_sequence model.
+    
+    :param project_id
+        :type int
+    :param remote_or_local
+        :type str
+    :param query_sequence
+        :type str
+    
+    :returns JsonResponse
+        :type Json
+    
 '''
 @login_required(login_url="login")
-def ajax_synteny_progress(request,project_id:int,remote_or_local:str,query_sequence:str):
+def ajax_synteny_progress(request:WSGIRequest,project_id:int,remote_or_local:str,query_sequence:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
             if request.method == "GET":
-                print("hello")
                 query_sequences = ExternalTools.objects.get_associated_query_sequence(project_id,
                                                                                      query_sequence,
-                                                                                     remote_or_local)
-                print(query_sequence)
+                                                                                     remote_or_local) 
                 task_status = query_sequences[0].synteny_calculation_task.status
                 return JsonResponse({"data": task_status}, status=200)
         return JsonResponse({"data": "ERROR"}, status=200)

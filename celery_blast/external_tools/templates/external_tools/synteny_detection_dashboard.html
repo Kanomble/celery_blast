@@ -27,9 +27,7 @@
                     <th>Accession ID</th>
                     <th>Calculate Synteny</th>
                     <th>View Synteny</th>
-                    {% if qseq.check_if_synteny_calculation_task_is_complete == 'SUCCESS' or qseq.check_if_synteny_calculation_task_is_complete == "FAILURE" %}
-                        <th>Delete Synteny</th>
-                    {% endif %}
+                    <th>Delete Synteny</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -76,6 +74,18 @@
                                    href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=remote_or_local %}" style="display: none">
                                    View Synteny
                                 </a>
+                            </td>
+                            <td>
+                              <a class="btn btn-danger disabled" rel="noreferrer noopener"
+                                 target="_blank" style="display: block" id="synteny-delete_button-disabled-{{ qseq.query_accession_Id }}"
+                                 href="{% url 'delete_synteny' project_id=project_id remote_or_local=remote_or_local query_sequence_id=qseq.query_accession_id %}">
+                                   Delete Synteny
+                              </a>
+                              <a class="btn btn-danger" rel="noreferrer noopener"
+                                 target="_blank" style="display: none" id="synteny-delete_button-{{ qseq.query_accession_Id }}"
+                                 href="{% url 'delete_synteny' project_id=project_id remote_or_local=remote_or_local query_sequence_id=qseq.query_accession_id %}">
+                                   Delete Synteny
+                              </a>
                             </td>
                         {% elif qseq.check_if_synteny_calculation_task_is_complete == 'FAILURE' %}
                             <td>
@@ -134,6 +144,9 @@
                     var synteny_view_button = document.getElementById('synteny-view-button-{{ qseq.query_accession_id }}');
                     var synteny_calculation_disabled = document.getElementById('synteny-calculation-progress-{{ qseq.query_accession_id }}');
                     var synteny_calculation = document.getElementById('synteny-calculation-button-{{ qseq.query_accession_id }}');
+                    var synteny_delete_button_disabled = document.getElementById("synteny-delete_button-disabled-{{ qseq.query_accession_Id }}");
+                    var synteny_delete_button = document.getElementById("synteny-delete_button-{{ qseq.query_accession_Id }}")
+
                     poll = function () {
                         jQuery.ajax({
                             url: "{% url 'ajax_synteny_progress' project_id=project_id remote_or_local=remote_or_local query_sequence=qseq.query_accession_id %}",
@@ -147,6 +160,8 @@
                                         synteny_view_button.style = "display: block;";
                                         synteny_calculation_disabled.style = "display: none;";
                                         synteny_calculation.style = "display: block;";
+                                        synteny_delete_button_disabled.style="display: none;";
+                                        synteny_delete_button.style = "display: block;";
                                         clearInterval(pollInterval); // optional: stop poll function
                                     } else if (data.data == "ERROR") {
                                         synteny_view_button_disabled.textContent = "ERROR";
