@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, HttpResponse
 from django_celery_results.models import TaskResult
 from django.views.decorators.csrf import csrf_exempt
+from django.db import IntegrityError, transaction
 
 from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id, \
     download_selected_proteins
@@ -131,6 +132,48 @@ def load_synteny_view(request: WSGIRequest, project_id: int, remote_or_local:str
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
+
+'''delete_synteny_view
+    
+    This function deletes all files associated with the user specified synteny calculation procedure.
+    
+'''
+def delete_synteny_view(request:WSGIRequest, project_id:int, remote_or_local:str, query_sequence_id:str):
+    try:
+        with transaction.atomic():
+            try:
+                query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_sequence_id, remote_or_local)
+                query_sequence[0].synteny_calculation_task.delete()
+                query_sequence[0].save()
+            except IntegrityError as e:
+                raise IntegrityError("[-] ERROR deleting synteny_calculation_task"
+                                     " from query_sequence object with IntegrityError: {}".format(e))
+
+        if remote_or_local == "remote":
+            blast_project_path = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/" + str(query_sequence_id)
+        elif remote_or_local == "local":
+            blast_project_path = BLAST_PROJECT_DIR + str(project_id) + "/" + str(query_sequence_id)
+        else:
+            raise Exception("[-] ERROR project is neither remote nor local ...")
+
+        if os.path.isdir(blast_project_path) == False:
+            raise Exception("[-] ERROR deleting synteny files.\nSpecified path: {} does not exist!".format(blast_project_path))
+        else:
+            synteny_files = []
+            for file in  os.listdir(blast_project_path):
+                if file == "clinker_result_plot.html":
+                    synteny_files.append(blast_project_path + "/" + file)
+                elif file.endswith("_sliced_gb_file.gbk"):
+                    synteny_files.append(blast_project_path + "/" + file)
+
+        if len(synteny_files) != 0:
+            for file in synteny_files:
+                os.remove(file)
+
+        return redirect('synteny_dashboard', project_id=project_id, remote_or_local=remote_or_local)
+    except Exception as e:
+        return failure_view(request, e)
+
 
 '''load_phylogenetic_tree_view
 

@@ -101,6 +101,7 @@ synteny_urls = [
          name="calculate_synteny_form_submit_ajax"),
     path('<int:project_id>/<str:remote_or_local>/<str:query_sequence_id>/clinker_synteny_plot',
          views.load_synteny_view, name='load_synteny'),
+    path('<int:project_id>/<str:remote_or_local>/<str:query_sequence_id>/delete_synteny', views.delete_synteny_view, name='delete_synteny')
 ]
 
 urlpatterns = [

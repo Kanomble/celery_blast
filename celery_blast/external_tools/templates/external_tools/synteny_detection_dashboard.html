@@ -27,6 +27,9 @@
                     <th>Accession ID</th>
                     <th>Calculate Synteny</th>
                     <th>View Synteny</th>
+                    {% if qseq.check_if_synteny_calculation_task_is_complete == 'SUCCESS' or qseq.check_if_synteny_calculation_task_is_complete == "FAILURE" %}
+                        <th>Delete Synteny</th>
+                    {% endif %}
                 </tr>
                 </thead>
                 <tbody>
@@ -74,6 +77,22 @@
                                    View Synteny
                                 </a>
                             </td>
+                        {% elif qseq.check_if_synteny_calculation_task_is_complete == 'FAILURE' %}
+                            <td>
+                               <a class="btn btn-dark" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id remote_or_local=remote_or_local query_sequence=qseq.query_accession_id %}">
+                                   Calculate Synteny
+                                </a>
+                            </td>
+                            <td>
+                              <a class="btn btn-dark disabled" rel="noreferrer noopener" target="_blank" href="{% url 'load_synteny' project_id=project_id remote_or_local=remote_or_local query_sequence_id=qseq.query_accession_id %}">
+                                   View Synteny
+                                </a>
+                            </td>
+                            <td>
+                              <a class="btn btn-danger" rel="noreferrer noopener" target="_blank" href="{% url 'delete_synteny' project_id=project_id remote_or_local=remote_or_local query_sequence_id=qseq.query_accession_id %}">
+                                   Delete Synteny
+                                </a>
+                            </td>
                         {% else %}
                             <td>
                                <a class="btn btn-dark" href="{% url 'synteny_calculation_dashboard_view' project_id=project_id query_sequence=qseq.query_accession_id remote_or_local=remote_or_local %}">
@@ -83,6 +102,11 @@
                             <td>
                               <a class="btn btn-dark disabled" href="{% url 'load_synteny' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=remote_or_local %}">
                                    View Synteny
+                                </a>
+                            </td>
+                            <td>
+                              <a class="btn btn-danger disabled" rel="noreferrer noopener" target="_blank" href="{% url 'delete_synteny' project_id=project_id remote_or_local=remote_or_local query_sequence_id=qseq.query_accession_id %}">
+                                   Delete Synteny
                                 </a>
                             </td>
                         {% endif %}
