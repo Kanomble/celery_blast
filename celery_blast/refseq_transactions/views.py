@@ -51,6 +51,19 @@ def dashboard(request):
     except Exception as e:
         return failure_view(request, e)
 
+'''update_ncbi_databases
+
+    This view triggers a download process of the RefSeq and GenBank assembly summary files.
+
+'''
+@login_required(login_url='login')
+def update_ncbi_databases_view(request):
+    try:
+        download_refseq_assembly_summary.delay('RefSeq')
+        download_refseq_assembly_summary.delay('GenBank')
+        return redirect('refseq_transactions_dashboard')
+    except Exception as e:
+        return failure_view(request,e)
 
 ''' download_refseq_assembly_summary_view
     

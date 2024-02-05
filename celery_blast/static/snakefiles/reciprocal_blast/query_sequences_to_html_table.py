@@ -328,7 +328,6 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
                 }
             }
         ]
-
         """
         # OUTPUT AN HTML FILE
         with open(path_to_html_output, 'w') as f:
