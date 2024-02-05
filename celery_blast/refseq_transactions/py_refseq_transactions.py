@@ -204,9 +204,7 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
     :returns desired_refseq_genomes_dataframe
         :type pd.DataFrame
 '''
-
-
-def read_current_assembly_summary_with_pandas(assembly_levels: list,summary_file_path: str) -> pd.DataFrame:
+def read_current_assembly_summary_with_pandas(assembly_levels: list, summary_file_path: str) -> pd.DataFrame:
     # original filepath - delete
     # summary_file_path = REFSEQ_ASSEMBLY_FILE + "assembly_summary_refseq.txt"
     if (isfile(summary_file_path) == False):
