@@ -24,6 +24,7 @@
                         <th>Project Title</th>
                         <th>Database</th>
                         <th>Timestamp</th>
+                        <th>Delete Project</th>
                         <th>Project Details</th>
                     </tr>
                 </thead>
@@ -33,6 +34,27 @@
                             <td>{{project.project_title}}</td>
                             <td>{{project.project_database.database_name}}</td>
                             <td>{{project.timestamp |date:'d.m.Y, h:m:s'}}</td>
+                            {% if project.project_execution_task_result.status %}
+                                {% if project.project_execution_task_result.status == "PROGRESS" %}
+                                    <td>
+                                        <form class="col"
+                                              action="{% url 'one_way_project_deletion' project_id=project.id %}"
+                                              method="GET">
+                                            {% csrf_token %}
+                                            <input type="submit" value="Delete Blast Project" class="btn btn-danger disabled">
+                                        </form>
+                                    </td>
+                                {% else %}
+                                     <td>
+                                        <form class="col"
+                                              action="{% url 'one_way_project_deletion' project_id=project.id %}"
+                                              method="GET">
+                                            {% csrf_token %}
+                                            <input type="submit" value="Delete Blast Project" class="btn btn-danger">
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            {% endif %}
                             <td>
                                  <form class="col"
                                        action="{% url 'one_way_project_details' project_id=project.id %}"

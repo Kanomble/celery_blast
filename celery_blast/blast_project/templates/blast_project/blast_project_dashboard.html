@@ -106,14 +106,21 @@
         <div class="row" style="text-align:center;justify-content: center;">
             <p style="font-size: large; text-align: left">
                 CATHI can aid researchers in the identification of possible target sequences and to elucidate the
-                evolutionary background of those query sequences by generating interactive result graphs and tables.
-                <br>
-                <br>
-                Press the button to view an example interactive visualization. <button class="btn btn-dark" onclick="displayDivElement('bokeh_example')"> Plot Example</button>
+                evolutionary background of those sequences by generating interactive result graphs and tables similar to the example plot
+                you can see in this short overview.
+            </p>
+
+            <br>
+            <br>
+
+            <p style="font-size: large; text-align: left">
+                Press the button to view an example interactive visualization.
+                Klick on the button to hide/show the example plot: <button class="btn btn-dark" onclick="displayDivElement('bokeh_example')">Plot Example</button>
                 <br>
             </p>
         </div>
-        <div class="row" style="text-align:center;justify-content: center;"  id="bokeh_example">
+
+        <div class="row" style="text-align:center;justify-content: center;display:none;"  id="bokeh_example">
             {% include "blast_project/interactive_bokeh_plot_example.html" %}
             <p style="font-size: large; text-align: left">
                 <br>
@@ -123,6 +130,44 @@
                 <br>
             </p>
         </div>
+        <p style="font-size: large; text-align: left">
+            Typically, a target sequence search also involves paper search.
+            With CATHI, you can utilize the E-Direct Software from NCBI, which enables searching in biological databases and in
+            the pubmed database, through the Entrez Search Dashboard page.
+            There, you can search for manuscripts within the PubMed database, download paper-associated protein sequences,
+            or simply view each entry on NCBI.
+            Furthermore, you can conveniently search and download protein sequences to serve as query sequences.
+        </p>
+
+        <br>
+        <br>
+
+        <p style="font-size: large; text-align: left">
+            CATHI's main aim is to conduct a reciprocal BLAST project using user-provided target sequences.
+            Therefore, users can create BLAST databases locally using the NCBI Database Dashboard or choose remotely available databases from NCBI.
+            The reciprocal BLAST project is a pipeline that comprises several tasks, starting with BLAST searches and concluding with the identification of conserved protein domains.
+        </p>
+        <br>
+        <div style="font-size: large; text-align: left">
+             <ol>
+                <li>Forward BLAST</li>
+                <li>Backward BLAST</li>
+                <li>Inference of Reciprocal Best Hits</li>
+                <li>Resulting Parsing and Taxonomy Inference</li>
+                <li>Generation of Interactive Tables and Graphs</li>
+                <li>Multiple Sequence Alignment</li>
+                <li>Trimming of Multiple Sequence Alignments</li>
+                <li>Phylogenetic Inference</li>
+                <li>Conserved Domain Inference</li>
+            </ol>
+        </div>
+
+        <br>
+        <br>
+        <p style="font-size: large; text-align: left">
+             With CATHI's Project Cration Dashboard users can easily create reciprocal BLAST projects.
+        </p>
+
     </div>
 
 {% endblock %}

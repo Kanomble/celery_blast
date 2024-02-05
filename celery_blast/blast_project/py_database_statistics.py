@@ -1698,7 +1698,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 table_data.data['# TaxName'] = []
                 table_data.data['# Different Organisms In Selection'] = []
                 for(let key in tab_dict){
-                    table_data.data['#RBHs'].push(tab_dict[key])
+                    table_data.data['# RBHs'].push(tab_dict[key])
                     table_data.data['# Different Organisms In DB'].push(tab_dict_static[key])
                     table_data.data['# TaxName'].push(key)
                     table_data.data['# Different Organisms In Selection'].push(tab_dict_org_counter[key])
