@@ -53,20 +53,20 @@ class OneWayProjectCreationForm(forms.Form):
         # query file was uploaded
         if query_file is not None:
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-                raise self.add_error('query_sequence_file', "please upload only fasta files!")
+                self.add_error('query_sequence_file', "{} - please upload only fasta files! - files with the ending: .faa or .fasta".format(query_file.name))
 
             if len(query_file.name.split(".")) != 2:
-                raise self.add_error('query_sequence_file', "there are no dots allowed except the filetype delimiter")
+                self.add_error('query_sequence_file', "{} - there are no dots allowed except the filetype delimiter".format(query_file.name))
             else:
                 filename = query_file.name.split(".")[0]
                 for character in filename:
                     if character in punctuation:
                         if character != '_' and character != '-':
-                            raise self.add_error('query_sequence_file',
+                            self.add_error('query_sequence_file',
                                                  "bad character: \"{}\" in query file name".format(character))
                     if character not in ascii_letters:
                         if character != '_' and character != '-':
-                            raise self.add_error('query_sequence_file',
+                            self.add_error('query_sequence_file',
                                                  "bad character: \"{}\" in query file name".format(character))
 
             header = []
@@ -188,20 +188,20 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         # query file was uploaded
         if query_file != None:
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-                raise self.add_error('r_query_sequence_file', "please upload only fasta files!")
+                self.add_error('r_query_sequence_file', "{} - please upload only fasta files!".format(query_file.name))
 
             if len(query_file.name.split(".")) != 2:
-                raise self.add_error('r_query_sequence_file', "there are no dots allowed except the filetype delimiter")
+                self.add_error('r_query_sequence_file', "{} - there are no dots allowed except the filetype delimiter".format(query_file.name))
             else:
                 filename = query_file.name.split(".")[0]
                 for character in filename:
                     if character in punctuation:
                         if character != '_' and character != '-':
-                            raise self.add_error('r_query_sequence_file',
+                            self.add_error('r_query_sequence_file',
                                                  "bad character: \"{}\" in query file name".format(character))
                     if character not in ascii_letters:
                         if character != '_' and character != '-':
-                            raise self.add_error('r_query_sequence_file',
+                            self.add_error('r_query_sequence_file',
                                                  "bad character: \"{}\" in query file name".format(character))
 
             header = []

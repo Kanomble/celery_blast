@@ -60,18 +60,18 @@ rule extract_subject_sequences_from_database:
 	            shell("touch {output} 2> {log}")
 
 rule conduct_multiple_sequence_alignment_mafft:
-    input: "{qseqid}/target_sequences.faa"
-    output: "{qseqid}/target_sequences.msa"
-    log:"log/{qseqid}/conduct_multiple_sequence_alignment_mafft.log"
-    run:
+	input: "{qseqid}/target_sequences.faa"
+	output: "{qseqid}/target_sequences.msa"
+	log:"log/{qseqid}/conduct_multiple_sequence_alignment_mafft.log"
+	run:
 		switch = False
 		with open(input[0],'r') as infile:
 			if len(infile.readlines()) > 1:
 				switch = True
-		if switch:
-			shell("mafft --auto {input} > {output} 2> {log}")
-		else:
-			shell("touch {output} 2> {log}")
+			if switch:
+				shell("mafft --auto {input} > {output} 2> {log}")
+			else:
+				shell("touch {output} 2> {log}")
 
 rule trimal:
 	input: target_msa="{qseqid}/target_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"

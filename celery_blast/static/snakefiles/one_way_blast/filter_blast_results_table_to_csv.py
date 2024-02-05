@@ -8,6 +8,8 @@ which is later used to perform the msa and phylo.
 import pandas as pd
 import sys
 import math
+from os.path import isdir
+from os import mkdir
 
 RETURNCODE=5
 try:
@@ -25,6 +27,9 @@ try:
         elif len(qseq_df) > 30:
             best_hits = math.ceil(len(qseq_df)*0.50)
             qseq_df = qseq_df.nlargest(best_hits, "bitscore")
+
+        if isdir(qseq) == False:
+            mkdir(qseq)
 
         qseq_df = qseq_df.reset_index(drop=True)
 
