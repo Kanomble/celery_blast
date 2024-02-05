@@ -1713,7 +1713,7 @@ def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: 
                 var temp = []
                 var csvFileData = []
                 if(sc.selected.indices.length != 0){
-                    for(var i = 0; i < sc.data.length; i++){
+                    for(var i = 0; i < sc.selected.indices.length; i++){
                         temp = [sc.data['qseqid'][sc.selected.indices[i]],
                                 sc.data['sacc_transformed'][sc.selected.indices[i]],
                                 sc.data['staxids'][sc.selected.indices[i]]]

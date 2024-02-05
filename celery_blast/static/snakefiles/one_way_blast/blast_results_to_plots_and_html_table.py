@@ -594,21 +594,20 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
             var csvFileData = []
             
             if(sc.selected.indices.length != 0){
-                for(var i = 0; i < sc.data.length; i++){
+                for(var i = 0; i < sc.selected.indices.length; i++){
                     temp = [sc.data['qseqid'][sc.selected.indices[i]],
                             sc.data['sacc'][sc.selected.indices[i]],
                             sc.data['staxids'][sc.selected.indices[i]]]
                     csvFileData.push(temp)
                 }
             } else {
-                for(var i = 0; i < sc.data['sacc_transformed'].length; i++){
+                for(var i = 0; i < sc.data['sacc'].length; i++){
                     temp = [sc.data['qseqid'][i],
                             sc.data['sacc'][i],
                             sc.data['staxids'][i]]
                     csvFileData.push(temp);
                 }                          
             } 
-            
             //define the heading for each row of the data  
             var csv = `qseqid,sacc,staxids\n`;  
             //merge the data with CSV  
