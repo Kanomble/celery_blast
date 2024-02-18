@@ -212,13 +212,14 @@ def extract_assembly_ftp_paths_from_reciprocal_result_entries(database_table_pat
                     assemblies = []
                     for prot_id in genome_assemblies.keys():
                         assemblies.append(genome_assemblies[prot_id])
+                        log.write("\tassembly:{}\n".format(genome_assemblies[prot_id]))
 
                     result_table = pd.read_csv(result_data_path, index_col=0)
                     result_table = result_table[result_table.qseqid == query_sequence]
                     database_table = pd.read_csv(database_table_path, index_col=0)
                     database_table = database_table.rename(columns={"taxid":"staxids"})
                     log.write("INFO:merging database table with sliced result table\n")
-                    result_selection = result_table[result_table.sacc.isin(genome_assemblies)]
+                    result_selection = result_table[result_table.sseqid.isin(assemblies)]
                     def check_assembly_column(x: str, assemblies: list) -> bool:
                         for assembly in assemblies:
                             if x in assembly:

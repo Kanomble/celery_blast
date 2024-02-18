@@ -33,7 +33,10 @@ rule all:
 		expand("{qseqid}/msa_phylo_sequences_trimmed.html",qseqid=QSEQIDS),
 
 		expand("{qseqid}/msa_phylo_sequences.tree",qseqid=QSEQIDS),
-		expand("{qseqid}/msa_phylo_sequences.html",qseqid=QSEQIDS)
+		expand("{qseqid}/msa_phylo_sequences.html",qseqid=QSEQIDS),
+		"query_domains_rpsbproc.out",
+		"rpsbproc_query_domains.html",
+		"rpsbproc_query_sites.html"
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -338,7 +341,7 @@ rule conduct_phylogeny_fast_tree:
 #RULE 21
 rule html_phylogenie:
     input: newick_tree="{qseqid}/msa_phylo_sequences.tree", blast_table="{qseqid}/msa_phylo_rbh_table.tsf",
-    output: html_tree="{qseqid}/msa_phylo_sequences_tree.html",
+    output: html_tree="{qseqid}/msa_phylo_sequences.html",
     log: shiptv_log="log/{qseqid}/shiptv.log",
     run:
         df = pd.read_table(input['blast_table'])
@@ -366,3 +369,29 @@ rule query_domains_to_html_table:
 	log: log="log/query_domains_to_html_table.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"
+
+#RULE 20
+rule cdd_domain_rpsblast_for_rpsbproc:
+	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/shiptv.log", qseqid=QSEQIDS)
+	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
+	output: domain_df="query_domains.asn"
+	log: log="log/cdd_domain_rpsblast_for_rpsbproc.log"
+	shell:
+		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt 11 -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
+
+#RULE 21
+rule cdd_domain_rpsbproc:
+	input: rpsblast_asn_output="query_domains.asn", domain_blast_log="log/cdd_domain_rpsblast_for_rpsbproc.log"
+	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
+	output: rpsbproc_df="query_domains_rpsbproc.out"
+	log: log="log/cdd_domain_rpsbproc.log"
+	shell:
+		"rpsbproc -i {input.rpsblast_asn_output} -o {output.rpsbproc_df} -e {params.e_value} -m rep -d /blast/utilities/RpsbProc-x64-linux/data/"
+
+#RULE 22
+rule rpsbproc_parsing:
+	input: rpsbproc_output="query_domains_rpsbproc.out"
+	output: domain_html="rpsbproc_query_domains.html", sites_html="rpsbproc_query_sites.html"
+	log: log="log/rpsbproc_parsing.log"
+	script:
+		"../../../static/snakefiles/reciprocal_blast/rpsbproc_parser.py"

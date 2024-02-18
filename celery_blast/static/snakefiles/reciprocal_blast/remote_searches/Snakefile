@@ -35,7 +35,10 @@ rule all:
 		expand("{qseqid}/msa_phylo_sequences.html", qseqid=QSEQIDS),
 		expand("{qseqid}/genome_assembly_table.csv", qseqid=QSEQIDS),
 		"plot_amount_hits_of_target_taxon.png",
-		"plot_evalue_distribution.png"
+		"plot_evalue_distribution.png",
+		"query_domains_rpsbproc.out",
+		"rpsbproc_query_domains.html",
+		"rpsbproc_query_sites.html"
 
 
 #RULE 1
@@ -50,7 +53,6 @@ rule forward_blast:
 		with open(log[0], "w") as logfile:
 			try:
 				logfile.write("INFO:starting forward blast search against: {}\n".format(params.database))
-
 				logfile.write("INFO:reading query file ...\n")
 				query_dict = {}
 				with open(input[0],"r") as qfile:
@@ -64,9 +66,10 @@ rule forward_blast:
 								query_dict[header] += line
 				logfile.write("INFO:writing temporary query files and conducting blast searches:\n")
 				logfile.write("INFO:temporary query files are named temp_fw_seq_{index}.faa.\n"
-							  "The index is the index number of the header of the query sequence within the provided query file.\n")
+							  "\tThe index is the index number of the header of the query sequence within the provided query file.\n")
 				logfile.write("INFO:BLAST searches are conducted on a each single file to prevent errors raised by the NCBI servers.\n")
 				logfile.write("INFO:this likely occurs if the search is not restricted to any particular taxon.\n")
+				logfile.write("INFO:entrez_query:{}\n".format(params.entrez_query))
 				for index, header in enumerate(query_dict.keys()):
 					logfile.write("\tINFO:working with query file: {}\n".format(header.split(" ")[0].split(">")[1]))
 					with open("temp_fw_seq_{}.faa".format(index),"w") as tempfile:
@@ -86,7 +89,7 @@ rule forward_blast:
 									 " -query " + "temp_fw_seq_{}.faa".format(index) + \
 									 " -remote" + \
 									 " -entrez_query \"" + entrez_query + "\"" + " 2> {log.log_blastp}"
-					elif (params.entrez_query.strip() == "all[organism]"):
+					elif (params.entrez_query.strip() == "all[organism]" or params.entrez_query.strip() == ""):
 						cmd_string = "blastp" + " -db " + params.database + \
 									 " -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\"" \
 									 " -out " + "current_search_fw_blast.table" + \
@@ -97,10 +100,8 @@ rule forward_blast:
 									 " -remote" + " 2> {log.log_blastp}"
 					logfile.write("INFO: cmd string for the forward blast:\n")
 					logfile.write("\tINFO: {}\n".format(cmd_string))
-
 					# BLAST search!
 					shell(cmd_string)
-
 					with open("current_search_fw_blast.table",'r') as interfilename:
 						for line in interfilename.readlines():
 							inter_blast_out.write(line)
@@ -468,7 +469,34 @@ rule cdd_domain_rpsblast:
 	shell:
 		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt \"6 qseqid qlen sacc slen qstart qend sstart send qseq sseq bitscore evalue pident stitle\" -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
 
+
 #RULE 20
+rule cdd_domain_rpsblast_for_rpsbproc:
+	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/shiptv.log", qseqid=QSEQIDS)
+	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
+	output: domain_df="query_domains.asn"
+	log: log="log/cdd_domain_rpsblast_for_rpsbproc.log"
+	shell:
+		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt 11 -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
+
+#RULE 21
+rule cdd_domain_rpsbproc:
+	input: rpsblast_asn_output="query_domains.asn", domain_blast_log="log/cdd_domain_rpsblast_for_rpsbproc.log"
+	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
+	output: rpsbproc_df="query_domains_rpsbproc.out"
+	log: log="log/cdd_domain_rpsbproc.log"
+	shell:
+		"rpsbproc -i {input.rpsblast_asn_output} -o {output.rpsbproc_df} -e {params.e_value} -m rep -d /blast/utilities/RpsbProc-x64-linux/data/"
+
+#RULE 22
+rule rpsbproc_parsing:
+	input: rpsbproc_output="query_domains_rpsbproc.out"
+	output: domain_html="rpsbproc_query_domains.html", sites_html="rpsbproc_query_sites.html"
+	log: log="log/rpsbproc_parsing.log"
+	script:
+		"../../../../static/snakefiles/reciprocal_blast/rpsbproc_parser.py"
+
+#RULE 23
 rule query_domains_to_html_table:
 	input: query_domains="query_domains.tsf", query_domains_html_table_log="log/cdd_domain_rpsblast.log"
 	output: domain_html_table="query_domains.html"
@@ -476,7 +504,7 @@ rule query_domains_to_html_table:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"
 
-#RULE 21
+#RULE 24
 rule extract_assembly_ftp_paths_from_rbhs:
 	input: result_dataframe = "{qseqid}/rbh_table.tsf"
 	output: ipg_table_path = "{qseqid}/ipg_table.table", genome_assembly_table = "{qseqid}/genome_assembly_table.csv"
@@ -485,7 +513,7 @@ rule extract_assembly_ftp_paths_from_rbhs:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/remote_searches/extract_assembly_ftp_paths_from_rbhs.py"
 
-#RULE 22
+#RULE 25
 #creates plots for the visualization of pipeline results
 rule blast_tables_to_plots:
 	input: fw_res="blastp_fw_out_reformatted.table", rec_res="reciprocal_best_hits_protein_ids.txt",query_file=config['query_sequence']

@@ -109,13 +109,13 @@ RUN tar xvzf RpsbProc-x64-linux.tar.gz -C /blast/utilities/
 RUN rm RpsbProc-x64-linux.tar.gz
 ENV PATH /blast/utilities/RpsbProc-x64-linux:$PATH
 
-RUN mkdir /blast/utilities//data
-RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddid.tbl.gz -O /blast/utilities//data/cddid.tbl.gz && gzip -d /blast/utilities/data/cddid.tbl.gz
-RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cdtrack.txt -O /blast/utilities//data/cdtrack.txt
-RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/family_superfamily_links -O /blast/utilities//data/family_superfamily_links
-RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddannot.dat.gz -O /blast/utilities//data/cddannot.dat.gz && gzip -d /blast/utilities/data/cddannot.dat.gz
-RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddannot_generic.dat.gz -O /blast/utilities//data/cddannot_generic.dat.gz && gzip -d /blast/utilities/data/cddannot_generic.dat.gz
-RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/bitscore_specific.txt -O /blast/utilities//data/bitscore_specific.txt
+RUN mkdir /blast/utilities/RpsbProc-x64-linux/data
+RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddid.tbl.gz -O /blast/utilities/RpsbProc-x64-linux/data/cddid.tbl.gz && gzip -d /blast/utilities/RpsbProc-x64-linux/data/cddid.tbl.gz
+RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cdtrack.txt -O /blast/utilities/RpsbProc-x64-linux/data/cdtrack.txt
+RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/family_superfamily_links -O /blast/utilities/RpsbProc-x64-linux/data/family_superfamily_links
+RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddannot.dat.gz -O /blast/utilities/RpsbProc-x64-linux/data/cddannot.dat.gz && gzip -d /blast/utilities/RpsbProc-x64-linux/data/cddannot.dat.gz
+RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddannot_generic.dat.gz -O /blast/utilities/RpsbProc-x64-linux/data/cddannot_generic.dat.gz && gzip -d /blast/utilities/RpsbProc-x64-linux/data/cddannot_generic.dat.gz
+RUN wget https://ftp.ncbi.nih.gov/pub/mmdb/cdd/bitscore_specific.txt -O /blast/utilities/RpsbProc-x64-linux/data/bitscore_specific.txt
 
 # Delete not required packages etc..
 RUN apt-get autoremove --purge --yes && apt-get clean && rm -rf /var/lib/apt/lists/*

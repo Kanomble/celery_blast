@@ -110,6 +110,7 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
             if request.method == "POST":
                 form_data = request.POST
                 data = form_data.dict()
+                print(data)
                 #{'0': 'ARV18906.1_GCA_002163715.1_ASM216371v1', '1': 'OGO98856.1_GCA_001795455.1_ASM179545v1'}
                 synteny_calculation_task.delay(project_id, query_sequence, data, remote_or_local)
         return JsonResponse({"response": "success"}, status=200)

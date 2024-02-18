@@ -78,7 +78,7 @@
             if(rOrl === "local"){
                 var tab_columns = [
                     {"data": 'index'},
-                    {"data": 'sseqid'},
+                    {"data": 'sacc'},
                     {"data": 'qseqid'},
                     {"data": 'bitscore'},
                     {"data": 'pident'},
@@ -143,7 +143,7 @@
                         var jsonArr = {};
                         if(rOrl === "local"){
                             for (var i = 0; i < selected_rows_length; i++) {
-                                jsonArr[objects[i].index] = objects[i].sseqid;
+                                jsonArr[objects[i].index] = objects[i].sacc;
                             }
                         } else {
                             for (var i = 0; i < selected_rows_length; i++) {

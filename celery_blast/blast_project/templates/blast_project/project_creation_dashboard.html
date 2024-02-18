@@ -57,7 +57,9 @@ This Website can be used for the creation of reciprocal BLAST projects.
                     <p style="text-align: left;font-size: medium">
                         This database is the "search space" for your provided query sequences. <br>
                         This database is used for the initial BLAST, the forward BLAST. <br>
-                        All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta. </p>
+                        All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta.
+                        Those hits are used as input for the second BLAST, the backward BLAST.
+                    </p>
                 </li>
                 <li class="list-group-item">
                     <b> Backward BLAST database </b> <br>
@@ -65,14 +67,17 @@ This Website can be used for the creation of reciprocal BLAST projects.
                         All hits of the forward BLAST are used as input for the backward BLAST, which uses this database.
                         If those hits match the exact query sequence of the forward BLAST, reciprocal best hits (RBHs) are found.
                         E.g., if you want to search RBHs for WP_087494701.1, WP_087494701.1 needs to reside in your backward BLAST database (you need
-                        to select a database containing the proteome of Curvibacter sp. AEP1-3).
+                        to select a database containing the proteome of Curvibacter sp. AEP1-3). <br>
+                        This field gets validated by CATHI. If you receive an error message within this field, you may need to change the selected backward BLAST database
+                        to a database truly containing your query sequences. The best option is to search for proteins within one proteome, upload this proteome as
+                        a local BLAST database and use this database as the backward BLAST database.
                     </p>
                 </li>
                 <li class="list-group-item">
                     <b> Species name for the backward BLAST </b> <br>
                     <p style="text-align: left;font-size: medium"> This is the scientific name of the organisms from which the query sequences were obtained.
                         Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer RBHs.
-                        E.g., if you want to search RBHs for WP_087494701.1, you need to enter Curvibacter sp. AEP1-3.
+                        E.g., if you want to search RBHs for WP_087494701.1, which is a protein sequence of Curvibacter sp. AEP1-3, you need to enter Curvibacter sp. AEP1-3.
                     </p>
                 </li>
             </ul>
