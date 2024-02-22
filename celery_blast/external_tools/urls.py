@@ -18,6 +18,12 @@ cdd_search_urls = [
     path('<int:project_id>/<str:query_id>/<str:remote_or_local>/selection_constrained_phylogeny',
          views.load_selection_constrained_phylogeny,
          name='load_selection_constrained_phylogeny'),
+    path('<int:project_id>/<str:remote_or_local>/rpsbproc_query_domains',
+         views.load_rpsbproc_domains_view, name="rpsbproc_domains_view"),
+    path('<int:project_id>/<str:remote_or_local>/rpsbproc_query_sites',
+         views.load_rpsbproc_sites_view, name="rpsbproc_sites_view"),
+    path('<int:project_id>/<str:remote_or_local>/all_cdds',
+         views.load_all_cdd_domains_view, name="all_cdds_view")
 ]
 
 entrez_search_urls = [

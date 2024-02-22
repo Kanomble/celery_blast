@@ -147,7 +147,7 @@ def create_domains_html(full_domain_dataframe: pd.DataFrame, savep: str) -> int:
           </head>
 
           <body>
-            <div id="result_table" style="display:none">
+            <div id="rpsbproc_domain_result_table" style="display:none">
                 {table}
             </div>
           </body>
@@ -161,8 +161,8 @@ def create_domains_html(full_domain_dataframe: pd.DataFrame, savep: str) -> int:
             <script>
             $(document).ready(function(){{
                 var table = document.getElementsByTagName('table');
-                table[0].id='myTable'
-                $('#myTable').DataTable(
+                table[0].id='rpsbprocDomainTable'
+                $('#rpsbprocDomainTable').DataTable(
                     {{
                         dom: 'Bfrtip',
                         "lengthMenu": [ 10 ],
@@ -178,7 +178,7 @@ def create_domains_html(full_domain_dataframe: pd.DataFrame, savep: str) -> int:
                         {datatable}
                     }}
                 );
-                var result_table = document.getElementById('result_table');
+                var result_table = document.getElementById('rpsbproc_domain_result_table');
                 result_table.style.display = "block";
             }});
             </script>
@@ -252,7 +252,7 @@ def create_sites_html(full_sites_dataframe: pd.DataFrame, savep: str) -> int:
           </head>
 
           <body>
-            <div id="result_table" style="display:none">
+            <div id="rpsbproc_sites_result_table" style="display:none">
                 {table}
             </div>
           </body>
@@ -266,8 +266,8 @@ def create_sites_html(full_sites_dataframe: pd.DataFrame, savep: str) -> int:
             <script>
             $(document).ready(function(){{
                 var table = document.getElementsByTagName('table');
-                table[0].id='myTable'
-                $('#myTable').DataTable(
+                table[0].id='rpsbprocSitesTable'
+                $('#rpsbprocSitesTable').DataTable(
                     {{
                         dom: 'Bfrtip',
                         "lengthMenu": [ 10 ],
@@ -283,7 +283,7 @@ def create_sites_html(full_sites_dataframe: pd.DataFrame, savep: str) -> int:
                         {datatable}
                     }}
                 );
-                var result_table = document.getElementById('result_table');
+                var result_table = document.getElementById('rpsbproc_sites_result_table');
                 result_table.style.display = "block";
             }});
             </script>
