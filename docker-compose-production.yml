@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   web:
-    image: kanomble/rec_blast_base_image:2.7
+    image: kanomble/rec_blast_base_image:3.0
     deploy:
       resources:
         limits:
@@ -31,7 +31,7 @@ services:
       - "5860-5870:5860-5870"
 
   celery_worker:
-    image: kanomble/rec_blast_base_image:2.7
+    image: kanomble/rec_blast_base_image:3.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast worker -l INFO"
     env_file:
       - ./.env.prod
@@ -49,7 +49,7 @@ services:
     restart: unless-stopped
 
   jupyter_notebook:
-    image: kanomble/rec_blast_base_image:2.7
+    image: kanomble/rec_blast_base_image:3.0
     command:  sh -c "cd media/ && jupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root"
     networks:
       - main
@@ -65,7 +65,7 @@ services:
       - "8888:8888"
 
   flower:
-    image: kanomble/rec_blast_base_image:2.7
+    image: kanomble/rec_blast_base_image:3.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast flower  --port=5555"
     networks:
       - main

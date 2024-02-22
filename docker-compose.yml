@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   web:
-    image: kanomble/rec_blast_base_image:3.1 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
+    image: kanomble/rec_blast_base_image:3.0 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
     deploy:
       resources:
         limits:
@@ -28,7 +28,7 @@ services:
       - "8080:8080"
 
   celery_worker:
-    image: kanomble/rec_blast_base_image:3.1
+    image: kanomble/rec_blast_base_image:3.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO"
     env_file:
       - ./.env.dev
@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
 
   flower:
-    image: kanomble/rec_blast_base_image:3.1
+    image: kanomble/rec_blast_base_image:3.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast flower --port=5555"
     networks:
       - main

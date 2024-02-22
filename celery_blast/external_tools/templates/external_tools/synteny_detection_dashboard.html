@@ -48,11 +48,11 @@
                                    View Synteny
                                 </a>
                             </td>
-                            <td>
+                            <!-- <td>
                               <a class="btn btn-danger" rel="noreferrer noopener" target="_blank" href="{% url 'delete_synteny' project_id=project_id remote_or_local=remote_or_local query_sequence_id=qseq.query_accession_id %}">
                                    Delete Synteny
                                 </a>
-                            </td>
+                            </td> -->
                         {% elif qseq.check_if_synteny_calculation_task_is_complete == 'PROGRESS' %}
                             <td>
                                 <button class="btn btn-dark disabled" id='synteny-calculation-progress-{{ qseq.query_accession_id }}' style="display: block">
