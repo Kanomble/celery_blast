@@ -105,7 +105,7 @@
                             {% if BlastProject.project_forward_database.uploaded_files == False %}
                                 <td><a class="btn btn-dark" href="{% url 'synteny_dashboard' project_id=BlastProject.id remote_or_local="local"%}">Synteny Detection</a> </td>
                             {% endif %}
-                            <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id %}">Download Project</a> </td>
+                            <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id remote_or_local='local' %}">Download Project</a> </td>
 
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>

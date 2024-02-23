@@ -4,33 +4,48 @@ from .models import BlastProject, RemoteBlastProject
 from refseq_transactions.models import BlastDatabase
 from external_tools.models import DomainDatabase
 
-from os.path import isdir, isfile
-from os import mkdir, listdir, remove, rmdir
+from os.path import isdir, isfile, join, relpath
+from os import mkdir, listdir, remove, rmdir, walk
 from subprocess import check_output
 from shutil import rmtree, make_archive
 from wsgiref.util import FileWrapper
 from django.db import IntegrityError, transaction
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, TAXDB_URL, REMOTE_BLAST_PROJECT_DIR
+import zipfile
+import io
 
 '''download_project_directory
     
     This function compresses the specified directory into a .zip file and creates the 
     class FileWrapper.
     
-    :param directory
+    :param base_directory
         :type str
     
-    :returns file_wrapper_archive
-        :type FileWrapper
+    :returns zip_buffer
+        :type io.BytesIO
 '''
 
 
-def download_project_directory(directory:str)->FileWrapper:
+def download_project_directory(base_directory:str)->io.BytesIO:
     try:
-        path_to_zip = make_archive(directory,"zip",directory)
-        return FileWrapper(open(path_to_zip, 'rb'))
+        def add_files_to_zip(zip_file, directory):
+            for root, _, filenames in walk(directory):
+                for filename in filenames:
+                    file_path = join(root, filename)
+                    relative_path = relpath(file_path, directory)
+                    zip_file.write(file_path, relative_path)
+        def generate_zip_archive(directory):
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+                add_files_to_zip(zip_file, directory)
+            zip_buffer.seek(0)
+            return zip_buffer
+        # Create an in-memory zip archive
+        zip_buffer = generate_zip_archive(base_directory)
+        return zip_buffer
     except Exception as e:
-        raise Exception("[-] ERROR creating zip directory: {} with exception: {}".format(directory, e))
+        raise Exception("[-] ERROR creating zip directory: {} with exception: {}".format(base_directory, e))
 
 '''read_task_logs_summary_table
     

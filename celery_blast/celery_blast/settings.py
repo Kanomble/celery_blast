@@ -15,7 +15,6 @@ from decouple import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
@@ -174,3 +173,5 @@ REFSEQ_URL = config("REFSEQ_URL")
 GENBANK_ASSEMBLY_FILE = config("GENBANK_ASSEMBLY_FILE")
 GENBANK_URL = config("GENBANK_URL")
 TAXONOMIC_NODES = config('TAXONOMIC_NODES')
+
+AUTORELOAD_IGNORE_PATTERNS = ['/media/blast_projects/remote_projects']

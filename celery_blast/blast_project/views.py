@@ -1,7 +1,7 @@
 import pandas as pd
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.utils import timezone
 from django.db import IntegrityError, transaction
 from django.contrib.auth import authenticate, login, logout
@@ -1032,28 +1032,20 @@ def download_project_as_zip_archive_view(request, project_id:int, remote_or_loca
             title = blast_project.project_title
         else:
             raise Exception("[-] ERROR project is neither remote nor local ...")
-        file_wrapper = download_project_directory(project_dir)
-        response = HttpResponse(file_wrapper, content_type='application/zip')
+
+        zip_buffer = download_project_directory(project_dir + "/")
+        response = StreamingHttpResponse(
+            iter(lambda: zip_buffer.read(4096), b''),
+            content_type='application/zip'
+        )
         response['Content-Disposition'] = 'attachment; filename="{filename}.zip"'.format(
             filename = title.replace(" ", "_")
         )
+        response['Content-Length'] = len(zip_buffer.getvalue())
         return response
     except Exception as e:
         return failure_view(request, e)
 
-@login_required(login_url='login')
-def download_remote_project_as_zip_archive_view(request, project_id:int) -> HttpResponse:
-    try:
-        project_dir = REMOTE_BLAST_PROJECT_DIR + str(project_id)
-        blast_project = get_remote_project_by_id(project_id)
-        file_wrapper = download_project_directory(project_dir)
-        response = HttpResponse(file_wrapper, content_type='application/zip')
-        response['Content-Disposition'] = 'attachment; filename="{filename}.zip"'.format(
-            filename = blast_project.r_project_title.replace(" ", "_")
-        )
-        return response
-    except Exception as e:
-        return failure_view(request, e)
 
 '''view_selection_phylogeny
 
