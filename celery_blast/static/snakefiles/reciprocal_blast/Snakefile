@@ -36,7 +36,9 @@ rule all:
 		expand("{qseqid}/msa_phylo_sequences.html",qseqid=QSEQIDS),
 		"query_domains_rpsbproc.out",
 		"rpsbproc_query_domains.html",
-		"rpsbproc_query_sites.html"
+		"rpsbproc_query_sites.html",
+		"rpsbproc_query_domains.csv",
+		"rpsbproc_query_sites.csv"
 
 #RULE 1
 #Forward BLAST - inference of target sequences within the search space
@@ -391,7 +393,7 @@ rule cdd_domain_rpsbproc:
 #RULE 22
 rule rpsbproc_parsing:
 	input: rpsbproc_output="query_domains_rpsbproc.out"
-	output: domain_html="rpsbproc_query_domains.html", sites_html="rpsbproc_query_sites.html"
+	output: domain_html="rpsbproc_query_domains.html", sites_html="rpsbproc_query_sites.html", domain_csv="rpsbproc_query_domains.csv", sites_csv="rpsbproc_query_sites.csv"
 	log: log="log/rpsbproc_parsing.log"
 	script:
 		"../../../static/snakefiles/reciprocal_blast/rpsbproc_parser.py"

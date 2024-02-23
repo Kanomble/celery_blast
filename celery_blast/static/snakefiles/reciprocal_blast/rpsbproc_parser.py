@@ -339,6 +339,12 @@ with open(snakemake.log['log'],'w') as logfile:
         logfile.write("INFO:done slicing, writing HTML documents ...\n")
         create_domains_html(full_domain_df, savep=snakemake.output["domain_html"])
         create_sites_html(full_sites_df, savep=snakemake.output["sites_html"])
+
+        logfile.write("INFO:writing csv files ...\n")
+
+        full_domain_df.to_csv(snakemake.output["domain_csv"])
+        full_sites_df.to_csv(snakemake.output["sites_csv"])
+
         logfile.write("DONE\n")
     except Exception as e:
         logfile.write("ERROR: Rpsbproc result parsing resulted in an error with exception: {}".format(e))

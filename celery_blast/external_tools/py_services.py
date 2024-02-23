@@ -2,6 +2,62 @@ import os
 import pandas as pd
 from django.conf import settings
 import json
+from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
+
+'''get_rpsbproc_domain_dictionary
+    
+    This function reads the domain prediction of the rpsbproc tool. It then generates a dictionary, that
+    can be used for drawing a domain canvas of the query sequence.
+    
+    :param project_id
+        :type int
+    :param remote_or_local
+        :type str
+    
+    :returns domain_dict
+        :type dict
+    
+'''
+def get_rpsbproc_domain_dictionary(project_id:int, remote_or_local:str)->dict:
+    try:
+        if remote_or_local == 'local':
+            path_to_domain_csv = BLAST_PROJECT_DIR
+        elif remote_or_local == 'remote':
+            path_to_domain_csv = REMOTE_BLAST_PROJECT_DIR
+        else:
+            raise Exception("[-] ERROR project is neither local nor remote ...")
+
+        domain_dict = {}
+        path_to_domain_csv += str(project_id) + "/rpsbproc_query_domains.csv"
+        if os.path.isfile(path_to_domain_csv):
+            domain_csv = pd.read_csv(path_to_domain_csv, index_col=0)
+
+            max_value = domain_csv.seq_length.max()
+            def normalize_to_max(value):
+                return int(round((value / max_value) * 1400, 0))
+
+            domain_csv.seq_length = domain_csv.seq_length.apply(normalize_to_max)
+            domain_csv["from"] = domain_csv["from"].apply(normalize_to_max)
+            domain_csv["to"] = domain_csv["to"].apply(normalize_to_max)
+
+            for query_id, definition, seq_length, dfrom, dto, bitscore, short_name, pssm, superfamily in zip(
+                    domain_csv['query_id'],
+                    domain_csv['definition_line'],
+                    domain_csv['seq_length'],
+                    domain_csv['from'],
+                    domain_csv['to'],
+                    domain_csv['bitscore'],
+                    domain_csv['short_name'],
+                    domain_csv['PSSM_id'],
+                    domain_csv['superfamily']):
+
+                if query_id not in list(domain_dict.keys()):
+                    domain_dict[query_id] = [[seq_length, dfrom, dto, bitscore, short_name, pssm, superfamily, definition]]
+                else:
+                    domain_dict[query_id].append([seq_length, dfrom, dto, bitscore, short_name, pssm, superfamily, definition])
+        return domain_dict
+    except Exception as e:
+        raise Exception("[-] ERROR creating rpsbproc domain dictionary with exception: {}".format(e))
 
 '''slice_bw_query_fasta_file
     

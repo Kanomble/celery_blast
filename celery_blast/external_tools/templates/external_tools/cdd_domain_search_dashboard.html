@@ -21,11 +21,11 @@
 {% endblock %}
 {% block content %}
     {% if query_task_dict.items|length > 0 %}
-    <div class="dashboard_project_list_col" style="overflow-x: hidden;justify-content: center;text-align: left;">
+    <div class="dashboard_project_list_col" style="overflow-x: hidden;">
             <h3 class="col_header" style="text-align: center"> CDD - Domain Search Task Overview </h3>
             <p style="text-align: center;font-size: small"> Monitor your CDD Domain Searches </p>
 
-            <div class="row justify-content-md-center">
+            <div class="row justify-content-md-center" style="text-align: center">
                 <div class="col-md">
                     <a class="btn btn-dark" target="_blank" href="{% url 'rpsbproc_domains_view' project_id=project_id remote_or_local=remote_or_local %}"> View Query Domains </a>
                 </div>
@@ -38,6 +38,10 @@
                     <a class="btn btn-dark" target="_blank" href="{% url 'all_cdds_view' project_id=project_id remote_or_local=remote_or_local %}"> View Query CDDs </a>
                 </div>
 
+
+                <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('domain_visualization')" > Show Domain Architecture </button>
+                </div>
             </div>
             <hr>
             {% for query, status in query_task_dict.items %}
@@ -93,6 +97,18 @@
     </div>
     {% endif %}
 
+    <div class="dashboard_project_list_col" id="domain_visualization" style="display: none">
+        {% if domain_dictionary != "NOT PRESENT" %}
+        {% for query, info in domain_dictionary.items %}
+            <p>{{ info.0.7 }}</p>
+            <canvas class="canvas" id={{ query }} width={{ info.0.0 }} height="60" style="border:1px solid black;background-color: transparent;"></canvas>
+            <hr>
+        {% endfor %}
+        {% else %}
+            <p> There is no rpsbproc domain output file for this project ... </p>
+        {% endif %}
+    </div>
+
     <div class="dashboard_project_list_col">
         <form method="post" action="{% url 'execute_cdd_domain_search' project_id=project_id remote_or_local=remote_or_local %}">
             {% csrf_token %}
@@ -117,7 +133,6 @@
 
                                     if (data.data) { // get and check data value
                                         status.text(data.data.progress); // get and print data string
-                                        console.log(data)
                                         if (data.data.progress == "SUCCESS") {
                                             status.text("DONE - refresh the page")
                                             clearInterval(pollInterval); // optional: stop poll function
@@ -140,4 +155,121 @@
             {% endif %}
         {% endfor %}
     </script>
+
+    <script>
+        // this javascript section draws the canvas elements for the identified protein domains
+        var textElements = {};
+        {% for query, info in domain_dictionary.items %}
+
+            var canvas_id = '{{ query }}';
+            var canvas = document.getElementById(canvas_id);
+            var ctx = canvas.getContext("2d");
+            var counter = 10;
+            //draw black line
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, 30);
+            ctx.lineTo({{ info.0.0 }}, 30);
+            ctx.stroke();
+            ctx.setLineDash([0, 0]);
+            textElements[canvas_id] = []
+            {% for entry in info %}
+                var randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+
+                function hexToRgba(hex, alpha) {
+                    var r = parseInt(hex.slice(1, 3), 16);
+                    var g = parseInt(hex.slice(3, 5), 16);
+                    var b = parseInt(hex.slice(5, 7), 16);
+                    return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+                }
+
+                var alpha = 0.2; // Opacity value (0.0 to 1.0)
+                ctx.fillStyle = hexToRgba(randomColor, alpha);
+                var borderWidth = 2; // Border width
+                var x = {{ entry.1 }};
+                var y = 20;
+                var width = {{ entry.2 }};
+                var height = 20;
+                ctx.strokeStyle = 'black';
+                ctx.fillRect(x,y,width,height);
+
+                var domainText = '{{ entry.4 }}';
+                var domainTextX = ({{ entry.2 }} - {{ entry.1 }})/2 + {{ entry.1 }};
+                var domainTextY = 35;
+                ctx.fillStyle = "#000000";
+                //ctx.fillStyle = hexToRgba(randomColor, 1.0);
+                ctx.font='10px sans-serif';
+                ctx.fillText(domainText, domainTextX, domainTextY);
+
+                var linkWidth;
+                linkWidth=ctx.measureText(domainText).width;
+                var linkHeight = 10;
+                var linkText = '{{ entry.5 }}';
+                textElements[canvas_id].push({text:domainText, x: domainTextX, y: domainTextY, fontSize:10, link: linkText});
+                ctx.strokeRect(x - borderWidth / 2, y - borderWidth / 2, width + borderWidth, height + borderWidth);
+
+                var lineLength = counter; // 70 Length of the vertical lines
+                var lineThickness = 2; // Thickness of the vertical lines
+
+                //ctx.strokeStyle = 'black';
+                ctx.strokeStyle = hexToRgba(randomColor, 1.0);
+                ctx.lineWidth = lineThickness;
+                ctx.beginPath();
+                ctx.moveTo(x - lineThickness / 2, y - lineLength / 2); // Starting point of the first vertical line
+                ctx.lineTo(x - lineThickness / 2, y + height + lineLength / 2); // Ending point of the first vertical line
+                ctx.moveTo(x + width + lineThickness / 2, y - lineLength / 2); // Starting point of the second vertical line
+                ctx.lineTo(x + width + lineThickness / 2, y + height + lineLength / 2); // Ending point of the second vertical line
+                ctx.stroke();
+
+
+                counter = counter + 5;
+            {% endfor %}
+
+
+        {% endfor %}
+
+        var canvasElements = document.getElementsByClassName('canvas');
+
+        for(var i = 0; i < canvasElements.length; i++){
+            var canvas = canvasElements[i];
+            canvas.addEventListener('click', function(event) {
+                var current_canvas = document.getElementById(event.target.id);
+                var clickX = event.clientX - current_canvas.getBoundingClientRect().left;
+                var clickY = event.clientY - current_canvas.getBoundingClientRect().top;
+                var ctx = current_canvas.getContext("2d");
+
+                console.log(clickX, clickY)
+                // Check if the click is within the bounding box of any text element
+                textElements[event.target.id].forEach(function(element) {
+                    var textWidth = ctx.measureText(element.text).width;
+                    var textHeight = element.fontSize;
+                    if (clickX >= element.x && clickX <= element.x + textWidth && clickY >= element.y - textHeight && clickY <= element.y) {
+                        // Open the link associated with the clicked text element
+                        window.location.href = element.link;
+                    }
+                });
+            });
+
+            canvas.addEventListener('mousemove', function(ev){
+                var current_canvas = document.getElementById(ev.target.id);
+                // Get the mouse position relative to the canvas element.
+                if (ev.layerX || ev.layerX == 0) { //for firefox
+                    x = ev.layerX;
+                    y = ev.layerY;
+                }
+                x-=current_canvas.offsetLeft;
+                y-=current_canvas.offsetTop;
+                textElements[ev.target.id].forEach(function(element) {
+                    var textWidth = ctx.measureText(element.text).width;
+                    var textHeight = element.fontSize;
+                    if(x>=element.x && x <= (element.x + textWidth) && y<=element.y && y>= (element.y-textHeight)) {
+                        document.body.style.cursor = "pointer";
+                    } else {
+                        document.body.style.cursor = "";
+                    }
+                });
+            });
+        }
+    </script>
+
 {% endblock %}

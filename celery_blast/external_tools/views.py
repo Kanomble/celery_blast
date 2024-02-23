@@ -4,6 +4,7 @@ import os
 from json import loads
 from time import sleep
 
+import pandas as pd
 from blast_project.py_services import get_html_results
 from blast_project.views import failure_view
 from django.contrib.auth.decorators import login_required
@@ -19,7 +20,7 @@ from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id,
 from .forms import EntrezSearchForm, RpsBLASTSettingsForm
 from .models import ExternalTools, EntrezSearch, QuerySequences
 from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results, \
-    read_query_sequence_rbh_table
+    read_query_sequence_rbh_table, get_rpsbproc_domain_dictionary
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building, \
     execute_multiple_sequence_alignment_for_all_query_sequences, execute_fasttree_phylobuild_for_all_query_sequences, \
     download_organism_protein_sequences_task, \
@@ -544,7 +545,7 @@ def phylogenetic_information(request, project_id, query_sequence_id, remote_or_l
 
 '''
 @login_required(login_url='login')
-def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
+def cdd_domain_search_dashboard(request:WSGIRequest, project_id:int, remote_or_local:str):
     try:
         if request.method == "GET":
             query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id, remote_or_local=remote_or_local)
@@ -556,6 +557,12 @@ def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
                        "project_id": project_id}
             context['remote_or_local'] = remote_or_local
             context['rpsblast_settingsform'] = rps_blast_settings_form
+
+            domain_dict = get_rpsbproc_domain_dictionary(project_id, remote_or_local)
+            if len(domain_dict.keys()) != 0:
+                context["domain_dictionary"] = domain_dict
+            else:
+                context['domain_dictionary'] = "NOT PRESENT"
             return render(request, "external_tools/cdd_domain_search_dashboard.html", context)
         else:
             return failure_view(request, "There is no post method for this view.")
@@ -573,7 +580,7 @@ def cdd_domain_search_dashboard(request, project_id, remote_or_local:str):
 
 '''
 @login_required(login_url='login')
-def load_rpsbproc_domains_view(request, project_id:int, remote_or_local:str):
+def load_rpsbproc_domains_view(request:WSGIRequest, project_id:int, remote_or_local:str):
     try:
         if remote_or_local == 'local':
             html_result_path = BLAST_PROJECT_DIR
@@ -599,7 +606,7 @@ def load_rpsbproc_domains_view(request, project_id:int, remote_or_local:str):
 
 '''
 @login_required(login_url='login')
-def load_all_cdd_domains_view(request, project_id: int, remote_or_local: str):
+def load_all_cdd_domains_view(request:WSGIRequest, project_id: int, remote_or_local: str):
     try:
         if remote_or_local == 'local':
             html_result_path = BLAST_PROJECT_DIR
@@ -625,7 +632,7 @@ def load_all_cdd_domains_view(request, project_id: int, remote_or_local: str):
 
 '''
 @login_required(login_url='login')
-def load_rpsbproc_sites_view(request, project_id: int, remote_or_local: str):
+def load_rpsbproc_sites_view(request:WSGIRequest, project_id: int, remote_or_local: str):
     try:
         if remote_or_local == 'local':
             html_result_path = BLAST_PROJECT_DIR
@@ -645,16 +652,16 @@ def load_rpsbproc_sites_view(request, project_id: int, remote_or_local: str):
     Before the rpsblast is executed, the function validates if it is "practical" to execute the search.
     If the query sequence has just one domain or if there are only two reciprocal results the function is 
     not executed. Settings for the rpsblast are saved within a django form object. 
-    The form is also validated. The query sequence identifier specified via a selection widget is then used
+    The form gets validated. The query sequence identifier specified via a selection widget is then used
     as input for the rpsblast. 
     
-    :param project:id
+    :param project_id
         :type int
     :param remote_or_local
         :type str
 '''
 @login_required(login_url='login')
-def execute_cdd_domain_search_for_target_query(request, project_id: int, remote_or_local:str):
+def execute_cdd_domain_search_for_target_query(request:WSGIRequest, project_id: int, remote_or_local:str):
     try:
         if request.method == "POST":
             query_sequences_rdy_for_cdd = ExternalTools.objects.get_cdd_searchable_queries(project_id=project_id, remote_or_local=remote_or_local)
@@ -677,8 +684,6 @@ def execute_cdd_domain_search_for_target_query(request, project_id: int, remote_
     This function is part of the CDD bokeh plot dashboard. It is similar to the load_reciprocal_result_view view function
     in blast_project/views.py. It loads the standalone HTML page for the phylogeny.
 
-    :param request
-        :type WSGIRequest
     :param project_id
         :type int
     :param query_id
@@ -752,7 +757,7 @@ def cdd_domain_search_details_view(request, query_id: str, project_id: int, remo
         :type str
 '''
 @login_required(login_url="login")
-def get_selection_constrained_cdd_phylogeny_task_status(request, project_id:int,query_id:str, remote_or_local:str):
+def get_selection_constrained_cdd_phylogeny_task_status(request:WSGIRequest, project_id:int,query_id:str, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
@@ -779,7 +784,7 @@ def get_selection_constrained_cdd_phylogeny_task_status(request, project_id:int,
         :type int
 '''
 @login_required(login_url="login")
-def get_entrez_search_progress(request, search_id:int):
+def get_entrez_search_progress(request:WSGIRequest, search_id:int):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
@@ -839,7 +844,7 @@ def ajax_synteny_progress(request:WSGIRequest,project_id:int,remote_or_local:str
 
 
 @login_required(login_url='login')
-def delete_cdd_domain_search_view(request, query_id: str, project_id: int, remote_or_local:str):
+def delete_cdd_domain_search_view(request:WSGIRequest, query_id: str, project_id: int, remote_or_local:str):
     try:
         query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id, remote_or_local)
         # the query_sequence variable is a QuerySet but should just hold one query_sequence
@@ -874,7 +879,7 @@ def delete_cdd_domain_search_view(request, query_id: str, project_id: int, remot
 
 
 @login_required(login_url='login')
-def get_cdd_task_status_ajax_call(request, query_id: str, project_id: int, remote_or_local:str):
+def get_cdd_task_status_ajax_call(request:WSGIRequest, query_id: str, project_id: int, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
@@ -951,8 +956,6 @@ def bokeh_database_task(request:WSGIRequest, remote_or_local:str):
     
     This view triggers the download of the selected protein accessions. 
     
-    :param request
-        :type WSGIRequest
 '''
 @csrf_exempt
 @login_required(login_url="login")
