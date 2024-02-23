@@ -101,7 +101,7 @@
         {% if domain_dictionary != "NOT PRESENT" %}
         {% for query, info in domain_dictionary.items %}
             <p>{{ info.0.7 }}</p>
-            <canvas class="canvas" id={{ query }} width={{ info.0.0 }} height="60" style="border:1px solid black;background-color: transparent;"></canvas>
+            <canvas class="canvas" id='{{ query }}' width='{{ info.0.0 }}' height="60" style="border:1px solid black;background-color: transparent;"></canvas>
             <hr>
         {% endfor %}
         {% else %}
@@ -160,11 +160,10 @@
         // this javascript section draws the canvas elements for the identified protein domains
         var textElements = {};
         {% for query, info in domain_dictionary.items %}
-
             var canvas_id = '{{ query }}';
             var canvas = document.getElementById(canvas_id);
             var ctx = canvas.getContext("2d");
-            var counter = 10;
+            var counter = 20;
             //draw black line
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
@@ -174,6 +173,7 @@
             ctx.setLineDash([0, 0]);
             textElements[canvas_id] = []
             {% for entry in info %}
+
                 var randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
 
                 function hexToRgba(hex, alpha) {
@@ -188,7 +188,7 @@
                 var borderWidth = 2; // Border width
                 var x = {{ entry.1 }};
                 var y = 20;
-                var width = {{ entry.2 }};
+                var width = {{ entry.2 }} - {{ entry.1 }};
                 var height = 20;
                 ctx.strokeStyle = 'black';
                 ctx.fillRect(x,y,width,height);
@@ -222,7 +222,7 @@
                 ctx.stroke();
 
 
-                counter = counter + 5;
+                counter = counter + 2;
             {% endfor %}
 
 
@@ -237,8 +237,6 @@
                 var clickX = event.clientX - current_canvas.getBoundingClientRect().left;
                 var clickY = event.clientY - current_canvas.getBoundingClientRect().top;
                 var ctx = current_canvas.getContext("2d");
-
-                console.log(clickX, clickY)
                 // Check if the click is within the bounding box of any text element
                 textElements[event.target.id].forEach(function(element) {
                     var textWidth = ctx.measureText(element.text).width;
