@@ -334,44 +334,46 @@
 
 <script>
 (function () {
-    var status = $('.progress-{{project_id}}'),
-    poll = function () {
-        jQuery.ajax({
-            url: "{% url 'ajax_selection_constrained_phylogeny' project_id=project_id remote_or_local='remote' %}",
-            dataType: 'json',
-            type: 'get',
-            success: function (data) { // check if available
-                //check if selection constrained phylogeny is already present
-                var success_button = document.getElementById("success_button");
-                //there is a phylogeny
-                if(success_button){
-                    clearInterval(pollInterval);
-                } else { //there is no phylpogeny
-                     if (data) { // get and check data value
-                        status.text('Processing ...'); // get and print data string
-                        if (data.data == 'SUCCESS') {
-                            status.text("DONE")
-                            clearInterval(pollInterval); // optional: stop poll function
-                            window.alert("Selection-constrained phylogenetic inference has completed; " +
-                                "the current page will now be reloaded.");
-                            window.location.reload();
-                        } else if (data.data == "ERROR") {
-                            status.text("ERROR")
-                            clearInterval(pollInterval);
+    {% if BlastProject.r_project_execution_snakemake_task.status == "SUCCESS" %}
+        var status = $('.progress-{{project_id}}'),
+        poll = function () {
+            jQuery.ajax({
+                url: "{% url 'ajax_selection_constrained_phylogeny' project_id=project_id remote_or_local='remote' %}",
+                dataType: 'json',
+                type: 'get',
+                success: function (data) { // check if available
+                    //check if selection constrained phylogeny is already present
+                    var success_button = document.getElementById("success_button");
+                    //there is a phylogeny
+                    if(success_button){
+                        clearInterval(pollInterval);
+                    } else { //there is no phylpogeny
+                         if (data) { // get and check data value
+                            status.text('Processing ...'); // get and print data string
+                            if (data.data == 'SUCCESS') {
+                                status.text("DONE")
+                                clearInterval(pollInterval); // optional: stop poll function
+                                window.alert("Selection-constrained phylogenetic inference has completed; " +
+                                    "the current page will now be reloaded.");
+                                window.location.reload();
+                            } else if (data.data == "ERROR") {
+                                status.text("ERROR")
+                                clearInterval(pollInterval);
+                            }
                         }
                     }
-                }
 
-            },
-            error: function () { // error logging
-                status.text("error polling progress data")
-            }
-        });
-    },
-    pollInterval = setInterval(function () { // run function every 5000 ms
-        poll();
-    }, 5000);
-    poll(); // also run function on init
+                },
+                error: function () { // error logging
+                    status.text("error polling progress data")
+                }
+            });
+        },
+        pollInterval = setInterval(function () { // run function every 5000 ms
+            poll();
+        }, 5000);
+        poll(); // also run function on init
+    {% endif %}
 })();
 </script>
 {% endblock %}
