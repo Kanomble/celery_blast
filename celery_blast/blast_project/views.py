@@ -160,8 +160,6 @@ def active_table_view(request, selected_table:str):
     associated project_details page. If the POST data is not valid, the function returns the 
     /blast_project/project_creation_dashboard template with validation errors.
 '''
-
-
 @login_required(login_url='login')
 def project_creation_view(request):
     try:
@@ -1014,19 +1012,30 @@ def send_query_sequence_information_view(request, project_id: int) -> HttpRespon
     
     :param project_id
         :type int
+    :param remote_or_local
+        :type str
         
     :return response
         :type HttpResponse - with the zipped directory as attachment
 '''
 @login_required(login_url='login')
-def download_project_as_zip_archive_view(request, project_id:int) -> HttpResponse:
+def download_project_as_zip_archive_view(request, project_id:int, remote_or_local:str) -> HttpResponse:
     try:
-        project_dir = BLAST_PROJECT_DIR + str(project_id)
-        blast_project = get_project_by_id(project_id)
+        if remote_or_local == "remote":
+            project_dir = REMOTE_BLAST_PROJECT_DIR + str(project_id)
+            blast_project = get_remote_project_by_id(project_id)
+            title = blast_project.r_project_title
+
+        elif remote_or_local == "local":
+            project_dir = BLAST_PROJECT_DIR + str(project_id)
+            blast_project = get_project_by_id(project_id)
+            title = blast_project.project_title
+        else:
+            raise Exception("[-] ERROR project is neither remote nor local ...")
         file_wrapper = download_project_directory(project_dir)
         response = HttpResponse(file_wrapper, content_type='application/zip')
         response['Content-Disposition'] = 'attachment; filename="{filename}.zip"'.format(
-            filename = blast_project.project_title.replace(" ", "_")
+            filename = title.replace(" ", "_")
         )
         return response
     except Exception as e:
