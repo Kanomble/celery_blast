@@ -12,7 +12,7 @@ from django.db import IntegrityError, transaction
 from .models import BlastDatabase
 from .py_services import write_pandas_table_to_project_dir, transform_data_table_to_json_dict, \
     filter_duplicates_by_ftp_path
-from celery_blast.settings import REFSEQ_ASSEMBLY_FILE, TAXONOMIC_NODES
+from celery_blast.settings import REFSEQ_ASSEMBLY_FILE, TAXONOMIC_NODES, BLAST_DATABASE_DIR
 
 ''' 
 transactions with models (manager)
@@ -342,6 +342,58 @@ def read_database_table_by_database_id_and_return_json(database_id):
     table = pd.read_csv(blastdb.path_to_database_file + '/' + tablefile_name, header=0, index_col=0)
     json = transform_data_table_to_json_dict(table)
     return json
+
+
+'''create_blastdb_dir_and_table_based_on_user_selection
+    
+    This function triggers processing of user selected proteomes.
+    Selection can be done within the datatable_blast_database_detail.html file.
+    
+    :param form_data_dict
+        :type dict
+        
+    :returns database_id
+        :type int
+'''
+def create_blastdb_dir_and_table_based_on_user_selection(form_data_dict:dict)->int:
+    try:
+
+        try:
+            keys = list(form_data_dict.keys())
+            values = [form_data_dict[key].split(',') for key in keys]
+        except Exception as e:
+            raise Exception("[-] ERROR creating pandas dataframe from dictionary with exception: {}".format(e))
+
+        selected_proteome_table = pd.DataFrame(values)
+        selected_proteome_table.columns = ["assembly_accession","organism_name","taxid","species_taxid","assembly_level","ftp_path"]
+        assembly_levels = list(selected_proteome_table.assembly_level.unique())
+        try:
+            database_name = form_data_dict[list(form_data_dict.keys())[0]][1].split(" ")[0] + "_selected_proteomes_db"
+        except:
+            database_name = "selected_proteomes_database"
+            counter = 1
+            databases = get_downloaded_databases()
+            for db in databases:
+                if database_name in db.database_name:
+                    counter += 1
+            database_name = database_name + "_" + str(counter)
+
+        database_description = "selected proteomes database"
+        new_blastdb = create_and_save_refseq_database_model(
+                    database_name=database_name,
+                    database_description=database_description,
+                    assembly_levels=assembly_levels,
+                    assembly_entries=len(selected_proteome_table))
+        database_table_path = create_blastdatabase_directory(new_blastdb.id)
+
+        write_pandas_table_to_project_dir(database_table_path,
+                                          selected_proteome_table,
+                                          database_name)
+
+        return new_blastdb.id
+    except Exception as e:
+        raise Exception("[-] ERROR processing selected proteomes with exception: {}".format(e))
+
 
 # TODO not in use
 '''check_for_db_updates

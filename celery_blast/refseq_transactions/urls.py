@@ -11,7 +11,9 @@ service_urls = [
          name='delete_blast_database'),
     path('<int:database_id>/database_details', views.display_blast_database_details_view, name='database_details'),
     path('<int:database_id>/download_and_format_blast_database', views.download_and_format_blast_database,
-         name='download_and_format_task')
+         name='download_and_format_task'),
+    path('<int:database_id>/download_and_format_selected_proteomes', views.download_and_format_selected_proteomes,
+         name="download_and_format_selected_proteomes")
 ]
 
 ajax_calls = [

@@ -452,8 +452,6 @@ def download_wget_ftp_paths(path_to_database: str, dictionary_ftp_paths_taxids: 
         available_db_chunks, errorlist = format_blast_databases(db_path,chunks,progress_recorder)
         
 '''
-
-
 @shared_task(bind=True)
 def download_blast_databases_based_on_summary_file(self, database_id):
     try:

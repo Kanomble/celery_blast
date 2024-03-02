@@ -1,4 +1,5 @@
 # MAIN VIEWS REFSEQ TRANSACTIONS FOR BLAT DATABASES
+import pandas as pd
 from blast_project.py_django_db_services import get_database_by_id
 from blast_project.py_services import delete_blastdb_and_associated_directories_by_id
 from blast_project.views import failure_view
@@ -6,11 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
-
+from time import sleep
 from .forms import RefseqDatabaseForm
 from .py_refseq_transactions import get_downloaded_databases, get_databases_in_progress, \
     get_databases_without_tasks, create_blastdatabase_table_and_directory, \
-    read_database_table_by_database_id_and_return_json, get_failed_tasks
+    read_database_table_by_database_id_and_return_json, get_failed_tasks, create_blastdb_dir_and_table_based_on_user_selection
 from .py_services import refseq_file_exists, get_database_download_and_formatting_task_result_progress, \
     genbank_file_exists
 from .tasks import download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
@@ -269,5 +270,37 @@ def download_and_format_blast_database(request, database_id):
     try:
         task = download_blast_databases_based_on_summary_file.delay(database_id)
         return redirect('refseq_transactions_dashboard')
+    except Exception as e:
+        return failure_view(request, e)
+
+
+'''download_and_format_selected_proteomes
+    
+    This function should trigger a download and format process of the selected proteome entries.
+    
+    :param database_id
+        :type int
+        
+'''
+@csrf_exempt
+@login_required(login_url='login')
+def download_and_format_selected_proteomes(request, database_id:int):
+    try:
+        if request.method == "POST":
+            form_data = request.POST
+            data = form_data.dict()
+            try:
+                database_id = create_blastdb_dir_and_table_based_on_user_selection(data)
+            except Exception as e:
+                raise Exception("[-] ERROR creating new BLAST database directory and table with exception: {}".format(e))
+
+            # celery task for downloading and formatting proteomes
+            download_blast_databases_based_on_summary_file.delay(database_id)
+
+            sleep(1)
+            return redirect('refseq_transactions_dashboard')
+        else:
+            return failure_view("There is no GET request for this view function ...")
+
     except Exception as e:
         return failure_view(request, e)
