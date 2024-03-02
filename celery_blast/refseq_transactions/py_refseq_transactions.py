@@ -355,16 +355,14 @@ def create_blastdb_dir_and_table_based_on_user_selection(form_data_dict:dict)->i
         selected_proteome_table = pd.DataFrame(values)
         selected_proteome_table.columns = ["assembly_accession","organism_name","taxid","species_taxid","assembly_level","ftp_path"]
         assembly_levels = list(selected_proteome_table.assembly_level.unique())
-        try:
-            database_name = form_data_dict[list(form_data_dict.keys())[0]][1].split(" ")[0] + "_selected_proteomes_db"
-        except:
-            database_name = "selected_proteomes_database"
-            counter = 1
-            databases = get_downloaded_databases()
-            for db in databases:
-                if database_name in db.database_name:
-                    counter += 1
-            database_name = database_name + "_" + str(counter)
+
+        database_name = "selected_proteomes_database"
+        counter = 1
+        databases = get_downloaded_databases()
+        for db in databases:
+            if database_name in db.database_name:
+                counter += 1
+        database_name = database_name + "_" + str(counter)
 
         database_description = "selected proteomes database"
         new_blastdb = create_and_save_refseq_database_model(
