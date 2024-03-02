@@ -17,8 +17,6 @@ from celery_blast.settings import REFSEQ_ASSEMBLY_FILE, TAXONOMIC_NODES, BLAST_D
 ''' 
 transactions with models (manager)
 '''
-
-
 def get_databases_without_tasks():
     return BlastDatabase.objects.get_databases_without_executed_tasks()
 
@@ -57,8 +55,6 @@ def get_databases_in_progress():
     :returns returncode - 0
         :type int - 0
 '''
-
-
 def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
     try:
         with transaction.atomic():
@@ -273,8 +269,6 @@ def read_current_assembly_summary_with_pandas(assembly_levels: list, summary_fil
         :type str (filename)
     :returns pandas dataframe
 '''
-
-
 def read_taxonomy_table(taxfilename: str) -> pd.DataFrame:
     filepath = TAXONOMIC_NODES + taxfilename
     if (isfile(filepath) == False):
@@ -298,8 +292,6 @@ def read_taxonomy_table(taxfilename: str) -> pd.DataFrame:
         :type pd.DataFrame
         
 '''
-
-
 def read_taxonomy_list(taxid_list: list) -> pd.DataFrame:
     try:
         taxid_df = pd.DataFrame({'taxid': taxid_list})
@@ -319,8 +311,6 @@ def read_taxonomy_list(taxid_list: list) -> pd.DataFrame:
         :type pandas dataframe
     :returns pandas dataframe
 '''
-
-
 def filter_table_by_taxonomy(refseq_table, taxonomy_table):
     # on field can be changed to on=['taxid']
     return refseq_table.merge(taxonomy_table, how='inner', on=['taxid'])
@@ -334,8 +324,6 @@ def filter_table_by_taxonomy(refseq_table, taxonomy_table):
         :type int
     :returns jsonarray
 '''
-
-
 def read_database_table_by_database_id_and_return_json(database_id):
     blastdb = get_database_by_id(database_id)
     tablefile_name = blastdb.database_name.replace(' ', '_').upper()

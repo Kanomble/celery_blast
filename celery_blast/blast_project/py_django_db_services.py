@@ -1,4 +1,5 @@
 import os
+# from typing import BinaryIO
 from .models import BlastProject, BlastSettings, RemoteBlastProject
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from external_tools.models import ExternalTools, QuerySequences, DomainDatabase
@@ -541,9 +542,29 @@ def get_all_succeeded_databases():
     return BlastDatabase.objects.get_databases_with_succeeded_tasks()
 
 
-# TODO documentation
-def create_and_save_refseq_database_model(database_name, database_description, assembly_levels, assembly_entries,
-                                          attached_taxonomic_file=None):
+'''create_and_save_refseq_database_model
+
+    This function creates an entry in the PostgreSQL database for the BlastDatabase model.
+    It is used within the refseq_transaction module in py_refseq_transactions.py.
+    
+    :param database_name
+        :type str
+    :param database_description
+        :type str
+    :param assembly_levels - ["Chromosome", "Contig", ...]
+        :type list
+    :param assembly_entries - number of entries in BLAST database table
+        :type int
+    :param attached_taxonomic_file - path to taxonomic node file (optional)
+        :type str
+        
+    :returns blast_database
+        :type BlastDatabase
+
+'''
+def create_and_save_refseq_database_model(database_name:str, database_description:str,
+                                          assembly_levels:list, assembly_entries:int,
+                                          attached_taxonomic_file=None)->BlastDatabase:
     try:
 
         # create model refseq genome objects (s. models.py file)
@@ -570,10 +591,16 @@ def create_and_save_refseq_database_model(database_name, database_description, a
         blast_database.save()
         return blast_database
     except Exception as e:
-        raise IntegrityError('couldnt save refseq genome model into database with exception : {}'.format(e))
+        raise IntegrityError('[-] ERROR: could not save BLAST database (BlastDatabase) model into postgres database with exception : {}'.format(e))
 
-
-# TODO implementation documentation
+# TODO documentation - genome_file type .. BinaryIO?
+'''save_uploaded_genomes_into_database
+    
+    This function creates the BlastDatabase model, directory and table files for uploaded
+    genomes. It is executed within the upload_genome_view function in the blast_project/views.py file.
+    
+    
+'''
 def save_uploaded_genomes_into_database(database_title, database_description, genome_file, assembly_entries,
                                         assembly_level, taxonomic_node, user_email, assembly_accession=None,
                                         organism_name=None, taxmap_file=None, organism_file=None,

@@ -157,7 +157,7 @@ def write_pandas_table_to_project_dir(blastdatabase_path: str, database_table: p
         database_table_filepath = blastdatabase_path + '/' + database_name.replace(' ', '_').upper()
         database_table.to_csv(database_table_filepath)
     except Exception as e:
-        raise IntegrityError('couldnt write pandas table to refseq genome directory: {}'.format(e))
+        raise IntegrityError('[-] ERROR: could not write pandas table to BLAST database directory: {}'.format(e))
 
 
 '''transform_data_table_to_json_dict
