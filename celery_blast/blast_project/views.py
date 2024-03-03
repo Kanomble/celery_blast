@@ -39,7 +39,7 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_
 '''setup_cathi_view
 
     This function executes the celery_task setup_cathi_download_cdd_refseq_genbank_assembly_files.
-    The function will download and decompress the CDD database and the refseq and genbank assembly
+    The function triggers the download and decompression of the CDD database and the refseq and genbank assembly
     summary files.
     
 '''
@@ -82,8 +82,6 @@ def delete_domain_database_view(request):
         display blast_projects and links to other view functions
 
 '''
-
-
 @login_required(login_url='login')
 def dashboard_view(request):
     try:
@@ -91,15 +89,18 @@ def dashboard_view(request):
         context['domain_database'] = get_domain_database_model()
 
         if request.method == 'GET':
+            # get all projects and databases
             users_blast_projects = get_users_blast_projects(request.user.id)
             available_blast_databases = get_downloaded_databases()
             one_way_blast_projects = get_users_one_way_blast_projects(request.user.id)
             one_way_remote_blast_projects = get_users_one_way_remote_blast_projects(request.user.id)
+
             context['blast_projects'] = users_blast_projects
             context['ActiveBlastDatabases'] = available_blast_databases
             context['OneWayBlastProjects'] = one_way_blast_projects
             context['OneWayRemoteBlastProjects'] = one_way_remote_blast_projects
         return render(request, 'blast_project/blast_project_dashboard.html', context)
+
     except Exception as e:
         return failure_view(request, e)
 
@@ -327,8 +328,6 @@ def project_creation_view(request):
     :param project_id
         :type int 
 '''
-
-
 @login_required(login_url='login')
 def project_details_view(request, project_id: int):
     try:
@@ -378,8 +377,6 @@ def remote_project_details_view(request, project_id: int):
     :param project_id
         :type int
 '''
-
-
 @login_required(login_url='login')
 def project_delete_view(request, project_id: int):
     try:
@@ -410,8 +407,6 @@ def remote_project_delete_view(request, project_id: int):
     This function is now obsolete as retrieving information is now done via the snakemake pipeline.
     
 '''
-
-
 def ajax_wp_to_links(request, project_id: int):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -434,8 +429,6 @@ def ajax_wp_to_links(request, project_id: int):
         Executes the asynchronous celery function: execute_reciprocal_blast_project which resides in tasks.py.
 
 '''
-
-
 @login_required(login_url='login')
 def start_reciprocal_blast_project_view(request, project_id: int):
     try:
@@ -479,8 +472,6 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
     is displayed.
     
 '''
-
-
 @login_required(login_url='login')
 def load_reciprocal_result_html_table_view(request, project_id):
     try:
@@ -507,8 +498,6 @@ def load_remote_reciprocal_result_html_table_view(request, project_id):
         create taxonomic files
         synchronous call of write_species_taxids_into_file
 '''
-
-
 @login_required(login_url='login')
 def create_taxonomic_file_view_old(request):
     try:
@@ -537,8 +526,6 @@ def create_taxonomic_file_view_old(request):
         synchronous call of write_species_taxids_into_file
 
 '''
-
-
 @login_required(login_url='login')
 def create_taxonomic_file_view(request):
     try:
@@ -558,10 +545,21 @@ def create_taxonomic_file_view(request):
     except Exception as e:
         return failure_view(request, e)
 
-
 # two upload genome options one for single and one for multiple files
 # first view function - upload_genome_view for the single files
 # second view function - upload_multiple_genomes_post view
+'''upload_genome_view
+    
+    This function is triggered by form submit of the form_genome_upload.html HTML form.
+    It formats an user provided FASTA proteome file to a BlastDatabase model and a BLAST database.
+    
+    :POST
+        execute save_uploaded_genomes_into_database to upload files and create a BlastDatabase model
+        execute execute_makeblastdb_with_uploaded_genomes celery task to format the BLAST database
+    :GET
+        display HTML form and input fields
+    
+'''
 @login_required(login_url='login')
 def upload_genome_view(request):
     try:
@@ -572,6 +570,7 @@ def upload_genome_view(request):
             upload_genome_form = UploadGenomeForm(request.user, request.POST, request.FILES)
             if upload_genome_form.is_valid():
                 with transaction.atomic():
+                    # create BlastDatabase model and upload proteome file
                     new_db = save_uploaded_genomes_into_database(
                         database_title=upload_genome_form.cleaned_data['database_title'],
                         database_description=upload_genome_form.cleaned_data['database_description'],
@@ -589,13 +588,14 @@ def upload_genome_view(request):
                     )
                     genome_file_name = upload_genome_form.cleaned_data['database_title'].replace(' ',
                                                                                                  '_').upper() + '.database'
-
                     # inside transaction atomic blog
+                    # uploaded taxmap file
                     if upload_genome_form.cleaned_data['taxmap_file'] != None:
                         execute_makeblastdb_with_uploaded_genomes.delay(
                             new_db.id,
                             new_db.path_to_database_file + '/' + genome_file_name,
                             taxmap_file=True)
+                    # uploaded taxonomic node
                     elif upload_genome_form.cleaned_data['taxonomic_node'] != None:
                         execute_makeblastdb_with_uploaded_genomes.delay(
                             new_db.id,
@@ -605,6 +605,7 @@ def upload_genome_view(request):
                         raise IntegrityError('couldnt trigger makeblastdb execution ...')
                 return success_view(request)
             else:
+                # return validation information if is_valid is false
                 context = {'UploadGenomeForm': upload_genome_form,
                            'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
         else:
@@ -626,7 +627,20 @@ def upload_genome_view(request):
                                     e))
 
 
-# TODO implement view for disentangling big genome upload view ...
+'''upload_multiple_genomes_view
+
+    This view is triggered by the submit button of the form_genome_upload_multiple_files.html HTML form.
+    It creates a new BlastDatabase model and manages the upload and BLAST database formatting procedure 
+    of the user provided proteomes.
+    
+    :POST 
+        execute save_uploaded_multiple_file_genomes_into_database function
+        execute execute_makeblastdb_with_uploaded_genomes celery task
+        create, upload and format a BLAST database by user provided files
+    :GET
+        display HTML form and input fields
+        
+'''
 @login_required(login_url='login')
 def upload_multiple_genomes_view(request):
     try:
@@ -639,12 +653,12 @@ def upload_multiple_genomes_view(request):
                                                                        extra=extra_field_count)
             if multiple_files_genome_form.is_valid():
                 with transaction.atomic():
-
+                    # upload files and create new BlastDatabase model
                     new_db = save_uploaded_multiple_file_genomes_into_database(multiple_files_genome_form.cleaned_data,
                                                                                int(extra_field_count) + 1,
                                                                                request.user.email)
                     genome_file_name = new_db.database_name.replace(' ', '_').upper() + '.database'
-
+                    # format FASTA files to BLAST database
                     execute_makeblastdb_with_uploaded_genomes.delay(
                         new_db.id,
                         new_db.path_to_database_file + '/' + genome_file_name,
@@ -653,6 +667,7 @@ def upload_multiple_genomes_view(request):
                     return success_view(request)
 
             else:
+                # return validation information if is_valid is false
                 context = {'UploadGenomeForm': upload_genome_form,
                            'MultipleFileUploadGenomeForm': multiple_files_genome_form, }
                 return render(request, 'blast_project/upload_genome_files_dashboard.html', context)
