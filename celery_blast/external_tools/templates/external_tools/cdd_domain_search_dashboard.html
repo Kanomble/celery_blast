@@ -49,7 +49,7 @@
                 <thead>
                     <tr>
                         <th>Query ID</th>
-                        <th>Analysis Progress</th>
+                        <th>Progress</th>
                         <th>View Results</th>
                         <th>Delete Search</th>
                     </tr>
@@ -62,12 +62,12 @@
                             </td>
                             {% if status.0 == 'NOTEXEC' %}
                                 {% if status.1 == 'not valid' %}
-                                    <td>
+                                    <td style="background-color: rgba(255, 165, 0, 0.3);">
                                         <p>Not Enough CDDs in Query</p>
                                     </td>
 
                                 {% else %}
-                                    <td>
+                                    <td style="background-color: rgba(0, 0, 255, 0.3);">
                                         <p>Not Executed</p>
                                     </td>
                                 {% endif %}
@@ -78,7 +78,7 @@
                                     <p>Not Executed</p>
                                 </td>
                             {% elif status.0 == 'SUCCESS' %}
-                                <td>
+                                <td style="background-color: rgba(0, 128, 0, 0.3);">
                                     <p>CDD Search Finished</p>
                                 </td>
                                 <td>
@@ -92,7 +92,7 @@
                                         for: {{ query }}</a>
                                 </td>
                             {% elif status.0 == 'PROGRESS' %}
-                                <td>
+                                <td style="background-color: rgba(0, 0, 255, 0.3);">
                                     <p>CDD Search Ongoing</p>
                                 </td>
                                 <td>
@@ -108,10 +108,10 @@
                                 </td>
                             {% elif status.0 == 'FAILURE' %}
                                 <td>
-                                    <p>CDD Search - ERROR</p>
+                                    <p  style="background-color: rgba(255, 0, 0, 0.3);">CDD Search - ERROR</p>
                                 </td>
                                 <td>
-                                    <p>CDD Search - ERROR</p>
+                                    <p  style="background-color: rgba(255, 0, 0, 0.3);">CDD Search - ERROR</p>
                                 </td>
                                 <td>
                                     <a class="btn btn-danger"
@@ -232,11 +232,15 @@
                 ctx.fillRect(x,y,width,height);
 
                 var domainText = '{{ entry.4 }}';
-                var domainTextX = width/2 + x;
+
+                var text_width = ctx.measureText(domainText).width
+
+                var domainTextX = width/2 + x - text_width/2;
                 var domainTextY = 35;
                 ctx.fillStyle = "#000000";
                 //ctx.fillStyle = hexToRgba(randomColor, 1.0);
                 ctx.font='15px sans-serif';
+
                 ctx.fillText(domainText, domainTextX, domainTextY);
 
                 var linkWidth;
@@ -265,12 +269,12 @@
 
 
         {% endfor %}
-        console.log(textElements);
         var canvasElements = document.getElementsByClassName('canvas');
 
         for(var i = 0; i < canvasElements.length; i++){
             var canvas = canvasElements[i];
             canvas.addEventListener('click', function(event) {
+
                 var current_canvas = document.getElementById(event.target.id);
                 var clickX = event.clientX - current_canvas.getBoundingClientRect().left;
                 var clickY = event.clientY - current_canvas.getBoundingClientRect().top;
@@ -288,6 +292,8 @@
 
             canvas.addEventListener('mousemove', function(ev){
                 var current_canvas = document.getElementById(ev.target.id);
+                var ctx = current_canvas.getContext("2d");
+
                 // Get the mouse position relative to the canvas element.
                 if (ev.layerX || ev.layerX == 0) { //for firefox
                     x = ev.layerX;
