@@ -598,7 +598,7 @@ def create_and_save_refseq_database_model(database_name:str, database_descriptio
     
     This function creates the BlastDatabase model, directory and table files for uploaded
     genomes. It is executed within the upload_genome_view function in the blast_project/views.py file.
-    
+    The function returns a BlastDatabase object.
     
 '''
 def save_uploaded_genomes_into_database(database_title, database_description, genome_file, assembly_entries,
@@ -642,8 +642,25 @@ def save_uploaded_genomes_into_database(database_title, database_description, ge
         raise IntegrityError('couldnt save uploaded genome model into database with exception : {}'.format(e))
 
 
-# TODO documentation
-def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_files, amount_of_entries, user_email):
+'''save_uploaded_multiple_file_genomes_into_database
+
+    This function creates the BlastDatabase model, directory and table files for uploaded
+    genomes. It is executed within the upload_multiple_genomes_view function in the blast_project/views.py file.
+    The function returns a BlastDatabase object.
+
+    :param cleaned_data_multiple_files
+        :type dict
+    :param amount_of_entries
+        :type int
+    :param user_email
+        :type str
+        
+    :returns clast_database
+        :type BlastDatabase
+'''
+def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_files:dict,
+                                                      amount_of_entries:int,
+                                                      user_email:str)->BlastDatabase:
     # 1st save db model
     # 2nd upload files
     # 3rd write accession table
