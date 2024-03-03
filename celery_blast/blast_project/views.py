@@ -400,7 +400,7 @@ def remote_project_delete_view(request, project_id: int):
     except Exception as e:
         return failure_view(request, e)
 
-
+# THIS FUNCTION IS OBSOLETE
 '''ajax_wp_to_links --> OBSOLETE
     
     Asynchronous call to NCBI-Server for fetching information of the provided query sequences.

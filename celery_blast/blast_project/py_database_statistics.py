@@ -32,8 +32,6 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR
     :returns BlastProject
         :type blast_project.models.BlastProject
 '''
-
-
 def get_project_by_id(project_id):
     return BlastProject.objects.get(id=project_id)
 
@@ -60,8 +58,6 @@ def get_remote_project_by_id(project_id):
     :returns db_df
         :type pandas.core.frame.DataFrame
 '''
-
-
 def add_taxonomic_information_to_db(user_email: str, logfile: str, taxids: list) -> pd.core.frame.DataFrame:
     try:
         with open(logfile, 'w') as log:
@@ -194,8 +190,6 @@ def add_taxonomic_information_to_db(user_email: str, logfile: str, taxids: list)
         :type list[pd.core.series.Series]
 
 '''
-
-
 def extract_taxonomic_information(logfile: str, uploaded: bool, rbh_df: pd.core.frame.DataFrame,
                                   db_df: pd.core.frame.DataFrame, taxonomic_unit: str) -> list:
     with open(logfile, 'w') as log:
@@ -279,8 +273,6 @@ def extract_taxonomic_information(logfile: str, uploaded: bool, rbh_df: pd.core.
         :type (pd.core.frame.DataFrame, pd.core.frame.DataFrame)
 
 '''
-
-
 def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.core.frame.DataFrame,
                                       tax_counts: list, taxonomic_unit: str) -> tuple:
     with open(logfile, 'w') as log:
@@ -351,8 +343,6 @@ def tax_counts_to_db_statistic_tables(logfile: str, project_id: int, db_df: pd.c
     :returns 0
         :type int
 '''
-
-
 def calculate_database_statistics(project_id: int, logfile: str, user_email: str, taxonomic_units: list) -> int:
     with open(logfile, 'w') as log:
         try:
@@ -412,6 +402,7 @@ def calculate_database_statistics(project_id: int, logfile: str, user_email: str
                     logfile_tax_to_db_stat_function = path_to_project + '/log/' + taxonomic_unit + '_tax_counts_to_db_statistics_tables.log'
                     df, normalized_df = tax_counts_to_db_statistic_tables(logfile_tax_to_db_stat_function, project_id,
                                                                           db_df, tax_counts, taxonomic_unit)
+
                     log.write("INFO:DONE extraction of {} database statistics\n".format(taxonomic_unit))
                 else:
                     log.write("INFO:the database statistics dataframes do exist, skipping creation procedure\n")
@@ -445,8 +436,6 @@ def calculate_database_statistics(project_id: int, logfile: str, user_email: str
     :return status
         :type str
 '''
-
-
 def get_database_selection_task_status(project_id: int, remote_or_local:str) -> str:
     try:
 
@@ -485,8 +474,6 @@ def get_database_selection_task_status(project_id: int, remote_or_local:str) -> 
     :return status
         :type str
 '''
-
-
 def get_database_statistics_task_status(project_id: int) -> str:
     try:
         project = get_project_by_id(project_id)
@@ -512,8 +499,6 @@ def get_database_statistics_task_status(project_id: int) -> str:
     :return returncode
         :type int
 '''
-
-
 def delete_database_statistics_task_and_output(project_id: int, logfile: str) -> int:
     try:
         with open(logfile, 'w') as log:
@@ -561,8 +546,6 @@ def delete_database_statistics_task_and_output(project_id: int, logfile: str) ->
     :returns data
         :type list[json_dicts]
 '''
-
-
 def transform_normalized_database_table_to_json(project_id: int, taxonomic_unit: str) -> list:
     try:
         df_path = BLAST_PROJECT_DIR + str(project_id) + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
@@ -602,8 +585,6 @@ def transform_normalized_database_table_to_json(project_id: int, taxonomic_unit:
         :type int
 
 '''
-
-
 def create_bokeh_plots(result_df: pd.DataFrame, database: pd.DataFrame, taxonomic_unit: str, project_id: int):
     try:
         path_to_project = BLAST_PROJECT_DIR + str(project_id)
@@ -630,8 +611,6 @@ def create_bokeh_plots(result_df: pd.DataFrame, database: pd.DataFrame, taxonomi
         :type bokeh.models.CustomJS
     
 '''
-
-
 def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: Select,
                                             taxonomy_table_callback_dict: dict) -> CustomJS:
     try:
@@ -681,8 +660,6 @@ def create_color_palette_selection_callback(curr: ColumnDataSource, color_menu: 
     :returns color_palette_menu
         :type bokeh.models.Select
 '''
-
-
 def create_color_palette_selection() -> Select:
     try:
 
@@ -711,8 +688,6 @@ def create_color_palette_selection() -> Select:
     :returns tax_menu
         :type bokeh.models.MultiSelect
 '''
-
-
 def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str) -> MultiSelect:
     try:
         unique_tax = list(bokeh_dataframe[taxonomic_unit].unique())
@@ -769,8 +744,6 @@ def build_taxonomy_menu(bokeh_dataframe: pd.DataFrame, taxonomic_unit: str) -> M
     :returns tax_menu_callback
         :type bokeh.models.CustomJS
 '''
-
-
 def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: ColumnDataSource,
                                      table_dat: ColumnDataSource, taxonomic_unit: str, tax_selection: dict,
                                      menu_qseqid: MultiSelect, xaxis_menu: Select, yaxis_menu: Select,
@@ -922,8 +895,6 @@ def build_json_callback_for_taxonomy(column_dat: ColumnDataSource, static_dat: C
     :returns y_axis_menu
         :type bokeh class
 '''
-
-
 def create_y_axis_menu(circle, axis, data_column):
     y_axis_menu = Select(options=['bitscore', 'pident', 'evalue', 'slen'],  # ,'slen'
                          value='pident',
@@ -955,8 +926,6 @@ def create_y_axis_menu(circle, axis, data_column):
     :returns y_axis_menu
         :type bokeh class
 '''
-
-
 def create_x_axis_menu(circle, axis, data_column):
     x_axis_menu = Select(options=['bitscore', 'pident', 'evalue', 'slen'],  # ,'slen'
                          value='bitscore',
@@ -992,8 +961,6 @@ def create_x_axis_menu(circle, axis, data_column):
     :returns color_dict, marker_dict
         :type tuple(dict, dict)
 '''
-
-
 def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.DataFrame) -> tuple:
     try:
         # prepare distinct colors for the specified taxonomic unit
@@ -1044,8 +1011,6 @@ def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.Dat
     :returns color_callback
         :type CustomJS
 '''
-
-
 def create_color_callback(legend_items, Curr:ColumnDataSource, Overall:ColumnDataSource, color_dict:dict,
                           DbData:ColumnDataSource, table_data_dict:dict, menu_qseqids:MultiSelect) -> CustomJS:
     try:
@@ -1128,7 +1093,6 @@ def create_color_callback(legend_items, Curr:ColumnDataSource, Overall:ColumnDat
 
     
 '''
-
 def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSource, DbData: ColumnDataSource,
                                 xaxis_menu: Select, yaxis_menu: Select,
                                 color_menu: Select, color_dict: dict, taxonomy_menus: list) -> CustomJS:
@@ -1242,8 +1206,6 @@ def create_qseqid_menu_callback(Overall: ColumnDataSource, Curr: ColumnDataSourc
     :returns db_df - used for the initial table data view
         :type pd.DataFrame
 '''
-
-
 def create_initial_bokeh_database_data(database: pd.DataFrame, data_selection: pd.DataFrame, taxcount_df: pd.DataFrame,
                                        taxonomic_unit: str) -> pd.DataFrame:
     try:
@@ -1290,8 +1252,6 @@ def create_initial_bokeh_database_data(database: pd.DataFrame, data_selection: p
     :returns result_data, color_dict
         :type tuple(pd.DataFrame, dict)
 '''
-
-
 def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: str) -> tuple:
     try:
         # RBH result dataframe
@@ -1333,8 +1293,6 @@ def create_initial_bokeh_result_data(result_data: pd.DataFrame, taxonomic_unit: 
         :type tuple(pd.DataFrame, pd.DataFrame)
     
 '''
-
-
 def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_unit: str) -> tuple:
     try:
         unique_tax = list(result_data[taxonomic_unit].unique())
@@ -1388,8 +1346,6 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
         :type CustomJS
 
 '''
-
-
 def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSource,remote_or_local:str)->CustomJS:
     task_selection_callback = CustomJS(args=dict(sc=current_selection, remote_or_local=remote_or_local), code="""
         var viewData = { 
@@ -1454,8 +1410,6 @@ def bokeh_database_statistics_django_task_button(current_selection: ColumnDataSo
     :returns returncode - 0 if successful
         :type int
 '''
-
-
 def create_linked_bokeh_plot(logfile: str, result_data: pd.DataFrame, database: pd.DataFrame, taxonomic_unit: str,
                              project_id: int) -> int:
     try:
