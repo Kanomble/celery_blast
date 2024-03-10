@@ -32,6 +32,8 @@ def get_downloaded_databases():
 def get_failed_tasks():
     return BlastDatabase.objects.get_databases_with_failed_tasks()
 
+def get_all_databases():
+    return BlastDatabase.objects.all()
 
 def get_databases_in_progress():
     return BlastDatabase.objects.get_databases_with_task_on_progress()
@@ -358,7 +360,7 @@ def create_blastdb_dir_and_table_based_on_user_selection(form_data_dict:dict)->i
 
         database_name = "selected_proteomes_database"
         counter = 1
-        databases = get_downloaded_databases()
+        databases = get_all_databases()
         for db in databases:
             if database_name in db.database_name:
                 counter += 1

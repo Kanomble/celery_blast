@@ -291,7 +291,8 @@
             });
 
             canvas.addEventListener('mousemove', function(ev){
-                var current_canvas = document.getElementById(ev.target.id);
+                //console.log(this);
+                var current_canvas = this;//document.getElementById(ev.target.id);
                 var ctx = current_canvas.getContext("2d");
 
                 // Get the mouse position relative to the canvas element.

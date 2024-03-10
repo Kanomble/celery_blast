@@ -54,7 +54,11 @@
                     </tbody>
                 </table>
                 <br><br>
-                <button id="button" class="btn btn-dark">Download and format selected proteomes</button>
+                {% if Database.uploaded_files == False %}
+                    <button id="button" class="btn btn-dark">Download and format selected proteomes</button>
+                {% else %}
+                    <button id="button" class="btn btn-dark disabled">Download and format selected proteomes</button>
+                {% endif %}
                 <br><br>
             </form>
         </div>
