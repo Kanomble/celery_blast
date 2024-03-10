@@ -349,6 +349,7 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
+- [ ] fix error if no results for one query 
 - [ ] fix fasta file upload errors if ending is .fasta in local BLAST searches
 - [ ] fix correct error displaying if there are no results in a reciprocal BLAST search
   - [ ] add warning during project creation if in the database reside more than one organism with the specified taxid
