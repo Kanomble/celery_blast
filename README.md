@@ -349,7 +349,6 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
-- [ ] fix error if no results for one query 
 - [ ] fix fasta file upload errors if ending is .fasta in local BLAST searches
 - [ ] fix correct error displaying if there are no results in a reciprocal BLAST search
   - [ ] add warning during project creation if in the database reside more than one organism with the specified taxid
@@ -367,13 +366,13 @@ This allows interaction with the associated celery task and can be used for disp
 - [ ] add validation for entrez_queries
 - [x] fix one-way BLAST snakemake pipeline
 - [ ] add videos, links to init page
-- [ ] add option to filter for genomes directly within the refseq/genbank assembly summary files
+- [X] add option to filter for genomes directly within the refseq/genbank assembly summary files
 - [X] add option to selection contrained phylogeny just with selection based on taxonomic units
 - [ ] add setup option after installation -> directly download CDD/refseq/genbank assembly summary files (maybe add a wizard)
 - [ ] add error message if filtered database table is empty 
 - [ ] add error message if there are 0 hits within the forward blast dataframe
-- [ ] add rpsbproc utility for initial CDD searches
-  - [ ] searches for the PCA can still be done with the table output that has to get generated in an additional search
+- [X] add rpsbproc utility for initial CDD searches
+  - [X] searches for the PCA can still be done with the table output that has to get generated in an additional search
 
 ## useful documentation:
 - Interaction with NCBI (Entrez) via python [Biopython package](https://biopython.org/wiki/Documentation)
