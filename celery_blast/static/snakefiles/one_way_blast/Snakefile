@@ -40,7 +40,7 @@ rule query_sequences_to_html_table:
 		"../../../static/snakefiles/one_way_blast/query_sequences_to_html_table.py"
 
 rule filter_blast_results_table_to_csv:
-	input: results_table="blast_results_with_tax.table"
+	input: results_table="blast_results_with_tax.table", query_file=config['query_sequence']
 	output: result_csv=expand("{qseqid}/blast_results_with_tax.table",qseqid=QSEQIDS),
             ids=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS)
 	log: log="filter_blast_results_table_to_csv.log"

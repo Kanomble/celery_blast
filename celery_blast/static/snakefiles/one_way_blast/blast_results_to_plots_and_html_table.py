@@ -29,6 +29,7 @@ from bokeh.core.enums import MarkerType
 plt.rcParams['legend.fontsize'] = 10
 from bokeh.palettes import inferno, viridis, magma, Spectral
 from random import shuffle
+from pandas.errors import EmptyDataError
 
 def create_color_and_marker_dictionaries_for_bokeh_dataframe(result_data: pd.DataFrame) -> tuple:
     try:
@@ -565,9 +566,15 @@ def create_unlinked_bokeh_plot(result_data: pd.DataFrame, taxonomic_unit: str) -
 
         menu_qseqids.js_on_change('value', menu_qseqid_callback)
 
-        range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + result_data['bitscore'].min(),
-                                   value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
-                                   title="Bitscore Range Slider")
+        if result_data['bitscore'].max() != 0:
+
+            range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + result_data['bitscore'].min(),
+                                       value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
+                                       title="Bitscore Range Slider")
+        else:
+            range_slider = RangeSlider(start=0, end=result_data['bitscore'].max() + 1,
+                                       value=(result_data['bitscore'].min(), result_data['bitscore'].max()), step=1,
+                                       title="Bitscore Range Slider")
 
         circle_size_spinner = Spinner(title="Circle size",
                                       low=0, high=60, step=5,
@@ -758,7 +765,7 @@ with open(snakemake.log['log'], 'w') as logfile:
     try:
         logfile.write("INFO:starting to fetch taxonomic information...\n")
 
-        #TODO obsolete?
+        no_hits = False
         queries = {}
         queryfile = open(snakemake.input['query_file'], "r")
         for line in queryfile.readlines():
@@ -768,9 +775,24 @@ with open(snakemake.log['log'], 'w') as logfile:
                 queries[prot_id] = line
         queryfile.close()
         logfile.write("INFO:trying to load blast dataframe ...\n")
-        df = pd.read_table(snakemake.input['blast_results'], delimiter="\t", header=None)
-        df.columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore","slen", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
+
+        columns = ["qseqid", "sseqid", "pident", "evalue", "bitscore","slen", "qgi", "sgi", "sacc", "staxids", "sscinames", "scomnames",
                       "stitle"]
+        try:
+            df = pd.read_table(snakemake.input['blast_results'], delimiter="\t", header=None)
+        except EmptyDataError:
+            empty_data_dict = {}
+            for col in columns:
+                empty_data_dict[col] = "no information"
+            empty_data_dict["staxids"] = 0
+            empty_data_dict["pident"] = 0
+            empty_data_dict["evalue"] = 0
+            empty_data_dict["bitscore"] = 0
+            empty_data_dict["slen"] = 0
+            df = pd.DataFrame(empty_data_dict, index=[0])
+            no_hits = True
+
+        df.columns = columns
         logfile.write("INFO:loaded BLAST dataframe ...\n")
 
         # normalize taxonomic identifier
@@ -789,14 +811,21 @@ with open(snakemake.log['log'], 'w') as logfile:
 
         unique_taxids = list(df["staxids"].unique())
 
-        tax_df = add_taxonomic_information_to_db(snakemake.params['user_email'], logfile, unique_taxids)
+        if no_hits == False:
+            tax_df = add_taxonomic_information_to_db(snakemake.params['user_email'], logfile, unique_taxids)
+        else:
+            columns = ["staxids", 'organism_name_taxdb', 'genus', 'family', 'superfamily', 'order', 'class', 'phylum']
+            tax_df_dict = {}
+            for col in columns:
+                tax_df_dict[col] = "no information"
+            tax_df_dict["staxids"] = 0
+            tax_df = pd.DataFrame(tax_df_dict, index=[0])
 
         if tax_df['staxids'].dtype != 'int':
             tax_df['staxids'] = tax_df['staxids'].apply(slice_taxids)
             tax_df['staxids'] = tax_df['staxids'].astype('int64')
 
         result_df = df.merge(tax_df, on='staxids')
-
 
         dataframes = []
 
