@@ -7,23 +7,21 @@ result_data.columns=["qseqid", "sseqid", "pident", "evalue", "bitscore","slen", 
                   "stitle"]
 result_data['qseqid'] = result_data['qseqid'].map(lambda line: line.split('.')[0])
 result_data['sacc_transformed'] = result_data['sacc'].map(lambda line: line.split('.')[0])
-#lets try limiting the results here
-x=3
 queries = []
 with open(snakemake.input['query_file'],'r') as fhandle:
     for line in fhandle.readlines():
-        if line[0] == '>':
-            query = line.split('>')[1].split(' ')[0]
-            if '.' in query:
-                query = query.split('.')[0]
-            #print(query)
-            queries.append(query)
+        if ">" in line:
+            prot_id = line.split(" ")[0].split(">")[1].strip()
+            if "|" in prot_id:
+                prot_id = prot_id.split("|")[1]
+            prot_id = prot_id.split(' ')[0].split(".")[0]
+            queries.append(prot_id)
 
 new_result_df= pd.DataFrame()
 for query in queries:
     result_data = result_data[result_data['qseqid'] == query]
     #limit target_df on one best hit
-    result_data = result_data.nlargest(x, 'bitscore')
+    result_data = result_data.nlargest(3, 'bitscore')
 #try:
     # the backward blast is currently limited to output only the best match, but the best match can contain several hsps,
     # thus it is possible that there are multiple lines of one qseqid present, which gets loaded by reading the dictionary for
@@ -34,19 +32,7 @@ for query in queries:
     #sys.exit(123)
 
 
-def add_taxonomic_information_to_result_dataframe(result_data, query_file):
-    def read_query_file(query_file):
-        queries = {}
-        queryfile = open(query_file, "r")
-        for line in queryfile.readlines():
-            if ">" in line:
-                prot_id = line.split(">")[1].split(' ')[0].split('.')[0]
-                line = ' '.join(line.split(">")[1].split(' ')[1:]).rstrip()
-                queries[prot_id] = line
-        queryfile.close()
-        return queries
-
-
+def add_taxonomic_information_to_result_dataframe(result_data):
     df = result_data.copy()
     '''
     queries = read_query_file(query_file)
@@ -162,13 +148,13 @@ def add_taxonomic_information_to_result_dataframe(result_data, query_file):
 
     result_df = pd.concat(dataframes)
     '''
-    return df #result_df
+    return df
 
 
 
 result_data.to_csv(snakemake.output['results_csv'],header=list(result_data.columns))
 try:
-    big_result_data = add_taxonomic_information_to_result_dataframe(result_data, snakemake.input['query_file'])
+    big_result_data = add_taxonomic_information_to_result_dataframe(result_data)
 except:
     #returncode for error in taxonomic information adding
     sys.exit(124)

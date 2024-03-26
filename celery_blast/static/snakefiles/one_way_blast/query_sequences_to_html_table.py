@@ -21,9 +21,12 @@ def get_additional_protein_information(target_file: str) -> dict:
                 header = {}
                 for line in proteins.readlines():
                     if line.startswith(">"):
-                        if "|" in line:
-                            line = line.replace("|", " ")
-                        acc = line.split(" ")[0].split(">")[-1].split(".")[0]
+                        acc = line.split(" ")[0].split(">")[1].strip()
+                        if "|" in acc:
+                            acc = acc.split("|")[1]
+                        acc = acc.split(".")[0]
+
+                        line = line.strip()
                         protein_info = line.split(" ")[1:]
                         protein_info = " ".join(protein_info)
                         protein_info = protein_info.rstrip()
@@ -51,12 +54,15 @@ def get_protein_length(target_file: str) -> dict:
 
             for line in fasta_file.readlines():
                 if line.startswith(">"):
-                    if "|" in line:
-                        line = line.replace("|", " ")
-                    acc = line.split(" ")[0].split(">")[-1].split(".")[0]
-                    proteins[acc] = ""
+                    prot_id = line.split(" ")[0].split(">")[1].strip()
+
+                    if "|" in prot_id:
+                        prot_id = prot_id.split("|")[1]
+
+                    prot_id = prot_id.split(' ')[0].split(".")[0]
+                    proteins[prot_id] = ""
                 else:
-                    proteins[acc] += line.rstrip()
+                    proteins[prot_id] += line.rstrip()
 
             for key in proteins.keys():
                 proteins[key] = len(proteins[key])
@@ -82,10 +88,13 @@ def get_target_header(target_file: str) -> list:
             header = []
             for line in proteins.readlines():
                 if line.startswith(">"):
-                    if "|" in line:
-                        line = line.replace("|", " ")
-                    acc = line.split(" ")[0].split(">")[-1].split(".")[0]
-                    header.append(acc)
+                    prot_id = line.split(" ")[0].split(">")[1].strip()
+
+                    if "|" in prot_id:
+                        prot_id = prot_id.split("|")[1]
+
+                    prot_id = prot_id.split(' ')[0].split(".")[0]
+                    header.append(prot_id)
         return header
     except Exception as e:
         raise Exception("[-] ERROR during reading query sequence file with exception: {}".format(e))
@@ -329,37 +338,60 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
     except Exception as e:
         raise Exception("[-] ERROR during creation of pandas html tables with exception: {}".format(e))
 
+with open(snakemake.log[0],"w") as logfile:
+    try:
+        logfile.write("INFO:starting to produce query sequence html table ...\n")
+        logfile.write("INFO:getting target header\n")
+        proteins = get_target_header(snakemake.input['target_file'])
+        logfile.write("INFO:getting target header\n")
 
-proteins = get_target_header(snakemake.input['target_file'])
-additional_infos = get_additional_protein_information(snakemake.input['target_file'])
-protein_length = get_protein_length(snakemake.input['target_file'])
+        additional_infos = get_additional_protein_information(snakemake.input['target_file'])
+        logfile.write("INFO:getting target header\n")
 
-unknown_proteins = []
-known_proteins = []
+        protein_length = get_protein_length(snakemake.input['target_file'])
+        logfile.write("INFO:getting target header\n")
 
-try:
-    records = fetch_protein_records(proteins, snakemake.params['email'])
-    for record in records:
-        known_proteins.append(record['GBSeq_locus'])
 
-    for protein in proteins:
-        if protein not in known_proteins:
-            unknown_proteins.append(protein)
-    protein_information = parse_entrez_xml(records)
-except Exception as e:
-    print("[-] There are no protein information available on NCBI")
-    unknown_proteins = proteins
-    protein_information = {}
-    protein_information['queries'] = []
-    protein_information['features'] = {}
-    protein_information['links'] = {}
-    protein_information['general_information'] = {}
+        unknown_proteins = []
+        known_proteins = []
+        logfile.write("INFO:getting target header: {}\n".format(proteins))
+        try:
+            records = fetch_protein_records(proteins, snakemake.params['email'])
+            logfile.write("INFO:length of records: {}\n".format(len(records)))
+            for record in records:
+                logfile.write("INFO:working with record: {}\n".format(record['GBSeq_locus']))
+                known_proteins.append(record['GBSeq_locus'])
 
-for protein in unknown_proteins:
-    protein_information['queries'].append(protein)
-    protein_information['features'][protein] = {'': [additional_infos[protein]]}
-    protein_information['links'][protein] = {'pfam': '', 'jvci': '', 'cdd': '', 'refseq': ''}
-    protein_information['general_information'][protein] = (
-    additional_infos[protein], protein_length[protein], 'input organism')
+            for protein in proteins:
+                if protein not in known_proteins:
+                    unknown_proteins.append(protein)
+            protein_information = parse_entrez_xml(records)
+            logfile.write("INFO:getting target header\n")
 
-create_pandas_df_and_html_table(proteins,protein_information,snakemake.output['output_html'],snakemake.output['output_csv'])
+        except Exception as e:
+            logfile.write("ERROR: There are no protein information available on NCBI\n")
+            unknown_proteins = proteins
+            protein_information = {}
+            protein_information['queries'] = []
+            protein_information['features'] = {}
+            protein_information['links'] = {}
+            protein_information['general_information'] = {}
+
+        logfile.write("INFO:unknown proteins: {}\n".format(unknown_proteins))
+        logfile.write("\tINFO:{}\n".format(protein_length))
+
+        for protein in unknown_proteins:
+
+            protein_information['queries'].append(protein)
+            protein_information['features'][protein] = {'': [additional_infos[protein]]}
+            protein_information['links'][protein] = {'pfam': '', 'jvci': '', 'cdd': '', 'refseq': ''}
+            protein_information['general_information'][protein] = (
+            additional_infos[protein], protein_length[protein], 'input organism')
+            logfile.write("INFO:working with protein: {}\n".format(protein))
+
+        logfile.write("INFO: creating pandas dataframe ...\n")
+        create_pandas_df_and_html_table(proteins,protein_information,snakemake.output['output_html'],snakemake.output['output_csv'])
+        logfile.write("DONE\n")
+
+    except Exception as e:
+        logfile.write("ERROR with exception: {}\n".format(e))

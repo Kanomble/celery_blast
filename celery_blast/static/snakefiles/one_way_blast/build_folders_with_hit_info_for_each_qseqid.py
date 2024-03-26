@@ -7,10 +7,13 @@ try:
     with open(snakemake.input['query_file'],'r') as fhandle:
         for line in fhandle.readlines():
             if line[0] == '>':
-                query = line.split('>')[1].split(' ')[0]
-                if '.' in query:
-                    query = query.split('.')[0]
-                queries.append(query)
+                prot_id = line.split(" ")[0].split(">")[1].strip()
+
+                if "|" in prot_id:
+                    prot_id = prot_id.split("|")[1]
+
+                prot_id = prot_id.split(' ')[0].split(".")[0]
+                queries.append(prot_id)
 
     for query in queries:
         target_df = result_df[result_df['qseqid'] == query]

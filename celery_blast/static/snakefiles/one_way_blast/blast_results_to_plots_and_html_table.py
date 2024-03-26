@@ -1,12 +1,3 @@
-'''plot results and update taxonomic information
-
-input: blast_results.table, config['query_sequence']
-output: genus_bars.html, blast_results.html, blast_results_with_tax.table
-
-Expands blast results table with tax information.
-Creates altair plots based on tax information.
-Produces blast results in html file.
-'''
 
 from Bio import Entrez
 import sys

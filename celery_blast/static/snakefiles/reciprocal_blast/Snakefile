@@ -105,7 +105,7 @@ rule fw_result_processing:
 											 8: params.taxid,
 											 9: scientific_name,
 											 10: scientific_name,
-											 11: "artificially added query not in FW database",
+											 11: "artificially added RBH - not in FW database",
 											 12: len(queries[query])}
 						forward_df = forward_df.append(new_forward_entry,ignore_index=True)
 				logfile.write("INFO:writing new forward dataframe to disc ...\n")

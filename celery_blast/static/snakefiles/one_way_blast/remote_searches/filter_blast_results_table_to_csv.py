@@ -41,7 +41,11 @@ with open(snakemake.log[0], "w") as log_f:
         queryfile = open(snakemake.input['query_file'], "r")
         for line in queryfile.readlines():
             if ">" in line:
-                prot_id = line.rstrip().split(">")[1].split(' ')[0].split(".")[0]
+                prot_id = line.split(" ")[0].split(">")[1].strip()
+                if "|" in prot_id:
+                    prot_id = prot_id.split("|")[1]
+                prot_id = prot_id.split(' ')[0].split(".")[0]
+
                 queries[prot_id] = ""
             queries[prot_id] += line.rstrip()
 
