@@ -122,7 +122,8 @@ with open(snakemake.log['log'],'w') as logfile:
             with open(output_file_path,'w') as output:
                 sacc_list = list(target_df['sacc'].unique())
                 for sacc in sacc_list:
-                    output.write(sacc+'\n')
+                    if sacc.split(".")[0] not in queries:
+                        output.write(sacc+'\n')
 
             plt.close('all')
         hit_info_file.close()

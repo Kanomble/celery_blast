@@ -3,6 +3,7 @@
 configfile: "./snakefile_config"
 import pandas as pd
 from math import ceil
+from Bio import Entrez
 
 #PIPELINE PREPARATION
 #filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
@@ -15,7 +16,8 @@ with open(config['query_sequence'],'r') as qseqfile:
 			qseq_id = line.split(" ")[0].split(">")[1].split(".")[0]
 			QSEQIDS.append(qseq_id)
 			QSEQIDS_SEQUENCE_DICT[qseq_id] = ""
-		QSEQIDS_SEQUENCE_DICT[qseq_id] += line.rstrip()
+		else:
+			QSEQIDS_SEQUENCE_DICT[qseq_id] += line.rstrip()
 
 rule all:
 	input:
@@ -56,22 +58,60 @@ rule forward_blast:
 #RULE 2
 #collects the subject id's of the forward BLAST and writes those id's into a file that is used by the bw_query_preparation rule (RULE 3)
 rule fw_result_processing:
-	input: fw_res="blastp_fw_out.table", fw_blast_logs="log/forward_blast.log"
-	params: taxid=config["bw_taxid"]
+	input: fw_res="blastp_fw_out.table", fw_blast_logs="log/forward_blast.log", fw_queries=config["query_sequence"]
+	params: taxid=config["bw_taxid"], user_email=config["user_email"], forward_dataframe="blastp_fw_out.table"
 	output: gi_list="bw_queries_gi_list_for_blastdbcmd.txt"
 	log: log="log/fw_result_processing.log"
 	run:
-		with open(log[0],'w') as logfile:
+		with open(log.log,'w') as logfile:
 			try:
 				logfile.write("INFO:working with forward blast results: writing target sequences into output file\n")
-				fw_results = pd.read_table(input[0], header=None)
-				with open(output[0],"w+") as out:
-					target_list = list(fw_results[7][:].unique())
+				forward_df = pd.read_table(input.fw_res, header=None)
+				with open(output.gi_list,"w+") as out:
+					target_list = list(forward_df[7][:].unique())
 					for gi in target_list:
 						out.write(gi+"\n")
 
 					logfile.write("INFO:done")
-				logfile.write(('INFO:done writing {} target sequences into output file\n'.format(len(fw_results[7][:].unique()))))
+				logfile.write(('INFO:done writing {} target sequences into output file\n'.format(len(forward_df[7][:].unique()))))
+				logfile.write("INFO:checking if query sequences are present in forward dataframe ...\n")
+				logfile.write("INFO:open query file ...\n")
+				queries = {}
+				with open(input.fw_queries,"r") as queryfile:
+					for line in queryfile.readlines():
+						if ">" in line:
+							prot_id = line.rstrip().split(">")[1].split(' ')[0]
+							queries[prot_id] = ""
+						else:
+							queries[prot_id] += line.rstrip()
+
+				try:
+					Entrez.email = params.user_email
+					search = Entrez.efetch(id=params.taxid,db='taxonomy',retmode='xml')
+					record = Entrez.read(search)
+					search.close()
+					scientific_name = record[0]['ScientificName']
+				except:
+					logfile.write("INFO:haven't found scientific name for provided taxonomic node: {}\n".format(params.taxid))
+					logfile.write("INFO:scientific name: no information ...\n")
+					scientific_name = "no information"
+
+				for query in queries.keys():
+					temp_data = forward_df.copy()
+					temp_data[1] = temp_data[1].apply(lambda x: x.split(".")[0])
+					temp_data = temp_data[temp_data[1] == query.split(".")[0]]
+					if len(temp_data) == 0:
+						logfile.write("INFO:working with query: {}\n".format(query))
+						logfile.write("\tINFO:adding placeholder for query sequence: {} to forward BLAST dataframe\n".format(query))
+						new_forward_entry = {0: query, 1: query, 2: 100.0, 3: 0.0, 4: 600, 5: 0, 6: 0, 7: query,
+											 8: params.taxid,
+											 9: scientific_name,
+											 10: scientific_name,
+											 11: "artificially added query not in FW database",
+											 12: len(queries[query])}
+						forward_df = forward_df.append(new_forward_entry,ignore_index=True)
+				logfile.write("INFO:writing new forward dataframe to disc ...\n")
+				forward_df.to_csv(params.forward_dataframe, index=False, header=False, sep="\t")
 				logfile.write("DONE\n")
 			except Exception as e:
 				logfile.write("ERROR:{}\n".format(e))
