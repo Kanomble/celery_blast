@@ -57,6 +57,7 @@ rule forward_blast:
 #collects the subject id's of the forward BLAST and writes those id's into a file that is used by the bw_query_preparation rule (RULE 3)
 rule fw_result_processing:
 	input: fw_res="blastp_fw_out.table", fw_blast_logs="log/forward_blast.log"
+	params: taxid=config["bw_taxid"]
 	output: gi_list="bw_queries_gi_list_for_blastdbcmd.txt"
 	log: log="log/fw_result_processing.log"
 	run:
