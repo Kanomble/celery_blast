@@ -20,6 +20,7 @@ try:
         #apply bitscore filter
         if len(forward_df) <= 0:
             logfile.write("WARNING:there are no hits in the forward BLAST table...\n")
+            logfile.write("WARNING:adding original query sequence as hit ...\n")
         else:
             forward_df = forward_df[forward_df[4] >= snakemake.params['bitscore_filter']]
             if len(forward_df) <= 0:
@@ -46,6 +47,8 @@ try:
             qseq_result_df = qseq_df_bw.merge(qseq_df_fw,how='inner',on=['targetid','qseqid']).drop_duplicates()
             logfile.write("\tINFO:found {} RBHs\n".format(len(qseq_result_df)))
             result_df = pd.concat([result_df,qseq_result_df],ignore_index=True)
+
+
 
         # returncode for no reciprocal hits
         if len(result_df['targetid']) == 0:

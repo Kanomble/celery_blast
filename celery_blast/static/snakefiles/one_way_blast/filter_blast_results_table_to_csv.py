@@ -25,6 +25,7 @@ with open(snakemake.log['log'], 'w') as log_f:
         if len(result_data["qseqid"]) == 1:
             if "no information" in list(result_data["qseqid"]):
                 no_hits = True
+
         if no_hits == False:
             log_f.write("INFO:found {} hits in the result table.\n".format(len(result_data["qseqid"])))
         else:
@@ -34,9 +35,9 @@ with open(snakemake.log['log'], 'w') as log_f:
         queryfile = open(snakemake.input['query_file'], "r")
         for line in queryfile.readlines():
             if ">" in line:
-                prot_id = line.split(">")[1].split(' ')[0].split(".")[0]
-                line = ' '.join(line.split(">")[1].split(' ')[1:]).rstrip()
-                queries[prot_id] = line
+                prot_id = line.rstrip().split(">")[1].split(' ')[0].split(".")[0]
+            queries[prot_id] = line.rstrip()
+
         queryfile.close()
 
         qseqids = queries.keys()

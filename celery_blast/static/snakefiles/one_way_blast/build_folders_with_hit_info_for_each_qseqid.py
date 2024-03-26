@@ -10,7 +10,6 @@ try:
                 query = line.split('>')[1].split(' ')[0]
                 if '.' in query:
                     query = query.split('.')[0]
-                print(query)
                 queries.append(query)
 
     for query in queries:

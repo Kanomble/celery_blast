@@ -7,12 +7,15 @@ from math import ceil
 #PIPELINE PREPARATION
 #filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
 QSEQIDS = []
+QSEQIDS_SEQUENCE_DICT = {}
 with open(config['query_sequence'],'r') as qseqfile:
 	for line in qseqfile.readlines():
 		if ">" in line:
 			#TODO adjust qseq_ids in query_sequence file in order to assign a new unique name ?
 			qseq_id = line.split(" ")[0].split(">")[1].split(".")[0]
 			QSEQIDS.append(qseq_id)
+			QSEQIDS_SEQUENCE_DICT[qseq_id] = ""
+		QSEQIDS_SEQUENCE_DICT[qseq_id] += line.rstrip()
 
 rule all:
 	input:
@@ -62,8 +65,11 @@ rule fw_result_processing:
 				logfile.write("INFO:working with forward blast results: writing target sequences into output file\n")
 				fw_results = pd.read_table(input[0], header=None)
 				with open(output[0],"w+") as out:
-					for gi in fw_results[7][:].unique():
+					target_list = list(fw_results[7][:].unique())
+					for gi in target_list:
 						out.write(gi+"\n")
+
+					logfile.write("INFO:done")
 				logfile.write(('INFO:done writing {} target sequences into output file\n'.format(len(fw_results[7][:].unique()))))
 				logfile.write("DONE\n")
 			except Exception as e:
@@ -84,13 +90,34 @@ rule bw_query_preparation:
 #RULE 4
 #backward blast rule. the backward blast is divided into chunks of 100 query sequences.
 rule backward_blast:
-	input: bw_queries="bw_queries.faa", bw_query_preparation_logs="log/bw_query_preparation.log"
+	input: bw_queries="bw_queries.faa", gi_list="bw_queries_gi_list_for_blastdbcmd.txt", bw_query_preparation_logs="log/bw_query_preparation.log"
 	output: "blastp_bw_out.table"
 	params: word_size=config['bw_word_size'],e_value=config['bw_e_value'],num_alignments=config['bw_num_alignments'],max_hsps=config['bw_max_hsps'],num_threads=config['bw_num_threads'],taxid=config['bw_taxid'],database=config['backwarddb'],intermediate_filename="inter_blast.table"
 	log: log="log/backward_blast.log"
 	run:
 		with open(log[0],'w') as logfile:
 			try:
+				logfile.write("INFO:checking if query sequences are within backward BLAST sequences ...\n")
+				logfile.write("INFO:open gi list file ...\n")
+				bw_sequences = []
+				with open(input.gi_list, "r") as gi_file:
+					for line in gi_file.readlines():
+						target_id = line.rstrip().split(".")[0]
+						#some target_ids are in multiple genomes just check if one of them corresponds to the query sequence
+						if target_id not in bw_sequences:
+							bw_sequences.append(target_id)
+
+				logfile.write("INFO:done, checking for query sequence presence within bw_sequences list ...\n")
+				with open(input.bw_queries, "a") as bw_queries:
+					for query in QSEQIDS:
+						if query not in bw_sequences:
+							logfile.write("\tINFO:detected query, which is not present within the forward BLAST dataframe, adding query to backward queries ...\n")
+							header=">{}\n".format(query)
+							sequence=QSEQIDS_SEQUENCE_DICT[query]+"\n"
+							bw_queries.write(header)
+							bw_queries.write(sequence)
+
+				logfile.write("INFO:done checking bw queries.\n")
 				logfile.write("INFO:starting backward blast ...\n")
 				step = 100
 				sequence_dict = {}
