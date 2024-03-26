@@ -71,8 +71,6 @@ rule fw_result_processing:
 					target_list = list(forward_df[7][:].unique())
 					for gi in target_list:
 						out.write(gi+"\n")
-
-					logfile.write("INFO:done")
 				logfile.write(('INFO:done writing {} target sequences into output file\n'.format(len(forward_df[7][:].unique()))))
 				logfile.write("INFO:checking if query sequences are present in forward dataframe ...\n")
 				logfile.write("INFO:open query file ...\n")
@@ -98,8 +96,8 @@ rule fw_result_processing:
 
 				for query in queries.keys():
 					temp_data = forward_df.copy()
-					temp_data[1] = temp_data[1].apply(lambda x: x.split(".")[0])
-					temp_data = temp_data[temp_data[1] == query.split(".")[0]]
+					temp_data[7] = temp_data[7].apply(lambda x: x.split(".")[0])
+					temp_data = temp_data[temp_data[7] == query.split(".")[0]]
 					if len(temp_data) == 0:
 						logfile.write("INFO:working with query: {}\n".format(query))
 						logfile.write("\tINFO:adding placeholder for query sequence: {} to forward BLAST dataframe\n".format(query))
