@@ -21,6 +21,24 @@ def get_users_one_way_blast_projects(userid):
 def get_users_one_way_remote_blast_projects(userid):
     return OneWayRemoteBlastProject.objects.get_blast_projects_by_userid(userid)
 
+def check_if_one_way_project_title_exists(local_or_remote:str,new_project_title:str):
+    try:
+        if local_or_remote == "local":
+            local_projects = OneWayBlastProject.objects.all()
+            for project in local_projects:
+                if project.project_title == new_project_title:
+                    return True
+        elif local_or_remote == "remote":
+            remote_projects = OneWayRemoteBlastProject.objects.all()
+            for project in remote_projects:
+                if project.r_project_title == new_project_title:
+                    return True
+        else:
+            raise Exception("[-] Project is neither remote nor local ...")
+        return False
+    except Exception as e:
+        raise Exception("ERROR during project title form validation with excpetion: {}".format(e))
+
 
 def create_one_way_remote_project_from_form(valid_project_form, user, settings, query_sequence_filename):
     try:

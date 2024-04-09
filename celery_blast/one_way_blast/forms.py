@@ -2,6 +2,7 @@ from string import punctuation, ascii_letters
 
 from blast_project.py_biopython import fetch_protein_records
 from blast_project.py_django_db_services import get_all_succeeded_databases
+from .py_django_db_services import check_if_one_way_project_title_exists
 from django import forms
 
 
@@ -44,6 +45,11 @@ class OneWayProjectCreationForm(forms.Form):
         query_file = cleaned_data['query_sequence_file']
         query_sequences = cleaned_data['query_sequence_text']
         user_email = cleaned_data['user_email']
+        project_title = cleaned_data['project_title']
+
+        # check if project title exists
+        if check_if_one_way_project_title_exists("local", project_title):
+            self.add_error('project_title', 'the specified project title already exists, please choose another title')
 
         # upload a query file or specify valid protein identifiers
         if query_file is None and query_sequences == '':
@@ -179,6 +185,11 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         query_file = cleaned_data['r_query_sequence_file']
         query_sequences = cleaned_data['r_query_sequence_text']
         user_email = cleaned_data['r_user_email']
+        project_title = cleaned_data['r_project_title']
+
+        # check if project title already exists
+        if check_if_one_way_project_title_exists("remote", project_title):
+            self.add_error('r_project_title', 'the specified project title already exists, please choose another title')
 
         # upload a query file or specify valid protein identifiers
         if query_file == None and query_sequences == '':

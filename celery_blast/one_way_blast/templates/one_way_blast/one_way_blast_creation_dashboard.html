@@ -47,6 +47,60 @@
     {% if OneWayProjectCreationForm.errors %} onload="loadRemoteOrLocal('local')" {% endif %} {% endblock %}
 {% block content %}
 
+    <div class="dashboard_project_list_col">
+        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Normal BLAST Project Creation Setup </b> </h2>
+        <br>
+
+        <div id="input_field_information" style="display: none">
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <b> Project Title </b> <br>
+                    <p style="text-align: left;font-size: medium"> Just enter a UNIQUE project title.
+                        This field is mandatory as it is needed for correct project assignment. </p>
+                </li>
+                <li class="list-group-item">
+                    <b> Query Sequences </b> <br>
+                    <p style="text-align: left;font-size: medium">Upload a query sequence FASTA file. <br>
+                        <br>
+                        Example target file content:
+                        <br>
+                        <br>
+                        >WP_087494701.1 lipopolysaccharide heptosyltransferase I [Curvibacter sp. AEP1-3]<br>
+                        MGATHPASCRIGGGFALKAPQKILIVKLSSLGDVVHTMPAVQDLRAAFPRARIDWVVERGFAPLVARCEG<br>
+                        VARVIPCDIRIWSKKPFAAATRAAWRSFKADLQQDAYDAVIDLQGLSKSALVAWLARTTPDGRRYAMANQ<br>
+                        TEGSGYEAPTRWVADTAIALEAHVHAVERGRLLCAKALGYTPADALRFGLVGQSKALSAPLPKHVGHADN<br>
+                        PFVPRKPLVALVHGTSRVDKEWPLEHWIALGRRLNDAGFGVSLPHAGARELATSQAIAAGLDEAWVLPAV<br>
+                        ALDVLTDTLAHCAGVVGVDSGVSHIAVALDLPHVQIYNFDTAWRTGPAALDARGKPARQCSVYAQPCPEV<br>
+                        ESVWSAWEALATPVLSR<br>
+                        >WP_087495532.1 lipopolysaccharide heptosyltransferase II [Curvibacter sp. AEP1-3]<br>
+                        MIKALVIAPQWIGDAVMTEPLLRRLAARGERITVAAVPWVAPVYRAMPQVAEVLVLPFARGGVQWAARRA<br>
+                        YAAALRGQFAKAYVCPNSLKSALIPFWAGIPERIGYTGELRFGMLNQRLPNPPEGSRPPMVAFYSALSGE<br>
+                        AGVDTDRPALQVAADAIAAVLAPRALHAQGFYVVAPGAEYGPAKRWPATHFAALVTRLDKPVLLLGSAKD<br>
+                        DAVCNEIAEAVNAVRPGHCANLAGRTSLDEAVALIAGAHAMVSNDSGLMHVAAAFGVPQVAIFGSSSPLH<br>
+                        TPPLNPAATVLWLKNDPSYQPPLDCAPCFKRDCPLGHTRCLNDITSDKVLSVL<br>
+                        <br>
+                        The sequence identifier (the genome from which you receive the sequences) have to reside in the backward database. <br>
+                        A careful design of query sequences is recommended as too much starting sequences can significantly increase the running time. </p>
+                </li>
+                <li class="list-group-item">
+                    <b> Protein Identifier </b>
+                    <p style="text-align: left;font-size: medium">
+                        If you dont want to upload a FASTA file containing your query sequences, you can list protein identifier
+                        separated by commas. E.g.: WP_087495532.1, WP_087494701.1
+                    </p>
+                </li>
+                <li class="list-group-item">
+                    <b> BLAST database </b> <br>
+                    <p style="text-align: left;font-size: medium">
+                        This database is the "search space" for your provided query sequences. <br>
+                    </p>
+                </li>
+            </ul>
+            <br>
+        </div>
+        <button class="btn btn-dark" onclick="displayDivElement('input_field_information')" style="position: absolute;top: 10px; right: 10px;">Input Field Info</button>
+    </div>
+
     <div class="text-center dashboard_project_list_col">
         <form name="project_creation_menu" action="javascript:void(0)" id="one_way_project_creation_form">
             <div class="custom-control custom-radio custom-control-inline">

@@ -17,7 +17,7 @@ This Website can be used for the creation of reciprocal BLAST projects.
 {% block content %}
 <div id="post_form_container">
     <div class="dashboard_project_list_col">
-        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Project Creation Setup </b> </h2>
+        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Reciprocal BLAST Project Creation Setup </b> </h2>
         <br>
 
         <div id="input_field_information" style="display: none">
@@ -53,6 +53,13 @@ This Website can be used for the creation of reciprocal BLAST projects.
                         A careful design of query sequences is recommended as too much starting sequences can significantly increase the running time. </p>
                 </li>
                 <li class="list-group-item">
+                    <b> Protein Identifier </b>
+                    <p style="text-align: left;font-size: medium">
+                        If you dont want to upload a FASTA file containing your query sequences, you can list protein identifier
+                        separated by commas. E.g.: WP_087495532.1, WP_087494701.1
+                    </p>
+                </li>
+                <li class="list-group-item">
                     <b> Forward BLAST database </b> <br>
                     <p style="text-align: left;font-size: medium">
                         This database is the "search space" for your provided query sequences. <br>
@@ -83,7 +90,7 @@ This Website can be used for the creation of reciprocal BLAST projects.
             </ul>
             <br>
         </div>
-        <button class="btn btn-dark" onclick="displayDivElement('input_field_information')" style="position: absolute;top: 10px; right: 10px;">Display Information For Input Fields </button>
+        <button class="btn btn-dark" onclick="displayDivElement('input_field_information')" style="position: absolute;top: 10px; right: 10px;"> Input Field Info </button>
     </div>
 
     {% if taxdb == True %}
