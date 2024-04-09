@@ -1,5 +1,3 @@
-# Create your models here.
-from os.path import isdir, isfile
 from ast import literal_eval
 from django.db import models
 from django.contrib.auth.models import User
@@ -342,6 +340,25 @@ class BlastProject(models.Model):
             raise Exception(
                 "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
 
+    '''read_reciprocal_information_table
+        
+        This function reads the recirpcoal_results_info.txt table once the project has finished and
+        returns a dictionary with all query sequences as keys and the number of results as values.
+    
+    '''
+    def read_reciprocal_information_table(self, filepath=BLAST_PROJECT_DIR):
+        try:
+            reciprocal_result_info_path = filepath + "/" + str(self.id) + "/reciprocal_results_info.txt"
+            reciprocal_results_table = pd.read_table(reciprocal_result_info_path)
+            reciprocal_results_table = reciprocal_results_table.set_index("qseqid")
+            reciprocal_results_table = reciprocal_results_table.to_dict()
+            reciprocal_results_table = reciprocal_results_table["hits"]
+            print(reciprocal_results_table)
+            return reciprocal_results_table
+        except Exception as e:
+            raise Exception("[-] ERROR reading reciprocal_results_info.txt with exception: {}".format(e))
+
+
     '''check_for_reciprocal_result_table
         
         This function checks if the reciprocal_result.html file is in the project directory or not.
@@ -658,6 +675,23 @@ class RemoteBlastProject(models.Model):
         except Exception as e:
             raise Exception(
                 "[-] ERROR during pandas parsing of query_sequence_information csv file with exception: {}".format(e))
+
+    '''read_reciprocal_information_table
+
+        This function reads the recirpcoal_results_info.txt table once the project has finished and
+        returns a dictionary with all query sequences as keys and the number of results as values.
+
+    '''
+    def read_reciprocal_information_table(self, filepath=REMOTE_BLAST_PROJECT_DIR):
+        try:
+            reciprocal_result_info_path = filepath + "/" + str(self.id) + "/reciprocal_results_info.txt"
+            reciprocal_results_table = pd.read_table(reciprocal_result_info_path)
+            reciprocal_results_table = reciprocal_results_table.set_index("qseqid")
+            reciprocal_results_table = reciprocal_results_table.to_dict()
+            reciprocal_results_table = reciprocal_results_table["hits"]
+            return reciprocal_results_table
+        except Exception as e:
+            raise Exception("[-] ERROR reading reciprocal_results_info.txt with exception: {}".format(e))
 
     '''check_for_reciprocal_result_table
 

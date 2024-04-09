@@ -124,6 +124,9 @@
                     <button class="btn btn-dark" onclick="displayDivElement('query_sequence_information')" > Query Sequence Information </button>
                 </div>
                 <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('reciprocal_result')"> Result Summary </button>
+                </div>
+                <div class="col-md">
                     <button class="btn btn-dark" onclick="displayDivElement('result_graphs')" > E-Value/Taxonomy Distribution </button>
                 </div>
             </div>
@@ -163,6 +166,26 @@
             {{ BlastProject.read_query_information_table | safe }}
         </div>
     </div>
+
+    <div class="dashboard_project_list_col" id="reciprocal_result" style="display:none">
+        <h2 style="text-align: center"> Reciprocal Result Summary </h2>
+        <table class="table table-striped table-bordered">
+            <tbody>
+                <tr>
+                    <th> Query Sequence </th>
+                    <th> Number of Reciprocal Best Hits (RBHs) </th>
+                </tr>
+                {% for key, value in BlastProject.read_reciprocal_information_table.items %}
+                    <tr>
+                        <td> {{ key }} </td>
+                        <td> {{ value }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
     <div class="dashboard_project_list_col" id="result_graphs" style="display: none">
         <h2 style="text-align: center"> Result Graphs </h2>
         <p style="font-size: medium; text-align: center"> <strong> Amount of hits in database organisms: </strong> Number of inferred RBHs (x-axis) in different species (y-axis) for one particular query sequence.

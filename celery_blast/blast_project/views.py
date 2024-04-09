@@ -737,8 +737,6 @@ def registration_view(request):
     :param exception
         :type str
 '''
-
-
 # if an exception occurres this page is rendered in order to evaluate the exception context
 def failure_view(request, exception):
     context = {'exception': exception}
@@ -762,8 +760,6 @@ def success_view(request):
     :param project_id
         :type int
 '''
-
-
 @login_required(login_url='login')
 def database_statistics_dashboard(request, project_id):
     try:
@@ -832,8 +828,6 @@ def database_selection_phylogeny_task_status(request, project_id, remote_or_loca
     Function returns database statistics json dataframe of the specified taxonomic unit.
     
 '''
-
-
 @login_required(login_url='login')
 def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxonomic_unit: str):
     try:
@@ -855,8 +849,6 @@ def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxono
     :param project_id
         :type int
 '''
-
-
 @login_required(login_url='login')
 def execute_database_statistics_task(request, project_id: int):
     try:
@@ -875,8 +867,6 @@ def execute_database_statistics_task(request, project_id: int):
         :type int
  
 '''
-
-
 @login_required(login_url='login')
 def delete_database_statistics(request, project_id):
     try:
