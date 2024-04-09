@@ -2,6 +2,7 @@
 #which is created by a BlastProject model function
 configfile: "./snakefile_config"
 import pandas as pd
+
 from math import ceil
 from Bio import Entrez
 
@@ -66,7 +67,11 @@ rule fw_result_processing:
 		with open(log.log,'w') as logfile:
 			try:
 				logfile.write("INFO:working with forward blast results: writing target sequences into output file\n")
-				forward_df = pd.read_table(input.fw_res, header=None)
+				try:
+					forward_df = pd.read_table(input.fw_res, header=None)
+				except pd.errors.EmptyDataError as e:
+					forward_df = pd.DataFrame(columns=range(0, 13))
+
 				with open(output.gi_list,"w+") as out:
 					target_list = list(forward_df[7][:].unique())
 					for gi in target_list:
@@ -362,9 +367,34 @@ rule conduct_multiple_sequence_alignment_mafft:
 rule trimal:
 	input: target_msa="{qseqid}/msa_phylo_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
 	output: trimmed_sequences="{qseqid}/msa_phylo_sequences_trimmed.msa"
-	log: trimal_log="log/{qseqid}/trimal.log"
-	shell:
-		"trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}"
+	log: log="log/{qseqid}/trimal.log"
+	run:
+		with open(log['log'],'a') as lfile:
+			execute_trimal=True
+			lfile.write("INFO:starting multiple sequence alignment trimming procedure with trimal...\n")
+			#check if target sequence file is empty (or just contains the query sequence)
+			#if this is the case, there is no need for producing a msa
+			with open(input[0],'r') as infile:
+				if len(infile.readlines()) <= 1:
+					lfile.write("WARNING:there are not enough sequences in the msa file ...\n")
+					execute_trimal=False
+			try:
+				if execute_trimal==True:
+					#trimal execution
+					trimal=shell("trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}")
+					lfile.write("INFO:ending trimal multiple sequence alignment trimming\n")
+					lfile.write("DONE")
+				else:
+					lfile.write("WARNING: producing empty trimmed alignment file with touch\n")
+					#produce empty file for snakemake
+					shell("touch {output.trimmed_sequences}")
+					lfile.write("DONE\n")
+			except Exception as e:
+				with open(log['log'],'w') as lfile:
+					lfile.write("ERROR: in trimal with exception: {}\n".format(e))
+					lfile.write("WARNING: producing empty trimmed alignment file with touch\n")
+					shell("touch {output.trimmed_sequences}")
+
 
 #RULE 20
 rule display_alignment:
@@ -384,7 +414,7 @@ rule conduct_phylogeny_fast_tree:
 		#check if multiple sequence alignment has entries
 		execute_fasttree=True
 		with open(input[0],"r") as infile:
-			if len(infile.readlines()) <= 1:
+			if len(infile.readlines()) <= 2:
 				#if there are no entries in the multiple sequence alignment there is no need for
 				# conducting fasttree
 				execute_fasttree == False
@@ -413,7 +443,7 @@ rule html_phylogenie:
     log: shiptv_log="log/{qseqid}/shiptv.log",
     run:
         df = pd.read_table(input['blast_table'])
-        if len(df) > 0:
+        if len(df) > 1:
             shell("shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}")
         else:
             with open(output['html_tree'], 'w') as html_output:
