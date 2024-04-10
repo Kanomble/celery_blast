@@ -11,10 +11,10 @@ QSEQIDS = []
 with open(config['query_sequence'],'r') as qseqfile:
 	for line in qseqfile.readlines():
 		if ">" in line:
-			#TODO adjust qseq_ids in query_sequence file in order to assign a new unique name ?
 			qseq_id = line.split(" ")[0].split(">")[1].split(".")[0]
 			QSEQIDS.append(qseq_id)
 
+# collection rule
 rule all:
 	input:
 		"interactive_bokeh_plot.html",
@@ -29,7 +29,6 @@ rule all:
 		expand("{qseqid}/msa_phylo_rbh_table.tsf",qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences.faa",qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences.msa", qseqid=QSEQIDS),
-
 		expand("{qseqid}/msa_phylo_sequences_trimmed.msa", qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences_trimmed.html", qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences.tree", qseqid=QSEQIDS),
@@ -303,7 +302,7 @@ rule blast_tables_to_html:
 #RULE 9
 #interactive plot creation with bokeh
 rule create_interactive_plot:
-	input: blast_results="reciprocal_results_with_taxonomy.csv"
+	input: blast_results="reciprocal_results_with_taxonomy.csv", blast_tables_to_html_log="log/blast_tables_to_html.log"
 	params: user_email=config['user_email']
 	output: bokeh_plot="interactive_bokeh_plot.html"
 	log:log="log/create_interactive_plot.log"
@@ -314,7 +313,7 @@ rule create_interactive_plot:
 #RULE 10
 #outputs a summary for the RBH inference and constructs directories for each query sequence
 rule build_folders_with_hit_info_for_each_qseqid:
-	input: result_csv="reciprocal_results_with_taxonomy.csv", query_file=config['query_sequence'], blast_tables_to_html_log="log/blast_tables_to_html.log"
+	input: result_csv="reciprocal_results_with_taxonomy.csv", query_file=config['query_sequence'], bokeh_plot_log="log/create_interactive_plot.log"
 	output: hit_information="reciprocal_results_info.txt",queries=expand("{qseqid}/target_sequence_ids.txt",qseqid=QSEQIDS),
 		rec_res_html=expand("{qseqid}/results_rbhs.html",qseqid=QSEQIDS),rec_res_table=expand("{qseqid}/rbh_table.tsf",qseqid=QSEQIDS),
 		result_statistics=expand("{qseqid}/basic_statistics.png",qseqid=QSEQIDS)
@@ -326,7 +325,7 @@ rule build_folders_with_hit_info_for_each_qseqid:
 #RULE 11
 #creates a html table with information of the query sequences
 rule query_sequences_to_html_table:
-	input: target_file=config['query_sequence']
+	input: target_file=config['query_sequence'], hit_info_log="log/build_folders_with_hit_info_for_each_qseqid.log"
 	params: email=config['user_email']
 	output: output_html="query_sequence_information.html", output_csv="query_sequence_information.csv"
 	log: log="log/query_sequences_to_html_table.log"
@@ -336,7 +335,7 @@ rule query_sequences_to_html_table:
 #RULE 12
 #extracts sequences of RBHs from the forward database
 rule extract_rbh_sequences:
-	input: target_ids="{qseqid}/target_sequence_ids.txt", target_fasta="bw_queries.faa", build_folders_with_hit_info_for_each_qseqid_log="log/build_folders_with_hit_info_for_each_qseqid.log"
+	input: target_ids="{qseqid}/target_sequence_ids.txt", target_fasta="bw_queries.faa", query_sequence_table_log="log/query_sequences_to_html_table.log"
 	output: "{qseqid}/target_sequences_raw.faa"
 	log: log="log/{qseqid}/extract_subject_sequences_from_database.log"
 	run:
@@ -379,8 +378,10 @@ rule check_if_query_sequence_is_in_target_sequences_faa:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/check_if_query_sequence_is_in_target_sequences_faa.py"
 
+#RULE 14
+#extracting target sequences for phylogenetic inference
 rule extract_target_sequences_for_phylogeny:
-	input: target_fasta="{qseqid}/target_sequences.faa",rec_res_table="{qseqid}/rbh_table.tsf", query_sequences_to_html_table_log="log/query_sequences_to_html_table.log"
+	input: target_fasta="{qseqid}/target_sequences.faa",rec_res_table="{qseqid}/rbh_table.tsf", check_if_query_is_in_target_sequence_file_log="log/check_if_query_sequence_is_in_target_sequences_faa.log"
 	output: msa_phylo_sequences="{qseqid}/msa_phylo_sequences.faa", msa_phylo_blast_table="{qseqid}/msa_phylo_rbh_table.tsf"
 	params: max_sequences=config['max_rbhs_for_phylo']
 	log: log="log/{qseqid}/extract_target_sequences_for_phylogeny.log"
@@ -417,10 +418,11 @@ rule extract_target_sequences_for_phylogeny:
 						if switch == True:
 							target_file.write(line)
 
-#RULE 14
+#RULE 15
+#multiple sequence alignment with mafft
 #this rule shouldn't throw exceptions, if an error occurs an empty file is created
 rule conduct_multiple_sequence_alignment_mafft:
-	input: msa_phylo_sequences="{qseqid}/msa_phylo_sequences.faa"
+	input: msa_phylo_sequences="{qseqid}/msa_phylo_sequences.faa", extract_sequences_log="log/{qseqid}/extract_target_sequences_for_phylogeny.log"
 	output: target_sequences="{qseqid}/msa_phylo_sequences.msa"
 	log: log="log/{qseqid}/msa.log"
 	run:
@@ -449,15 +451,41 @@ rule conduct_multiple_sequence_alignment_mafft:
 					lfile.write("ERROR: in mafft with exception: {}\n".format(e))
 					shell("touch {output}")
 
-#RULE 15
+#RULE 16
+#trimming of the alignment using trimal
+#if there are no sequences in the msa an empty file is produced via touch
 rule trimal:
 	input: target_msa="{qseqid}/msa_phylo_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
 	output: trimmed_sequences="{qseqid}/msa_phylo_sequences_trimmed.msa"
 	log: trimal_log="log/{qseqid}/trimal.log"
-	shell:
-		"trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}"
-
-#RULE 16
+	run:
+		with open(log['log'],'a') as lfile:
+			execute_trimal=True
+			lfile.write("INFO:starting multiple sequence alignment trimming procedure with trimal...\n")
+			#check if target sequence file is empty (or just contains the query sequence)
+			#if this is the case, there is no need for producing a msa
+			with open(input[0],'r') as infile:
+				if len(infile.readlines()) <= 1:
+					lfile.write("WARNING:there are not enough sequences in the msa file ...\n")
+					execute_trimal=False
+			try:
+				if execute_trimal==True:
+					#trimal execution
+					trimal=shell("trimal -in {input.target_msa} -out {output.trimmed_sequences} -gt 0.8 -st 0.001 -cons 60 2> {log.trimal_log}")
+					lfile.write("INFO:ending trimal multiple sequence alignment trimming\n")
+					lfile.write("DONE")
+				else:
+					lfile.write("WARNING: producing empty trimmed alignment file with touch\n")
+					#produce empty file for snakemake
+					shell("touch {output.trimmed_sequences}")
+					lfile.write("DONE\n")
+			except Exception as e:
+				with open(log['log'],'w') as lfile:
+					lfile.write("ERROR: in trimal with exception: {}\n".format(e))
+					lfile.write("WARNING: producing empty trimmed alignment file with touch\n")
+					shell("touch {output.trimmed_sequences}")
+#RULE 17
+#mview creates an HTML file of the trimmed msa
 rule display_alignment:
 	input: trimmed_sequences="{qseqid}/msa_phylo_sequences_trimmed.msa"
 	output: html_output="{qseqid}/msa_phylo_sequences_trimmed.html"
@@ -465,7 +493,8 @@ rule display_alignment:
 	shell:
 		"mview -in fasta -html head -moltype aa -css on -coloring any -consensus on -sort cov {input.trimmed_sequences} > {output.html_output} 2> {log.display_alignment_log}"
 
-#RULE 17
+#RULE 18
+#phylogenetic inference with fasttree2
 #this rule shouldn't throw exceptions, if an error occurs an empty file is created
 rule conduct_phylogeny_fast_tree:
 	input: target_msa="{qseqid}/msa_phylo_sequences_trimmed.msa"
@@ -475,7 +504,7 @@ rule conduct_phylogeny_fast_tree:
 		#check if multiple sequence alignment has entries
 		execute_fasttree=True
 		with open(input[0],"r") as infile:
-			if len(infile.readlines()) <= 1:
+			if len(infile.readlines()) <= 2:
 				#if there are no entries in the multiple sequence alignment there is no need for
 				# conducting fasttree
 				execute_fasttree == False
@@ -497,14 +526,16 @@ rule conduct_phylogeny_fast_tree:
 				lfile.write("ERROR: in fasttree with exception: {}\n".format(e))
 				shell("touch {output}")
 
-#RULE 18
+#RULE 19
+#shiptv produces an interactive HTML file of the phylogeny
+#an empty HTML document is produced if there are not > 2 sequences in the blast_table input
 rule html_phylogenie:
     input: newick_tree="{qseqid}/msa_phylo_sequences.tree", blast_table="{qseqid}/msa_phylo_rbh_table.tsf",
     output: html_tree="{qseqid}/msa_phylo_sequences.html",
     log: shiptv_log="log/{qseqid}/shiptv.log",
     run:
         df = pd.read_table(input['blast_table'])
-        if len(df) > 0:
+        if len(df) > 2:
             shell("shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}")
         else:
             with open(output['html_tree'], 'w') as html_output:
@@ -512,7 +543,8 @@ rule html_phylogenie:
             with open(log['shiptv_log'],'w') as logfile:
                 logfile.write("WARNING:There are no sequences in the tree file\n")
                 logfile.write("DONE")
-#RULE 19
+#RULE 20
+#rpsblast for query sequences with csv output for HTML documents
 rule cdd_domain_rpsblast:
 	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/shiptv.log", qseqid=QSEQIDS)
 	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
@@ -522,7 +554,8 @@ rule cdd_domain_rpsblast:
 		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt \"6 qseqid qlen sacc slen qstart qend sstart send qseq sseq bitscore evalue pident stitle\" -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
 
 
-#RULE 20
+#RULE 21
+#rpsblast for query sequences with asn output for rpsbproc
 rule cdd_domain_rpsblast_for_rpsbproc:
 	input: queries=config['query_sequence'], domain_blast_log=expand("log/{qseqid}/shiptv.log", qseqid=QSEQIDS)
 	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
@@ -531,7 +564,8 @@ rule cdd_domain_rpsblast_for_rpsbproc:
 	shell:
 		"rpsblast -query {input.queries} -db ../databases/CDD/Cdd -outfmt 11 -out {output.domain_df} -evalue {params.e_value} -num_threads {params.num_threads} 2> {log.log}"
 
-#RULE 21
+#RULE 22
+#rpsblast for query sequences with asn output for rpsbproc
 rule cdd_domain_rpsbproc:
 	input: rpsblast_asn_output="query_domains.asn", domain_blast_log="log/cdd_domain_rpsblast_for_rpsbproc.log"
 	params: e_value=config['fw_e_value'], num_threads=config['fw_num_threads']
@@ -540,7 +574,8 @@ rule cdd_domain_rpsbproc:
 	shell:
 		"rpsbproc -i {input.rpsblast_asn_output} -o {output.rpsbproc_df} -e {params.e_value} -m rep -d /blast/utilities/RpsbProc-x64-linux/data/"
 
-#RULE 22
+#RULE 23
+#post-processing of the rpsbproc output, this rule produces interactive HTML documents
 rule rpsbproc_parsing:
 	input: rpsbproc_output="query_domains_rpsbproc.out"
 	output: domain_html="rpsbproc_query_domains.html", sites_html="rpsbproc_query_sites.html", domain_csv="rpsbproc_query_domains.csv", sites_csv="rpsbproc_query_sites.csv"
@@ -548,7 +583,8 @@ rule rpsbproc_parsing:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/rpsbproc_parser.py"
 
-#RULE 23
+#RULE 24
+#rpsblast output processing for possible CDD PCA execution within the conserved domain site of CATHI
 rule query_domains_to_html_table:
 	input: query_domains="query_domains.tsf", query_domains_html_table_log="log/cdd_domain_rpsblast.log"
 	output: domain_html_table="query_domains.html"
@@ -556,16 +592,17 @@ rule query_domains_to_html_table:
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/query_sequence_domains_to_html_table.py"
 
-#RULE 24
+#RULE 25
+#this rule extracts the ftp paths to the proteomes of the RBHs for synteny analysis
 rule extract_assembly_ftp_paths_from_rbhs:
-	input: result_dataframe = "{qseqid}/rbh_table.tsf"
+	input: result_dataframe = "{qseqid}/rbh_table.tsf", query_domains_log="log/query_domains_to_html_table.log"
 	output: ipg_table_path = "{qseqid}/ipg_table.table", genome_assembly_table = "{qseqid}/genome_assembly_table.csv"
 	params: user_email=config['user_email'], assembly_file_path="../../../../media/databases/refseq_summary_file/"
 	log: log="log/{qseqid}/extract_assembly_ftp_paths_from_rbhs.log"
 	script:
 		"../../../../static/snakefiles/reciprocal_blast/remote_searches/extract_assembly_ftp_paths_from_rbhs.py"
 
-#RULE 25
+#RULE 26
 #creates plots for the visualization of pipeline results
 rule blast_tables_to_plots:
 	input: fw_res="blastp_fw_out_reformatted.table", rec_res="reciprocal_best_hits_protein_ids.txt",query_file=config['query_sequence']

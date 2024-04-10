@@ -1,7 +1,7 @@
 from Bio import Entrez
 from sys import exit
 
-ERRORCODE = 3
+ERRORCODE = 25
 
 with open(snakemake.log['log'],"w") as logfile:
     try:

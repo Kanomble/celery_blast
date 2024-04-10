@@ -12,7 +12,6 @@ QSEQIDS_SEQUENCE_DICT = {}
 with open(config['query_sequence'],'r') as qseqfile:
 	for line in qseqfile.readlines():
 		if ">" in line:
-			#TODO adjust qseq_ids in query_sequence file in order to assign a new unique name ?
 			qseq_id = line.split(" ")[0].split(">")[1].split(".")[0]
 			QSEQIDS.append(qseq_id)
 			QSEQIDS_SEQUENCE_DICT[qseq_id] = ""
@@ -34,10 +33,8 @@ rule all:
 		expand("{qseqid}/msa_phylo_rbh_table.tsf",qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences.faa",qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences.msa",qseqid=QSEQIDS),
-
 		expand("{qseqid}/msa_phylo_sequences_trimmed.msa",qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences_trimmed.html",qseqid=QSEQIDS),
-
 		expand("{qseqid}/msa_phylo_sequences.tree",qseqid=QSEQIDS),
 		expand("{qseqid}/msa_phylo_sequences.html",qseqid=QSEQIDS),
 		"query_domains_rpsbproc.out",
