@@ -5,7 +5,7 @@ if the query sequence does not reside in the fasta file, the sequence gets added
 '''
 
 from sys import exit
-ERRORCODE=16
+ERRORCODE=10
 
 with open(snakemake.log['log'],'w') as logfile:
     try:

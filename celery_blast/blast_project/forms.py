@@ -166,7 +166,11 @@ class ProjectCreationForm(forms.Form):
         self.fields['user_email'].initial = user.email
 
     ''' Validation of user input.
-    
+        
+        project_title: the project title is checked for uniqueness.
+            
+            functions: check_if_project_title_exists
+        
         species_name_for_backward_blast: The provided species name must be a valid scientific name, that can get trans-
         lated into taxonomic identifier, which will be used for database filtering. This taxonomic identifier (taxid) 
         has to reside in the backward database. This may cause problems as there is another taxid called species taxid.
@@ -227,8 +231,8 @@ class ProjectCreationForm(forms.Form):
 
             # query file was uploaded
             if query_file != None:
-                if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
-                    self.add_error('query_sequence_file', "please upload only fasta files!")
+                if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True and query_file.name.endswith('.fa') != True:
+                    self.add_error('query_sequence_file', "please upload only fasta files, your filename should end with .faa, .fa or .fasta")
 
                 if len(query_file.name.split(".")) != 2:
                     self.add_error('query_sequence_file',

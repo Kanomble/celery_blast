@@ -1,3 +1,7 @@
+'''
+    This script produces the e_value and hit per taxid overview for the detail page.
+'''
+
 import matplotlib.pyplot as plt
 import matplotlib._color_data as mcd
 import pandas as pd
@@ -7,7 +11,8 @@ from sys import exit
 overlap = [name for name in mcd.CSS4_COLORS]
 overlap.remove("lightgrey")
 
-ERRORCODE=10
+ERRORCODE=11
+
 with open(snakemake.log[0],'w') as logfile:
     try:
         logfile.write("INFO:generating plots for the results of the reciprocal BLAST pipeline\n")
@@ -74,7 +79,7 @@ with open(snakemake.log[0],'w') as logfile:
 
                 if i == axisticks_boolean:
                     axisticks_boolean += math.ceil(math.sqrt(len(queries)))
-                    axs[i].set_xticks([0, 0.0005, 0.001])#0, 0.0005, 0.001
+                    axs[i].set_xticks([0, 0.0005, 0.001])
                     axs[i].set_xticklabels([0, 0.0005, 0.001])
                 else:
                     axs[i].get_xaxis().set_visible(False)

@@ -169,8 +169,16 @@ Further CATHI post-processing procedures outside the scope of this pipeline invo
    1. Conducting RPS-BLAST with a specified set of RBHs
    2. Conducting a principal component analysis (PCA) based on the percent identity of the inferred domains with respect to the query sequence domains
    3. Building an interactive bokeh plot with the first two principal components and the taxonomic information within the RBH result table
-   4. Refine the 
+   4. Refine the phylogeny by slecting RBHs directly from the PCA bokeh-plot to conduct a conserved-domain corrected phylogenetic inference
+4. Synteny analysis
+   1. Select up to ten different RBHs for the inference of syntenic regions with the clinker tool
+   2. The clinker result is an interactive HTML document that can be changed according to user needs
 
+Further CATHI target-sequence search features:
+
+1. Target sequence search with NCBIs Entrez-Direct tool
+   1. CATHI offers an interface that can be used to search within the PubMed, Protein, Pfam and Assembly NCBI databases
+   2. Within comprehensive and interactive result tables users can download their seuqences of interest directly as protein FASTA files
 <a name="example_output"></a>
 ### CATHI example output
 
@@ -349,21 +357,21 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
-- [ ] fix query sequence id fetching if sp|XY| or | | is in sequence
-- [ ] fix fasta file upload errors if ending is .fasta in local BLAST searches
+- [ ] add capitalize or something similar to name validations
+- [X] fix query sequence id fetching if sp|XY| or | | is in sequence
+- [X] fix fasta file upload errors if ending is .fasta in local BLAST searches
 - [ ] fix correct error displaying if there are no results in a reciprocal BLAST search
   - [ ] add warning during project creation if in the database reside more than one organism with the specified taxid
 - [ ] fix evalue in axis changing within bokeh plots
-- [ ] rework blast project detail pages
+- [X] rework blast project detail pages
 - [ ] rework progress tracking of remote projects
 - [X] add progress visualization for CDD selection constrained phylogeny
 - [X] fix endless polling of progress for selection sliced phylogeny in remote BLAST projects
 - [X] fix polling of progress data for CDD remote searches
 - [ ] display logfiles within the details dashboard
-  - enable correct error handling - e.g. no hits etc.
 - [ ] refactor calculation of database normalized tables
   - seems to be zero in some cases (which is wrong)
-- [ ] add validation for same project titles
+- [X] add validation for same project titles
 - [ ] add validation for entrez_queries
 - [x] fix one-way BLAST snakemake pipeline
 - [ ] add videos, links to init page
@@ -371,7 +379,6 @@ This allows interaction with the associated celery task and can be used for disp
 - [X] add option to selection contrained phylogeny just with selection based on taxonomic units
 - [ ] add setup option after installation -> directly download CDD/refseq/genbank assembly summary files (maybe add a wizard)
 - [ ] add error message if filtered database table is empty 
-- [ ] add error message if there are 0 hits within the forward blast dataframe
 - [X] add rpsbproc utility for initial CDD searches
   - [X] searches for the PCA can still be done with the table output that has to get generated in an additional search
 

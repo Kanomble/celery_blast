@@ -1,8 +1,13 @@
+'''
+    This script produces the HTML DataTable file for the detail page.
+'''
+
 from Bio import Entrez
 import pandas as pd
 from sys import exit
 from os.path import isfile
-ERRORCODE=11
+
+ERRORCODE=12
 
 '''get_additional_porotein_information
 
