@@ -111,6 +111,7 @@
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
                             <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>
                         {% endif %}
+                            <td><a class="btn btn-info" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="local" %}">Examine Logs</a></td>
                     </tr>
                 </tbody>
             </table>

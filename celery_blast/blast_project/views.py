@@ -32,6 +32,7 @@ from external_tools.tasks import setup_cathi_download_cdd_refseq_genbank_assembl
 from Bio import Entrez
 from os.path import isfile
 from os import remove
+from time import sleep
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR, TAXONOMIC_NODES
@@ -442,6 +443,8 @@ def start_reciprocal_blast_project_view(request, project_id: int):
                     execute_reciprocal_blast_project.delay(project_id)
             else:
                 execute_reciprocal_blast_project.delay(project_id)
+        # sleep 1 second to enable correct progress handling
+        sleep(1)
         return redirect('project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
@@ -459,7 +462,8 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
                     execute_remote_reciprocal_blast_project.delay(project_id)
             else:
                 execute_remote_reciprocal_blast_project.delay(project_id)
-
+        # sleep 1 second to enable correct progress handling
+        sleep(1)
         return redirect('remote_project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
@@ -1124,3 +1128,26 @@ def delete_taxonomic_node_file(request, taxonomic_node_file:str):
                 taxonomic_node_file, taxonomic_node_file_path))
     except Exception as e:
         return failure_view(request,e)
+
+'''examine_logfiles_view
+
+    This function loads the content of all available logfiles and displays the content as HTML.
+    
+    :param project_id
+        :type int
+    :param remote_or_local
+        :type str
+
+'''
+@login_required(login_url="login")
+def examine_logfile_view(request, project_id:int, remote_or_local:str):
+    try:
+        if remote_or_local == "local":
+            path_to_logs = BLAST_PROJECT_DIR + str(project_id) + "/log"
+        elif remote_or_local == "remote":
+            path_to_logs = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log"
+        else:
+            raise Exception("[-] ERROR project is neither remote nor local ...")
+
+    except Exception as e:
+        return failure_view(request, e)
