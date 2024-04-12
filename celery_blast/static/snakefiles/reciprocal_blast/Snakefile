@@ -303,6 +303,9 @@ rule extract_target_sequences_for_phylogeny:
 			))
 			# load RBH result dataframe and slice the bitscore sorted dataframe based on the max max_sequences param
 			fw_df = pd.read_table(input.rec_res_table)
+			# omit sequences not present within the multiple sequence alignment
+			fw_df = fw_df[fw_df.query_info != "artificially added RBH - not in FW database"]
+
 			if len(fw_df) > int(params.max_sequences):
 				lfile.write("INFO:sorting BLAST table by bitscore with {} entries ...\n".format(len(fw_df)))
 				fw_df = fw_df.sort_values(by="bitscore",ascending=False)

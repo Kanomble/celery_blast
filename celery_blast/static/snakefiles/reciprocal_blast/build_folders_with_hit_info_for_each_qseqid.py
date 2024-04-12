@@ -1,6 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from sys import exit
+from os.path import isdir
+from os import mkdir
+
 ERRORCODE=8
 
 with open(snakemake.log['log'],'w') as logfile:
@@ -37,6 +40,10 @@ with open(snakemake.log['log'],'w') as logfile:
             cols = ['sacc', 'qseqid', 'bitscore', 'pident', 'evalue', 'slen', 'query_info', 'phylum', 'class',
                     'order', 'family', 'genus']
             target_df_to_tab = target_df.loc[:,cols]
+            # omit sequences not present within the multiple alignment file ...
+            target_df_to_tab = target_df_to_tab[target_df_to_tab.query_info != "artificially added RBH - not in FW database"]
+
+            logfile.write("\tINFO:number of sequences in RBH table: {}\n".format(len(target_df_to_tab)))
             target_df_to_tab.to_csv(query+'/rbh_table.tsf', index=False, sep="\t")
 
             logfile.write("\t\tINFO:constructing DataTable CNN html string for pandas html table ...\n")

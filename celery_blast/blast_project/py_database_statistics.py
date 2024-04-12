@@ -203,7 +203,7 @@ def extract_taxonomic_information(logfile: str, uploaded: bool, rbh_df: pd.core.
                 log.write("INFO:working on downloaded refseq database entries\n")
                 acc = lambda ids: ids.split('_')[2] + '_' + ids.split('_')[3]
                 rbh_df['assembly_accession'] = rbh_df['sseqid']
-                rbh_df['assembly_accession'] = rbh_df['assembly_accession'].map(acc)
+                rbh_df['assembly_accession'] = rbh_df['assembly_accession'].apply(acc)
                 for query in rbh_df['qseqid'].unique():
                     log.write("\tINFO:extracting taxonomic information for {}\n".format(query))
                     df = rbh_df[rbh_df['qseqid'] == query]
@@ -363,7 +363,8 @@ def calculate_database_statistics(project_id: int, logfile: str, user_email: str
                 raise FileNotFoundError
 
             result_data = pd.read_csv(path_to_reciprocal_results, index_col=0)
-
+            result_data = result_data[result_data.query_info != "artificially added RBH - not in FW database"]
+            log.write("INFO:the size of the result dataframe is: {}\n".format(len(result_data)))
             if (isfile(new_database_name)):
                 log.write("INFO:database: {} exists\n".format(new_database_name))
                 db_df = pd.read_csv(new_database_name, index_col=0)
@@ -392,7 +393,7 @@ def calculate_database_statistics(project_id: int, logfile: str, user_email: str
                 normalized_df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics_normalized.csv'
                 df_filepath = path_to_project + '/' + taxonomic_unit + '_database_statistics.csv'
                 if isfile(normalized_df_filepath) is False or isfile(df_filepath) is False:
-                    log.write("INFO:starting function extract_taxonomic_information ...\n")
+                    log.write("INFO:starting function extract_taxonomic_information for taxonomic unit: {}\n".format(taxonomic_unit))
                     logfile_tax_count_function = path_to_project + '/log/' + taxonomic_unit + '_extract_taxonomic_information.log'
                     tax_counts = extract_taxonomic_information(logfile_tax_count_function, forward_db.uploaded_files,
                                                                result_data, db_df, taxonomic_unit)
