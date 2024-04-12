@@ -442,11 +442,11 @@ rule conduct_phylogeny_fast_tree:
 #shiptv produces an interactive HTML file of the phylogeny
 #an empty HTML document is produced if there are not > 2 sequences in the blast_table input
 rule html_phylogenie:
-    input: newick_tree="{qseqid}/msa_phylo_sequences.tree", blast_table="{qseqid}/msa_phylo_rbh_table.tsf", fasttree_log="log/{qseqid}/phylogeny.log"
-    output: html_tree="{qseqid}/msa_phylo_sequences.html",
-    log: shiptv_log="log/{qseqid}/shiptv.log",
-    run:
-		with open(log['shiptv_log'],'w') as logfile:
+	input: newick_tree="{qseqid}/msa_phylo_sequences.tree", blast_table="{qseqid}/msa_phylo_rbh_table.tsf", fasttree_log="log/{qseqid}/phylogeny.log"
+	output: html_tree="{qseqid}/msa_phylo_sequences.html"
+	log: shiptv_log="log/{qseqid}/shiptv.log"
+	run:
+		with open(log["shiptv_log"], 'w') as logfile:
 			try:
 				logfile.write("INFO:starting shiptv procedure to produce interactive phylogeny\n")
 				# the blast_table contains at least one sequence, the actual query sequence on its own

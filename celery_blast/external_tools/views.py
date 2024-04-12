@@ -102,6 +102,7 @@ def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, projec
     synteny calculation table dashboard. The received data is a json objects that gets translated into a dictionary.
     The dictionary keys are integers indicating the number of the selected item and the id of the selected rbh.
     Based on the RBH id the result dataframe and database table the ftp path for the corresponding genbank file is calculated.
+    
 '''
 @csrf_exempt
 def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, query_sequence:str, remote_or_local:str):
@@ -111,7 +112,6 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
             if request.method == "POST":
                 form_data = request.POST
                 data = form_data.dict()
-                print(data)
                 #{'0': 'ARV18906.1_GCA_002163715.1_ASM216371v1', '1': 'OGO98856.1_GCA_001795455.1_ASM179545v1'}
                 synteny_calculation_task.delay(project_id, query_sequence, data, remote_or_local)
         return JsonResponse({"response": "success"}, status=200)
@@ -121,6 +121,7 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
 '''load_synteny_view
 
     This function returns the clinker result plot as an standalone html document.
+    
 '''
 @login_required(login_url='login')
 def load_synteny_view(request: WSGIRequest, project_id: int, remote_or_local:str, query_sequence_id: str):
