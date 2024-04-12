@@ -97,8 +97,8 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
             reciprocal_result_table = reciprocal_result_table[reciprocal_result_table.sacc.isin(accessions)]
         path_to_rbh_table = path_to_query_subdir + '/selection_sliced_rbh_table.tsf'
         reciprocal_result_table.to_csv(path_to_rbh_table, sep="\t", index=None)
-
-        path_to_html_tree = path_to_query_subdir + '/selection_sliced_phylogeny.html'
+        path_to_html_tree_output = path_to_query_subdir + '/selection_sliced_phylogeny.html'
+        path_to_html_tree = path_to_query_subdir + '/selection_sliced_phylogeny_temp.html'
         shiptv_task = "shiptv --newick {} --metadata {} --output-html {}".format(path_to_fasttree_output,
                                                                                  path_to_rbh_table,
                                                                                  path_to_html_tree)
@@ -106,6 +106,15 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
         returncode = shiptv_task.wait(40000)
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+
+        with open(path_to_html_tree, "r") as infile:
+            with open(path_to_html_tree_output, "w") as outfile:
+                lines = infile.readlines()
+                chroma_cdn = '''<script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js" integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'''
+                lines.insert(5, chroma_cdn)
+                for line in lines:
+                    outfile.write(line)
+
         logger.info("DONE")
         progress_recorder.set_progress(99,100,"PROGRESS")
     except Exception as e:
@@ -172,13 +181,23 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         logger.info("done with phylogenetic tree inference")
         logger.info("starting to generate html file with phylogeny ...")
         path_to_rbh_table = path_to_query_subdir + '/rbh_table.tsf'
-        path_to_html_tree = path_to_query_subdir + '/selection_sliced_domain_phylogeny.html'
+        path_to_html_tree = path_to_query_subdir + '/selection_sliced_domain_phylogeny_temp.html'
+        path_to_html_tree_output = path_to_query_subdir + '/selection_sliced_domain_phylogeny.html'
         shiptv_task = "shiptv --newick {} --metadata {} --output-html {}".format(path_to_fasttree_output,
                                                                                  path_to_rbh_table, path_to_html_tree)
         shiptv_task = Popen(shiptv_task, shell=True)
         returncode = shiptv_task.wait(40000)
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
+
+        with open(path_to_html_tree, "r") as infile:
+            with open(path_to_html_tree_output, "w") as outfile:
+                lines = infile.readlines()
+                chroma_cdn = '''<script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js" integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'''
+                lines.insert(5, chroma_cdn)
+                for line in lines:
+                    outfile.write(line)
+
         logger.info("DONE")
         progress_recorder.set_progress(99,100,"PROGRESS")
     except Exception as e:

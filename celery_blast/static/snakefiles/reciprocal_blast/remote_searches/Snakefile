@@ -534,18 +534,36 @@ rule conduct_phylogeny_fast_tree:
 #an empty HTML document is produced if there are not > 2 sequences in the blast_table input
 rule html_phylogenie:
     input: newick_tree="{qseqid}/msa_phylo_sequences.tree", blast_table="{qseqid}/msa_phylo_rbh_table.tsf",
-    output: html_tree="{qseqid}/msa_phylo_sequences.html",
+    output: html_tree="{qseqid}/msa_phylo_sequences_original.html", shiptv_tree="{qseqid}/msa_phylo_sequences.html"
     log: shiptv_log="log/{qseqid}/shiptv.log",
     run:
-        df = pd.read_table(input['blast_table'])
-        if len(df) > 2:
-            shell("shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}")
-        else:
-            with open(output['html_tree'], 'w') as html_output:
-                html_output.write("<p>No sequences to display</p>\n")
-            with open(log['shiptv_log'],'w') as logfile:
-                logfile.write("WARNING:There are no sequences in the tree file\n")
-                logfile.write("DONE")
+		with open(log['shiptv_log'],"w") as logfile:
+			try:
+				logfile.write("INFO:starting shiptv procedure to produce interactive phylogeny\n")
+				df = pd.read_table(input['blast_table'])
+				if len(df) > 2:
+					shell("shiptv --newick {input.newick_tree} --metadata {input.blast_table} --output-html {output.html_tree} 2> {log.shiptv_log}")
+					logfile.write("INFO:correcting chroma CDN ...\n")
+					with open({output.html_tree},"r") as infile:
+						with open({output.shiptv_tree},"w") as outfile:
+							lines = infile.readlines()
+							chroma_cdn = '''<script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js" integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'''
+							lines.insert(5,chroma_cdn)
+							for line in lines:
+								outfile.write(line)
+				else:
+					with open(output['html_tree'], 'w') as html_output:
+						html_output.write("<p>No sequences to display</p>\n")
+					with open(output['shiptv_tree'],'w') as html_output:
+						html_output.write("<p>No sequences to display</p>\n")
+					logfile.write("WARNING:There are no sequences in the tree file\n")
+					logfile.write("DONE")
+			except Exception as e:
+				logfile.write("ERROR: ERROR during shiptv execution with exception: {}\n".format(e))
+				logfile.write("ERROR\n")
+				shell("touch {output.html_tree}")
+				shell("touch {output.shiptv_tree}")
+
 #RULE 20
 #rpsblast for query sequences with csv output for HTML documents
 rule cdd_domain_rpsblast:
