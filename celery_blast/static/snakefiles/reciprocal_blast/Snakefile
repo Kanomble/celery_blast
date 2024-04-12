@@ -368,9 +368,9 @@ rule conduct_multiple_sequence_alignment_mafft:
 rule trimal:
 	input: target_msa="{qseqid}/msa_phylo_sequences.msa", multiple_sequence_alignment_log="log/{qseqid}/msa.log"
 	output: trimmed_sequences="{qseqid}/msa_phylo_sequences_trimmed.msa"
-	log: log="log/{qseqid}/trimal.log"
+	log: trimal_log="log/{qseqid}/trimal.log"
 	run:
-		with open(log['log'],'a') as lfile:
+		with open(log['trimal_log'],'a') as lfile:
 			execute_trimal=True
 			lfile.write("INFO:starting multiple sequence alignment trimming procedure with trimal...\n")
 			#check if target sequence file is empty (or just contains the query sequence)
