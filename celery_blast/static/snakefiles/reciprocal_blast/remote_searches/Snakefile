@@ -459,7 +459,7 @@ rule trimal:
 	output: trimmed_sequences="{qseqid}/msa_phylo_sequences_trimmed.msa"
 	log: trimal_log="log/{qseqid}/trimal.log"
 	run:
-		with open(log['log'],'a') as lfile:
+		with open(log['trimal_log'],'a') as lfile:
 			execute_trimal=True
 			lfile.write("INFO:starting multiple sequence alignment trimming procedure with trimal...\n")
 			#check if target sequence file is empty (or just contains the query sequence)
