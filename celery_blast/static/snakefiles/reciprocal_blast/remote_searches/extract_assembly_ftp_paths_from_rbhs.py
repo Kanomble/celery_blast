@@ -198,7 +198,12 @@ def write_ipg_table(proteins: list, ipg_table_path: str, logfile:TextIO) -> int:
 '''
 def return_ipg_table(ipg_table_filepath: str) -> pd.DataFrame:
     try:
-        ipg_table = pd.read_csv(ipg_table_filepath, sep="\t")
+        try:
+            ipg_table = pd.read_csv(ipg_table_filepath, sep="\t")
+
+        except pd.errors.EmptyDataError as e:
+            ipg_table = pd.DataFrame(columns=range(0,11))
+
         ipg_table.columns = ["entrez_id", "source", "nucleotide_accession", "start", "stop", "strand", "protein",
                              "protein_name", "organism", "strain", "assembly_accession"]
         return ipg_table
@@ -244,42 +249,49 @@ def extract_assembly_ftp_paths_from_remote_blast_search_rbhs(proteins: list,
         logfile.write("INFO:reading ipg_table.table file\n")
         ipg_table = return_ipg_table(ipg_table_path)
 
-        logfile.write("INFO:filtering ipg_table ...\n")
-        # filter for refseq and genbank entries
-        refseq_assemblies_table = ipg_table[ipg_table['source'] == "RefSeq"]
-        genbank_assemblies_table = ipg_table[ipg_table['source'] == "INSDC"]
+        if len(ipg_table) > 0:
+            logfile.write("INFO:filtering ipg_table ...\n")
+            # filter for refseq and genbank entries
+            refseq_assemblies_table = ipg_table[ipg_table['source'] == "RefSeq"]
+            genbank_assemblies_table = ipg_table[ipg_table['source'] == "INSDC"]
 
-        logfile.write("INFO:reading assembly summary files ...\n")
-        # extract assembly summary information
-        concat_assemblies_table = read_assembly_summary_files(list(refseq_assemblies_table.assembly_accession.unique()),
-                                                              list(
-                                                                  genbank_assemblies_table.assembly_accession.unique()),
-                                                              assembly_file_path)
-        logfile.write("INFO:merging ipg_table and assembly_summary_table on assembly_accession column\n")
-        # merge dataframes
-        ipg_table = ipg_table[['protein', 'assembly_accession', 'source']]
-        ipg_table = ipg_table.dropna()
-        logfile.write("INFO:dropped missing entries from ipg_table dataframe\n")
-        ipg_table['protein'] = ipg_table['protein'].astype(str)
-        ipg_table['protein'] = ipg_table.protein.apply(lambda x: x.split(".")[0])
-        ipg_table = ipg_table[ipg_table.protein.isin(proteins)]
+            logfile.write("INFO:reading assembly summary files ...\n")
+            # extract assembly summary information
+            concat_assemblies_table = read_assembly_summary_files(list(refseq_assemblies_table.assembly_accession.unique()),
+                                                                  list(
+                                                                      genbank_assemblies_table.assembly_accession.unique()),
+                                                                  assembly_file_path)
+            logfile.write("INFO:merging ipg_table and assembly_summary_table on assembly_accession column\n")
+            # merge dataframes
+            ipg_table = ipg_table[['protein', 'assembly_accession', 'source']]
+            ipg_table = ipg_table.dropna()
+            logfile.write("INFO:dropped missing entries from ipg_table dataframe\n")
+            ipg_table['protein'] = ipg_table['protein'].astype(str)
+            ipg_table['protein'] = ipg_table.protein.apply(lambda x: x.split(".")[0])
+            ipg_table = ipg_table[ipg_table.protein.isin(proteins)]
 
-        concat_assemblies_table = concat_assemblies_table.merge(ipg_table, left_on="assembly_accession",
-                                                                right_on="assembly_accession")
+            concat_assemblies_table = concat_assemblies_table.merge(ipg_table, left_on="assembly_accession",
+                                                                    right_on="assembly_accession")
 
-        logfile.write("INFO:filering assembly_table ...\n")
-        concat_assemblies_table = concat_assemblies_table.dropna()
-        concat_assemblies_table = concat_assemblies_table.drop_duplicates(subset=["assembly_accession", "protein"],
-                                                                          keep="first")
-        concat_assemblies_table = concat_assemblies_table[concat_assemblies_table.ftp_path != "na/na_protein.faa.gz"]
+            logfile.write("INFO:filering assembly_table ...\n")
+            concat_assemblies_table = concat_assemblies_table.dropna()
+            concat_assemblies_table = concat_assemblies_table.drop_duplicates(subset=["assembly_accession", "protein"],
+                                                                              keep="first")
+            concat_assemblies_table = concat_assemblies_table[concat_assemblies_table.ftp_path != "na/na_protein.faa.gz"]
 
-        # sort dataframe by taxids and reset the index
-        columns = list(concat_assemblies_table.columns)
-        concat_assemblies_table = concat_assemblies_table.sort_values(by="taxid").reset_index()
-        concat_assemblies_table = concat_assemblies_table[columns]
-        logfile.write("INFO:writing assembly file to disc ...\n")
-        # save dataframe to disc
-        concat_assemblies_table.to_csv(path_to_synteny_dataframe)
+            # sort dataframe by taxids and reset the index
+            columns = list(concat_assemblies_table.columns)
+            concat_assemblies_table = concat_assemblies_table.sort_values(by="taxid").reset_index()
+            concat_assemblies_table = concat_assemblies_table[columns]
+            logfile.write("INFO:writing assembly file to disc ...\n")
+            # save dataframe to disc
+            concat_assemblies_table.to_csv(path_to_synteny_dataframe)
+        else:
+            with open(path_to_synteny_dataframe,"w") as genome_assembly_table:
+                logfile.write("INFO:there are no hits in the IPG table ...\n")
+                logfile.write("WARNING:creating empty file ...\n")
+                genome_assembly_table.write(",assembly_accession,organism_name,taxid,species_taxid,assembly_level,ftp_path,protein,source\n")
+                genome_assembly_table.write("0,no entry, no entry, no entry, no entry, no entry, no entry, no entry, no entry\n")
 
     except Exception as e:
         raise Exception(
