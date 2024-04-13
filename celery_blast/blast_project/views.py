@@ -17,7 +17,8 @@ from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_proj
     calculate_database_statistics_task, execute_remote_reciprocal_blast_project
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, get_remote_html_results, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
-    read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id
+    read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id, \
+    list_all_available_logfiles
 from .py_project_creation import create_blast_project, create_remote_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json, get_database_selection_task_status
@@ -1143,11 +1144,53 @@ def delete_taxonomic_node_file(request, taxonomic_node_file:str):
 def examine_logfile_view(request, project_id:int, remote_or_local:str):
     try:
         if remote_or_local == "local":
-            path_to_logs = BLAST_PROJECT_DIR + str(project_id) + "/log"
+            path_to_logs = BLAST_PROJECT_DIR + str(project_id) + "/log/"
+            path_to_task_table = BLAST_PROJECT_DIR + "task_logfiles"
         elif remote_or_local == "remote":
-            path_to_logs = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log"
+            path_to_logs = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log/"
+            path_to_task_table = REMOTE_BLAST_PROJECT_DIR + "task_logfiles"
         else:
             raise Exception("[-] ERROR project is neither remote nor local ...")
 
+        direct_logfiles, query_log_dirs = list_all_available_logfiles(path_to_logs, path_to_task_table)
+        context = {'direct_logfiles':direct_logfiles,
+                   'query_log_dirs':query_log_dirs,
+                   'project_id':project_id,
+                   'remote_or_local':remote_or_local}
+        return render(request, "blast_project/logfile_dashboard.html", context)
     except Exception as e:
         return failure_view(request, e)
+
+'''view_logfile
+    
+    This function returns the content of a selected logfile within the logfile dashboard.
+    
+    :param project_id
+        :type int
+    :param remote_or_local
+        :type str
+    :param logfile - name of the logfile
+        :type str
+        
+    :returns HttpResponse
+        :type HttpResponse
+'''
+@login_required(login_url="login")
+def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
+    try:
+        if remote_or_local == "local":
+            path_to_logfile = BLAST_PROJECT_DIR + str(project_id) + "/log/" + logfile
+        elif remote_or_local == "remote":
+            path_to_logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log/" + logfile
+        else:
+            raise Exception("[-] ERROR project is neither remote nor local ...")
+
+        if isfile(path_to_logfile):
+            with open(path_to_logfile, 'r') as lfile:
+                lines = lfile.readlines()
+
+            return HttpResponse(lines, content_type="text/plain")
+        else:
+            return HttpResponse("couldnt find logfile: {} ...".format(path_to_logfile), content_type="text/plain")
+    except Exception as e:
+        return failure_view(e)

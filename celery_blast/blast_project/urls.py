@@ -35,7 +35,8 @@ service_urls = [
          name='remote_reciprocal_results'),
     path('<int:project_id>/<str:remote_or_local>/download_archive', views.download_project_as_zip_archive_view,
          name='download_archive'),
-    path('<int:project_id>/<str:remote_or_local>/logfiles', views.examine_logfile_view, name="logfile_dashboard")
+    path('<int:project_id>/<str:remote_or_local>/logfiles', views.examine_logfile_view, name="logfile_dashboard"),
+    path('<int:project_id>/<str:remote_or_local>/<str:logfile>/view_logfile', views.view_logfile, name="view_logfile")
 ]
 
 # this ajax call is currently not used - it has been replaced by the snakemake pipeline script

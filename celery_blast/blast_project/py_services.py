@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 
 from .models import BlastProject, RemoteBlastProject
@@ -13,6 +15,46 @@ from django.db import IntegrityError, transaction
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, TAXDB_URL, REMOTE_BLAST_PROJECT_DIR
 import zipfile
 import io
+
+'''list_all_available_logfiles
+    
+    This functions uses the os module to get a list of all available logfiles for a certain reciprocal BLAST
+    project.
+    
+    :param path_to_logfiles
+        :type str
+    :param path_to_task_table
+        :type str
+    
+    :returns direct_logfiles, query_specific_logfiles
+        :type tuple(list[list, list], dict)
+'''
+def list_all_available_logfiles(path_to_logfiles: str, path_to_task_table) -> tuple:
+    try:
+        direct_logfiles = {}
+        query_specific_logfiles_dir = []
+        if isdir(path_to_logfiles):
+            for file in listdir(path_to_logfiles):
+                if isdir(path_to_logfiles + file) == False:
+                    direct_logfiles[file] = path_to_logfiles + file
+                else:
+                    query_specific_logfiles_dir.append(path_to_logfiles + file + '/')
+            query_specific_logfiles = {}
+            for dir in query_specific_logfiles_dir:
+                query_specific_logfiles[dir] = []
+                for file in os.listdir(dir):
+                    query_specific_logfiles[dir].append(dir + file)
+        else:
+            raise Exception("[-] There is no such path available on the server: {}".format(path_to_logfiles))
+
+        logfile_table = pd.read_csv(path_to_task_table)
+        direct_logfiles = logfile_table[logfile_table.logfile.isin(list(direct_logfiles.keys()))]
+
+        direct_logfiles = zip(list(direct_logfiles.logfile), list(direct_logfiles.progress))
+        return direct_logfiles, query_specific_logfiles
+    except Exception as e:
+        raise Exception("[-] ERROR during logfile listing with exception: {}".format(e))
+
 
 '''download_project_directory
     

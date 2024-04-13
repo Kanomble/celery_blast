@@ -67,7 +67,7 @@
                         <td>{{BlastProject.r_timestamp|date:'d.m.Y, h:m:s'}}</td>
 
                         <td>
-                            {% if BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
+                        {% if BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
 
                                 <button class="btn btn-primary disabled">
                                     Loading ...
@@ -81,8 +81,12 @@
                                 {% csrf_token %}
                                 <input type="submit" value="Execute Snakemake" class="btn btn-primary">
                             </form>
-                            {% endif %}
-                        <td></td>
+                        {% endif %}
+
+                        {% if BlastProject.r_project_execution_snakemake_task %}
+                            <td><a class="btn btn-info" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="remote" %}">Examine Logs</a></td>
+                        {% endif %}
+
                         {% if BlastProject.r_project_execution_snakemake_task.status != 'POGRESS' %}
                         <td>
                             <form class="col"

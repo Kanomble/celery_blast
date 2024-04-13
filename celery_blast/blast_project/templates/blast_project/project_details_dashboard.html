@@ -81,7 +81,14 @@
                             </form>
                             {% endif %}
                         </td>
+
+
                         <td><a class="btn btn-dark" href="{% url 'database_details' database_id=Database.id %}">Database Details</a></td>
+
+                        {% if BlastProject.project_execution_snakemake_task %}
+                            <td><a class="btn btn-info" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="local" %}">Examine Logs</a></td>
+                        {% endif %}
+
                         {% if BlastProject.project_execution_snakemake_task.status != 'POGRESS' %}
                         <td>
                             <form class="col"
@@ -105,13 +112,13 @@
                             {% if BlastProject.project_forward_database.uploaded_files == False %}
                                 <td><a class="btn btn-dark" href="{% url 'synteny_dashboard' project_id=BlastProject.id remote_or_local="local"%}">Synteny Detection</a> </td>
                             {% endif %}
+                            <td></td>
                             <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id remote_or_local='local' %}">Download Project</a> </td>
 
                         {% elif BlastProject.check_for_reciprocal_result_table == True %}
                             <td><a class="btn btn-dark" href="{% url 'reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
                             <td><a class="btn btn-dark" href="{% url 'database_statistics' project_id=BlastProject.id %}">Database Statistics</a></td>
                         {% endif %}
-                            <td><a class="btn btn-info" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="local" %}">Examine Logs</a></td>
                     </tr>
                 </tbody>
             </table>

@@ -46,7 +46,7 @@ with open(snakemake.log['log'],'w') as logfile:
             logfile.write("\tINFO:number of sequences in RBH table: {}\n".format(len(target_df_to_tab)))
             target_df_to_tab.to_csv(query+'/rbh_table.tsf', index=False, sep="\t")
 
-            logfile.write("\t\tINFO:constructing DataTable CNN html string for pandas html table ...\n")
+            logfile.write("\t\tINFO:constructing DataTable CDN html string for pandas html table ...\n")
             pd.set_option('colheader_justify', 'left')
             html_string = '''
             <html>
