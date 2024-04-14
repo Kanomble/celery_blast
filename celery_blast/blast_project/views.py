@@ -1152,9 +1152,11 @@ def examine_logfile_view(request, project_id:int, remote_or_local:str):
         else:
             raise Exception("[-] ERROR project is neither remote nor local ...")
 
-        direct_logfiles, query_log_dirs = list_all_available_logfiles(path_to_logs, path_to_task_table)
+        direct_logfiles, query_specific_logfiles, database_logfiles = list_all_available_logfiles(path_to_logs, path_to_task_table)
+        print(query_specific_logfiles)
         context = {'direct_logfiles':direct_logfiles,
-                   'query_log_dirs':query_log_dirs,
+                   'query_specific_logfiles':query_specific_logfiles,
+                   'database_logfiles':database_logfiles,
                    'project_id':project_id,
                    'remote_or_local':remote_or_local}
         return render(request, "blast_project/logfile_dashboard.html", context)
@@ -1182,6 +1184,28 @@ def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
             path_to_logfile = BLAST_PROJECT_DIR + str(project_id) + "/log/" + logfile
         elif remote_or_local == "remote":
             path_to_logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log/" + logfile
+        else:
+            raise Exception("[-] ERROR project is neither remote nor local ...")
+
+        if isfile(path_to_logfile):
+            with open(path_to_logfile, 'r') as lfile:
+                lines = lfile.readlines()
+
+            return HttpResponse(lines, content_type="text/plain")
+        else:
+            return HttpResponse("couldnt find logfile: {} ...".format(path_to_logfile), content_type="text/plain")
+    except Exception as e:
+        return failure_view(e)
+
+'''view_query_specific_logfile
+
+'''
+def view_query_specific_logfile(request, project_id: int, remote_or_local: str, logfile: str, query:str):
+    try:
+        if remote_or_local == "local":
+            path_to_logfile = BLAST_PROJECT_DIR + str(project_id) + "/log/" + query + "/" + logfile
+        elif remote_or_local == "remote":
+            path_to_logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log/" + query + "/" + logfile
         else:
             raise Exception("[-] ERROR project is neither remote nor local ...")
 

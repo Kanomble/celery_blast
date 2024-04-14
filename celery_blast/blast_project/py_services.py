@@ -41,17 +41,21 @@ def list_all_available_logfiles(path_to_logfiles: str, path_to_task_table) -> tu
                     query_specific_logfiles_dir.append(path_to_logfiles + file + '/')
             query_specific_logfiles = {}
             for dir in query_specific_logfiles_dir:
-                query_specific_logfiles[dir] = []
+                key = dir.split("/")[-2]
+                query_specific_logfiles[key] = []
                 for file in os.listdir(dir):
-                    query_specific_logfiles[dir].append(dir + file)
+                    query_specific_logfiles[key].append(file)
         else:
             raise Exception("[-] There is no such path available on the server: {}".format(path_to_logfiles))
 
         logfile_table = pd.read_csv(path_to_task_table)
         direct_logfiles = logfile_table[logfile_table.logfile.isin(list(direct_logfiles.keys()))]
+        database_logfiles = direct_logfiles[direct_logfiles.progress == 0.0]
+        direct_logfiles = direct_logfiles[direct_logfiles.progress > 0.0]
 
         direct_logfiles = zip(list(direct_logfiles.logfile), list(direct_logfiles.progress))
-        return direct_logfiles, query_specific_logfiles
+        database_logfiles = zip(list(database_logfiles.logfile), list(database_logfiles.progress))
+        return direct_logfiles, query_specific_logfiles, database_logfiles
     except Exception as e:
         raise Exception("[-] ERROR during logfile listing with exception: {}".format(e))
 
