@@ -357,6 +357,7 @@ This allows interaction with the associated celery task and can be used for disp
 
 <a name="todo"></a>
 ## TODO
+- [ ] add ajax calls to CDD search ...
 - [ ] add capitalize or something similar to name validations
 - [X] fix query sequence id fetching if sp|XY| or | | is in sequence
 - [X] fix fasta file upload errors if ending is .fasta in local BLAST searches
@@ -364,11 +365,11 @@ This allows interaction with the associated celery task and can be used for disp
   - [ ] add warning during project creation if in the database reside more than one organism with the specified taxid
 - [ ] fix evalue in axis changing within bokeh plots
 - [X] rework blast project detail pages
-- [ ] rework progress tracking of remote projects
+- [X] rework progress tracking of remote projects
 - [X] add progress visualization for CDD selection constrained phylogeny
 - [X] fix endless polling of progress for selection sliced phylogeny in remote BLAST projects
 - [X] fix polling of progress data for CDD remote searches
-- [ ] display logfiles within the details dashboard
+- [X] display logfiles within the details dashboard
 - [ ] refactor calculation of database normalized tables
   - seems to be zero in some cases (which is wrong)
 - [X] add validation for same project titles
