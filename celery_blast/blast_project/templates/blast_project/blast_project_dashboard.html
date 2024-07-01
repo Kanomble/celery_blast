@@ -34,6 +34,7 @@
 {% endblock %}
 
 {% block content %}
+{% load static %}
 {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result.status != "SUCCESS" %}
     {% if domain_database.domain_database_download_task_result %}
 
@@ -91,14 +92,78 @@
 
             </div>
             <div class="col-md">
-                <button class="btn btn-dark disabled">2. Target Sequence Search</button>
+                <button class="btn btn-dark" onclick="displayDivElement('target_search')">2. Target Sequence Search</button>
             </div>
             <div class="col-md">
-                <button class="btn btn-dark disabled">3. Database Management</button>
+                <button class="btn btn-dark" onclick="displayDivElement('database_management')">3. Database Management</button>
             </div>
             <div class="col-md">
                 <button class="btn btn-dark disabled">4. Starting CATHIs Pipeline</button>
             </div>
+        </div>
+    </div>
+
+    <div id="database_management" class="dashboard_project_list_col", style="overflow-x:hidden;display:none;">
+        <h3 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px">Database Management</h3>
+        <div class="row" style="text-align:center;justify-content:center">
+            <p style="font-size:large; text-align:left">
+                There are two possibilities to create BLAST databases through CATHIs dahsboards.
+                Firstly, CATHI enables the download and processing of GenBank or RefSeq genome entries directly from the NCBI FTP-Servers.
+                Secondly, users can upload their own FASTA-formatted proteome files, either based on concatenation of all available FASTA-, in which case
+                users also have to provide metadata information, or by uploading single FASTA-files in combination with a valid scientific taxonomic name.
+            </p>
+            <br>
+
+
+            <img src="{% static '/images/blast_database_details.jpg' %}" alt="My image">
+
+        </div>
+    </div>
+
+
+    <div id="target_search" class="dashboard_project_list_col" style="overflow-x: hidden; display: none;">
+        <h3 class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Target Search - How can you obtain your target sequences? </h3>
+        <div class="row" style="text-align:center;justify-content: center;">
+            <p style="font-size: large; text-align: left">
+                CATHI integrates NCBIs <a target="_blank" href="https://www.ncbi.nlm.nih.gov/books/NBK179288/"> EDirect software </a>, which can be used for searching through various NCBI databases.
+                You can use this interface through CATHIs <a href="{% url 'entrez_dashboard' %}">entrez search dashboard</a>.
+                Most often you will be interested in searching for specific protein sequences that you can use within CATHIs reciprocal BLAST
+                or normal BLAST pipelines. For this you can do following:
+            </p>
+        </div>
+        <br>
+        <div style="font-size: large; text-align: left">
+             <ol>
+                 <li>Go to the <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a> </li>
+                <li>Specify the PROTEIN database</li>
+                 <li>Enter an ENTREZ search term e.g.: <b> c-di-GMP AND cyclase AND pseudomonas[ORGN] </b> </li>
+                <li>Click on submit</li>
+                <li>Wait until the search process is finished, this will be indicated automatically within the dashboard</li>
+                <li>Check the result table and select entries by clicking on the corresponding row</li>
+                <li>Click on the download button to download your selected sequences</li>
+                <li>All selected sequences will get downloaded and formatted into a FASTA file</li>
+                <li>Keep in mind, that you can just use target sequences derived from one particular proteome within the reciprocal BLAST pipeline</li>
+            </ol>
+        </div>
+        <br>
+
+        <div class="row" style="text-align:center;justify-content:center;">
+            <h3 class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Entrez Protein Search Results Example </h3>
+            <br>
+            <img src="{% static '/images/entrez_protein_db_search_results.PNG' %}" alt="Entrez Protein Search Results">
+        </div>
+
+        <br>
+
+        <div class="row" style="text-align:center;justify-content:center;">
+            <p style="font-size: large; text-align: left">
+                An alternative approach is to search for paper entries within the PubMed database
+                and download the associated protein sequences. This can be done through the result page of the
+                PubMed entrez search result. On the top-right you can see a button: <b> Download All Associated
+                    Proteins </b>, by pressing this button CATHI will link all paper entries to the protein database.
+                In a subsequent step, CATHI will download the proteins as a FASTA file. This process can consume a lot of
+                time, due to the linking process but can yield interesting results.
+            </p>
         </div>
     </div>
 

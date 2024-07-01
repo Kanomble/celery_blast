@@ -15,6 +15,7 @@ from .py_services import delete_one_way_blast_project_and_associated_directories
     delete_one_way_remote_blast_project_and_associated_directories_by_id, get_one_way_html_results,\
     read_snakemake_logfile, check_amount_of_blast_hits
 from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_project
+from time import sleep
 
 '''one_way_blast_project_creation_view
     
@@ -176,6 +177,7 @@ def execute_one_way_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
             execute_one_way_blast_project.delay(project_id)
+        sleep(1)
         return redirect('one_way_project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
@@ -187,6 +189,7 @@ def execute_one_way_remote_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
             execute_one_way_remote_blast_project.delay(project_id)
+        sleep(1)
         return redirect('one_way_remote_project_details', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)
@@ -209,7 +212,7 @@ def load_one_way_result_html_table_view(request, project_id, remote):
 
 '''
 @login_required(login_url='login')
-def one_way_download_target_sequences(request, project_id, project_type, filename='', ):
+def one_way_download_target_sequences(request, project_id, project_type, filename=''):
     try:
         if filename != '':
             if project_type == "one_way_blast":
@@ -253,8 +256,6 @@ def one_way_download_target_sequences(request, project_id, project_type, filenam
         :type int
         
 '''
-
-
 def ajax_call_to_snakemake_logfiles(request, project_id: int, remote: int):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
