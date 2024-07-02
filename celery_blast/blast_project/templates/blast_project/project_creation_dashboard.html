@@ -7,7 +7,50 @@
 {% block infoheader %} Project Creation {% endblock %}
 
 {% block page_description %}
-This Website can be used for the creation of reciprocal BLAST projects.
+    This website can be used for creation of reciprocal BLAST sequence similarity searches. There are two
+    options that can be used.
+    The first option allows you to create reciprocal BLAST projects based on <strong>local protein databases</strong> and the second
+    option allows you to create
+    BLAST projects based on databases that reside on <strong>NCBI-Servers</strong>. The second option is achieved by
+    using the <strong>-remote</strong>
+    parameter of the <a href="https://www.ncbi.nlm.nih.gov/books/NBK279690/">BLAST-C++</a> software package.
+    <br>
+    <h2> Information on advanced BLAST settings </h2>
+    <ul>
+        <li> Turn the <strong>Thread</strong> parameter to the number of your available CPU cores to enhance the search
+            speed (only available for local BLAST searches)
+        </li>
+        <li> If you search against very small local databases increase the <strong> E-Value </strong> parameter (<a
+                href="https://www.metagenomics.wiki/tools/blast/evalue">E-Value informations</a>)
+        </li>
+        <li> Changing the <strong>Word Size</strong> parameter will effect the amount of High-Scoring-Pairs and
+            increases (higher word-size) or decreases (lower word-size) the search speed
+        </li>
+        <li> You can provide an <strong>Entrez Query</strong> to your remote BLAST projects, this will limit your BLAST
+            search based on your query (e.g. apes[organism] - more <a target="_blank"
+                    href="https://www.ncbi.nlm.nih.gov/books/NBK3837/">informations</a>)
+        </li>
+        <li> The <strong> Max Hsps </strong> parameter is used to control the amount of HSPs on your subject sequences.
+            HSPs are assigned if the scoring value between the aligned sequences is above a certain threshold, thus
+            subject sequences with more than one region of similarity will have multiple HSPs.
+        </li>
+        <li>
+            The <strong>Bitscore filter</strong> can be applied to retain high quality hits and omit putative paralogous genes.
+            A bitscore of around 200 is a good value for high quality hits.
+        </li>
+        <li>
+            The maximal amount of RBHs in MSA and Phylogeny parameter is a convenient parameter to restrict the number of
+            taxonomic units that will be displayed within the phylogeny.
+        </li>
+        <li>
+            Descriptions for the TrimAL parameters can be viewed on the corresponding tool
+            <a target="_blank" href="https://trimal.readthedocs.io/en/latest/">homepage</a>.
+        </li>
+        <li>
+            Descriptions for the Multiple Sequence Alignment visualization settings can be found
+            <a target="_blank" href="https://desmid.github.io/mview/">here</a>.
+        </li>
+    </ul>
 {% endblock %}
 
 {% block header %}

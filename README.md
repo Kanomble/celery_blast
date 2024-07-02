@@ -368,7 +368,7 @@ This allows interaction with the associated celery task and can be used for disp
 - [X] add progress visualization for CDD selection constrained phylogeny
 - [X] fix endless polling of progress for selection sliced phylogeny in remote BLAST projects
 - [X] fix polling of progress data for CDD remote searches
-- [ ] display logfiles within the details dashboard
+- [X] display logfiles within the details dashboard
 - [ ] refactor calculation of database normalized tables
   - seems to be zero in some cases (which is wrong)
 - [X] add validation for same project titles

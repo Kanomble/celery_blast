@@ -7,14 +7,28 @@
 {% block infoheader %} CATHI Dashboard {% endblock %}
 
 {% block page_description %}
-    You are logged in as: <strong>{{request.user}}</strong>.<br>
-    Monitor and execute your current projects by entering the
-    <a class="nav-link" href="{% url 'active_table_view' selected_table="reciprocal_blast_projects" %}">Reciprocal Projects</a> dashboard.
+    You are logged in as: <strong>{{request.user}}</strong>.
+    <br>
+    <br>
+    Monitor your current projects by viewing the
+    <a target="_blank" href="{% url 'active_table_view' selected_table="reciprocal_blast_projects" %}">Reciprocal Project</a> for local projects and
+    <a target="_blank" href="{% url 'active_table_view' selected_table="reciprocal_remote_blast_projects" %}">Reciprocal Project</a> for remote projects.
+    <br>
+    <br>
+    View your current normal BLAST projects by viewing the
+    <a target="_blank" href="{% url 'active_table_view' selected_table="one_way_projects" %}">One-Way BLAST Project</a> for your local projects and
+    <a target="_blank" href="{% url 'active_table_view' selected_table="one_way_remote_projects" %}">One-Way BLAST Project</a> for your remote projects.
+    <br>
+    <br>
+    If you want to create a completly new project check out the project creation dashboards for <a target="_blank" href="{% url 'project_creation' %}"> Reciprocal Projects </a>
+    or for <a target="_blank" href="{% url 'one_way_project_creation' %}"> One-Way BLAST projects </a>.
+    <br>
+    <br>
     Manage and view available local databases by entering the
-    <a class="nav-link" href="{% url 'active_table_view' selected_table="databases" %}">Active Databases</a> dashboard.
-
-    If you want to create a completely new project or upload custom proteomes for BLAST databases creation, take a look at the navigation bar
-    on the left hand side of this dashboard.
+    <a href="{% url 'active_table_view' selected_table="databases" %}">Active Databases</a> dashboard.
+    If you want to create a new BLAST database from remotely available proteomes or upload custom proteomes for BLAST database creation,
+    visit the  <a target="_blank" href="{% url 'refseq_transactions_dashboard' %}"> RefSeq/GenBank and Local Database</a> dashboard or the
+    <a target="_blank" href="{% url 'upload_genomes' %}"> Upload Protein Databases</a> dashboard.
     <br>
     <h2> Content of this Web-Tool </h2>
     <ul>
@@ -104,20 +118,45 @@
     </div>
 
     <div id="database_management" class="dashboard_project_list_col", style="overflow-x:hidden;display:none;">
-        <h3 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px">Database Management</h3>
-        <div class="row" style="text-align:center;justify-content:center">
-            <p style="font-size:large; text-align:left">
-                There are two possibilities to create BLAST databases through CATHIs dahsboards.
-                Firstly, CATHI enables the download and processing of GenBank or RefSeq genome entries directly from the NCBI FTP-Servers.
-                Secondly, users can upload their own FASTA-formatted proteome files, either based on concatenation of all available FASTA-, in which case
-                users also have to provide metadata information, or by uploading single FASTA-files in combination with a valid scientific taxonomic name.
-            </p>
-            <br>
+        <h3 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px">Database Management - How can you build local BLAST databases?</h3>
+        <h4 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px"> Downloading Proteome FASTA Files - BLAST Databases from RefSeq/GenBank</h4>
 
-
-            <img src="{% static '/images/blast_database_details.jpg' %}" alt="My image">
-
+        <div class="container">
+            <div class="row" style="text-align:center;justify-content:center">
+                <p style="font-size:large; text-align:left">
+                    There are two possibilities to create BLAST databases through CATHIs dashboards.
+                    CATHI allows users to download and process GenBank or RefSeq genome entries directly from the NCBI FTP servers. After specifying the completeness level of the desired
+                    genomes and the taxonomic entries that should reside in the database through a <a target="_blank" href="{% url 'refseq_transactions_dashboard' %}">dedicated interface</a> (see example image under this section),
+                    potential database entries are first listed in an <b>unactive database</b> section, only after clicking the <b>Download Database</b> button, genome entries are downloaded and
+                    subsequently formatted into BLAST databases. This enables users to review huge databases before a download process is triggered. The whole downloading and formatting process is
+                    tracked within the  <a target="_blank" href="{% url 'refseq_transactions_dashboard' %}">remote database interface</a>.
+                </p>
+                <img src="{% static '/images/remote_database_dashboard.PNG' %}" alt="Remote BLAST Database Dashboard">
+                <br>
+            </div>
         </div>
+        <br>
+        <br>
+
+            <div class="container" style="text-align:center;justify-content:center">
+                <h4 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px"> Uploading Proteome FASTA Files - Custom BLAST Databases</h4>
+                <br>
+                <img height="600" width="600" style="float:left;margin-right:10px" src="{% static '/images/local_concat_database_upload.PNG' alt="Concatenated BLAST Database" %}">
+                <p style="font-size:large; text-align:left">
+                    Users can <a target="_blank" href="{% url 'upload_genomes' %}">upload</a> their own FASTA-formatted proteome files, either based on concatenation of all available FASTA files, in which case
+                    users must also provide metadata information, or by uploading individual FASTA files in combination with a valid scientific taxonomic name.
+                </p>
+                <br>
+                <p style="font-size:large; text-align:left">
+                    Choosing the first option allows users to upload a preformatted FASTA-file. E.g., image you have five proteomes, from five different organisms, you then
+                    need to prepare a concatenated FASTA-file, for example with the <b>cat</b> command: <b>cat genome_1.fasta genome_2.fasta ... genome_5.fasta > concat.fasta</b>, then
+                    you need to prepare four additional files: a file with the corresponding organism names separated by newlines, e.g. the scientific name for the genome_1.fasta file is
+                    <i>Bacillus subtilis</i> and the scientific name for the genome_2.fasta file is <i>Escherichia coli</i>, then you need to specify those names within this file, additionally
+                    you need to prepare the same for the completeness levels and for assembly accessions. If you do not know the completeness levels or the assembly accessions just upload a file
+                    with arbitrary namings, e.g., for the completeness levels: <b>chromosome</b> and for the assembly accessions <b>assembly_1, assembly_2 ...</b> (also separated by line).
+                </p>
+            </div>
+
     </div>
 
 
@@ -126,7 +165,7 @@
         <div class="row" style="text-align:center;justify-content: center;">
             <p style="font-size: large; text-align: left">
                 CATHI integrates NCBIs <a target="_blank" href="https://www.ncbi.nlm.nih.gov/books/NBK179288/"> EDirect software </a>, which can be used for searching through various NCBI databases.
-                You can use this interface through CATHIs <a href="{% url 'entrez_dashboard' %}">entrez search dashboard</a>.
+                You can use this interface through CATHIs <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a>.
                 Most often you will be interested in searching for specific protein sequences that you can use within CATHIs reciprocal BLAST
                 or normal BLAST pipelines. For this you can do following:
             </p>
