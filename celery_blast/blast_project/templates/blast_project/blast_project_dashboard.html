@@ -117,7 +117,7 @@
         </div>
     </div>
 
-    <div id="database_management" class="dashboard_project_list_col", style="overflow-x:hidden;display:none;">
+    <div id="database_management" class="dashboard_project_list_col", style="overflow-x:hidden;display:none; overflow-y: scroll; ">
         <h3 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px">Database Management - How can you build local BLAST databases?</h3>
         <h4 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px"> Downloading Proteome FASTA Files - BLAST Databases from RefSeq/GenBank</h4>
 
@@ -138,140 +138,228 @@
         <br>
         <br>
 
-            <div class="container" style="text-align:center;justify-content:center">
-                <h4 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px"> Uploading Proteome FASTA Files - Custom BLAST Databases</h4>
-                <br>
-                <img height="600" width="600" style="float:left;margin-right:10px" src="{% static '/images/local_concat_database_upload.PNG' alt="Concatenated BLAST Database" %}">
+
+
+        <div class="container" style="text-align:center;justify-content:center;margin-top:30px;margin-bottom:15px;">
+            <h4 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px"> <b> Downloading Proteome FASTA Files from NCBIs RefSeq or GenBank FTP-Servers </b> </h4>
+            <br>
+            <img height="600" width="600" style="float:left;margin-right:10px" src="{% static '/images/local_concat_database_upload.PNG' alt="Concatenated BLAST Database" %}">
+            <p style="font-size:large; text-align:left">
+                Users can <a target="_blank" href="{% url 'upload_genomes' %}">upload</a> their own FASTA-formatted proteome files, either based on concatenation of all available FASTA files, in which case
+                users must also provide metadata information, or by uploading individual FASTA files in combination with a valid scientific taxonomic name.
+            </p>
+            <br>
+            <p style="font-size:large; text-align:left">
+                Choosing the first option allows users to upload a preformatted FASTA-file. E.g., image you have five proteomes, from five different organisms, you then
+                need to prepare a concatenated FASTA-file, for example with the <b>cat</b> command: <b>cat genome_1.fasta genome_2.fasta ... genome_5.fasta > concat.fasta</b>, then
+                you need to prepare four additional files: a file with the corresponding organism names separated by newlines, e.g. the scientific name for the genome_1.fasta file is
+                <i>Bacillus subtilis</i> and the scientific name for the genome_2.fasta file is <i>Escherichia coli</i>, then you need to specify those names within this file, additionally
+                you need to prepare the same for the completeness levels and for assembly accessions. If you do not know the completeness levels or the assembly accessions just upload a file
+                with arbitrary namings, e.g., for the completeness levels: <b>chromosome</b> and for the assembly accessions <b>assembly_1, assembly_2 ...</b> (also separated by line).
+            </p>
+        </div>
+        <div class="container" style="margin-top:30px;margin-bottom:15px;"><br><br><br></div>
+
+        <div class="container" style="margin-top:30px;">
+            <h4 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px;"> <b> Monitoring BLAST database content through the database details dashboard </b></h4>
+
+            <div class="row" style="text-align:center;justify-content:center">
+            <br>
                 <p style="font-size:large; text-align:left">
-                    Users can <a target="_blank" href="{% url 'upload_genomes' %}">upload</a> their own FASTA-formatted proteome files, either based on concatenation of all available FASTA files, in which case
-                    users must also provide metadata information, or by uploading individual FASTA files in combination with a valid scientific taxonomic name.
+                  The advantage of using locally downloaded and formatted databases is that users have precise knowledge of the content of the BLAST database,
+                    which is beneficial for analyzing the abundance of RBHs among various taxonomic clades.
+                    For example, if users want to analyze the abundance of certain bacterial genes within the <i>Pseudomonadota</i> phylum,
+                    they will likely encounter many homologous sequences for <i>Escherichia coli</i> simply because there are more sequences from <i>Escherichia coli</i> genomes compared to other members of the <i>Pseudomonadota</i> phylum.
+                    With knowledge of the exact content of the search space, CATHI can correct this bias towards genomes with high sequence numbers. This also aids in selecting better settings for the reciprocal BLAST pipeline, such as extending the number of reported <b>num_alignments</b>.
+                    <br>
+                    <br>
+
+                    However, users can also use remotely available databases, such as the reference sequence database, and by specifying a certain <b>entrez_query</b>,
+                    they can omit searching for certain taxonomies or more precisely specify the searchable content.
                 </p>
-                <br>
-                <p style="font-size:large; text-align:left">
-                    Choosing the first option allows users to upload a preformatted FASTA-file. E.g., image you have five proteomes, from five different organisms, you then
-                    need to prepare a concatenated FASTA-file, for example with the <b>cat</b> command: <b>cat genome_1.fasta genome_2.fasta ... genome_5.fasta > concat.fasta</b>, then
-                    you need to prepare four additional files: a file with the corresponding organism names separated by newlines, e.g. the scientific name for the genome_1.fasta file is
-                    <i>Bacillus subtilis</i> and the scientific name for the genome_2.fasta file is <i>Escherichia coli</i>, then you need to specify those names within this file, additionally
-                    you need to prepare the same for the completeness levels and for assembly accessions. If you do not know the completeness levels or the assembly accessions just upload a file
-                    with arbitrary namings, e.g., for the completeness levels: <b>chromosome</b> and for the assembly accessions <b>assembly_1, assembly_2 ...</b> (also separated by line).
+
+                <img src="{% static '/images/database_details.PNG' alt="Database Details" %}">
+            </div>
+        </div>
+    </div>
+
+
+    <div id="target_search" class="dashboard_project_list_col" style="overflow-x: hidden; display: none; overflow-y: scroll; ">
+        <div class="container">
+            <h3 class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Target Search - How can you obtain your target sequences? </h3>
+            <div class="row" style="text-align:center;justify-content: center;">
+                <p style="font-size: large; text-align: left">
+                    CATHI integrates NCBIs <a target="_blank" href="https://www.ncbi.nlm.nih.gov/books/NBK179288/"> EDirect software </a>, which can be used for searching through various NCBI databases.
+                    You can use this interface through CATHIs <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a>.
+                    Most often you will be interested in searching for specific protein sequences that you can use within CATHIs reciprocal BLAST
+                    or normal BLAST pipelines. For this you can do following:
                 </p>
             </div>
-
-    </div>
-
-
-    <div id="target_search" class="dashboard_project_list_col" style="overflow-x: hidden; display: none;">
-        <h3 class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Target Search - How can you obtain your target sequences? </h3>
-        <div class="row" style="text-align:center;justify-content: center;">
-            <p style="font-size: large; text-align: left">
-                CATHI integrates NCBIs <a target="_blank" href="https://www.ncbi.nlm.nih.gov/books/NBK179288/"> EDirect software </a>, which can be used for searching through various NCBI databases.
-                You can use this interface through CATHIs <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a>.
-                Most often you will be interested in searching for specific protein sequences that you can use within CATHIs reciprocal BLAST
-                or normal BLAST pipelines. For this you can do following:
-            </p>
-        </div>
-        <br>
-        <div style="font-size: large; text-align: left">
-             <ol>
-                 <li>Go to the <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a> </li>
-                <li>Specify the PROTEIN database</li>
-                 <li>Enter an ENTREZ search term e.g.: <b> c-di-GMP AND cyclase AND pseudomonas[ORGN] </b> </li>
-                <li>Click on submit</li>
-                <li>Wait until the search process is finished, this will be indicated automatically within the dashboard</li>
-                <li>Check the result table and select entries by clicking on the corresponding row</li>
-                <li>Click on the download button to download your selected sequences</li>
-                <li>All selected sequences will get downloaded and formatted into a FASTA file</li>
-                <li>Keep in mind, that you can just use target sequences derived from one particular proteome within the reciprocal BLAST pipeline</li>
-            </ol>
-        </div>
-        <br>
-
-        <div class="row" style="text-align:center;justify-content:center;">
-            <h3 class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Entrez Protein Search Results Example </h3>
             <br>
-            <img src="{% static '/images/entrez_protein_db_search_results.PNG' %}" alt="Entrez Protein Search Results">
-        </div>
+            <div style="font-size: large; text-align: left">
+                 <ol>
+                     <li>Go to the <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a> </li>
+                    <li>Specify the PROTEIN database</li>
+                     <li>Enter an ENTREZ search term e.g.: <b> c-di-GMP AND cyclase AND pseudomonas[ORGN] </b> </li>
+                    <li>Click on submit</li>
+                    <li>Wait until the search process is finished, this will be indicated automatically within the dashboard</li>
+                    <li>Check the result table and select entries by clicking on the corresponding row</li>
+                    <li>Click on the download button to download your selected sequences</li>
+                    <li>All selected sequences will get downloaded and formatted into a FASTA file</li>
+                    <li>Keep in mind, that you can just use target sequences derived from one particular proteome within the reciprocal BLAST pipeline</li>
+                </ol>
+            </div>
+            <br>
 
-        <br>
+            <div class="row" style="text-align:center;justify-content:center;">
+                <h3 class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Entrez Protein Search Results Example </h3>
+                <br>
+                <img src="{% static '/images/entrez_protein_db_seach_results.PNG' %}" alt="Entrez Protein Search Results">
+            </div>
 
-        <div class="row" style="text-align:center;justify-content:center;">
-            <p style="font-size: large; text-align: left">
-                An alternative approach is to search for paper entries within the PubMed database
-                and download the associated protein sequences. This can be done through the result page of the
-                PubMed entrez search result. On the top-right you can see a button: <b> Download All Associated
-                    Proteins </b>, by pressing this button CATHI will link all paper entries to the protein database.
-                In a subsequent step, CATHI will download the proteins as a FASTA file. This process can consume a lot of
-                time, due to the linking process but can yield interesting results.
-            </p>
+            <br>
+
+            <div class="row" style="text-align:center;justify-content:center;">
+                <p style="font-size: large; text-align: left">
+                    An alternative approach is to search for paper entries within the PubMed database
+                    and download the associated protein sequences. This can be done through the result page of the
+                    PubMed entrez search result. On the top-right you can see a button: <b> Download All Associated
+                        Proteins </b>, by pressing this button CATHI will link all paper entries to the protein database.
+                    In a subsequent step, CATHI will download the proteins as a FASTA file. This process can consume a lot of
+                    time, due to the linking process but can yield interesting results.
+                </p>
+            </div>
         </div>
     </div>
 
-    <div id="overview" class="dashboard_project_list_col" style="overflow-x: hidden;display: none;">
-        <h3  class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Overview Section - What can you do with CATHI?  </h3>
-        <div class="row" style="text-align:center;justify-content: center;">
+    <div id="overview" class="dashboard_project_list_col" style="overflow-x: hidden;display: none;overflow-y: auto; ">
+        <div class="container">
+
+            <h3  class="col_header" style="text-align: center;text-size-adjust: auto;margin-bottom: 30px"> Overview Section - What can you do with CATHI?  </h3>
+            <div class="row" style="text-align:center;justify-content: center;">
+                <p style="font-size: large; text-align: left">
+                    CATHI can aid researchers in the identification of possible target sequences and to elucidate the
+                    evolutionary background of those sequences by generating interactive result graphs and tables similar to the example plot
+                    you can see in this short overview.
+                </p>
+
+                <br>
+                <br>
+
+                <p style="font-size: large; text-align: left">
+                    Press the button to view an example interactive visualization.
+                    Click on the button to view the example plot: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="interactive_bokeh_plot_example.html" %}">Interactive Result Visualization</a>
+                    <br>
+                </p>
+
+                <p style="font-size: large; text-align: left">
+                    <br>
+                    In this interactive visualization, users can filter reciprocal best hits (RBHs) based on their taxonomic identity by selecting taxonomy
+                    field names on the right selection menus. The result visualization provides a <b>Lasso-Tool</b> that users can apply to select specific RBHs.
+                    In addition, you can select multiple query sequences, change the x- and y-axis attributes, download selected sequences or conduct a phylogenetic inference.
+                    <br>
+                </p>
+
+                <p style="font-size: large; text-align: left">
+                    With CATHI users can calculate principal components based on protein domains of the inferred RBHs. This is done
+                    through searching for conserved protein domains. For each RBH domain identitiy levels (in %) are written to a table, which
+                    is subsequently used to calculate principal components.
+                    Click on the button to view an example interacitve Protein-Domain-PCA plot: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="pca_bokeh_domain_plot.html" %}">Protein-Domain PCA Plot</a>
+                    <br>
+                </p>
+
+                <p style="font-size: large; text-align: left">
+                    Press the button to view an example interactive synteny visualization produced by the clinker tool.
+                    Click on the button to view the example synteny: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="clinker_result_plot.html" %}">Synteny Plot</a>
+                    <br>
+                </p>
+
+
+            </div>
+
+
+
             <p style="font-size: large; text-align: left">
-                CATHI can aid researchers in the identification of possible target sequences and to elucidate the
-                evolutionary background of those sequences by generating interactive result graphs and tables similar to the example plot
-                you can see in this short overview.
+                Typically, a target sequence search also involves paper search.
+                With CATHI, you can utilize the E-Direct Software from NCBI, which enables searching in biological databases and in
+                the pubmed database, through the Entrez Search Dashboard page.
+                There, you can search for manuscripts within the PubMed database, download paper-associated protein sequences,
+                or simply view each entry on NCBI.
+                Furthermore, you can conveniently search and download protein sequences to serve as query sequences.
             </p>
 
             <br>
             <br>
 
             <p style="font-size: large; text-align: left">
-                Press the button to view an example interactive visualization.
-                Klick on the button to hide/show the example plot: <button class="btn btn-dark" onclick="displayDivElement('bokeh_example')">Plot Example</button>
-                <br>
+                CATHI's main aim is to conduct a reciprocal BLAST project using user-provided target sequences.
+                Therefore, users can create BLAST databases locally using the NCBI Database Dashboard or choose remotely available databases from NCBI.
+                The reciprocal BLAST project is a pipeline that comprises several tasks, starting with BLAST searches and concluding with the identification of conserved protein domains.
             </p>
-        </div>
+            <br>
+            <div style="font-size: large; text-align: left">
+                 <ol>
+                    <li>Forward BLAST</li>
+                    <li>Backward BLAST</li>
+                    <li>Inference of Reciprocal Best Hits</li>
+                    <li>Resulting Parsing and Taxonomy Inference</li>
+                    <li>Generation of Interactive Tables and Graphs</li>
+                    <li>Multiple Sequence Alignment</li>
+                    <li>Trimming of Multiple Sequence Alignments</li>
+                    <li>Phylogenetic Inference</li>
+                    <li>Conserved Domain Inference</li>
+                     <li>Domain Architecture Visualization</li>
+                     <li>Motif/Site Descriptions</li>
+                     <li>Interactive Synteny Visualization</li>
+                     <li>Interactive RBH Visualization (see Example Plot)</li>
+                     <li>Database Statistics with local databases</li>
+                </ol>
+            </div>
 
-        <div class="row" style="text-align:center;justify-content: center;display:none;"  id="bokeh_example">
-            {% include "blast_project/interactive_bokeh_plot_example.html" %}
-            <p style="font-size: large; text-align: left">
+            <br>
+            <br>
+
+            <div class="row" style="text-align:center;justify-content: center;">
+             <h4 class="col_header" style="text-align:center;text-size-adjust:auto;margin-bottom:30px;"> <b>Analysing reciprocal best hit sequences within CATHIs project details dashboard</b> </h4>
                 <br>
-                You can filter the reciprocal best hits (RBHs) based on their taxonomic identity by clicking on the taxonomy
-                field names of the right selection menus. In addition, you can select multiple query sequences, change the x- and y-axis
-                attributes, download selected sequences or conduct a phylogenetic inference.
+                <p style="font-size:large; text-align:left">
+                    The following image presents an example of a project details page, displaying the project's progress bar
+                    (100%) and listing all result and post-processing options that users can evaluate or conduct. The pipeline monitoring process
+                    is enabled through the progress bar and the possibility to examine special logfiles that are written by the pipeline tasks.
+                    Users can view all available logfiles by clicking the <b>Examine Logs</b> button. A short <b>Result Summary</b> and <b>Query Sequence Information</b> is directly presented
+                    within this Project Details dashboard. The whole project can be downloaded by pressing the <b>Download Project</b> button, which enables
+                    a more precise post-processing on local machines.
+                    <br>
+                    <br>
+                    Interactive result visualizations, presented within the above section, can be accessed by clicking the <b>Interactive Plot</b> button.
+                    Protein-domain inferences, which include not only comprehensive result tables but also the aforementioned PCA based on conserved protein domains
+                    and a visualization of the protein domains, can be accessed through the <b>CDD Domain Search</b> button.
+                    <br>
+                    <br>
+                    The synteny calculation dashboard (<b>Synteny Detection</b>) and the multiple sequence alignments as well as the phylogenetic trees (<b>MSA and phylogeny</b>)
+                    are accessed through the deticated buttons. A comprehensive overview of all inferred RBHs is presented by pressing the <b>Reciprocal Results Table</b> button.
+                </p>
+                <img src="{% static '/images/reciprocal_blast_project_details_dashboard.PNG' alt="Project Details Dashboard" %}">
+                <p style="font-size:large; text-align:left">
+                    With CATHI's Project Creation Dashboard users can easily create reciprocal and normal one-way-BLAST projects. Typically, you just need to select your desired
+                database and choose your query sequences, and for reciprocal BLAST projects you also have to specify the backward BLAST database in which the organism of your query sequences
+                resides. This also implies, that you can only search for RBHs of query sequences from ONE particular organism.
+                    <br>
+                    <br>
+                    The <a target="_blank" href="{% url 'project_creation' %}">project creation dashboard</a>
+                has a help section for input fields, check those input field descriptions BEFORE you start your first project.
+                    <br>
+                    <br>
+                    Users have two options, either they can search among previously downloaded or uploaded and formatted local databases
+                    or they can use online available databases such as the reference sequence (RefSeq) database from NCBI. Using local databases
+                    has the advantage of knowing the exact content of the databases, listed within the <b>Database Details</b> dashboards, which enables statistical inferences and comparisons based on the amount of particular organisms.
+                    Database statistics of the inferred RBHs can be conducted through CATHIs
+                    interactive result plots within the <b>Database Statistics Interface</b> for projects that are based on local databases.
+                </p>
                 <br>
-            </p>
+            </div>
+
         </div>
-        <p style="font-size: large; text-align: left">
-            Typically, a target sequence search also involves paper search.
-            With CATHI, you can utilize the E-Direct Software from NCBI, which enables searching in biological databases and in
-            the pubmed database, through the Entrez Search Dashboard page.
-            There, you can search for manuscripts within the PubMed database, download paper-associated protein sequences,
-            or simply view each entry on NCBI.
-            Furthermore, you can conveniently search and download protein sequences to serve as query sequences.
-        </p>
-
-        <br>
-        <br>
-
-        <p style="font-size: large; text-align: left">
-            CATHI's main aim is to conduct a reciprocal BLAST project using user-provided target sequences.
-            Therefore, users can create BLAST databases locally using the NCBI Database Dashboard or choose remotely available databases from NCBI.
-            The reciprocal BLAST project is a pipeline that comprises several tasks, starting with BLAST searches and concluding with the identification of conserved protein domains.
-        </p>
-        <br>
-        <div style="font-size: large; text-align: left">
-             <ol>
-                <li>Forward BLAST</li>
-                <li>Backward BLAST</li>
-                <li>Inference of Reciprocal Best Hits</li>
-                <li>Resulting Parsing and Taxonomy Inference</li>
-                <li>Generation of Interactive Tables and Graphs</li>
-                <li>Multiple Sequence Alignment</li>
-                <li>Trimming of Multiple Sequence Alignments</li>
-                <li>Phylogenetic Inference</li>
-                <li>Conserved Domain Inference</li>
-            </ol>
-        </div>
-
-        <br>
-        <br>
-        <p style="font-size: large; text-align: left">
-             With CATHI's Project Creation Dashboard users can easily create reciprocal BLAST projects.
-        </p>
 
     </div>
 

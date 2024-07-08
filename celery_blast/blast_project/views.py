@@ -1194,3 +1194,17 @@ def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
             return HttpResponse("couldnt find logfile: {} ...".format(path_to_logfile), content_type="text/plain")
     except Exception as e:
         return failure_view(e)
+
+
+'''view_example_synteny
+
+   This function returns the example htmls of the overview section in CATHIs home dashboard.
+
+'''
+@login_required(login_url='login')
+def view_example_html(request, example_html:str):
+    try:
+        html_path = "blast_project/" + example_html
+        return render(request, html_path)
+    except Exception as e:
+        return failure_view(request, e)
