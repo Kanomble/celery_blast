@@ -13,8 +13,26 @@
 {% endblock %}
 
 {% block content %}
-    <div class="dashboard_project_list_col" id="pipeline_logfiles" style="display:block">
+
+    <div class="dashboard_project_list_col">
+        <div class="container">
+            <div class="row justify-content-md-center" style="text-align: center">
+                <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('pipeline_logfiles')" > Pipeline Logfiles </button>
+                </div>
+                <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('query_specific_logfiles')"> Query Specific Logfiles </button>
+                </div>
+                <div class="col-md">
+                    <button class="btn btn-dark" onclick="displayDivElement('database_logfiles')" > Database Statistics Logfiles </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard_project_list_col" id="pipeline_logfiles" style="display:none">
         <h2 style="text-align: center"> Pipeline Logfiles </h2>
+        <br>
         <table class="table table-striped table-bordered">
             <tbody>
                 <tr>
@@ -32,6 +50,59 @@
             </tbody>
         </table>
     </div>
+
+    <div class="dashboard_project_list_col" id="query_specific_logfiles" style="display:none">
+        <h2 style="text-align: center"> Query Specific - Logfiles </h2>
+        <br>
+        <table class="table table-striped table-bordered">
+            <tbody>
+                <tr>
+                    <th> Query </th>
+                    <th> Logfile </th>
+                    <th> View Logfile </th>
+                </tr>
+                {% for key, value in query_specific_logfiles.items %}
+
+                    <tr>
+                        <td style="font-size: large">
+                            {{ key }}
+                        </td>
+                    </tr>
+
+                    {% for val in value %}
+                         <tr>
+                            <td> {{ key }} </td>
+                            <td> {{ val }} </td>
+                            <td> <a href="{% url "view_query_specific_logfile" project_id=project_id remote_or_local=remote_or_local logfile=val query=key  %}" class="btn btn-dark"> View </a> </td>
+                         </tr>
+                    {% endfor %}
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dashboard_project_list_col" id="database_logfiles" style="display:none">
+        <h2 style="text-align: center"> Database Statistics Logfiles </h2>
+        <br>
+        <table class="table table-striped table-bordered">
+            <tbody>
+                <tr>
+                    <th> Logfile Name </th>
+                    <th> Progress </th>
+                    <th> View Logfile </th>
+                </tr>
+                {% for logfile, progress in database_logfiles %}
+                    <tr>
+                        <td> {{ logfile }} </td>
+                        <td> {{ progress }} </td>
+                        <td> <a href="{% url "view_logfile" project_id=project_id remote_or_local=remote_or_local logfile=logfile %}" class="btn btn-dark"> View </a> </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 {% endblock %}
 
 {% block scripts %}
