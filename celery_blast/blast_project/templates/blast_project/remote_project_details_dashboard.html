@@ -10,19 +10,29 @@
 {% endblock %}
 
 {% block page_description %}
-<h2> Project Details </h2>
-<br>
-    <h4> What to do if an error occurs during Snakemake execution? </h4>
-    <ul>
-        <li> Monitor your current Snakemake run and check if the workflow has thrown an error or is still running. The progress is automatically updated every 30 seconds.</li>
-        <li> If an error occurred during Snakemake execution you might think about deleting this project and starting a new one with different query sequences, databases or BLAST settings. </li>
-        <li> Check your entrez_query variable for correctness. </li>
-    </ul>
+    <h2> Project Details </h2>
+
+    This detail page lists all available results and post-processing options of the project.
+    You can track the progress of the pipeline by checking the progress bar and the logs.
+    During the course of the pipeline, this page enables viewing intermediate results,
+    such as a result table of all inferred RBHs, so you might want to refresh this dashboard from time to time.
+    Keep in mind that a project with many query sequences might run for a long time,
+    especially if the selected forward BLAST database is large (such as the nr database).
 
     <h4> Basic Information </h4>
     <ul>
         <li> Click on the "Execute Snakemake" Button if you haven't started your reciprocal BLAST analysis </li>
-        <li> If your Snakemake execution finishes you can view and download the results by clicking on the "Reciprocal Results Table" button which appears after successfull termination at the right side of the project information panel</li>
+        <li> If your Snakemake execution finishes the progress bar will show a value of 100%, you can then reload this dashboard</li>
+        <li> For more information check the home webpage of CATHI</li>
+    </ul>
+
+    <br>
+    <h4> What to do if an error occurs during Snakemake execution? </h4>
+    <ul>
+        <li> Monitor your current Snakemake run and check if the workflow has thrown an error or is still running. The progress is automatically updated every 30 seconds.</li>
+        <li> Have a look at the logfiles of this run: <a class="btn btn-info" target="_blank" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="local" %}">Examine Logs</a></li>
+        <li> If an error occurred during Snakemake execution you might think about deleting this project and starting a new one with different query sequences, databases or BLAST settings. </li>
+        <li> Check your entrez_query variable for correctness. </li>
     </ul>
 {% endblock %}
 

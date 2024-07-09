@@ -7,6 +7,23 @@
 {% block infoheader %} BLAST Database Statistics Dashboard {% endblock %}
 
 {% block page_description %}
+    Within this dashboard, you can compare your RBHs from all query sequences to the content of the forward BLAST database.
+    This enables a more precise evaluation of the abundance of your query sequences across the various taxonomic units within the databases.
+    <br>
+    <br>
+    By pressing the <b>Interactive Graph</b> button, you can extend this dashboard with an interactive visualization of your RBHs.
+    The interactive visualization is based on the python library<a target="_blank" href="https://bokeh.org/"> Bokeh </a>that provides
+    various tools for interactivity. You can select specific taxonomic units from the dropdown menus on the right site of this plot, which
+    will automatically update the contents of the scatter plot. You can choose color palettes (if you dont exceed the number of different taxonomies, maximum is 12),
+    change the x- and y-axis to visualize the sequence length, bitscore, evalue or percent identity and by selecting the <b>Lasso-Tool</b>
+    on the Bokeh menu on the right site of the plot, you can select specific RBHs directly from the plot itself. This process will also update the table, which lists
+    the amount of different taxonomic units within the database and the amount of different taxonomic units as well as RBHs of the results.
+    <br>
+    <br>
+    By pressing the <b>Download Selection</b> button CATHI prepares a .csv file for you that will directly be downloaded onto your Download folder.
+    Furthermore, you can create a phylogenie with MAFFT and FastTree simply by pressing the <b>Selection Constrained Phylogeny</b> button. The
+    process of the phylogenetic inference is tracked by CATHI and once it is completed the Database Statistics dashboard will be reloaded and
+    you can access the phylogeny by pressing the <b>View Phylogeny</b> button.
 {% endblock %}
 {% block header %}
 {% endblock %}

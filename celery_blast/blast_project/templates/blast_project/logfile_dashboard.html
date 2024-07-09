@@ -7,6 +7,22 @@
 {% block infoheader %} Reciprocal BLAST Logfile Dashboard {% endblock %}
 
 {% block page_description %}
+CATHI's reciprocal BLAST pipeline consists of several tasks.
+    Each task is tracked by creating specific log files that can be viewed by the user through this dashboard.
+    <br>
+    <br>
+    The tasks are divided into three main aspects: the general <b>Pipeline Logfiles</b>,
+    which enable a close examination of CATHI's main pipeline tasks such as the forward and backward BLAST as well as the
+    inference of RBHs; the <b>Query Specific Logfiles</b>, which list the multiple sequence alignment,
+    phylogenetic inference, synteny, and general post-processing tasks
+    (some conducted by the user through CATHI's interfaces and some conducted during the pipeline);
+    and the <b>Database Statistics Logfiles</b> for reciprocal BLAST projects that are based on locally downloaded and formatted databases.
+    <br>
+    <br>
+    Keep in mind that logfiles are not created for all tasks.
+    For example, if the inference of CDDs for your query sequences does not result in an error,
+    the log file for this task will have no content.
+    However, if you encounter an error during the execution of the pipeline, check the logfiles through this interface.
 {% endblock %}
 
 {% block header %}
