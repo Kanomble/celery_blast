@@ -9,7 +9,23 @@
 {% block header %}
 {% endblock %}
 {% block page_description %}
-    <h2> Synteny Detection Dashboard </h2>
+    You are logged in as: <strong>{{request.user}}</strong>.
+    <br>
+    <br>
+    Within this dashboard you can produce synteny plots for all listed
+    query sequences. By pressing the <b>Calculate Synteny</b> button you are redirected to a table that lists RBHs and
+    their corresponding genome identifier. By selecting up to ten rows of this table and pressing the <b>Download Genbank files and calculate synteny</b>
+    button, you can produce a clinker based synteny plot.
+    <br>
+    <br>
+    The listed RBH sequences may vary to the original RBHs if you are working on a project that was conducted on remotely
+    available databases, such as nr or refseq, due to the lack of the exact assembly identifier for the inferred proteins. Therefore
+    CATHI searches for all <b>identical proteins</b> and their corresponding <b>assembly accessions</b>. A table with all
+    <b>identical proteins</b> is located in the result directory of the query sequence of this project.
+    <br>
+    <br>
+    Press the button for an example visualization of the KaiC locus, described in the CATHI tool paper: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="clinker_result_plot.html" %}">Synteny Plot</a>
+
 {% endblock %}
 {% block content %}
 

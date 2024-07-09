@@ -12,6 +12,14 @@
 {% endblock %}
 
 {% block page_description %}
+Within this dashboard, you can select up to ten rows corresponding to RBHs of your query sequence and download the associated GenBank files.
+    These downloaded GenBank files can be found in a directory of the project, for further post-processing.
+    The files are then processed by CATHI and prepared for input to the clinker tool,
+    which calculates pairwise identities between proteins in the locus of the selected RBH.
+    <br>
+    <br>
+CATHI searches for six genes to the right and six genes to the left of the selected RBH locus.
+    These thirteen genes are then written into a new GenBank file, which will be located in the result directory of this query sequence.
 {% endblock %}
 
 {% block content %}

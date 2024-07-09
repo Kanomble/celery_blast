@@ -7,6 +7,25 @@
 {% block infoheader %} CDD Domain Search Dashboard {% endblock %}
 
 {% block page_description %}
+    You are logged in as: <strong>{{request.user}}</strong>.
+    <br>
+    <br>
+    Within this dashboard you can manage domains of your query sequence. By pressing the buttons labeled as <b>View Query Domains</b>,
+    <b>View Query Sites</b> and <b>View Query CDDs</b> you will be redirected to comprehensive result tables listing hits of your query sequences
+    against the Conserved Domain Database (CDD).
+    <br>
+    <br>
+    The button <b>Show Domain Architecture</b> expands this domain dashboard by displaying the architecture of the domains within your query sequences.
+    By clicking on the protein domain names within those domain graphs, you are redirected to NCBI's domain website,
+    where further details of the corresponding domain are explained.
+    <br>
+    <br>
+    This dashboard provides the capability to infer protein domains for all RBHs of your query sequences. The results of this analysis are displayed in an interactive plot,
+    which is linked to a table listing all percent identities of the RBHs to the hits of the CDDs of your query sequences (e.g., if one domain in an RBH is missing, the identity is 0.0).
+    <br>
+    <br>
+    Check this example graph for an example visualization: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="pca_bokeh_domain_plot.html" %}">Protein-Domain PCA Plot</a>
+
 {% endblock %}
 
 {% block page_header %}
