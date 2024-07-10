@@ -7,16 +7,23 @@
 {% block infoheader %} External Tools {% endblock %}
 
 {% block page_description %}
-    <h2> External Tools </h2>
+    <h2> Multiple Sequence Alignment and Phylogenetic Inference </h2>
     <br>
-    <h4> Multiple Sequence Alignment with MAFFT </h4>
+    <h4> Multiple Sequence Alignment (MSA) with MAFFT </h4>
     <ul>
-        <li> MAFFT can be used for conducting a multiple sequence alignment with all orthologous sequences</li>
+        <li>By pressing the <b>View Multiple Sequence Alignment</b> you can view the trimmed MSA</li>
+        <li>An original untrimmed MSA file <b>(msa_phylo_sequences.msa)</b> is located in your project result directory</li>
+        <li>The HTML of the MSA is generated with <a target="_blank" href="https://desmid.github.io/mview/">MView</a></li>
+        <li>Options for coloring are presented during project creation within the advanced settings option</li>
     </ul>
 
     <h4> Phylogenetic Tree inference with FastTree </h4>
     <ul>
-        <li> FastTree can be used directly after MAFFT for the inference of ml phylogenetic trees</li>
+        <li>FastTree2 is being used directly after MAFFT for the inference of maximum-likelihood phylogenetic trees</li>
+        <li>By pressing the <b>View Phylogeny</b> button, you are redirected to an interactive HTML, displaying the phylogenetic tree produced by <a target="_blank" href="https://pypi.org/project/shiptv/">shiptv</a></li>
+
+        <li>Options for displaying just high value RBHs are given within the advanced settings option during project creation</li>
+        <li>For more sophisticated visualizations of your phylogeny we refer to the <a target="_blank" href="https://treeviewer.org/">TreeViewer</a> tool</li>
     </ul>
 {% endblock %}
 

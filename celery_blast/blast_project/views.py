@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
@@ -1165,6 +1167,7 @@ def examine_logfile_view(request, project_id:int, remote_or_local:str):
 '''view_logfile
     
     This function returns the content of a selected logfile within the logfile dashboard.
+    All logfiles reside in the log/ directory of the associated project.
     
     :param project_id
         :type int
@@ -1197,20 +1200,23 @@ def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
         return failure_view(e)
 
 
-'''view_example_html
-
-   This function returns the example htmls of the overview section in CATHIs home dashboard.
-
-'''
-@login_required(login_url='login')
-def view_example_html(request, example_html:str):
-    try:
-        html_path = "blast_project/" + example_html
-        return render(request, html_path)
-    except Exception as e:
-        return failure_view(request, e)
-
 '''view_query_specific_logfile
+    
+    This function returns the logfile for a task specific to a query sequence, e.g., the production of multiple sequence 
+    alignments or phylogenetic inferences. In particular all query specific logfiles reside in the log/query_sequence/ 
+    directory of the associated project.
+    
+    :param project_id
+        :type int
+    :param remote_or_local
+        :type str
+    :param logfile - name of the logfile
+        :type str
+    :param query - name of the query sequence
+        :type str
+        
+    :returns HttpResponse
+        :type HttpResponse
 
 '''
 def view_query_specific_logfile(request, project_id: int, remote_or_local: str, logfile: str, query:str):
@@ -1231,3 +1237,32 @@ def view_query_specific_logfile(request, project_id: int, remote_or_local: str, 
             return HttpResponse("couldnt find logfile: {} ...".format(path_to_logfile), content_type="text/plain")
     except Exception as e:
         return failure_view(e)
+
+'''view_example_html
+
+   This function returns the example htmls of the overview section in CATHIs home dashboard. 
+   The phylogeny file produced by shiptv is not suited for the rendering process of django, its getting served from
+   the template directory as a plain HttpResponse
+   
+   :param example_html
+        :type str
+
+'''
+@login_required(login_url='login')
+def view_example_html(request, example_html:str):
+    try:
+        if example_html != "example_interactive_phylogeny.html":
+            html_path = "blast_project/" + example_html
+            return render(request, html_path)
+        else:
+            html_content = ""
+            with open("blast_project/templates/blast_project/example_interactive_phylogeny.html") as html_file:
+                html_content = html_file.read()
+            if html_content != "":
+                return HttpResponse(html_content)
+            else:
+                raise Exception("[-] Example Phylogeny Not Found ...")
+    except Exception as e:
+        return failure_view(request, e)
+
+

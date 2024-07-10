@@ -79,13 +79,13 @@
                         <td>
                         {% if BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
 
-                                <button class="btn btn-primary disabled">
-                                    Loading ...
-                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                </button>
+                            <button class="btn btn-primary disabled">
+                                Loading ...
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            </button>
 
                             {% else %}
-                                <form class="col"
+                            <form class="col"
                                    action="{% url 'remote_project_execution' project_id=BlastProject.id%}"
                                    method="POST">
                                 {% csrf_token %}
@@ -176,20 +176,18 @@
             <div id="progress_bar"> 0% </div>
         </div>
     {% elif BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
-            <div class="progress">
-                <div id="progress_bar"> 0% </div>
-            </div>
+        <div class="progress">
+            <div id="progress_bar"> 0% </div>
+        </div>
     {% else %}
-            <div class="progress">
-                <div id="progress_bar"> 0% </div>
-            </div>
+        <div class="progress">
+            <div id="progress_bar"> 0% </div>
+        </div>
     {% endif %}
     </div>
 
 
 {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
-
-
     <div class="dashboard_project_list_col" id="query_sequence_information" style="display: none">
         <h2 style="text-align: center">Query Sequence Information</h2>
         <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
@@ -215,10 +213,9 @@
                     </tr>
                 {% endfor %}
             </tbody>
-
         </table>
-
     </div>
+
     <div class="dashboard_project_list_col" id="interactive_bokeh_plot" style="max-height: 50%;display: none">
         {% include BokehPlot %}
     </div>
@@ -232,14 +229,10 @@
             Distribution of forward BLAST e-values for each query sequence. </p>
         <br>
         <div id="demo" class="carousel slide" data-ride="carousel">
-
-            <!-- Indicators -->
             <ul class="carousel-indicators">
                 <li data-target="#demo" data-slide-to="0" class="active"></li>
                 <li data-target="#demo" data-slide-to="1"></li>
             </ul>
-
-            <!-- The slideshow -->
             <div class="carousel-inner">
             <div class="carousel-item active">
                 <img src="/media/blast_projects/remote_projects/{{BlastProject.id}}/plot_amount_hits_of_target_taxon.png" alt="distribution of hits of target taxons" class="img-fluid" >
@@ -249,15 +242,12 @@
             </div>
 
             </div>
-
-        <!-- Left and right controls -->
-        <a class="carousel-control-prev" href="#demo" data-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-        </a>
-        <a class="carousel-control-next" href="#demo" data-slide="next">
-            <span class="carousel-control-next-icon"></span>
-        </a>
-
+            <a class="carousel-control-prev" href="#demo" data-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </a>
+            <a class="carousel-control-next" href="#demo" data-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </a>
         </div>
     </div>
     {% elif BokehPlot %}
@@ -265,7 +255,6 @@
             {% include BokehPlot %}
         </div>
     {% endif %}
-
 {% endblock %}
 
 
@@ -273,7 +262,7 @@
 {% load static %}
 
 <script src="{% static 'javascript/load_ajax_table.js' %}"></script>
-    <!-- ajax call for snakemake pipeline progress_bar -->
+<!-- ajax call for snakemake pipeline progress_bar -->
 <script>
     (function() {
         var status = $('.progress_bar'),
@@ -283,7 +272,6 @@
                 dataType: 'json',
                 type: 'get',
                 success: function(data) { // check if available
-
                     if(data){
                         var progress_bar = document.getElementById('progress_bar');
                         var progress_container = document.getElementsByClassName('progress')[0];
@@ -365,7 +353,6 @@
                 "deferRender": true,
             }
         );
-
     });
 </script>
 
