@@ -13,6 +13,7 @@ services:
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
      && gunicorn celery_blast.wsgi:application --bind 0.0.0.0:8000 --timeout 10000 --workers 4 --threads 2"
+    container_name: cathi_web
     networks:
       - main
     restart: unless-stopped
@@ -87,7 +88,7 @@ services:
       context: ./
       dockerfile: ./nginx/Dockerfile
     volumes:
-      - ./celery_blast/static:/blast/reciprocal_blast/static
+      - ./celery_blast/static:/blast/reciprocal_blast/assets
       - ./data:/blast/reciprocal_blast/media
     ports:
       - 1337:80
