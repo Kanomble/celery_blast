@@ -70,7 +70,7 @@ def run():
             print("INFO:EXTRACTING TAXONOMY DB")
             database_dir = "/blast/reciprocal_blast/"+BLAST_DATABASE_DIR
             proc = subprocess.Popen(["tar", "-zxvf", path_to_taxdb_location, "-C", database_dir], shell=False)
-            returncode = proc.wait(timeout=600)
+            returncode = proc.wait(timeout=1400)
             if returncode != 0:
                 raise subprocess.SubprocessError
             print("INFO:DONE DOWNLOADING TAXONOMY DATABASE")
