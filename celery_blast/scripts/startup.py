@@ -64,7 +64,7 @@ def run():
             print("INFO:TAXDB_URL: {}".format(taxdb_ftp_path))
 
             proc = subprocess.Popen(["wget", taxdb_ftp_path, "-q", "-O", path_to_taxdb_location], shell=False)
-            returncode = proc.wait(timeout=600)
+            returncode = proc.wait(timeout=1400)
             if returncode != 0:
                 raise subprocess.SubprocessError
             print("INFO:EXTRACTING TAXONOMY DB")
