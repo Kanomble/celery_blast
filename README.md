@@ -90,14 +90,16 @@ The application can get installed by submitting the command: `docker-compose up`
 Once installed, CATHI is accessible via: `http://127.0.0.1:1337/blast_project/` for the production environment
 and via: `http://127.0.0.1:8080/blast_project/` for the Django development server.
 
-<a name="CATHI setup"></a>
-### CATHI setup
+<a name="CATHI Set-Up"></a>
+### CATHI Set-Up
 Once you have installed CATHI you should see, that the containers within the Docker-Desktop application are listed green.
 Here is an example for the production environment:
 
 ![Docker Container Network](./celery_blast/static/images/docker_container_network.PNG)
 
-
+Next, you need to perform a last Set-Up step, therefore you need to download the Conserved-Domain-Database and 
+the RefSeq and GenBank assembly summary files. This can be done by clicking on the **Start CATHI Tool Set-Up Procedure** button, that appears
+on the home dashboard after registering and logging into CATHI.
 
 <a name="configuration_notes"></a>
 ## Advanced Installation

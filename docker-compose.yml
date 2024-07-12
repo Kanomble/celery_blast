@@ -12,6 +12,7 @@ services:
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
      && python manage.py runserver 0.0.0.0:8080"
+    container_name: cathi_web
     networks:
       - main
     restart: unless-stopped

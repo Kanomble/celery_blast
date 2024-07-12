@@ -54,6 +54,10 @@ def setup_cathi_view(request):
             setup_cathi_download_cdd_refseq_genbank_assembly_files.delay()
         else:
             raise Exception("[-] ERROR. There is no GET method for this view")
+
+        # sleeping two seconds for correctly reloading the home dashboard
+        sleep(2)
+
         return redirect("blast_project_dashboard")
     except Exception as e:
         return failure_view(request, e)
@@ -983,7 +987,7 @@ def get_domain_database_download_task_status(request):
     except Exception as e:
         return JsonResponse({"error":"{}".format(e)}, status=400)
 
-'''send_logfile_content_view
+'''send_logfile_content_view - OBSOLETE
     
     This view function is part of the pipeline monitoring. It is executed
     if the user presses an image within the progress bar of the project.
@@ -1008,7 +1012,7 @@ def send_logfile_content_view(request, project_id: int, logfile: str) -> HttpRes
     except Exception as e:
         return failure_view(request, e)
 
-
+# OBSOLETE
 @login_required(login_url='login')
 def send_query_sequence_information_view(request, project_id: int) -> HttpResponse:
     try:

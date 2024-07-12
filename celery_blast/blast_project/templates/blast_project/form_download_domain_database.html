@@ -1,21 +1,27 @@
 <div class="container">
     <div class="row" style="text-align:center;justify-content:center">
-        <h3> <b> CATHI Tool Setup </b> </h3>
+        <h3> <b> CATHI Tool Set-Up </b> </h3>
         <br>
-        <p style="font-size:large; text-align:left"> Before you can start creating projects, you need to perform a setup.
-        During this setup, the Conserved Domain Database is downloaded from the NCBI FTP site, along with genome assembly files. These files are used in the database creation dashboard.
-        Additionally, these files can be downloaded later on if there is a new release for GenBank or RefSeq.
+        <p style="font-size:large; text-align:left"> Before you can start creating projects, you need to perform a set-up.
+        During this set-up, the Conserved Domain Database is downloaded from the NCBI FTP site, along with genome assembly files utilized during BLAST database creation.
+        Additionally to this setup, these files can be downloaded later on if there is a new release for GenBank or RefSeq.
         </p>
+        <br>
+        <br>
+        <p style="font-size:large; text-align:left">
+         The download and set-up process can take up to >20 minutes, depending on your internet connection.
+        </p>
+        <br>
         <br>
         <form action="{% url 'setup_cathi_view' %}" method="post">
             {% csrf_token %}
             <div class="form-group">
                 <a href="#" data-toggle="tooltip"
-                   title="Setup CATHI by downloading the CDD database and the RefSeq and GenBank assembly summary files."
+                   title="Set-Up CATHI by downloading the CDD database and the RefSeq and GenBank assembly summary files."
                 >
 
                     <input type="submit"
-                           value="Start CATHI Tool Setup Procedure"
+                           value="Start CATHI Tool Set-Up Procedure"
                            class="btn btn-danger">
                 </a>
             </div>

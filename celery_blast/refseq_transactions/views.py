@@ -118,7 +118,6 @@ def create_blast_database_model_and_directory(request):
 
             # validation error
             else:
-                print(refseq_database_form.errors)
                 if (refseq_file_exists()):
                     context['refseq_exists'] = True
 
@@ -132,6 +131,7 @@ def create_blast_database_model_and_directory(request):
                 context['UnactiveBlastDatabases'] = not_executed_databases
                 context['RefseqDatabaseForm'] = refseq_database_form
 
+            sleep(2)
             return render(request, 'refseq_transactions/refseq_transactions_dashboard.html', context)
         # should never been executed
         else:
@@ -156,6 +156,7 @@ def delete_blast_database_model_and_directory(request, database_id):
     try:
         if request.method == "POST":
             delete_blastdb_and_associated_directories_by_id(database_id)
+            sleep(1)
             return redirect('refseq_transactions_dashboard')
         else:
             return failure_view(request, "error deleting this database, request method is not a POST method.")
@@ -269,6 +270,7 @@ def ajax_call_for_database_download_progress(request, database_id):
 def download_and_format_blast_database(request, database_id):
     try:
         task = download_blast_databases_based_on_summary_file.delay(database_id)
+        sleep(2)
         return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request, e)
