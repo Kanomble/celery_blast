@@ -1,21 +1,38 @@
 {% extends "base.html" %}
 
 {% block title %}
-    BLAST Dashboard
+    BLAST Database Dashboard
 {% endblock %}
 
-{% block page_title %} Refseq Transaction Dashboard {% endblock %}
-{% block infoheader %} Refseq Transaction Dashboard {% endblock %}
+{% block page_title %} BLAST Database Dashboard {% endblock %}
 
 {% block header %}
 {% endblock %}
 
+{% block infoheader %} BLAST Database Dashboard {% endblock %}
+
 {% block page_description %}
     Welcome to the BLAST database management interface, where you can oversee your BLAST databases essential for
-    both your reciprocal and one-way BLAST initiatives.
-    At present, you have the option to select assemblies from two distinct databases: the Reference-Sequence
-    (RefSeq) and the GenBank database.
-    For further insights into the database contents, kindly refer to their respective public websites.
+    both your reciprocal and one-way BLAST projects.
+    <br>
+    <br>
+    At present, you have the option to select assemblies from two distinct databases: the RefSeq and the GenBank database.
+    <br>
+    <br>
+    To <b>create</b> a local BLAST database enter a unique <b>Database Name</b> and a (not necessarily unique) <b>Database Description</b>
+    into the appropriate fields. Select one of the <b>Public Databases</b>, either RefSeq or GenBank, for content parsing. Specify the <b>Assembly Completeness Level</b>
+    and optionally specify one or multiple <b>Taxonomies</b>, which your database should include.
+    <br>
+    Creating BLAST databases with proteomes that are created based on high <b>Assembly Completeness</b> (assemblies marked as <b>Chromosome</b> or <b>Complete Genome</b>) is beneficial for your subsequent BLAST searches but can restrict
+    the content of your databases. If you are just interested in a specific taxonomic group you should specify this by selecting a taxonomic node file
+    that can be created using CATHI's <a target="_blank" href="{% url 'species_taxids' %}">Taxonomy Dashboard</a> or by directly specifying valid scientific names in this dashboard.
+    <br>
+    <br>
+    After pressing the <b>Submit</b> button, CATHI filters the RefSeq or GenBank summary files according to the specified information and present a comprehensive report about
+    the potential database entries within the <b>Inactive Database</b> table.
+    You can check the database entries by clicking on the <b>Database Details</b> button and start the download and formatting process by clicking on the <b>Download Database</b> button.
+    <br>
+    <br>
     This dashboard provides a comprehensive listing of databases categorized as active (downloaded and formatted) and
     inactive (neither downloaded nor formatted). Kindly bear in mind that these databases are utilized
     collaboratively by multiple users. Removing a specific database
@@ -69,15 +86,15 @@
             </div>
         {% endif %}
 
-        {% if UnactiveBlastDatabases.count > 0 %}
+        {% if InactiveBlastDatabases.count > 0 %}
             <div class="dashboard_project_list_col"  style="margin-bottom: 30px;
                                                             display: flex;
                                                             flex-direction: column;
                                                             align-items: center;
                                                              justify-content: center;">
-                <h3> Unactive BLAST Databases </h3>
+                <h3> Inactive BLAST Databases </h3>
                 <br>
-                {% include "refseq_transactions/table_unactive_blast_databases.html" %}
+                {% include "refseq_transactions/table_inactive_blast_databases.html" %}
             </div>
         {% endif %}
         {% if FailedDatabases.count > 0 %}
@@ -93,7 +110,7 @@
     <script>
         $(document).ready(function () {
             $('#activeDatabasesTable').DataTable();
-            $('#unactiveDatabasesTable').DataTable();
+            $('#inactiveDatabasesTable').DataTable();
             $('#failedDatabasesTable').DataTable();
             $('[data-toggle="tooltip"]').tooltip();
         });

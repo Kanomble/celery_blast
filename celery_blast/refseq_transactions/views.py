@@ -45,7 +45,7 @@ def dashboard(request):
         context['RefseqDatabaseForm'] = refseq_database_form
         context['ActiveBlastDatabases'] = executed_databases
         context['DownloadInProgressBlastDatabases'] = download_in_progress_databases
-        context['UnactiveBlastDatabases'] = not_executed_databases
+        context['InactiveBlastDatabases'] = not_executed_databases
         context['FailedDatabases'] = failed_databases
 
         return render(request, 'refseq_transactions/refseq_transactions_dashboard.html', context)

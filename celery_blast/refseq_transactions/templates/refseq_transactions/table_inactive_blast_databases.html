@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table class="table table-hover" id="unactiveDatabasesTable">
+    <table class="table table-hover" id="inactiveDatabasesTable">
         <thead>
         <tr>
             <th>Database Name</th>
@@ -13,8 +13,8 @@
             <th>Database Details</th>
         </tr>
         </thead>
-        <tbody id="unactiveDatabaseTableBody">
-        {% for database in UnactiveBlastDatabases %}
+        <tbody id="inactiveDatabaseTableBody">
+        {% for database in InactiveBlastDatabases %}
             <tr>
                 <td>{{ database.database_name }}</td>
                 <td>{{ database.database_description }}</td>
