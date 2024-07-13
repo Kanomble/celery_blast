@@ -47,7 +47,7 @@ def download_refseq_assembly_summary(summary_file:str):
             logger.warning("wrong summary_file selected: {}".format(summary_file))
             logger.warning("specify RefSeq or GenBank in the relevant form.html document ...")
             raise Exception("wrong summary_file selected: {}".format(summary_file))
-        timeout = 300
+        timeout = 600
 
         logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
                     .format(current_working_directory, path_to_assembly_file_location))
@@ -68,7 +68,7 @@ def download_refseq_assembly_summary(summary_file:str):
         # invoke wget program
         logger.info('creating popen process')
         logger.info("refseq_url: {}, path_to_assembly_file: {}".format(refseq_url, path_to_assembly_file))
-        wget_process = Popen(['wget', refseq_url, '-q', '-O', path_to_assembly_file], shell=False)
+        wget_process = Popen(['curl', '-s', '-o', path_to_assembly_file, refseq_url], shell=False)
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(
