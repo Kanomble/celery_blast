@@ -69,7 +69,7 @@ def download_refseq_assembly_summary(summary_file:str):
         # invoke wget program
         logger.info('creating popen process')
         logger.info("refseq_url: {}, path_to_assembly_file: {}".format(refseq_url, path_to_assembly_file))
-        curl_process = Popen(['curl', '-s', '-o', path_to_assembly_file, refseq_url], shell=False)
+        curl_process = Popen('curl -s -o {} {}'.format(path_to_assembly_file, refseq_url), shell=True)
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(
