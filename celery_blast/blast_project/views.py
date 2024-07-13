@@ -865,6 +865,7 @@ def execute_database_statistics_task(request, project_id: int):
     try:
         taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
         calculate_database_statistics_task.delay(project_id, request.user.email, taxonomic_units)
+        sleep(1)
         return redirect('database_statistics', project_id=project_id)
     except Exception as e:
         return failure_view(request, e)

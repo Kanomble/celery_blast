@@ -56,6 +56,7 @@ def download_refseq_assembly_summary(summary_file:str):
             logger.warning('path_to_assembly_file_location : {} does not exists, trying to create it with mkdir ...')
             mkdir(path_to_assembly_file_location)
 
+        path_to_assembly_file = ""
         if summary_file == "RefSeq":
             path_to_assembly_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
         elif summary_file == "GenBank":
@@ -68,13 +69,13 @@ def download_refseq_assembly_summary(summary_file:str):
         # invoke wget program
         logger.info('creating popen process')
         logger.info("refseq_url: {}, path_to_assembly_file: {}".format(refseq_url, path_to_assembly_file))
-        wget_process = Popen(['curl', '-s', '-o', path_to_assembly_file, refseq_url], shell=False)
+        curl_process = Popen(['curl', '-s', '-o', path_to_assembly_file, refseq_url], shell=False)
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(
             'waiting for popen instance {} to finish with timeout set to {}'
-                .format(wget_process.pid, timeout))
-        returncode = wget_process.wait(timeout=timeout)
+                .format(curl_process.pid, timeout))
+        returncode = curl_process.wait(timeout=timeout)
 
         if (returncode != 0):
             logger.warning('subprocess Popen refseq assembly file download process resulted in an error!')
@@ -93,7 +94,7 @@ def download_refseq_assembly_summary(summary_file:str):
         raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due to soft time limit")
 
     except TimeoutExpired as e:
-        wget_process.kill()
+        curl_process.kill()
         if 'path_to_assembly_file' in locals():
             if isfile(path_to_assembly_file):
                 os.remove(path_to_assembly_file)
@@ -102,7 +103,7 @@ def download_refseq_assembly_summary(summary_file:str):
             "ERROR couldn't download assembly_summary_refseq.txt file due Popen call time limit : {}".format(e))
 
     except SubprocessError as e:
-        wget_process.kill()
+        curl_process.kill()
         if 'path_to_assembly_file' in locals():
             if isfile(path_to_assembly_file):
                 os.remove(path_to_assembly_file)
