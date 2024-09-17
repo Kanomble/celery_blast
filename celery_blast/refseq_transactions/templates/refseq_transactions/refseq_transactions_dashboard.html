@@ -130,7 +130,7 @@
                                 if (data) { // get and check data value
                                     status.text(data.progress); // get and print data string
                                     //console.log(data.progress)
-                                    if (data.progress > 99) {
+                                    if (data.progress > 99.999999) {
                                         status.text("DONE")
                                         clearInterval(pollInterval); // optional: stop poll function
                                     } else if (data.progress == "ERROR") {

@@ -81,7 +81,7 @@ def update_ncbi_databases_view(request):
 @login_required(login_url='login')
 def download_refseq_assembly_summary_view(request, summary_file:str):
     try:
-        download_refseq_assembly_summary(summary_file)
+        download_refseq_assembly_summary.delay(summary_file)
         return redirect('refseq_transactions_dashboard')
     except Exception as e:
         return failure_view(request, e)

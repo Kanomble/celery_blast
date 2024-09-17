@@ -3,9 +3,11 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
-    get_list_of_species_taxids_by_list_of_scientific_names, fetch_protein_records
+    get_list_of_species_taxids_by_list_of_scientific_names, fetch_protein_records, \
+    check_if_protein_identifier_correspond_to_backward_taxid
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, \
     check_if_sequences_are_in_database, check_if_project_title_exists, check_if_database_title_exists, check_if_remote_project_title_exists
+
 from string import punctuation, ascii_letters
 
 ''' CreateTaxonomicFileForm
@@ -278,6 +280,12 @@ class ProjectCreationForm(forms.Form):
                 if len(header) != len(set(header)):
                     self.add_error('query_sequence_file',
                                    'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+
+
+                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(header, taxonomic_nodes[0], user_email)
+                if returncocde != 0:
+                    self.add_error("species_name_for_backward_blast","specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(taxonomic_nodes[0]))
+                    self.add_error("query_sequence_file", "following protein identifier does not match to your specified taxonomic node: {}".format(protein))
             # protein identifier have been uploaded
             elif query_sequences != '' and query_file is None:
                 # check string for invalid characters
@@ -294,12 +302,26 @@ class ProjectCreationForm(forms.Form):
                         self.add_error('query_sequence_text', 'following sequences are unavailable: {}'.format(errors))
                     cleaned_data['query_sequence_text'] = proteins
                 except Exception as e:
-                    self.add_error("query_sequence_text", "please provide valid protein identifiers")
+                    self.add_error("query_sequence_text", "please provide valid protein identifiers. "
+                                                          "Check your backward database. Maybe your backward database is broken.")
 
                 # self.add_error('query_sequence_text','not available yet')
+                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(query_sequences,
+                                                                                                taxonomic_nodes[0],
+                                                                                                user_email)
+                if returncocde != 0:
+                    self.add_error("species_name_for_backward_blast",
+                                   "specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(
+                                       taxonomic_nodes[0]))
+                    self.add_error("query_sequence_text",
+                                   "following protein identifier does not match to your specified taxonomic node: {}".format(
+                                       protein))
+
             else:
                 self.add_error('query_sequence_text',
                                "please upload a fasta file containing your sequences or specify valid protein identifier")
+
+
 
         except Exception as e:
             raise ValidationError(
@@ -591,6 +613,17 @@ class RemoteProjectCreationForm(forms.Form):
                 if len(header) != len(set(header)):
                     self.add_error('r_query_sequence_file',
                                    'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
+
+                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(header,
+                                                                                                taxonomic_nodes[0],
+                                                                                                user_email)
+                if returncocde != 0:
+                    self.add_error("r_species_name_for_backward_blast",
+                                   "specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(
+                                       taxonomic_nodes[0]))
+                    self.add_error("r_query_sequence_file",
+                                   "following protein identifier does not match to your specified taxonomic node: {}".format(
+                                       protein))
             # protein identifier have been uploaded
             elif query_sequences != '' and query_file is None:
                 # check string for invalid characters
@@ -607,9 +640,21 @@ class RemoteProjectCreationForm(forms.Form):
                         self.add_error('r_query_sequence_text', 'following sequences are unavailable: {}'.format(errors))
                     cleaned_data['r_query_sequence_text'] = proteins
                 except Exception as e:
-                    self.add_error("query_sequence_text", "please provide valid protein identifiers")
+                    self.add_error("query_sequence_text", "please provide valid protein identifiers. "
+                                                          "Maybe your backward database is broken, check your backward database.")
 
                 # self.add_error('query_sequence_text','not available yet')
+                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(query_sequences,
+                                                                                                taxonomic_nodes[0],
+                                                                                                user_email)
+                if returncocde != 0:
+                    self.add_error("r_species_name_for_backward_blast",
+                                   "specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(
+                                       taxonomic_nodes[0]))
+                    self.add_error("r_query_sequence_text",
+                                   "following protein identifier does not match to your specified taxonomic node: {}".format(
+                                       protein))
+
             else:
                 self.add_error('r_query_sequence_text',
                                "please upload a fasta file containing your sequences or specify valid protein identifier")
@@ -735,6 +780,7 @@ class UploadGenomeForm(forms.Form):
             for chunk in genome_fasta_file.chunks():
                 protein_ids += chunk.decode().count(">")
 
+
             taxmap_ids = 0
             for chunk in taxmap_file.chunks():
                 taxmap_ids += chunk.decode().count('\n')
@@ -759,7 +805,8 @@ class UploadGenomeForm(forms.Form):
 
             if taxmap_ids != protein_ids:
                 self.add_error('taxmap_file',
-                               'the amount of provided acc_ids: {} does not match the provided amount of protein_ids: {}'.format(
+                               'the amount of provided acc_ids: {} does not match the provided amount of protein_ids: {}, '
+                               'make sure there are no additional ">" signs within the fasta header'.format(
                                    taxmap_ids, protein_ids))
 
             if assembly_accessions_file is not None:

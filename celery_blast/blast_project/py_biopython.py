@@ -38,7 +38,9 @@ def get_species_taxid_by_name(user_email: str, scientific_name: str) -> list:
 
 '''check_if_protein_identifier_correspond_to_backward_taxid
     
-    Used in the ProjectCreationForm form validation. Checks if the provided query sequences match to the specified backward organism.
+    Used in the ProjectCreationForm form validation. 
+    Checks if the provided query sequences match to the specified backward organism.
+    This can only be done on a genus level and not on a species level!
     
     :param protein_identifier
         :type list
@@ -46,45 +48,63 @@ def get_species_taxid_by_name(user_email: str, scientific_name: str) -> list:
         :type str
     :param user_email
         :type str
+        
+    :returns returncode, protein_identifier
+        :type tuple(int,str)
 '''
 
 
 def check_if_protein_identifier_correspond_to_backward_taxid(protein_identifier: list, taxonomic_identifier: str,
-                                                             user_email: str) -> int:
+                                                             user_email: str) -> tuple:
     try:
-        Entrez.email = user_email
-        search = Entrez.elink(dbfrom='protein', id=protein_identifier, linkname="protein_taxonomy")
+
+        taxonomic_identifiers = []
+        search = Entrez.efetch(id=taxonomic_identifier, db='taxonomy', retmode='xml')
         record = Entrez.read(search)
         search.close()
-        taxonomic_ids = []
-        for rec in record:
-            taxid = rec['LinkSetDb'][0]['Link'][0]['Id']
-            if int(taxid) != int(taxonomic_identifier):
-                if taxid not in taxonomic_ids:
-                    taxonomic_ids.append(taxid)
 
-        if len(taxonomic_ids) != 0:
-            search = Entrez.efetch(id=taxonomic_ids, db='taxonomy', retmode='xml')
+        for rec in record:
+            for lineage in rec['LineageEx']:
+                if lineage['Rank'] == 'genus':
+                    species_level_tax_id = lineage['TaxId']
+                    taxonomic_identifiers.append(int(species_level_tax_id))
+        taxonomic_identifiers.append(int(taxonomic_identifier))
+
+        for protein in protein_identifier:
+            Entrez.email = user_email
+            search = Entrez.elink(dbfrom='protein', id=protein, linkname="protein_taxonomy")
             record = Entrez.read(search)
             search.close()
 
+            taxonomic_ids_proteins = []
             for rec in record:
-                taxid_to_check = rec['TaxId']
-                for lineage in rec['LineageEx']:
-                    if lineage['Rank'] == 'genus':
-                        species_level_tax_id = lineage['TaxId']
-                        if int(species_level_tax_id) == int(taxonomic_identifier):
-                            taxonomic_ids.remove(taxid_to_check)
+                taxid = rec['LinkSetDb'][0]['Link'][0]['Id']
+                taxonomic_ids_proteins.append(int(taxid))
 
-            if len(taxonomic_ids) != 0:
-                return 1
+            if len(taxonomic_ids_proteins) != 0:
+                search = Entrez.efetch(id=taxonomic_ids_proteins, db='taxonomy', retmode='xml')
+                record = Entrez.read(search)
+                search.close()
 
-        return 0
+                for rec in record:
+                    for lineage in rec['LineageEx']:
+                        if lineage['Rank'] == 'genus':
+                            species_level_tax_id = lineage['TaxId']
+
+                            taxonomic_ids_proteins.append(int(species_level_tax_id))
+
+            counter = len(taxonomic_identifiers)
+            for identifier in taxonomic_identifiers:
+                if int(identifier) in taxonomic_ids_proteins:
+                    counter -= 1
+            if counter == len(taxonomic_identifiers):
+                return 1, protein
+
+        return 0, ""
     except Exception as e:
         raise Exception(
             "[-] Problem during validation of protein identifiers and taxid of backward organisms with exception {}".format(
                 e))
-
 
 '''get_list_of_species_taxid_by_name
     sometimes there are mutliple taxonomic nodes for one organism name (e.g. get_species_taxids.sh -n bacillus = 1386, 55087)
