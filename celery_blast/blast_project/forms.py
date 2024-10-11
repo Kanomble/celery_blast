@@ -282,8 +282,10 @@ class ProjectCreationForm(forms.Form):
                                    'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
 
 
-                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(header, taxonomic_nodes[0], user_email)
-                if returncocde != 0:
+                #returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(header, taxonomic_nodes[0], user_email)
+                returncode = 0
+                if returncode != 0:
+                    protein = "placeholder"
                     self.add_error("species_name_for_backward_blast","specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(taxonomic_nodes[0]))
                     self.add_error("query_sequence_file", "following protein identifier does not match to your specified taxonomic node: {}".format(protein))
             # protein identifier have been uploaded
@@ -306,13 +308,17 @@ class ProjectCreationForm(forms.Form):
                                                           "Check your backward database. Maybe your backward database is broken.")
 
                 # self.add_error('query_sequence_text','not available yet')
-                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(query_sequences,
-                                                                                                taxonomic_nodes[0],
-                                                                                                user_email)
-                if returncocde != 0:
+                #returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(query_sequences,
+                #                                                                                taxonomic_nodes[0],
+                #                                                                                user_email)
+
+                returncode = 0
+
+                if returncode != 0:
                     self.add_error("species_name_for_backward_blast",
                                    "specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(
                                        taxonomic_nodes[0]))
+                    protein = "placeholder"
                     self.add_error("query_sequence_text",
                                    "following protein identifier does not match to your specified taxonomic node: {}".format(
                                        protein))
@@ -327,6 +333,8 @@ class ProjectCreationForm(forms.Form):
             raise ValidationError(
                 "validation error in project creation, due to this exception: {}".format(
                     e))
+
+        print("[***]", cleaned_data)
         return cleaned_data
 
 
@@ -614,13 +622,17 @@ class RemoteProjectCreationForm(forms.Form):
                     self.add_error('r_query_sequence_file',
                                    'there are duplicate proteins in your uploaded file, please remove the duplicate entries and upload the file again!')
 
-                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(header,
-                                                                                                taxonomic_nodes[0],
-                                                                                                user_email)
-                if returncocde != 0:
+                #returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(header,
+                #                                                                                taxonomic_nodes[0],
+                #                                                                                user_email)
+                returncode = 0
+
+                if returncode != 0:
                     self.add_error("r_species_name_for_backward_blast",
                                    "specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(
                                        taxonomic_nodes[0]))
+
+                    protein = "placeholder"
                     self.add_error("r_query_sequence_file",
                                    "following protein identifier does not match to your specified taxonomic node: {}".format(
                                        protein))

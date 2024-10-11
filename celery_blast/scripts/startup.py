@@ -9,7 +9,7 @@ from external_tools.models import DomainDatabase
 from blast_project.py_services import check_domain_database_status
 
 from os.path import isfile, isdir
-from os import remove, getcwd, mkdir, listdir
+from os import remove, getcwd
 import subprocess
 import psutil
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, TAXDB_URL, CDD_DATABASE_URL

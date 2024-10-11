@@ -332,6 +332,36 @@ def concatenate_genome_fasta_files_in_db_dir(path_to_database:str, database_titl
         raise IntegrityError('couldnt concatenate database files : {}'.format(e))
 
 
+'''check_blast_database_integrity
+    
+    This function checks if the specified database is correctly formatted.
+    Similar to the check_domain_database_status() function.
+    
+    :param database_id
+        :type int
+    :returns returncode
+        :type bool
+
+'''
+def check_blast_database_integrity(database_id:int)->bool:
+    try:
+        returncode = False
+        blastdb = BlastDatabase.objects.get(id=database_id)
+
+        if isdir(BLAST_DATABASE_DIR + str(database_id)):
+            blastdb_path = BLAST_DATABASE_DIR + str(database_id) + "/" + blastdb.get_pandas_table_name() + ".database"
+            out = check_output(['blastdbcheck', '-db', blastdb_path])
+            if "Result=SUCCESS. No errors reported for 1 volume(s)" in str(out) or "Result=SUCCESS. No errors reported for 1 alias(es)" in str(out):
+                returncode = True
+            else:
+                returncode = False
+        else:
+            returncode = False
+
+        return returncode
+    except Exception as e:
+        raise Exception("[-] ERROR during check up of BLAST database integrity with ID: {} and exception: {}".format(database_id, e))
+
 '''check_domain_database_status
     This function checks if the domain database is loaded by utilizing the subprocess
     check_output function in conjunction with the blastdbcheck tool from the BLAST+ software suite.
