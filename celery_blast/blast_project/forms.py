@@ -334,7 +334,6 @@ class ProjectCreationForm(forms.Form):
                 "validation error in project creation, due to this exception: {}".format(
                     e))
 
-        print("[***]", cleaned_data)
         return cleaned_data
 
 
@@ -656,16 +655,18 @@ class RemoteProjectCreationForm(forms.Form):
                                                           "Maybe your backward database is broken, check your backward database.")
 
                 # self.add_error('query_sequence_text','not available yet')
-                returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(query_sequences,
-                                                                                                taxonomic_nodes[0],
-                                                                                                user_email)
-                if returncocde != 0:
+                # returncocde, protein = check_if_protein_identifier_correspond_to_backward_taxid(query_sequences,
+                #                                                                                taxonomic_nodes[0],
+                #                                                                                user_email)
+
+                returncode = 0
+                if returncode != 0:
                     self.add_error("r_species_name_for_backward_blast",
                                    "specified taxonomic node: {} does not have any of the specified protein identifier(s) ...".format(
                                        taxonomic_nodes[0]))
-                    self.add_error("r_query_sequence_text",
-                                   "following protein identifier does not match to your specified taxonomic node: {}".format(
-                                       protein))
+                    #self.add_error("r_query_sequence_text",
+                    #               "following protein identifier does not match to your specified taxonomic node: {}".format(
+                    #                   protein))
 
             else:
                 self.add_error('r_query_sequence_text',
