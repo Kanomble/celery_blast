@@ -700,7 +700,7 @@ def save_uploaded_multiple_file_genomes_into_database(cleaned_data_multiple_file
                 with open(path_to_database + file.name, 'r') as current_genome_file:
                     for line in current_genome_file.readlines():
                         if line.startswith(">"):
-                            acc = line.split(" ")[0].split(">")[1]
+                            acc = line.split(" ")[0].split(">")[1].strip()
                             taxmap_file.write(acc + "\t" + str(taxid) + "\n")
 
                 genomes_to_organism_and_taxid_dict[file.name] = [organism, taxid]
