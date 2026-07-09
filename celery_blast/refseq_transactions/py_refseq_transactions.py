@@ -202,66 +202,63 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
     :returns desired_refseq_genomes_dataframe
         :type pd.DataFrame
 '''
-def read_current_assembly_summary_with_pandas(assembly_levels: list, summary_file_path: str) -> pd.DataFrame:
-    # original filepath - delete
-    # summary_file_path = REFSEQ_ASSEMBLY_FILE + "assembly_summary_refseq.txt"
-    if (isfile(summary_file_path) == False):
-        raise ValueError('assembly summary file does not exist!')
+def read_current_assembly_summary_with_pandas(
+    assembly_levels: list,
+    summary_file_path: str
+) -> pd.DataFrame:
 
-    # function for changing the ftp_header in the pandas table
+    if not isfile(summary_file_path):
+        raise ValueError("Assembly summary file does not exist: {}".format(summary_file_path))
+
     def set_protein_assembly_file(ftp_path):
         try:
-            if type(ftp_path) == str:
-                protein_genome = ftp_path.split('/')[-1:][0]
-                protein_genome = ftp_path + '/' + str(protein_genome) + '_protein.faa.gz'
-                return protein_genome
-            else:
-                return ftp_path
-        except:
-            raise Exception("[-] Problem during parsing the ftp_path column in the refseq assembly summary file")
+            if isinstance(ftp_path, str) and ftp_path:
+                protein_genome = ftp_path.rstrip("/").split("/")[-1]
+                return ftp_path.rstrip("/") + "/" + protein_genome + "_protein.faa.gz"
+            return ftp_path
+        except Exception as e:
+            raise ValueError(
+                "Problem during parsing the ftp_path column in the assembly summary file"
+            ) from e
 
-    # TODO Documentation, Refactoring
-    # init parsing refseq table with pandas
     try:
-        # skipping the first line with .readline()
-        # --> second line resides the header information for the assembly summary file
-        with open(summary_file_path, 'r') as rfile:
-            line = rfile.readline()
-            line = rfile.readline()
-            header = line.replace('#', '').replace(" ", '').rstrip().split("\t")
+        with open(summary_file_path, "r", encoding="utf-8") as rfile:
+            rfile.readline()
+            header = rfile.readline().lstrip("#").rstrip("\n").split("\t")
 
-        refseq_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None,
-                                     dtype={20: str,  # 20 excluded from refseq
-                                            5: str,  # 5 taxid
-                                            6: str,  # 6 species taxid
-                                            'ftp_path': str})
-        refseq_table.columns = header
-        refseq_table = refseq_table.astype({"taxid": str})
+        refseq_table = pd.read_table(
+            summary_file_path,
+            sep="\t",
+            skiprows=2,
+            header=None,
+            names=header,
+            dtype=str,
+            keep_default_na=False,
+        )
+
+        if "assembly_level" in refseq_table.columns and assembly_levels:
+            refseq_table = refseq_table[
+                refseq_table["assembly_level"].isin(assembly_levels)
+            ]
+
+        if "ftp_path" in refseq_table.columns:
+            refseq_table["ftp_path"] = refseq_table["ftp_path"].apply(
+                set_protein_assembly_file
+            )
+
+        return refseq_table[["assembly_accession","organism_name","taxid","species_taxid","assembly_level","ftp_path"]]
+
+    except pd.errors.ParserError as e:
+        raise ValueError(
+            "Could not parse assembly summary file as a valid tab-separated table. "
+            "The file likely contains a malformed line or was corrupted during download. "
+            "Original pandas error: {}".format(e)
+        ) from e
 
     except Exception as e:
         raise ValueError(
-            "exception during pandas parsing of assembly_summary_refseq.txt file ...\n\tException: {}".format(e))
-
-    # extract necessary data fields: assembly number, names, taxids and the correct ftp_filepath for downloading with gzip
-    try:
-        refseq_table = refseq_table[
-            ['assembly_accession', 'organism_name', 'taxid', 'species_taxid', 'assembly_level', 'ftp_path']]
-        # python lambda function applied to each row in the dataframe
-        refseq_table['ftp_path'] = refseq_table['ftp_path'].apply(lambda row: set_protein_assembly_file(row))
-
-        pandas_genome_level_dataframes = []
-        for genome_level in assembly_levels:
-            pandas_genome_level_dataframes.append(refseq_table[refseq_table['assembly_level'] == genome_level])
-
-        desired_refseq_genomes_dataframe = pd.concat(pandas_genome_level_dataframes)
-
-        return desired_refseq_genomes_dataframe
-
-    except Exception as e:
-        raise ValueError(
-            "exception during extraction of smaller dataframe from refseq_table dataframe ...\n\tException: {}".format(
-                e))
-
+            "Exception during pandas parsing of assembly summary file: {}".format(e)
+        ) from e
 
 ''' read_taxonomy_table
 
