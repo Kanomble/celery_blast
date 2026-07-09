@@ -30,8 +30,6 @@ logger = get_task_logger(__name__)
     :returns returncode of Popen
         :type str
 '''
-
-
 @shared_task()
 def download_refseq_assembly_summary(summary_file:str):
     try:
@@ -47,20 +45,22 @@ def download_refseq_assembly_summary(summary_file:str):
             logger.warning("wrong summary_file selected: {}".format(summary_file))
             logger.warning("specify RefSeq or GenBank in the relevant form.html document ...")
             raise Exception("wrong summary_file selected: {}".format(summary_file))
-        timeout = 600
+        timeout = 800
 
         logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
                     .format(current_working_directory, path_to_assembly_file_location))
 
         if (isdir(path_to_assembly_file_location) == False):
-            logger.warning('path_to_assembly_file_location : {} does not exists, trying to create it with mkdir ...')
+            logger.warning('path_to_assembly_file_location : {} does not exists, trying to create it with mkdir ...'.format(path_to_assembly_file_location))
             mkdir(path_to_assembly_file_location)
 
         path_to_assembly_file = ""
         if summary_file == "RefSeq":
             path_to_assembly_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
+            refseq_url = REFSEQ_URL
         elif summary_file == "GenBank":
             path_to_assembly_file = GENBANK_ASSEMBLY_FILE + 'assembly_summary_genbank.txt'
+            refseq_url = GENBANK_URL
 
         if (isfile(path_to_assembly_file)):
             logger.warning('assembly_summary_refseq.txt/assembly_summary_genbank.txt exists deleting it in order to download a newer version')
@@ -69,7 +69,16 @@ def download_refseq_assembly_summary(summary_file:str):
         # invoke wget program
         logger.info('creating popen process')
         logger.info("refseq_url: {}, path_to_assembly_file: {}".format(refseq_url, path_to_assembly_file))
-        curl_process = Popen('curl -s -o {} {}'.format(path_to_assembly_file, refseq_url), shell=True)
+        curl_process = Popen([
+                            "curl",
+                            "--fail",
+                            "--location",
+                            "--show-error",
+                            "--silent",
+                            "-o",
+                            path_to_assembly_file,
+                            refseq_url
+                        ])
         # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
         # wait for process to terminate and set returncode attribute
         logger.info(
