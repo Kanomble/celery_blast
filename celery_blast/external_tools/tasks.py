@@ -22,6 +22,7 @@ from .genbank_download_clinker_synteny import extract_assembly_ftp_paths_from_re
     download_genbank_files, write_new_genbank_file, delete_sliced_genbank_files
 from .py_services import check_if_target_sequences_are_available, check_if_msa_file_is_available, \
     slice_cdd_domain_corrected_fasta_file, slice_bw_query_fasta_file
+from .shiptv_html import patch_shiptv_html_file
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR
 from os.path import isdir
 from os import listdir, mkdir, remove
@@ -165,13 +166,7 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
-        with open(path_to_html_tree, "r") as infile:
-            with open(path_to_html_tree_output, "w") as outfile:
-                lines = infile.readlines()
-                chroma_cdn = '''<script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js" integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'''
-                lines.insert(5, chroma_cdn)
-                for line in lines:
-                    outfile.write(line)
+        patch_shiptv_html_file(path_to_html_tree, path_to_html_tree_output)
 
         logger.info("DONE")
         progress_recorder.set_progress(99,100,"PROGRESS")
@@ -240,13 +235,7 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
-        with open(path_to_html_tree, "r") as infile:
-            with open(path_to_html_tree_output, "w") as outfile:
-                lines = infile.readlines()
-                chroma_cdn = '''<script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js" integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'''
-                lines.insert(5, chroma_cdn)
-                for line in lines:
-                    outfile.write(line)
+        patch_shiptv_html_file(path_to_html_tree, path_to_html_tree_output)
 
         logger.info("DONE")
         progress_recorder.set_progress(99,100,"PROGRESS")

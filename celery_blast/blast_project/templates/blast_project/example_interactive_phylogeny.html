@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<meta charset="utf-8"
-      title="shiptv: Standalone HTML Interactive Phylogenetic Tree Visualization">
 <html>
 <head>
+  <meta charset="utf-8">
+  <title>shiptv: Standalone HTML Interactive Phylogenetic Tree Visualization</title>
   <style>
       body {
           margin: 0.625em auto;
@@ -8895,14 +8895,14 @@ for(var b=b.slice(0),a=a.slice(0),c=0;c<b.length;c++)for(var d=0;d<a.length;d++)
           </div>
         </div>
         <div id="tree-container" class="col-10">
-          <div id="tree-plot" style="overflow: none;"></div>
+          <div id="tree-plot" style="overflow: hidden;"></div>
         </div>
       </div>
     </div>
   </div>
   <div class="tab-pane" id="table-tab" role="tabpanel" aria-labelledby="table-tab-link">
     <div class="container-fluid">
-      <div class="ag-theme-balham" id="metadata-grid" style="height: 600px; width: 100%;"></div>
+      <div id="metadata-grid" style="height: 600px; width: 100%;"></div>
     </div>
   </div>
 </div>
@@ -10215,7 +10215,8 @@ return /******/ (function(modules) { // webpackBootstrap
     sortable: true,
     resizable: true
   };
-  var grid;
+  var gridApi;
+  var metadataColumns = [];
 
   function newElement(htmlString) {
     const frag = document.createRange().createContextualFragment(htmlString);
@@ -10228,7 +10229,7 @@ return /******/ (function(modules) { // webpackBootstrap
     }
     return genomes.map(function (x) {
       var record = genomeMetadata[x]
-      return cols.reduce(function (acc, col) {
+      return metadataColumns.reduce(function (acc, col) {
         if (record.hasOwnProperty(col)) {
           acc[col] = record[col];
         }
@@ -10238,9 +10239,9 @@ return /******/ (function(modules) { // webpackBootstrap
   }
 
   if (!_.isEmpty(genomeMetadata)) {
-    const cols = Object.keys(Object.values(genomeMetadata)[0]);
-    cols.unshift('genome');
-    const columnDefs = cols.map(function (x) {
+    metadataColumns = Object.keys(Object.values(genomeMetadata)[0]);
+    metadataColumns.unshift('genome');
+    const columnDefs = metadataColumns.map(function (x) {
       return Object.assign(JSON.parse(JSON.stringify(DEFAULT_GRID_COL_OPTS)), {
         headerName: _.capitalize(x).replace(/_+/g, " "),
         field: x,
@@ -10249,7 +10250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
     const rowData = Object.keys(genomeMetadata).map(function (x) {
       var record = genomeMetadata[x]
-      return cols.reduce(function (acc, col) {
+      return metadataColumns.reduce(function (acc, col) {
         if (record.hasOwnProperty(col)) {
           acc[col] = record[col];
         }
@@ -10261,9 +10262,15 @@ return /******/ (function(modules) { // webpackBootstrap
     var gridOptions = {
       columnDefs: columnDefs,
       rowData: rowData,
-      rowSelection: 'multiple'
+      rowSelection: {
+        mode: 'multiRow',
+        checkboxes: false,
+        headerCheckbox: false,
+        enableClickSelection: true
+      },
+      theme: agGrid.themeBalham
     };
-    grid = new agGrid.Grid(document.getElementById('metadata-grid'), gridOptions);
+    gridApi = agGrid.createGrid(document.getElementById('metadata-grid'), gridOptions);
   }
 
 
@@ -10368,16 +10375,13 @@ return /******/ (function(modules) { // webpackBootstrap
       return acc;
     }, {});
     console.log('sel_leaves', sel_leaves)
-    if (!_.isUndefined(grid)) {
-      grid.context.beans.gridApi.beanInstance.forEachNode(function (x) {
-        if (sel_leaves.hasOwnProperty(x.data.genome)) {
-          console.log(x);
-          x.selected = true;
-        } else {
-          x.selected = false;
-        }
+    if (gridApi) {
+      gridApi.forEachNode(function (node) {
+        node.setSelected(
+          Object.prototype.hasOwnProperty.call(sel_leaves, node.data.genome)
+        );
       });
-      grid.context.beans.gridApi.beanInstance.redrawRows();
+      gridApi.redrawRows();
     }
   });
 
@@ -10535,13 +10539,40 @@ return /******/ (function(modules) { // webpackBootstrap
     setBranchScale(document.getElementById("branchScaleInput").value);
     var subtreeNodes = tree.branches[x.node].tree.leaves.map((node) => node.id)
     var newRowData = getRowData(genomeMetadata, subtreeNodes)
-    grid.context.beans.gridApi.beanInstance.setRowData(newRowData)
+    if (gridApi) {
+      gridApi.setGridOption('rowData', newRowData);
+    }
   });
 
   tree.setTreeType('rectangular');
   tree.alignLabels = true;
 
-  tree.load(newick_string);
+  function makeTreeDrawable(newick) {
+    var branchLengths = Array.from(
+      newick.matchAll(
+        /:([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)/g
+      )
+    ).map(function (match) {
+      return Number(match[1]);
+    });
+
+    var allZero =
+      branchLengths.length > 0 &&
+      branchLengths.every(function (length) {
+        return Number.isFinite(length) && length === 0;
+      });
+
+    if (!allZero) {
+      return newick;
+    }
+
+    return newick.replace(
+      /:([+-]?(?:0+(?:\.0*)?|\.0+)(?:[eE][+-]?\d+)?)(?=\s*[,);])/g,
+      ':1'
+    );
+  }
+
+  tree.load(makeTreeDrawable(newick_string));
   window.tree = tree;
   updateHeight();
   setBranchScale(0.5);

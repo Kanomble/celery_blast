@@ -1,7 +1,15 @@
+import importlib.util
+import shutil
+import subprocess
+import tempfile
+import unittest
+from html.parser import HTMLParser
+from pathlib import Path
 from unittest.mock import ANY, mock_open, patch
 
 from django.test import SimpleTestCase
 
+from external_tools.shiptv_html import make_tree_drawable, patch_shiptv_html_file
 from external_tools.genbank_download_clinker_synteny import (
     build_download_genbank_command,
     run_genbank_download_command,
@@ -217,6 +225,156 @@ class ExternalToolCommandTests(SimpleTestCase):
 
         self.assertEqual(0, returncode)
         self.assertEqual(cleanup_exceptions, run_command.call_args.kwargs['cleanup_exceptions'])
+
+
+class ShiptvHtmlPatchTests(SimpleTestCase):
+    @unittest.skipUnless(shutil.which('shiptv'), 'shiptv CLI is not available')
+    def test_generated_standalone_html_uses_public_ag_grid_api(self):
+        html_path = self.generate_shiptv_html("(A:0.00000,B:0.00000):0.00000;")
+        patch_shiptv_html_file(html_path)
+
+        html = html_path.read_text(encoding='utf-8')
+        app_code = self.extract_shiptv_app_code(html)
+
+        self.assertIn('agGrid.createGrid', app_code)
+        self.assertNotIn('new agGrid.Grid', app_code)
+        self.assertNotIn('.context.beans', app_code)
+        self.assertNotIn('.beanInstance', app_code)
+        self.assertIn("mode: 'multiRow'", app_code)
+        self.assertIn('enableClickSelection: true', app_code)
+        self.assertIn('theme: agGrid.themeBalham', app_code)
+        self.assertIn('var metadataColumns = [];', app_code)
+        self.assertIn('metadataColumns.reduce', app_code)
+        self.assertIn('node.setSelected(', app_code)
+        self.assertIn("gridApi.setGridOption('rowData', newRowData);", app_code)
+        self.assertIn('tree.load(makeTreeDrawable(newick_string));', app_code)
+
+        self.assertIn('<meta charset="utf-8">', html)
+        self.assertIn('<title>shiptv: Standalone HTML Interactive Phylogenetic Tree Visualization</title>', html)
+        self.assertEqual(1, html.count('<head>'))
+        self.assertIn('<div id="metadata-grid" style="height: 600px; width: 100%;"></div>', html)
+        self.assertNotIn('class="ag-theme-balham" id="metadata-grid"', html)
+        self.assertNotIn('overflow: none', html)
+        self.assertEqual([], ExternalResourceParser.find_resources(html))
+        self.assertNotIn('https://cdnjs.cloudflare.com/ajax/libs/chroma-js', html)
+
+    def test_make_tree_drawable_converts_only_all_zero_branch_length_trees(self):
+        self.assertEqual(
+            '(A:1,B:1):1;',
+            make_tree_drawable('(A:0.00000,B:0.00000):0.00000;'),
+        )
+        self.assertEqual(
+            '(A:0.00000,B:0.5):0.00000;',
+            make_tree_drawable('(A:0.00000,B:0.5):0.00000;'),
+        )
+        self.assertEqual('(A,B);', make_tree_drawable('(A,B);'))
+
+    @unittest.skipUnless(
+        importlib.util.find_spec('playwright') is not None,
+        'Playwright is not installed',
+    )
+    @unittest.skipUnless(shutil.which('shiptv'), 'shiptv CLI is not available')
+    def test_patched_html_renders_tree_and_grid_in_browser(self):
+        from playwright.sync_api import sync_playwright
+
+        html_path = self.generate_shiptv_html("(A:0.00000,B:0.00000):0.00000;")
+        patch_shiptv_html_file(html_path)
+        page_errors = []
+        console_errors = []
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch()
+            page = browser.new_page(viewport={'width': 1280, 'height': 900})
+            page.on('pageerror', lambda error: page_errors.append(str(error)))
+            page.on('console', lambda message: console_errors.append(message.text) if message.type == 'error' else None)
+            page.goto(html_path.as_uri())
+            page.wait_for_selector('#tree-plot canvas')
+            page.wait_for_selector('#metadata-grid .ag-row')
+
+            canvas_box = page.locator('#tree-plot canvas').bounding_box()
+            self.assertGreater(canvas_box['width'], 0)
+            self.assertGreater(canvas_box['height'], 0)
+            self.assertGreaterEqual(page.locator('#metadata-grid .ag-row').count(), 2)
+
+            page.fill('#findLeavesInput', 'A')
+            page.wait_for_timeout(250)
+            self.assertGreaterEqual(page.locator('#metadata-grid .ag-row-selected').count(), 1)
+
+            page.fill('#findLeavesInput', 'B')
+            page.wait_for_timeout(250)
+            self.assertGreaterEqual(page.locator('#metadata-grid .ag-row-selected').count(), 1)
+
+            page.set_viewport_size({'width': 640, 'height': 700})
+            page.wait_for_timeout(250)
+            resized_box = page.locator('#tree-plot canvas').bounding_box()
+            self.assertGreater(resized_box['width'], 0)
+            self.assertGreater(resized_box['height'], 0)
+            browser.close()
+
+        self.assertEqual([], page_errors)
+        self.assertNotIn('agGrid.Grid is not a constructor', '\n'.join(console_errors))
+
+    @unittest.skipUnless(shutil.which('shiptv'), 'shiptv CLI is not available')
+    def test_non_zero_branch_lengths_are_loaded_without_normalizing_source_newick(self):
+        html_path = self.generate_shiptv_html("(A:0.00000,B:0.50000):0.00000;")
+        patch_shiptv_html_file(html_path)
+
+        html = html_path.read_text(encoding='utf-8')
+
+        self.assertIn('var newick_string = "(A:0.00000,B:0.50000):0.00000;";', html)
+        self.assertIn('tree.load(makeTreeDrawable(newick_string));', html)
+
+    @staticmethod
+    def extract_shiptv_app_code(html):
+        start = html.index('  var DEFAULT_GRID_COL_OPTS = {')
+        end = html.rindex('</script>')
+        return html[start:end]
+
+    @staticmethod
+    def generate_shiptv_html(newick):
+        temp_dir = Path(tempfile.mkdtemp())
+        newick_path = temp_dir / 'tree.nwk'
+        metadata_path = temp_dir / 'metadata.tsv'
+        html_path = temp_dir / 'tree.html'
+        newick_path.write_text(newick, encoding='utf-8')
+        metadata_path.write_text(
+            'genome\tgroup\tscore\tcategory\n'
+            'A\talpha\t1\tleft\n'
+            'B\tbeta\t2\tright\n',
+            encoding='utf-8',
+        )
+        subprocess.run(
+            [
+                'shiptv',
+                '--newick', str(newick_path),
+                '--metadata', str(metadata_path),
+                '--output-html', str(html_path),
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        return html_path
+
+
+class ExternalResourceParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.resources = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'script' and attrs.get('src'):
+            self.resources.append(attrs['src'])
+        if tag == 'link' and attrs.get('href'):
+            self.resources.append(attrs['href'])
+
+    @classmethod
+    def find_resources(cls, html):
+        parser = cls()
+        parser.feed(html)
+        return parser.resources
 
 
 class GenbankDownloadCommandTests(SimpleTestCase):

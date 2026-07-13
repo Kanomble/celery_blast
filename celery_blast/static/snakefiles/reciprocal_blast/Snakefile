@@ -1,9 +1,14 @@
 #snakemake configuration is defined in the snakefile_config file,
 #which is created by a BlastProject model function
 configfile: "./snakefile_config"
+import sys
+from pathlib import Path
 import pandas as pd
 from math import ceil
 from Bio import Entrez
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+from external_tools.shiptv_html import patch_shiptv_html_file
 
 #PIPELINE PREPARATION
 #filling the QSEQIDS list for the input wildcard "qseqid" in the all rule
@@ -475,24 +480,11 @@ rule fix_html_tree_cdns:
 	run:
 		with open(log.cdn_fix_log, "w") as logfile:
 			try:
-				logfile.write("INFO:start fixing shiptv CDNs ...\n")
-				with open(input["html_tree"],"r") as infile:
-					lines = infile.readlines()
-				with open(output["shiptv_tree"],"w") as outfile:
-					if len(lines) <= 1:
-						outfile.write("<p>No sequences to display</p>\n")
-						logfile.write("WARNING:There are not enough sequences in the tree file\n")
-					else:
-						logfile.write("INFO:adjusting chroma_cdn ...\n")
-						chroma_cdn = '''<script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js" integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n'''
-						logfile.write("INFO:chroma_cdn:{}".format(chroma_cdn))
-						lines.insert(5,chroma_cdn)
-						for line in lines:
-							outfile.write(line)
-
+				logfile.write("INFO:start patching generated shiptv HTML ...\n")
+				patch_shiptv_html_file(input["html_tree"], output["shiptv_tree"])
 				logfile.write("DONE\n")
 			except Exception as e:
-				logfile.write("ERROR: ERROR during CDN fixing with exception: {}\n".format(e))
+				logfile.write("ERROR: ERROR during shiptv HTML patching with exception: {}\n".format(e))
 				shell("touch {output.shiptv_tree}")
 #RULE 19
 #rpsblast for query sequences with csv output for HTML documents
