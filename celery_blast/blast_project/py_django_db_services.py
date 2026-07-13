@@ -1,6 +1,7 @@
 import os
 # from typing import BinaryIO
 from .models import BlastProject, BlastSettings, RemoteBlastProject
+from .access import get_owned_local_project_or_404, get_owned_remote_project_or_404, get_owned_project_or_404
 from refseq_transactions.models import BlastDatabase, AssemblyLevels
 from external_tools.models import ExternalTools, QuerySequences, DomainDatabase
 from blast_project import py_biopython as pyb
@@ -264,6 +265,18 @@ def get_project_by_id(project_id):
 
 def get_remote_project_by_id(project_id):
     return RemoteBlastProject.objects.get(id=project_id)
+
+
+def get_owned_project_by_id(user, project_id):
+    return get_owned_local_project_or_404(user, project_id)
+
+
+def get_owned_remote_project_by_id(user, project_id):
+    return get_owned_remote_project_or_404(user, project_id)
+
+
+def get_owned_project_by_id_and_scope(user, project_id, remote_or_local):
+    return get_owned_project_or_404(user, project_id, remote_or_local)
 
 
 ''' create_project_from_form

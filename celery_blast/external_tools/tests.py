@@ -1,4 +1,4 @@
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, mock_open, patch
 
 from django.test import SimpleTestCase
 
@@ -93,34 +93,14 @@ class EntrezSearchServiceCommandTests(SimpleTestCase):
 
 class ExternalToolCommandTests(SimpleTestCase):
     def test_build_mafft_command_passes_paths_as_arguments(self):
-        command = build_mafft_command('/tmp/input with spaces.faa', '/tmp/output.msa')
+        command = build_mafft_command('/tmp/input with spaces.faa')
 
-        self.assertEqual(
-            [
-                'bash',
-                '-c',
-                'mafft "$1" > "$2"',
-                'mafft_alignment',
-                '/tmp/input with spaces.faa',
-                '/tmp/output.msa',
-            ],
-            command,
-        )
+        self.assertEqual(['mafft', '/tmp/input with spaces.faa'], command)
 
     def test_build_fasttree_command_passes_paths_as_arguments(self):
-        command = build_fasttree_command('/tmp/input.msa', '/tmp/output tree.nwk')
+        command = build_fasttree_command('/tmp/input.msa')
 
-        self.assertEqual(
-            [
-                'bash',
-                '-c',
-                'fasttree -lg "$1" > "$2"',
-                'fasttree_phylogeny',
-                '/tmp/input.msa',
-                '/tmp/output tree.nwk',
-            ],
-            command,
-        )
+        self.assertEqual(['fasttree', '-lg', '/tmp/input.msa'], command)
 
     def test_build_shiptv_command_uses_argv_without_shell(self):
         command = build_shiptv_command('/tmp/tree.nwk', '/tmp/metadata.tsv', '/tmp/tree.html')
@@ -202,6 +182,28 @@ class ExternalToolCommandTests(SimpleTestCase):
             logger=ANY,
             check=True,
             cleanup_exceptions=(),
+        )
+
+    def test_run_external_tool_command_redirects_stdout_to_path(self):
+        class Result:
+            returncode = 0
+
+        command = ['mafft', '/tmp/input.faa']
+        opener = mock_open()
+        with patch('builtins.open', opener), \
+                patch('external_tools.tasks.run_external_command', return_value=Result()) as run_command:
+            returncode = run_external_tool_command(command, stdout_path='/tmp/output.msa')
+
+        self.assertEqual(0, returncode)
+        opener.assert_called_once_with('/tmp/output.msa', 'w')
+        run_command.assert_called_once_with(
+            command,
+            timeout=40000,
+            shell=False,
+            logger=ANY,
+            check=True,
+            cleanup_exceptions=(),
+            stdout=opener.return_value.__enter__.return_value,
         )
 
     def test_run_external_tool_command_delegates_cleanup_exceptions(self):

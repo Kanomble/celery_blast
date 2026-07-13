@@ -48,9 +48,16 @@ def run_external_command(
         logger=None,
         check=False,
         cleanup_exceptions=(),
+        stdout=None,
+        stderr=None,
         popen_factory=Popen,
         process_tree_killer=kill_process_tree):
-    process = popen_factory(command, shell=shell)
+    popen_kwargs = {'shell': shell}
+    if stdout is not None:
+        popen_kwargs['stdout'] = stdout
+    if stderr is not None:
+        popen_kwargs['stderr'] = stderr
+    process = popen_factory(command, **popen_kwargs)
     if logger is not None:
         logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(process.pid, timeout))
 

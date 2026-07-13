@@ -5,6 +5,7 @@ from json import loads
 from time import sleep
 
 import pandas as pd
+from blast_project.access import get_owned_project_or_404, project_owner_required
 from blast_project.py_services import get_html_results
 from blast_project.views import failure_view
 from django.contrib.auth.decorators import login_required
@@ -34,6 +35,7 @@ from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR, E
     
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def synteny_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local:str):
     try:
         context = {}
@@ -54,6 +56,7 @@ def synteny_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local:
 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, remote_or_local:str, query_sequence:str):
     try:
         context = {}
@@ -82,6 +85,8 @@ def synteny_calculation_dashboard_view(request:WSGIRequest, project_id:int, remo
         :type Json
 '''
 @csrf_exempt
+@login_required(login_url='login')
+@project_owner_required()
 def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, project_id:int, remote_or_local:str, query_sequence:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -105,6 +110,8 @@ def ajax_call_for_synteny_calculation_selector_table(request:WSGIRequest, projec
     
 '''
 @csrf_exempt
+@login_required(login_url='login')
+@project_owner_required()
 def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, query_sequence:str, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -124,6 +131,7 @@ def calculate_synteny_form_submit_ajax(request:WSGIRequest, project_id:int, quer
     
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_synteny_view(request: WSGIRequest, project_id: int, remote_or_local:str, query_sequence_id: str):
     try:
         if remote_or_local == "local":
@@ -141,6 +149,8 @@ def load_synteny_view(request: WSGIRequest, project_id: int, remote_or_local:str
     This function deletes all files associated with the user specified synteny calculation procedure.
     
 '''
+@login_required(login_url='login')
+@project_owner_required()
 def delete_synteny_view(request:WSGIRequest, project_id:int, remote_or_local:str, query_sequence_id:str):
     try:
         with transaction.atomic():
@@ -193,6 +203,7 @@ def delete_synteny_view(request:WSGIRequest, project_id:int, remote_or_local:str
         :type str
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_sequence_id: str, remote_or_local:str):
     try:
         if remote_or_local == 'local':
@@ -222,6 +233,7 @@ def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_seq
 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str, remote_or_local:str):
     try:
         if remote_or_local == 'local':
@@ -405,6 +417,7 @@ def entrez_dashboard_view(request: WSGIRequest):
 
 # TODO documentation
 @login_required(login_url='login')
+@project_owner_required()
 def project_informations(request, project_id, remote_or_local:str):
     try:
         context = {}
@@ -418,6 +431,7 @@ def project_informations(request, project_id, remote_or_local:str):
 
 # TODO documentation
 @login_required(login_url='login')
+@project_owner_required()
 def perform_simple_msa(request, project_id, query_sequence_id, remote_or_local):
     try:
         if request.method == 'POST':
@@ -431,6 +445,7 @@ def perform_simple_msa(request, project_id, query_sequence_id, remote_or_local):
 
 
 @login_required(login_url='login')
+@project_owner_required()
 def perform_simple_msa_for_all_query_sequences(request, project_id, remote_or_local):
     try:
         if request.method == 'POST':
@@ -444,6 +459,7 @@ def perform_simple_msa_for_all_query_sequences(request, project_id, remote_or_lo
 
 
 @login_required(login_url='login')
+@project_owner_required()
 def perform_fasttree_phylobuild_for_all_query_sequences(request, project_id, remote_or_local):
     try:
         if request.method == 'POST':
@@ -458,6 +474,7 @@ def perform_fasttree_phylobuild_for_all_query_sequences(request, project_id, rem
 
 # TODO documentation
 @login_required(login_url='login')
+@project_owner_required()
 def perform_fasttree_phylobuild(request, project_id, query_sequence_id, remote_or_local):
     try:
         if request.method == 'POST':
@@ -518,6 +535,7 @@ def ajax_call_progress_entrezsearch_to_fasta(request, search_id: int):
 # view for phylogenetic dashboard
 # obsolete right now
 @login_required(login_url='login')
+@project_owner_required()
 def phylogenetic_information(request, project_id, query_sequence_id, remote_or_local):
     try:
         context = {}
@@ -546,6 +564,7 @@ def phylogenetic_information(request, project_id, query_sequence_id, remote_or_l
 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def cdd_domain_search_dashboard(request:WSGIRequest, project_id:int, remote_or_local:str):
     try:
         if request.method == "GET":
@@ -581,6 +600,7 @@ def cdd_domain_search_dashboard(request:WSGIRequest, project_id:int, remote_or_l
 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_rpsbproc_domains_view(request:WSGIRequest, project_id:int, remote_or_local:str):
     try:
         if remote_or_local == 'local':
@@ -607,6 +627,7 @@ def load_rpsbproc_domains_view(request:WSGIRequest, project_id:int, remote_or_lo
 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_all_cdd_domains_view(request:WSGIRequest, project_id: int, remote_or_local: str):
     try:
         if remote_or_local == 'local':
@@ -633,6 +654,7 @@ def load_all_cdd_domains_view(request:WSGIRequest, project_id: int, remote_or_lo
 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_rpsbproc_sites_view(request:WSGIRequest, project_id: int, remote_or_local: str):
     try:
         if remote_or_local == 'local':
@@ -662,6 +684,7 @@ def load_rpsbproc_sites_view(request:WSGIRequest, project_id: int, remote_or_loc
         :type str
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def execute_cdd_domain_search_for_target_query(request:WSGIRequest, project_id: int, remote_or_local:str):
     try:
         if request.method == "POST":
@@ -693,6 +716,7 @@ def execute_cdd_domain_search_for_target_query(request:WSGIRequest, project_id: 
         :type str
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, query_id: str, remote_or_local:str):
     try:
         if remote_or_local == 'local':
@@ -719,6 +743,7 @@ def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, 
         :type str
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def cdd_domain_search_details_view(request, query_id: str, project_id: int, remote_or_local:str):
     try:
         # query_sequence_model = QuerySequences.objects.get(query_accession_id=)
@@ -758,6 +783,7 @@ def cdd_domain_search_details_view(request, query_id: str, project_id: int, remo
         :type str
 '''
 @login_required(login_url="login")
+@project_owner_required()
 def get_selection_constrained_cdd_phylogeny_task_status(request:WSGIRequest, project_id:int,query_id:str, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -815,6 +841,7 @@ def get_entrez_search_progress(request:WSGIRequest, search_id:int):
     
 '''
 @login_required(login_url="login")
+@project_owner_required()
 def ajax_synteny_progress(request:WSGIRequest,project_id:int,remote_or_local:str,query_sequence:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -845,6 +872,7 @@ def ajax_synteny_progress(request:WSGIRequest,project_id:int,remote_or_local:str
 
 
 @login_required(login_url='login')
+@project_owner_required()
 def delete_cdd_domain_search_view(request:WSGIRequest, query_id: str, project_id: int, remote_or_local:str):
     try:
         query_sequence = ExternalTools.objects.get_associated_query_sequence(project_id, query_id, remote_or_local)
@@ -880,6 +908,7 @@ def delete_cdd_domain_search_view(request:WSGIRequest, query_id: str, project_id
 
 
 @login_required(login_url='login')
+@project_owner_required()
 def get_cdd_task_status_ajax_call(request:WSGIRequest, query_id: str, project_id: int, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -899,6 +928,7 @@ def get_cdd_task_status_ajax_call(request:WSGIRequest, query_id: str, project_id
 
 '''
 @csrf_exempt
+@login_required(login_url='login')
 def bokeh_task(request:WSGIRequest, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -912,6 +942,7 @@ def bokeh_task(request:WSGIRequest, remote_or_local:str):
                 url = data['url'].split("/")
                 project_id = int(url[4])
                 query_id = str(url[8])
+                get_owned_project_or_404(request.user, project_id, remote_or_local)
 
                 calculate_phylogeny_based_on_selection.delay(project_id, query_id, data['accessions'][0], remote_or_local)
             return JsonResponse({"response": "success"}, status=200)
@@ -927,6 +958,7 @@ def bokeh_task(request:WSGIRequest, remote_or_local:str):
 
 '''
 @csrf_exempt
+@login_required(login_url='login')
 def bokeh_database_task(request:WSGIRequest, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -946,6 +978,7 @@ def bokeh_database_task(request:WSGIRequest, remote_or_local:str):
 
                 url = data['url'].split("/")
                 project_id = int(url[4])
+                get_owned_project_or_404(request.user, project_id, remote_or_local)
 
                 calculate_phylogeny_based_on_database_statistics_selection.delay(project_id, data['accessions'][0], remote_or_local)
             return JsonResponse({"response": "success"}, status=200)

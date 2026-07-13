@@ -9,6 +9,7 @@ from django.db import IntegrityError, transaction
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from .access import project_owner_required
 from .view_access_decorators import unauthenticated_user
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
     ProjectCreationForm, RemoteProjectCreationForm, BlastSettingsFormBackward, \
@@ -337,6 +338,7 @@ def project_creation_view(request):
         :type int 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def project_details_view(request, project_id: int):
     try:
         blast_project = get_project_by_id(project_id)
@@ -347,6 +349,7 @@ def project_details_view(request, project_id: int):
         return failure_view(request, e)
 
 @login_required(login_url='login')
+@project_owner_required(remote_or_local='remote')
 def remote_project_details_view(request, project_id: int):
     try:
         blast_project = get_remote_project_by_id(project_id)
@@ -386,6 +389,7 @@ def remote_project_details_view(request, project_id: int):
         :type int
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def project_delete_view(request, project_id: int):
     try:
         if request.method == "POST":
@@ -398,13 +402,14 @@ def project_delete_view(request, project_id: int):
 
 
 @login_required(login_url='login')
+@project_owner_required(remote_or_local='remote')
 def remote_project_delete_view(request, project_id: int):
     try:
         if request.method == "POST":
             delete_remote_project_and_associated_directories_by_id(project_id)
             return success_view(request)
         else:
-            return project_details_view(request, project_id)
+            return remote_project_details_view(request, project_id)
     except Exception as e:
         return failure_view(request, e)
 
@@ -415,6 +420,8 @@ def remote_project_delete_view(request, project_id: int):
     This function is now obsolete as retrieving information is now done via the snakemake pipeline.
     
 '''
+@login_required(login_url='login')
+@project_owner_required()
 def ajax_wp_to_links(request, project_id: int):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -438,6 +445,7 @@ def ajax_wp_to_links(request, project_id: int):
 
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def start_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
@@ -456,7 +464,8 @@ def start_reciprocal_blast_project_view(request, project_id: int):
     except Exception as e:
         return failure_view(request, e)
 
-
+@login_required(login_url='login')
+@project_owner_required(remote_or_local='remote')
 def start_remote_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
@@ -484,6 +493,7 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
     
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_reciprocal_result_html_table_view(request, project_id):
     try:
         html_data = get_html_results(project_id, "reciprocal_results.html")
@@ -492,6 +502,7 @@ def load_reciprocal_result_html_table_view(request, project_id):
         return failure_view(request, e)
 
 @login_required(login_url='login')
+@project_owner_required(remote_or_local='remote')
 def load_remote_reciprocal_result_html_table_view(request, project_id):
     try:
         html_data = get_remote_html_results(project_id, "reciprocal_results.html")
@@ -772,6 +783,7 @@ def success_view(request):
         :type int
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def database_statistics_dashboard(request, project_id):
     try:
         task_status = get_database_statistics_task_status(project_id)
@@ -822,6 +834,7 @@ def database_statistics_dashboard(request, project_id):
         :type str
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def database_selection_phylogeny_task_status(request, project_id, remote_or_local:str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -840,6 +853,7 @@ def database_selection_phylogeny_task_status(request, project_id, remote_or_loca
     
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxonomic_unit: str):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -861,6 +875,7 @@ def load_database_statistics_for_taxonomic_unit_ajax(request, project_id, taxono
         :type int
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def execute_database_statistics_task(request, project_id: int):
     try:
         taxonomic_units = ['genus', 'family', 'superfamily', 'order', 'class', 'phylum']
@@ -880,6 +895,7 @@ def execute_database_statistics_task(request, project_id: int):
  
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def delete_database_statistics(request, project_id):
     try:
         logfile = BLAST_PROJECT_DIR + str(project_id) + '/log/delete_database_statistics_task_and_output.log'
@@ -897,6 +913,8 @@ def delete_database_statistics(request, project_id):
         :type int
 
 '''
+@login_required(login_url='login')
+@project_owner_required()
 def ajax_call_to_logfiles(request, project_id: int):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -931,6 +949,8 @@ def ajax_call_to_logfiles(request, project_id: int):
     except Exception as e:
         return JsonResponse({"error": "{}".format(e)}, status=400)
 
+@login_required(login_url='login')
+@project_owner_required(remote_or_local='remote')
 def ajax_call_to_remote_logfiles(request, project_id: int):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -971,6 +991,7 @@ def ajax_call_to_remote_logfiles(request, project_id: int):
     This ajax call tracks the status of the domain database download task.
 
 '''
+@login_required(login_url='login')
 def get_domain_database_download_task_status(request):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -1000,6 +1021,7 @@ def get_domain_database_download_task_status(request):
     
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def send_logfile_content_view(request, project_id: int, logfile: str) -> HttpResponse:
     try:
         logfile_path = BLAST_PROJECT_DIR + str(project_id) + '/log/' + logfile + ".log"
@@ -1015,6 +1037,7 @@ def send_logfile_content_view(request, project_id: int, logfile: str) -> HttpRes
 
 # OBSOLETE
 @login_required(login_url='login')
+@project_owner_required()
 def send_query_sequence_information_view(request, project_id: int) -> HttpResponse:
     try:
         # BLAST_PROJECT_DIR+
@@ -1036,6 +1059,7 @@ def send_query_sequence_information_view(request, project_id: int) -> HttpRespon
         :type HttpResponse - with the zipped directory as attachment
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def download_project_as_zip_archive_view(request, project_id:int, remote_or_local:str) -> HttpResponse:
     try:
         if remote_or_local == "remote":
@@ -1080,6 +1104,7 @@ def download_project_as_zip_archive_view(request, project_id:int, remote_or_loca
         
 '''
 @login_required(login_url='login')
+@project_owner_required()
 def view_selection_phylogeny(request, project_id: int, remote_or_local:str):
     try:
         if remote_or_local == 'local':
@@ -1148,6 +1173,7 @@ def delete_taxonomic_node_file(request, taxonomic_node_file:str):
 
 '''
 @login_required(login_url="login")
+@project_owner_required()
 def examine_logfile_view(request, project_id:int, remote_or_local:str):
     try:
         if remote_or_local == "local":
@@ -1185,6 +1211,7 @@ def examine_logfile_view(request, project_id:int, remote_or_local:str):
         :type HttpResponse
 '''
 @login_required(login_url="login")
+@project_owner_required()
 def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
     try:
         if remote_or_local == "local":
@@ -1224,6 +1251,8 @@ def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
         :type HttpResponse
 
 '''
+@login_required(login_url="login")
+@project_owner_required()
 def view_query_specific_logfile(request, project_id: int, remote_or_local: str, logfile: str, query:str):
     try:
         if remote_or_local == "local":

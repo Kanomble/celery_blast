@@ -30,26 +30,12 @@ from refseq_transactions.tasks import download_refseq_assembly_summary
 logger = get_task_logger(__name__)
 
 
-def build_mafft_command(input_fasta, output_msa):
-    return [
-        'bash',
-        '-c',
-        'mafft "$1" > "$2"',
-        'mafft_alignment',
-        input_fasta,
-        output_msa,
-    ]
+def build_mafft_command(input_fasta):
+    return ['mafft', input_fasta]
 
 
-def build_fasttree_command(input_msa, output_tree):
-    return [
-        'bash',
-        '-c',
-        'fasttree -lg "$1" > "$2"',
-        'fasttree_phylogeny',
-        input_msa,
-        output_tree,
-    ]
+def build_fasttree_command(input_msa):
+    return ['fasttree', '-lg', input_msa]
 
 
 def build_shiptv_command(newick_path, metadata_path, output_html):
@@ -87,7 +73,19 @@ def build_rpsblast_command(path_to_query_file, path_to_cdd_db, output_path, rps_
     ]
 
 
-def run_external_tool_command(command, timeout=40000, cleanup_exceptions=()):
+def run_external_tool_command(command, timeout=40000, cleanup_exceptions=(), stdout_path=None):
+    if stdout_path is not None:
+        with open(stdout_path, 'w') as stdout:
+            return run_external_command(
+                command,
+                timeout=timeout,
+                shell=False,
+                logger=logger,
+                check=True,
+                cleanup_exceptions=cleanup_exceptions,
+                stdout=stdout,
+            ).returncode
+
     return run_external_command(
         command,
         timeout=timeout,
@@ -130,7 +128,8 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
         path_to_mafft_output = path_to_query_subdir + "/selection_sliced_mafft.msa"
         progress_recorder.set_progress(20, 100, "PROGRESS")
 
-        returncode = run_external_tool_command(build_mafft_command(path_to_sliced_fasta_file, path_to_mafft_output))
+        returncode = run_external_tool_command(build_mafft_command(path_to_sliced_fasta_file),
+                                               stdout_path=path_to_mafft_output)
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         progress_recorder.set_progress(70, 100, "SUCCESS")
@@ -139,7 +138,8 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
         logger.info("starting phylogenetic inference with fasttree")
         path_to_fasttree_output = path_to_query_subdir + "/selection_sliced_phylogeny.nwk"
         progress_recorder.set_progress(71,100, "PROGRESS")
-        returncode = run_external_tool_command(build_fasttree_command(path_to_mafft_output, path_to_fasttree_output))
+        returncode = run_external_tool_command(build_fasttree_command(path_to_mafft_output),
+                                               stdout_path=path_to_fasttree_output)
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         logger.info("done with phylogenetic tree inference")
@@ -213,7 +213,8 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         path_to_mafft_output = path_to_query_subdir + "/selection_sliced_domain_mafft.msa"
         progress_recorder.set_progress(20, 100, "PROGRESS")
 
-        returncode = run_external_tool_command(build_mafft_command(path_to_sliced_fasta_file, path_to_mafft_output))
+        returncode = run_external_tool_command(build_mafft_command(path_to_sliced_fasta_file),
+                                               stdout_path=path_to_mafft_output)
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         progress_recorder.set_progress(70, 100, "SUCCESS")
@@ -222,7 +223,8 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         logger.info("starting phylogenetic inference with fasttree")
         path_to_fasttree_output = path_to_query_subdir + "/selection_sliced_domain_phylogeny.nwk"
         progress_recorder.set_progress(71,100, "PROGRESS")
-        returncode = run_external_tool_command(build_fasttree_command(path_to_mafft_output, path_to_fasttree_output))
+        returncode = run_external_tool_command(build_fasttree_command(path_to_mafft_output),
+                                               stdout_path=path_to_fasttree_output)
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         logger.info("done with phylogenetic tree inference")
@@ -567,7 +569,8 @@ def execute_multiple_sequence_alignment(self, project_id, query_sequence_id, rem
             path_to_mafft_output = path_to_project + query_sequence_id + '/target_sequences.msa'
             progress_recorder.set_progress(20, 100, "PROGRESS")
 
-            returncode = run_external_tool_command(build_mafft_command(path_to_query_file, path_to_mafft_output))
+            returncode = run_external_tool_command(build_mafft_command(path_to_query_file),
+                                                   stdout_path=path_to_mafft_output)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
             else:
@@ -610,7 +613,8 @@ def execute_phylogenetic_tree_building(self, project_id, query_sequence_id, remo
             logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
             progress_recorder.set_progress(20, 100, "PROGRESS")
             progress_recorder.set_progress(30, 100, "PROGRESS")
-            returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file, path_to_fasttree_output))
+            returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file),
+                                                   stdout_path=path_to_fasttree_output)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
@@ -653,7 +657,8 @@ def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id
             target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
 
             if target_sequence_status == 0:
-                returncode = run_external_tool_command(build_mafft_command(path_to_query_file, path_to_mafft_output))
+                returncode = run_external_tool_command(build_mafft_command(path_to_query_file),
+                                                       stdout_path=path_to_mafft_output)
                 progress = int(progress * counter)
                 if progress <= 80:
                     logger.info(
@@ -711,7 +716,8 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id, remote
                 external_tools.update_query_sequences_phylo_task(qseqid, str(self.request.id))
                 logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
 
-                returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file, path_to_fasttree_output))
+                returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file),
+                                                       stdout_path=path_to_fasttree_output)
 
                 progress = int(progress * counter)
                 if progress <= 80:
@@ -857,7 +863,8 @@ def execute_domain_multiple_sequence_alignment(project_id: int, query_sequence_i
             # mafft invocation with default settings
             path_to_mafft_output = path_to_project + query_sequence_id + '/domain_corrected_target_sequences.msa'
 
-            returncode = run_external_tool_command(build_mafft_command(path_to_query_file, path_to_mafft_output))
+            returncode = run_external_tool_command(build_mafft_command(path_to_query_file),
+                                                   stdout_path=path_to_mafft_output)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
             else:
@@ -905,7 +912,8 @@ def execute_phylogenetic_tree_building_with_domains(project_id: int, query_seque
         msa_status = check_if_msa_file_is_available(path_to_msa_file)
         if msa_status == 0:
 
-            returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file, path_to_fasttree_output))
+            returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file),
+                                                   stdout_path=path_to_fasttree_output)
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         elif msa_status == 1:

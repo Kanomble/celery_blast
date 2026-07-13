@@ -1,7 +1,7 @@
 # The best practice is to create a common logger for all of your tasks at the top of your module:
 
 import os
-from subprocess import SubprocessError, TimeoutExpired
+from subprocess import STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
 from django.conf import settings
 from celery import shared_task
 from external_tools.models import ExternalTools
@@ -114,24 +114,19 @@ def run_makeblastdb_command(command):
     ).returncode
 
 
-def build_species_taxids_command(taxonomic_node, output_path):
-    return [
-        'bash',
-        '-c',
-        'get_species_taxids.sh -t "$1" >> "$2" 2>&1',
-        'get_species_taxids',
-        str(taxonomic_node),
-        output_path,
-    ]
+def build_species_taxids_command(taxonomic_node):
+    return ['get_species_taxids.sh', '-t', str(taxonomic_node)]
 
 
-def run_species_taxids_command(command):
+def run_species_taxids_command(command, stdout):
     return run_external_command(
         command,
         timeout=200,
         shell=False,
         logger=logger,
         check=False,
+        stdout=stdout,
+        stderr=subSTDOUT,
     ).returncode
 
 
@@ -206,12 +201,12 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
     try:
         returncode = 1
         # iteration over all possible taxonomic nodes
-        with open(filepath_species_taxids, 'w'):
-            pass
-        for node in taxonomic_node:
-            returncode = run_species_taxids_command(
-                build_species_taxids_command(node, filepath_species_taxids)
-            )
+        with open(filepath_species_taxids, 'w') as taxfile:
+            for node in taxonomic_node:
+                returncode = run_species_taxids_command(
+                    build_species_taxids_command(node),
+                    stdout=taxfile,
+                )
         return returncode
     except ExternalCommandTimeout as e:
         logger.info('ERROR:timeout expired during get_species_taxids.sh execution')

@@ -47,6 +47,30 @@ class ExternalCommandRunnerTests(TestCase):
         self.assertEqual(30, process.wait_timeout)
         self.assertEqual([(['snakemake', '--cores', '1'], False)], calls)
 
+    def test_run_external_command_passes_streams_when_provided(self):
+        process = FakeProcess(returncode=0)
+        calls = []
+        stdout = object()
+        stderr = object()
+
+        def popen_factory(command, **kwargs):
+            calls.append((command, kwargs))
+            return process
+
+        result = run_external_command(
+            ['mafft', 'input.faa'],
+            timeout=30,
+            stdout=stdout,
+            stderr=stderr,
+            popen_factory=popen_factory,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual(
+            [(['mafft', 'input.faa'], {'shell': False, 'stdout': stdout, 'stderr': stderr})],
+            calls,
+        )
+
     def test_run_external_command_raises_on_nonzero_returncode_when_checking(self):
         process = FakeProcess(returncode=2)
 

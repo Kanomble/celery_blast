@@ -103,27 +103,18 @@ class BlastProjectTaskHelperTests(SimpleTestCase):
             build_makeblastdb_command(4, 'media/databases/4/TEST.database')
 
     def test_build_species_taxids_command_passes_args_safely(self):
-        command = build_species_taxids_command(1140, '/data/taxids.txt')
+        command = build_species_taxids_command(1140)
 
-        self.assertEqual(
-            [
-                'bash',
-                '-c',
-                'get_species_taxids.sh -t "$1" >> "$2" 2>&1',
-                'get_species_taxids',
-                '1140',
-                '/data/taxids.txt',
-            ],
-            command,
-        )
+        self.assertEqual(['get_species_taxids.sh', '-t', '1140'], command)
 
     def test_run_species_taxids_command_delegates_to_runner_without_checking_returncode(self):
         class Result:
             returncode = 2
 
-        command = build_species_taxids_command(1140, '/data/taxids.txt')
+        command = build_species_taxids_command(1140)
+        stdout = object()
         with patch('blast_project.tasks.run_external_command', return_value=Result()) as run_command:
-            returncode = run_species_taxids_command(command)
+            returncode = run_species_taxids_command(command, stdout=stdout)
 
         self.assertEqual(2, returncode)
         run_command.assert_called_once_with(
@@ -132,6 +123,8 @@ class BlastProjectTaskHelperTests(SimpleTestCase):
             shell=False,
             logger=ANY,
             check=False,
+            stdout=stdout,
+            stderr=ANY,
         )
 
     @override_settings(SUBPROCESS_TIME_LIMIT=120)
