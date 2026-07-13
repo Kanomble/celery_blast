@@ -2,10 +2,9 @@ import os
 import random
 import shutil
 import string
-from subprocess import Popen, TimeoutExpired, SubprocessError
 
-import psutil
 from Bio import Entrez
+from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
 from celery_blast.settings import ESEARCH_OUTPUT
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -13,6 +12,74 @@ from django.db import transaction, IntegrityError
 from django_celery_results.models import TaskResult
 
 from .models import EntrezSearch
+
+
+XTRACT_FORMATS = {
+    'pubmed': 'Id PubDate Source Author Title ELocationID',
+    'protein': 'Id Caption Title Organism',
+    'assembly': 'Id AssemblyName AssemblyStatus Organism Taxid',
+    'cdd': 'Id Title Subtitle Abstract',
+    'protfam': 'Id DispMethod DispReviewLevel string',
+}
+
+
+def build_entrez_search_command(database, number_records, entrez_query, output_filepath):
+    return [
+        'bash',
+        '-o', 'pipefail',
+        '-c',
+        'esearch -db "$1" -query "$2" | efetch -format docsum -start 1 -stop "$3" | '
+        'xtract -pattern DocumentSummary -sep "\t" -sep ": " -element $4 > "$5"',
+        'entrez_search',
+        database,
+        entrez_query,
+        str(number_records),
+        XTRACT_FORMATS[database],
+        output_filepath,
+    ]
+
+
+def build_efetch_fasta_from_input_command(sequence_list_file_path, target_fasta_file_path):
+    return [
+        'bash',
+        '-c',
+        'efetch -db protein -format fasta -input "$1" > "$2"',
+        'efetch_fasta',
+        sequence_list_file_path,
+        target_fasta_file_path,
+    ]
+
+
+def build_pubmed_to_fasta_command(entrez_query, target_fasta_file_path, refseq_only=False):
+    if refseq_only:
+        script = 'esearch -db pubmed -query "$1" | elink -target protein | efilter -source refseq | efetch -format fasta > "$2"'
+    else:
+        script = 'esearch -db pubmed -query "$1" | elink -target protein | efetch -format fasta -start 1 -stop 100 > "$2"'
+    return [
+        'bash',
+        '-o', 'pipefail',
+        '-c',
+        script,
+        'pubmed_to_fasta',
+        entrez_query,
+        target_fasta_file_path,
+    ]
+
+
+def build_protein_query_to_fasta_command(entrez_query, output_filepath):
+    return [
+        'bash',
+        '-o', 'pipefail',
+        '-c',
+        'esearch -db protein -query "$1" | efilter -source refseq | efetch -format fasta > "$2"',
+        'protein_query_to_fasta',
+        entrez_query,
+        output_filepath,
+    ]
+
+
+def run_edirect_command(command, timeout):
+    return run_external_command(command, timeout=timeout, shell=False, check=False).returncode
 
 '''execute_entrez_search
 
@@ -41,19 +108,11 @@ def execute_entrez_search(database: str, number_records: str, entrez_query: str,
     # starts an Esearch which downloads the requested search with the selected database and saves it in a file
     # for adding  more databases, the columns need to be added here, in the models.py get_pandas_table function and in forms.py to the EntrezSearchForm class
     try:
-        xtract_format = {}
-        xtract_format['pubmed'] = 'Id PubDate Source Author Title ELocationID'
-        xtract_format['protein'] = 'Id Caption Title Organism'
-        xtract_format['assembly'] = 'Id AssemblyName AssemblyStatus Organism Taxid'
-        xtract_format['cdd'] = "Id Title Subtitle Abstract"
-        xtract_format['protfam'] = "Id DispMethod DispReviewLevel string"
-
-        cmd = 'esearch -db {} -query "{}" | efetch -format docsum -start 1 -stop {} | xtract -pattern DocumentSummary -sep "\t" -sep ": "  -element {} > {}'.format(
-            database, entrez_query,number_records, xtract_format[database], output_filepath)
-
-        process = Popen(cmd, shell=True)
         try:
-            returncode = process.wait(timeout=20000)
+            returncode = run_edirect_command(
+                build_entrez_search_command(database, number_records, entrez_query, output_filepath),
+                timeout=20000,
+            )
 
             if returncode != 0:
                 with transaction.atomic():
@@ -62,8 +121,7 @@ def execute_entrez_search(database: str, number_records: str, entrez_query: str,
                     entrez_search.delete()
 
             return returncode
-        except TimeoutExpired as e:
-            process.kill()
+        except ExternalCommandTimeout as e:
             returncode = 'searchtime expired {}'.format(e)
             return returncode
     except Exception:
@@ -187,10 +245,10 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
                 for seqid in sequence_ids:
                     seq_id_file.write("{}\n".format(seqid))
 
-            cmd = 'efetch -db protein -format fasta -input {} > {}'.format(sequence_list_file_path,
-                                                                           target_fasta_file_path)
-            process = Popen(cmd, shell=True)
-            returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
+            returncode = run_edirect_command(
+                build_efetch_fasta_from_input_command(sequence_list_file_path, target_fasta_file_path),
+                timeout=settings.SUBPROCESS_TIME_LIMIT,
+            )
 
             with transaction.atomic():
                 entrez_search.fasta_file_name = target_fasta_file_path
@@ -198,10 +256,10 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
 
             return returncode
         elif database == "pubmed":
-            cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efetch -format fasta -start 1 -stop 100 > {}'.format(
-                entrez_query, target_fasta_file_path)
-            process = Popen(cmd, shell=True)
-            returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
+            returncode = run_edirect_command(
+                build_pubmed_to_fasta_command(entrez_query, target_fasta_file_path),
+                timeout=settings.SUBPROCESS_TIME_LIMIT,
+            )
 
             with transaction.atomic():
                 entrez_search.fasta_file_name = target_fasta_file_path
@@ -210,20 +268,15 @@ def download_esearch_protein_fasta_files(search_id: int) -> int:
         else:
             raise Exception("There is no download option for the selected database: {}".format(database))
     # catch subprocess exceptions
-    except TimeoutExpired:
+    except ExternalCommandTimeout as e:
         # delete all child processes
-        if 'process' in locals():
-            pid = process.pid
-            parent = psutil.Process(pid)
-            for child in parent.children(recursive=True):
-                child.kill()
-            parent.kill()  # this is not enough need to kill all child processes
+        if e.pid is not None:
             if os.path.isfile(target_fasta_file_path):
                 os.remove(target_fasta_file_path)
-            return pid
+            return e.pid
         else:
             return 1
-    except SubprocessError as e:
+    except ExternalCommandError as e:
         raise Exception(
             "[-] Couldnt download protein fasta files for esearch {} on protein database and exception: {}".format(
                 search_id, e))
@@ -277,29 +330,20 @@ def update_entrezsearch_with_download_task_result(search_id: int, task_id: int) 
 def execute_entrez_efetch_fasta_files(database: str, entrez_query: str, output_filepath: str) -> int:
     try:
         if database == 'pubmed':
-            cmd = 'esearch -db pubmed -query "{}" | elink -target protein | efilter -source refseq | efetch -format fasta > {}'.format(
-                entrez_query, output_filepath)
+            command = build_pubmed_to_fasta_command(entrez_query, output_filepath, refseq_only=True)
         elif database == 'protein':
-            cmd = 'esearch -db protein -query "{}" | efilter -source refseq | efetch -format fasta > {}'.format(
-                entrez_query, output_filepath
-            )
+            command = build_protein_query_to_fasta_command(entrez_query, output_filepath)
         else:
             raise Exception
-        process = Popen(cmd, shell=True)
 
-        returncode = process.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
+        returncode = run_edirect_command(command, timeout=settings.SUBPROCESS_TIME_LIMIT)
         return returncode
 
-    except TimeoutExpired as e:
-        if 'process' in locals():
-            pid = process.pid
-            parent = psutil.Process(pid)
-            for child in parent.children(recursive=True):
-                child.kill()
-            parent.kill()  # this is not enough need to kill all child processes
+    except ExternalCommandTimeout as e:
+        if e.pid is not None:
             if os.path.isfile(output_filepath):
                 os.remove(output_filepath)
-            return pid
+            return e.pid
         else:
             return 1
     except Exception:

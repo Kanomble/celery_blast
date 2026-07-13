@@ -2,13 +2,14 @@ import math
 import os
 from os import getcwd, mkdir, remove, chmod
 from os.path import isdir, isfile
-from subprocess import Popen, SubprocessError, TimeoutExpired
+from subprocess import SubprocessError, TimeoutExpired
 
 import pandas as pd
 from blast_project.py_django_db_services import update_blast_database_with_task_result_model, update_assembly_entries_in_database
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
+from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
 from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE, GENBANK_URL
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
@@ -16,6 +17,81 @@ from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_sum
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
+
+
+def build_format_blast_database_command(database, taxonomic_mapfile):
+    return [
+        "makeblastdb",
+        "-in", database,
+        '-dbtype', 'prot',
+        '-taxid_map', taxonomic_mapfile,
+        '-parse_seqids',
+        '-out', database,
+        '-blastdb_version', '5',
+    ]
+
+
+def run_format_blast_database_command(command):
+    return run_external_command(
+        command,
+        timeout=settings.SUBPROCESS_TIME_LIMIT,
+        shell=False,
+        logger=logger,
+        check=False,
+        cleanup_exceptions=(SoftTimeLimitExceeded,),
+    ).returncode
+
+
+def build_download_and_gunzip_command(ftp_path, output_path):
+    return [
+        'bash',
+        '-o', 'pipefail',
+        '-c', 'wget -qO- "$1" | gzip -d > "$2"',
+        'download_assembly',
+        ftp_path,
+        output_path,
+    ]
+
+
+def run_download_and_gunzip_command(command):
+    return run_external_command(
+        command,
+        timeout=300,
+        shell=False,
+        logger=logger,
+        check=True,
+        cleanup_exceptions=(SoftTimeLimitExceeded,),
+    ).returncode
+
+
+def build_download_assembly_summary_command(refseq_url, output_path):
+    return [
+        "curl",
+        "--fail",
+        "--location",
+        "--show-error",
+        "--silent",
+        "-o",
+        output_path,
+        refseq_url,
+    ]
+
+
+def run_download_assembly_summary_command(command, timeout=800):
+    return run_external_command(
+        command,
+        timeout=timeout,
+        shell=False,
+        logger=logger,
+        check=True,
+        cleanup_exceptions=(SoftTimeLimitExceeded,),
+    ).returncode
+
+
+def remove_file_if_exists(path):
+    if path and isfile(path):
+        remove(path)
+
 
 ''' download_refseq_assembly_summary_file
 
@@ -66,29 +142,17 @@ def download_refseq_assembly_summary(summary_file:str):
             logger.warning('assembly_summary_refseq.txt/assembly_summary_genbank.txt exists deleting it in order to download a newer version')
             remove(path_to_assembly_file)
 
-        # invoke wget program
-        logger.info('creating popen process')
+        # invoke curl program
+        logger.info('creating assembly summary download process')
         logger.info("refseq_url: {}, path_to_assembly_file: {}".format(refseq_url, path_to_assembly_file))
-        curl_process = Popen([
-                            "curl",
-                            "--fail",
-                            "--location",
-                            "--show-error",
-                            "--silent",
-                            "-o",
-                            path_to_assembly_file,
-                            refseq_url
-                        ])
-        # communicate with subprocess : https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
-        # wait for process to terminate and set returncode attribute
-        logger.info(
-            'waiting for popen instance {} to finish with timeout set to {}'
-                .format(curl_process.pid, timeout))
-        returncode = curl_process.wait(timeout=timeout)
+        returncode = run_download_assembly_summary_command(
+            build_download_assembly_summary_command(refseq_url, path_to_assembly_file),
+            timeout=timeout,
+        )
 
         if (returncode != 0):
-            logger.warning('subprocess Popen refseq assembly file download process resulted in an error!')
-            raise Exception('Popen hasnt succeeded ...')
+            logger.warning('assembly summary download process resulted in an error!')
+            raise Exception('download command hasnt succeeded ...')
 
         logger.info('returncode : {}'.format(returncode))
 
@@ -98,26 +162,21 @@ def download_refseq_assembly_summary(summary_file:str):
 
     except SoftTimeLimitExceeded:
         if 'path_to_assembly_file' in locals():
-            if isfile(path_to_assembly_file):
-                os.remove(path_to_assembly_file)
+            remove_file_if_exists(path_to_assembly_file)
         raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due to soft time limit")
 
-    except TimeoutExpired as e:
-        curl_process.kill()
+    except ExternalCommandTimeout as e:
         if 'path_to_assembly_file' in locals():
-            if isfile(path_to_assembly_file):
-                os.remove(path_to_assembly_file)
+            remove_file_if_exists(path_to_assembly_file)
 
         raise Exception(
-            "ERROR couldn't download assembly_summary_refseq.txt file due Popen call time limit : {}".format(e))
+            "ERROR couldn't download assembly_summary_refseq.txt file due process time limit : {}".format(e))
 
-    except SubprocessError as e:
-        curl_process.kill()
+    except ExternalCommandError as e:
         if 'path_to_assembly_file' in locals():
-            if isfile(path_to_assembly_file):
-                os.remove(path_to_assembly_file)
+            remove_file_if_exists(path_to_assembly_file)
         raise Exception(
-            "ERROR couldn't download assembly_summary_refseq.txt file due Popen call exception : {}".format(e))
+            "ERROR couldn't download assembly_summary_refseq.txt file due process exception : {}".format(e))
 
     except Exception as e:
         raise Exception("couldn't download assembly_summary_refseq.txt file : {}".format(e))
@@ -204,12 +263,9 @@ def format_blast_databases(path_to_database: str, chunks: list, progress_recorde
         for chunk in chunks:
             database = path_to_database + "database_chunk_{}.faa".format(chunk)
             taxonomic_mapfile = path_to_database + "acc_taxmap_file_{}.table".format(chunk)
-            proc = Popen(["makeblastdb", "-in", database,
-                          '-dbtype', 'prot',
-                          '-taxid_map', taxonomic_mapfile,
-                          '-parse_seqids',
-                          '-out', database, '-blastdb_version', '5'])
-            returncode = proc.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
+            returncode = run_format_blast_database_command(
+                build_format_blast_database_command(database, taxonomic_mapfile)
+            )
             if (returncode != 0):
                 logger.warning("ERROR during database creation of chunk {}".format(chunk))
                 errorlist.append(chunk)
@@ -224,15 +280,18 @@ def format_blast_databases(path_to_database: str, chunks: list, progress_recorde
 
     except TimeoutExpired as e:
         logger.warning("ERROR in makeblastdb for database chunk: {} - process timed out".format(database))
-        if 'proc' in locals():
-            proc.kill()
         raise Exception(
             "ERROR in makeblastdb for database chunk: {} with exception: {} - process timed out".format(database, e))
 
     except SubprocessError as e:
         logger.warning("ERROR in makeblastdb for database chunk: {}".format(database))
-        if 'proc' in locals():
-            proc.kill()
+        raise Exception("ERROR in makeblastdb for database chunk: {} with exception: {}".format(database, e))
+    except ExternalCommandTimeout as e:
+        logger.warning("ERROR in makeblastdb for database chunk: {} - process timed out".format(database))
+        raise Exception(
+            "ERROR in makeblastdb for database chunk: {} with exception: {} - process timed out".format(database, e))
+    except ExternalCommandError as e:
+        logger.warning("ERROR in makeblastdb for database chunk: {}".format(database))
         raise Exception("ERROR in makeblastdb for database chunk: {} with exception: {}".format(database, e))
 
     except SoftTimeLimitExceeded:
@@ -402,15 +461,13 @@ def download_wget_ftp_paths(path_to_database: str, dictionary_ftp_paths_taxids: 
                 # 0 ... 9 attempts
                 for attempt in range(10):
                     try:
-
-                        proc = Popen('wget -qO- {} | gzip -d > {}'.format(file, path_to_database + gunzip_output),
-                                     shell=True)
-                        returncode = proc.wait(timeout=300)  # 66 Minutes
-                        if (returncode != 0):
-                            raise Exception
+                        output_path = path_to_database + gunzip_output
+                        returncode = run_download_and_gunzip_command(
+                            build_download_and_gunzip_command(file, output_path)
+                        )
                         # downloaded_files[gunzip_output] = dictionary_ftp_paths_taxids[file]
                         # logger.info('downloaded : {} returncode : {}'.format(path_to_database + gunzip_output,returncode))
-                        chmod(path_to_database + gunzip_output, 0o777)
+                        chmod(output_path, 0o777)
                     # catch exception raised if the subproccess failed e.g. gzip failure due to invalid download
                     except Exception as e:
                         logger.warning("download exception : {}".format(e))

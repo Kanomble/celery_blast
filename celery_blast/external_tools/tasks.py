@@ -1,14 +1,15 @@
 import os
-from subprocess import Popen, SubprocessError, TimeoutExpired, check_output
+from glob import glob
+from subprocess import check_output
 
 import pandas as pd
 
-import psutil
 from blast_project.py_django_db_services import update_external_tool_with_cdd_search, get_project_by_id, get_remote_project_by_id, \
     update_blast_project_with_database_statistics_selection_task_result_model, update_domain_database_task_result_model
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
+from celery_blast.processes import run_external_command
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 
@@ -27,6 +28,74 @@ from os import listdir, mkdir, remove
 from refseq_transactions.tasks import download_refseq_assembly_summary
 # logger for celery worker instances
 logger = get_task_logger(__name__)
+
+
+def build_mafft_command(input_fasta, output_msa):
+    return [
+        'bash',
+        '-c',
+        'mafft "$1" > "$2"',
+        'mafft_alignment',
+        input_fasta,
+        output_msa,
+    ]
+
+
+def build_fasttree_command(input_msa, output_tree):
+    return [
+        'bash',
+        '-c',
+        'fasttree -lg "$1" > "$2"',
+        'fasttree_phylogeny',
+        input_msa,
+        output_tree,
+    ]
+
+
+def build_shiptv_command(newick_path, metadata_path, output_html):
+    return [
+        'shiptv',
+        '--newick', newick_path,
+        '--metadata', metadata_path,
+        '--output-html', output_html,
+    ]
+
+
+def build_clinker_command(gbk_paths, output_html):
+    return ['clinker'] + list(gbk_paths) + ['-p', output_html, '-i', '0.25']
+
+
+def build_cdd_download_command(cdd_ftp_path, output_path):
+    return ['wget', cdd_ftp_path, '-q', '-O', output_path]
+
+
+def build_cdd_extract_command(cdd_archive_path, download_directory):
+    return ['tar', '-zxvf', cdd_archive_path, '-C', download_directory + '/']
+
+
+def build_rpsblast_command(path_to_query_file, path_to_cdd_db, output_path, rps_blast_task_data):
+    return [
+        'rpsblast',
+        '-query', path_to_query_file,
+        '-db', path_to_cdd_db,
+        '-outfmt', '6 qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident',
+        '-out', output_path,
+        '-evalue', str(rps_blast_task_data['rps_e_value']),
+        '-num_threads', str(rps_blast_task_data['rps_num_threads']),
+        '-max_hsps', str(rps_blast_task_data['rps_max_hsps']),
+        '-num_alignments', str(rps_blast_task_data['rps_num_alignments']),
+    ]
+
+
+def run_external_tool_command(command, timeout=40000, cleanup_exceptions=()):
+    return run_external_command(
+        command,
+        timeout=timeout,
+        shell=False,
+        logger=logger,
+        check=True,
+        cleanup_exceptions=cleanup_exceptions,
+    ).returncode
 
 
 @shared_task(bind=True)
@@ -59,14 +128,9 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
         logger.info("starting multiple sequence alignment")
 
         path_to_mafft_output = path_to_query_subdir + "/selection_sliced_mafft.msa"
-        cmd = "mafft {} > {}".format(path_to_sliced_fasta_file, path_to_mafft_output)
-        msa_task = Popen(cmd, shell=True)
-        logger.info(
-            'waiting for popen instance {} (mafft) to finish with timeout set to {}'.format(msa_task.pid,
-                                                                                    40000))
         progress_recorder.set_progress(20, 100, "PROGRESS")
 
-        returncode = msa_task.wait(40000)
+        returncode = run_external_tool_command(build_mafft_command(path_to_sliced_fasta_file, path_to_mafft_output))
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         progress_recorder.set_progress(70, 100, "SUCCESS")
@@ -74,14 +138,8 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
 
         logger.info("starting phylogenetic inference with fasttree")
         path_to_fasttree_output = path_to_query_subdir + "/selection_sliced_phylogeny.nwk"
-        cmd = "fasttree -lg {} > {}".format(path_to_mafft_output, path_to_fasttree_output)
-
-        phylo_task = Popen(cmd, shell=True)
         progress_recorder.set_progress(71,100, "PROGRESS")
-        logger.info(
-            'waiting for popen instance {} (fasttree) to finish with timeout set to {}'.format(phylo_task.pid,
-                                                                                    40000))
-        returncode = phylo_task.wait(40000)
+        returncode = run_external_tool_command(build_fasttree_command(path_to_mafft_output, path_to_fasttree_output))
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         logger.info("done with phylogenetic tree inference")
@@ -99,11 +157,11 @@ def calculate_phylogeny_based_on_database_statistics_selection(self, project_id:
         reciprocal_result_table.to_csv(path_to_rbh_table, sep="\t", index=None)
         path_to_html_tree_output = path_to_query_subdir + '/selection_sliced_phylogeny.html'
         path_to_html_tree = path_to_query_subdir + '/selection_sliced_phylogeny_temp.html'
-        shiptv_task = "shiptv --newick {} --metadata {} --output-html {}".format(path_to_fasttree_output,
-                                                                                 path_to_rbh_table,
-                                                                                 path_to_html_tree)
-        shiptv_task = Popen(shiptv_task, shell=True)
-        returncode = shiptv_task.wait(40000)
+        returncode = run_external_tool_command(build_shiptv_command(
+            path_to_fasttree_output,
+            path_to_rbh_table,
+            path_to_html_tree,
+        ))
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
@@ -153,14 +211,9 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         logger.info("starting multiple sequence alignment")
 
         path_to_mafft_output = path_to_query_subdir + "/selection_sliced_domain_mafft.msa"
-        cmd = "mafft {} > {}".format(path_to_sliced_fasta_file, path_to_mafft_output)
-        msa_task = Popen(cmd, shell=True)
-        logger.info(
-            'waiting for popen instance {} (mafft) to finish with timeout set to {}'.format(msa_task.pid,
-                                                                                    40000))
         progress_recorder.set_progress(20, 100, "PROGRESS")
 
-        returncode = msa_task.wait(40000)
+        returncode = run_external_tool_command(build_mafft_command(path_to_sliced_fasta_file, path_to_mafft_output))
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         progress_recorder.set_progress(70, 100, "SUCCESS")
@@ -168,14 +221,8 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
 
         logger.info("starting phylogenetic inference with fasttree")
         path_to_fasttree_output = path_to_query_subdir + "/selection_sliced_domain_phylogeny.nwk"
-        cmd = "fasttree -lg {} > {}".format(path_to_mafft_output, path_to_fasttree_output)
-
-        phylo_task = Popen(cmd, shell=True)
         progress_recorder.set_progress(71,100, "PROGRESS")
-        logger.info(
-            'waiting for popen instance {} (fasttree) to finish with timeout set to {}'.format(phylo_task.pid,
-                                                                                    40000))
-        returncode = phylo_task.wait(40000)
+        returncode = run_external_tool_command(build_fasttree_command(path_to_mafft_output, path_to_fasttree_output))
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         logger.info("done with phylogenetic tree inference")
@@ -183,10 +230,11 @@ def calculate_phylogeny_based_on_selection(self, project_id:int, query_sequence:
         path_to_rbh_table = path_to_query_subdir + '/rbh_table.tsf'
         path_to_html_tree = path_to_query_subdir + '/selection_sliced_domain_phylogeny_temp.html'
         path_to_html_tree_output = path_to_query_subdir + '/selection_sliced_domain_phylogeny.html'
-        shiptv_task = "shiptv --newick {} --metadata {} --output-html {}".format(path_to_fasttree_output,
-                                                                                 path_to_rbh_table, path_to_html_tree)
-        shiptv_task = Popen(shiptv_task, shell=True)
-        returncode = shiptv_task.wait(40000)
+        returncode = run_external_tool_command(build_shiptv_command(
+            path_to_fasttree_output,
+            path_to_rbh_table,
+            path_to_html_tree,
+        ))
         if returncode != 0:
             raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
@@ -272,13 +320,13 @@ def synteny_calculation_task(self, project_id:int, query_sequence:str, rbh_dict:
 
             logger.info("trying to execute clinker")
             logger.info("executing clinker in working directory: {}".format(working_directory))
-            cmd = "clinker "+working_directory+'*.gbk'+" -p "+working_directory+'clinker_result_plot.html'+' -i 0.25'
-            proc = Popen(cmd, shell=True)
-            returncode = proc.wait(timeout=2000)
+            gbk_paths = sorted(glob(os.path.join(working_directory, '*.gbk')))
+            output_html = os.path.join(working_directory, 'clinker_result_plot.html')
+            returncode = run_external_tool_command(build_clinker_command(gbk_paths, output_html), timeout=2000)
             progress_recorder.set_progress(99, 100, "PROGRESS")
             if returncode != 0:
                 logger.warning("error during donwload of the cdd database")
-                raise SubprocessError
+                raise Exception("clinker command failed with return code: {}".format(returncode))
 
         logger.info("done")
         return 0
@@ -367,21 +415,17 @@ def setup_cathi_download_cdd_refseq_genbank_assembly_files(self):
         path_to_cdd_location = path_to_cdd_location + 'Cdd_LE.tar.gz'
         download_directory = BLAST_DATABASE_DIR + 'CDD'
         logger.info("downloading CDD into {}".format(download_directory))
-        proc = Popen(["wget", cdd_ftp_path, "-q", "-O", path_to_cdd_location], shell=False)
-        returncode = proc.wait(timeout=4000)
+        returncode = run_external_tool_command(build_cdd_download_command(cdd_ftp_path, path_to_cdd_location), timeout=4000)
         progress_recorder.set_progress(70, 100, "PROGRESS")
         if returncode != 0:
             logger.warning("error during donwload of the cdd database")
-            raise SubprocessError
+            raise Exception("CDD download command failed with return code: {}".format(returncode))
         logger.info("successfully downloaded the cdd database")
-        proc = Popen(
-            ["tar", "-zxvf", path_to_cdd_location, "-C", download_directory + '/'],
-            shell=False)
-        returncode = proc.wait(timeout=2000)
+        returncode = run_external_tool_command(build_cdd_extract_command(path_to_cdd_location, download_directory), timeout=2000)
         progress_recorder.set_progress(80, 100, "PROGRESS")
         if returncode != 0:
             logger.warning("error during extraction of the cdd database")
-            raise SubprocessError
+            raise Exception("CDD extraction command failed with return code: {}".format(returncode))
         logger.info("successfully extracted the cdd database")
         remove(path_to_cdd_location)
 
@@ -396,9 +440,6 @@ def setup_cathi_download_cdd_refseq_genbank_assembly_files(self):
         except Exception as e:
             logger.warning("error during download of the RefSeq and/or GenBank assembly summary files.")
             raise Exception("[-] ERROR during download of RefSeq and/or GenBank summary files with exception: {}.".format(e))
-    except TimeoutExpired as e:
-        logger.warning("error during downloading the cdd database, timeout expired with exception: {}".format(e))
-        raise Exception("[-] ERROR timeout expired for downloading the cdd database with exception: {}".format(e))
 
     except Exception as e:
         raise Exception("[-] ERROR during downloading and decompressing the CDD database with exception: {}".format(e))
@@ -524,14 +565,9 @@ def execute_multiple_sequence_alignment(self, project_id, query_sequence_id, rem
         if target_sequence_status == 0:
             # mafft invocation with default settings
             path_to_mafft_output = path_to_project + query_sequence_id + '/target_sequences.msa'
-            cmd = "mafft {} > {}".format(path_to_query_file, path_to_mafft_output)
-            msa_task = Popen(cmd, shell=True)
-            logger.info(
-                'waiting for popen instance {} to finish with timeout set to {}'.format(msa_task.pid,
-                                                                                        40000))
             progress_recorder.set_progress(20, 100, "PROGRESS")
 
-            returncode = msa_task.wait(40000)
+            returncode = run_external_tool_command(build_mafft_command(path_to_query_file, path_to_mafft_output))
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
             else:
@@ -573,13 +609,8 @@ def execute_phylogenetic_tree_building(self, project_id, query_sequence_id, remo
             external_tools.update_query_sequences_phylo_task(query_sequence_id, str(self.request.id))
             logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
             progress_recorder.set_progress(20, 100, "PROGRESS")
-            cmd = "fasttree -lg {} > {}".format(path_to_msa_file, path_to_fasttree_output)
-            phylo_task = Popen(cmd, shell=True)
             progress_recorder.set_progress(30, 100, "PROGRESS")
-            logger.info(
-                'waiting for popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
-                                                                                        40000))
-            returncode = phylo_task.wait(40000)
+            returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file, path_to_fasttree_output))
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
 
@@ -622,12 +653,7 @@ def execute_multiple_sequence_alignment_for_all_query_sequences(self, project_id
             target_sequence_status = check_if_target_sequences_are_available(path_to_query_file)
 
             if target_sequence_status == 0:
-                cmd = "mafft {} > {}".format(path_to_query_file, path_to_mafft_output)
-                msa_task = Popen(cmd, shell=True)
-                logger.info(
-                    'waiting for popen instance {} to finish with timeout set to {}'.format(msa_task.pid,
-                                                                                            40000))
-                returncode = msa_task.wait(40000)
+                returncode = run_external_tool_command(build_mafft_command(path_to_query_file, path_to_mafft_output))
                 progress = int(progress * counter)
                 if progress <= 80:
                     logger.info(
@@ -685,12 +711,7 @@ def execute_fasttree_phylobuild_for_all_query_sequences(self, project_id, remote
                 external_tools.update_query_sequences_phylo_task(qseqid, str(self.request.id))
                 logger.info("updated query sequence model with taskresult instance : {}".format(str(self.request.id)))
 
-                cmd = "fasttree -lg {} > {}".format(path_to_msa_file, path_to_fasttree_output)
-                phylo_task = Popen(cmd, shell=True)
-                logger.info(
-                    'waiting for popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
-                                                                                            40000))
-                returncode = phylo_task.wait(40000)
+                returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file, path_to_fasttree_output))
 
                 progress = int(progress * counter)
                 if progress <= 80:
@@ -755,22 +776,24 @@ def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data:
 
         logger.info("INFO:preparing POPEN cmd for cdd search")
 
-        proc = Popen(['rpsblast', '-query', path_to_query_file,
-                      '-db', path_to_cdd_db,
-                      "-outfmt", "6 qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident",
-                      "-out", path_to_cdd_domain_search_output,
-                      '-evalue', str(rps_blast_task_data['rps_e_value']),
-                      '-num_threads', str(rps_blast_task_data['rps_num_threads']),
-                      '-max_hsps', str(rps_blast_task_data['rps_max_hsps']),
-                      '-num_alignments', str(rps_blast_task_data['rps_num_alignments'])], shell=False)
+        command = build_rpsblast_command(
+            path_to_query_file,
+            path_to_cdd_db,
+            path_to_cdd_domain_search_output,
+            rps_blast_task_data,
+        )
         progress_recorder.set_progress(30, 100, "PROGRESS")
-        logger.info("INFO:waiting for POPEN process with id: {} to finish".format(proc.pid))
+        logger.info("INFO:waiting for rpsblast process to finish")
 
-        returncode = proc.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
+        returncode = run_external_tool_command(
+            command,
+            timeout=settings.SUBPROCESS_TIME_LIMIT,
+            cleanup_exceptions=(SoftTimeLimitExceeded,),
+        )
         progress_recorder.set_progress(50, 100, "PROGRESS")
 
         if returncode != 0:
-            raise SubprocessError
+            raise Exception("rpsblast command failed with return code: {}".format(returncode))
 
         logger.info("INFO:performing PCA analysis and build interactive visualization ...")
         produce_bokeh_pca_plot(project_id, target_query, remote_or_local,taxonomic_unit='phylum')
@@ -793,35 +816,8 @@ def cdd_domain_search_with_rbhs_task(self, project_id: int, rps_blast_task_data:
 
     except SoftTimeLimitExceeded as e:
         logger.info("ERROR:CDD search reached Task Time Limit")
-        if 'proc' in locals():
-            pid = proc.pid
-            # TODO check if process with pid exists
-            parent = psutil.Process(pid)
-            for child in parent.children(recursive=True):
-                child.kill()
-            parent.kill()
         raise Exception("ERROR CDD search reached Task Time Limit")
 
-    except TimeoutExpired as e:
-        logger.warning("ERROR:TIMEOUT EXPIRED DURING CDD SEARCH: {}".format(e))
-        if 'proc' in locals():
-            pid = proc.pid
-            parent = psutil.Process(pid)
-
-            for child in parent.children(recursive=True):
-                child.kill()
-            parent.kill()
-
-    except SubprocessError as e:
-        logger.warning("ERROR: POPEN CALL for cdd domain search resulted in exception: {}".format(e))
-        if 'proc' in locals():
-
-            pid = proc.pid
-            parent = psutil.Process(pid)
-
-            for child in parent.children(recursive=True):
-                child.kill()
-            parent.kill()
     except Exception as e:
         raise Exception(
             "ERROR: unknown exception occurred during cdd_domain_search_with_rbhs_task with exception: {}".format(e))
@@ -860,13 +856,8 @@ def execute_domain_multiple_sequence_alignment(project_id: int, query_sequence_i
         if target_sequence_status == 0:
             # mafft invocation with default settings
             path_to_mafft_output = path_to_project + query_sequence_id + '/domain_corrected_target_sequences.msa'
-            cmd = "mafft {} > {}".format(path_to_query_file, path_to_mafft_output)
-            msa_task = Popen(cmd, shell=True)
-            logger.info(
-                'INFO: waiting for popen mafft instance {} to finish with timeout set to {}'.format(msa_task.pid,
-                                                                                                    40000))
 
-            returncode = msa_task.wait(40000)
+            returncode = run_external_tool_command(build_mafft_command(path_to_query_file, path_to_mafft_output))
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
             else:
@@ -914,12 +905,7 @@ def execute_phylogenetic_tree_building_with_domains(project_id: int, query_seque
         msa_status = check_if_msa_file_is_available(path_to_msa_file)
         if msa_status == 0:
 
-            cmd = "fasttree -lg {} > {}".format(path_to_msa_file, path_to_fasttree_output)
-            phylo_task = Popen(cmd, shell=True)
-            logger.info(
-                'INFO: waiting for fasttree popen instance {} to finish with timeout set to {}'.format(phylo_task.pid,
-                                                                                                       40000))
-            returncode = phylo_task.wait(40000)
+            returncode = run_external_tool_command(build_fasttree_command(path_to_msa_file, path_to_fasttree_output))
             if returncode != 0:
                 raise Exception("Popen hasnt succeeded, returncode != 0: {}".format(returncode))
         elif msa_status == 1:

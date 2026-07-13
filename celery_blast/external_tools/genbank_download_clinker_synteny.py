@@ -4,8 +4,26 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 import pandas as pd
 from os.path import isfile, isdir
 from os import remove, listdir
-import subprocess
+from celery_blast.processes import run_external_command
 from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
+
+
+def build_download_genbank_command(ftp_path, output_path):
+    return [
+        'bash',
+        '-o',
+        'pipefail',
+        '-c',
+        'wget -qO- "$1" | gzip -d > "$2"',
+        'download_genbank',
+        ftp_path,
+        output_path,
+    ]
+
+
+def run_genbank_download_command(command, timeout=500):
+    return run_external_command(command, timeout=timeout, shell=False, check=True).returncode
+
 
 '''extract_gene_cluster_by_one_sequence
 
@@ -313,9 +331,9 @@ def download_genbank_files(sequence_id_to_ftp_path: dict,
                             for attempt in range(10):
 
                                 try:
-                                    proc = subprocess.Popen("wget -qO- {} | gzip -d > {}".format(ftp_path, genbank_filename),
-                                                            shell=True)
-                                    returncode = proc.wait(timeout=500)
+                                    returncode = run_genbank_download_command(
+                                        build_download_genbank_command(ftp_path, genbank_filename)
+                                    )
                                     if (returncode != 0):
                                         raise Exception
 

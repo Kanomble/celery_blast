@@ -6,7 +6,6 @@
 '''
 
 from Bio import Entrez
-from .py_django_db_services import get_project_by_id
 
 ''' get_species_taxid_by_name 
 
@@ -222,6 +221,8 @@ def check_given_taxonomic_node(user_email: str, taxid: int) -> int:
 
 def calculate_pfam_and_protein_links_from_queries(user_email, project_id):
     try:
+        from .py_django_db_services import get_project_by_id
+
         # load BlastProject from database
         project = get_project_by_id(project_id)
         # setup filepath to BlastProject

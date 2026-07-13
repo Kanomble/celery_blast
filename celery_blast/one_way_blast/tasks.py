@@ -1,15 +1,43 @@
-from subprocess import Popen, SubprocessError, TimeoutExpired
-
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
+
+from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
 
 from .py_django_db_services import update_one_way_blast_project_with_task_result_model, \
     update_one_way_remote_blast_project_with_task_result_model
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
+
+
+def execute_snakemake_workflow(project_id, working_dir, config_file, snakefile_dir, task_result_updater, task_id,
+                               progress_recorder):
+    try:
+        task_result_updater(project_id, task_id)
+    except Exception as e:
+        logger.warning('couldnt update blastproject with exception : {}'.format(e))
+        raise Exception('couldnt update blastproject with exception : {}'.format(e))
+
+    logger.info('trying to start snakemake workflow')
+    command = [
+        'snakemake',
+        '--snakefile', snakefile_dir,
+        '--cores', '1',
+        '--configfile', config_file,
+        '--directory', working_dir,
+        '--keep-incomplete',
+    ]
+    result = run_external_command(
+        command,
+        timeout=settings.SUBPROCESS_TIME_LIMIT,
+        shell=False,
+        logger=logger,
+        check=True,
+    )
+    progress_recorder.set_progress(100, 100, "SUCCESS")
+    return result.returncode
 
 
 @shared_task(bind=True)
@@ -23,44 +51,21 @@ def execute_one_way_blast_project(self, project_id):
     progress_recorder.set_progress(0, 100, "started process")
 
     try:
-        update_one_way_blast_project_with_task_result_model(project_id, str(self.request.id))
-    except Exception as e:
-        logger.warning('couldnt update blastproject with exception : {}'.format(e))
-        raise Exception('couldnt update blastproject with exception : {}'.format(e))
-    try:
-        logger.info('trying to start snakemake one way BLAST workflow')
-        # snakemake --snakefile 'static/snakefiles/reciprocal_blast/Snakefile' --cores 1 --configfile 'media/blast_projects/4/snakefile_config' --directory 'media/blast_projects/4/'
-        # '--wms-monitor', settings.PANOPTES_IP,
-
-        one_way_blast_snakemake = Popen(
-            ['snakemake',
-             '--snakefile', snakefile_dir,
-             '--cores', '1',
-             '--configfile', snakemake_config_file,
-             '--directory', snakemake_working_dir,
-             '--keep-incomplete'], shell=False)
         progress_recorder.set_progress(50, 100, "executed snakemake")
-
-        logger.info('waiting for popen instance {} to finish with timeout set to {}'.format(one_way_blast_snakemake.pid,
-                                                                                            settings.SUBPROCESS_TIME_LIMIT))
-        returncode = one_way_blast_snakemake.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
-        if returncode > 0:
-            logger.warning('received a negative returncode : {} ... '.format(returncode))
-            raise Exception
-        logger.info('returncode : {}'.format(returncode))
-        progress_recorder.set_progress(100, 100, "SUCCESS")
-        return returncode
-
-    except TimeoutExpired as e:
-        logger.info('timeout expired ... trying to kill process {}'.format(one_way_blast_snakemake.pid))
-        one_way_blast_snakemake.kill()
-
+        return execute_snakemake_workflow(
+            project_id,
+            snakemake_working_dir,
+            snakemake_config_file,
+            snakefile_dir,
+            update_one_way_blast_project_with_task_result_model,
+            str(self.request.id),
+            progress_recorder,
+        )
+    except ExternalCommandTimeout as e:
+        raise Exception('exception during waiting for popen instance : {}'.format(e))
+    except ExternalCommandError as e:
         raise Exception(
-            'exception during waiting for popen instance : {} \n\t returncode of popen.wait : {}'.format(e, returncode))
-    except SubprocessError as e:
-        logger.info('subprocess throwed exception: {}'.format(e))
-        raise Exception(
-            'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
+            'exception occured during invokation of:\n\t one way blast snakefile : {}'.format(e))
 
 
 @shared_task(bind=True)
@@ -75,42 +80,18 @@ def execute_one_way_remote_blast_project(self, project_id):
     progress_recorder.set_progress(0, 100, "started process")
 
     try:
-        update_one_way_remote_blast_project_with_task_result_model(project_id, str(self.request.id))
-    except Exception as e:
-        logger.warning('couldnt update blastproject with exception : {}'.format(e))
-        raise Exception('couldnt update blastproject with exception : {}'.format(e))
-    try:
-        logger.info('trying to start snakemake one way remote BLAST workflow')
-        # snakemake --snakefile 'static/snakefiles/one_way_blast/remote_searches/Snakefile' --cores 1 --configfile
-        # 'media/one_way_blast/remote_searches/6/snakefile_config' --directory 'media/one_way_blast/remote_searches/6/'
-        #             '--wms-monitor', settings.PANOPTES_IP,
-        one_way_remote_blast_snakemake = Popen(
-            ['snakemake',
-             '--snakefile', snakefile_dir,
-             '--cores', '1',
-             '--configfile', snakemake_config_file,
-             '--directory', snakemake_working_dir,
-             '--keep-incomplete'], shell=False)
         progress_recorder.set_progress(50, 100, "executed snakemake")
-
-        logger.info(
-            'waiting for popen instance {} to finish with timeout set to {}'.format(one_way_remote_blast_snakemake.pid,
-                                                                                    settings.SUBPROCESS_TIME_LIMIT))
-        returncode = one_way_remote_blast_snakemake.wait(timeout=settings.SUBPROCESS_TIME_LIMIT)
-        if returncode > 0:
-            logger.warning('received a negative returncode {} ... '.format(returncode))
-            raise Exception
-        logger.info('returncode : {}'.format(returncode))
-        progress_recorder.set_progress(100, 100, "SUCCESS")
-        return returncode
-
-    except TimeoutExpired as e:
-        logger.info('timeout expired ... trying to kill process {}'.format(one_way_remote_blast_snakemake.pid))
-        one_way_remote_blast_snakemake.kill()
+        return execute_snakemake_workflow(
+            project_id,
+            snakemake_working_dir,
+            snakemake_config_file,
+            snakefile_dir,
+            update_one_way_remote_blast_project_with_task_result_model,
+            str(self.request.id),
+            progress_recorder,
+        )
+    except ExternalCommandTimeout as e:
+        raise Exception('exception during waiting for popen instance : {}'.format(e))
+    except ExternalCommandError as e:
         raise Exception(
-            'exception during waiting for popen instance : {} \n\t returncode of popen.wait > 0'.format(e))
-
-    except SubprocessError as e:
-        logger.info('subprocess throwed exception: {}'.format(e))
-        raise Exception(
-            'exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
+            'exception occured during invokation of:\n\t one way remote blast snakefile : {}'.format(e))
