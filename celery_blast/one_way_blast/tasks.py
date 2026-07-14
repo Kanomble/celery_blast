@@ -1,3 +1,5 @@
+import os
+
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
@@ -12,6 +14,22 @@ from .py_django_db_services import update_one_way_blast_project_with_task_result
 logger = get_task_logger(__name__)
 
 
+def resolve_project_path(path):
+    if os.path.isabs(path):
+        return path
+    return os.path.abspath(os.path.join(settings.BASE_DIR, path))
+
+
+def build_snakemake_environment():
+    env = os.environ.copy()
+    pythonpath = env.get('PYTHONPATH')
+    if pythonpath:
+        env['PYTHONPATH'] = settings.BASE_DIR + os.pathsep + pythonpath
+    else:
+        env['PYTHONPATH'] = settings.BASE_DIR
+    return env
+
+
 def execute_snakemake_workflow(project_id, working_dir, config_file, snakefile_dir, task_result_updater, task_id,
                                progress_recorder):
     try:
@@ -23,10 +41,10 @@ def execute_snakemake_workflow(project_id, working_dir, config_file, snakefile_d
     logger.info('trying to start snakemake workflow')
     command = [
         'snakemake',
-        '--snakefile', snakefile_dir,
+        '--snakefile', resolve_project_path(snakefile_dir),
         '--cores', '1',
-        '--configfile', config_file,
-        '--directory', working_dir,
+        '--configfile', resolve_project_path(config_file),
+        '--directory', resolve_project_path(working_dir),
         '--keep-incomplete',
     ]
     result = run_external_command(
@@ -35,6 +53,7 @@ def execute_snakemake_workflow(project_id, working_dir, config_file, snakefile_d
         shell=False,
         logger=logger,
         check=True,
+        env=build_snakemake_environment(),
     )
     progress_recorder.set_progress(100, 100, "SUCCESS")
     return result.returncode

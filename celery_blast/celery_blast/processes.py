@@ -48,11 +48,14 @@ def run_external_command(
         logger=None,
         check=False,
         cleanup_exceptions=(),
+        env=None,
         stdout=None,
         stderr=None,
         popen_factory=Popen,
         process_tree_killer=kill_process_tree):
     popen_kwargs = {'shell': shell}
+    if env is not None:
+        popen_kwargs['env'] = env
     if stdout is not None:
         popen_kwargs['stdout'] = stdout
     if stderr is not None:

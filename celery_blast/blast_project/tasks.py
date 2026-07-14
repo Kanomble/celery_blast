@@ -21,6 +21,22 @@ from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_U
 logger = get_task_logger(__name__)
 
 
+def resolve_project_path(path):
+    if os.path.isabs(path):
+        return path
+    return os.path.abspath(os.path.join(settings.BASE_DIR, path))
+
+
+def build_snakemake_environment():
+    env = os.environ.copy()
+    pythonpath = env.get('PYTHONPATH')
+    if pythonpath:
+        env['PYTHONPATH'] = settings.BASE_DIR + os.pathsep + pythonpath
+    else:
+        env['PYTHONPATH'] = settings.BASE_DIR
+    return env
+
+
 def execute_reciprocal_snakemake_workflow(project_id, working_dir, config_file, snakefile_dir, task_result_updater,
                                           task_id, project_type, progress_recorder):
     try:
@@ -34,10 +50,10 @@ def execute_reciprocal_snakemake_workflow(project_id, working_dir, config_file, 
 
     command = [
         'snakemake',
-        '--snakefile', snakefile_dir,
+        '--snakefile', resolve_project_path(snakefile_dir),
         '--cores', '1',
-        '--configfile', config_file,
-        '--directory', working_dir,
+        '--configfile', resolve_project_path(config_file),
+        '--directory', resolve_project_path(working_dir),
     ]
 
     try:
@@ -48,6 +64,7 @@ def execute_reciprocal_snakemake_workflow(project_id, working_dir, config_file, 
             logger=logger,
             check=True,
             cleanup_exceptions=(SoftTimeLimitExceeded,),
+            env=build_snakemake_environment(),
         )
     except ExternalCommandError:
         progress_recorder.set_progress(0, 100, "FAILURE")

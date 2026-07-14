@@ -1,6 +1,8 @@
+import os
 from subprocess import SubprocessError, TimeoutExpired
 from unittest.mock import ANY, patch
 
+from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
@@ -33,6 +35,16 @@ class FakeExternalTools:
 
     def update_for_all_query_sequences_phylo_task(self, task_id):
         self.phylo_task_id = task_id
+
+
+def expected_snakemake_environment():
+    env = os.environ.copy()
+    pythonpath = env.get('PYTHONPATH')
+    if pythonpath:
+        env['PYTHONPATH'] = settings.BASE_DIR + os.pathsep + pythonpath
+    else:
+        env['PYTHONPATH'] = settings.BASE_DIR
+    return env
 
 
 class BlastProjectTaskHelperTests(SimpleTestCase):
@@ -183,14 +195,66 @@ class BlastProjectTaskHelperTests(SimpleTestCase):
         run_command.assert_called_once_with(
             [
                 'snakemake',
-                '--snakefile', 'static/snakefiles/reciprocal_blast/Snakefile',
+                '--snakefile', os.path.abspath(
+                    os.path.join(settings.BASE_DIR, 'static/snakefiles/reciprocal_blast/Snakefile')
+                ),
                 '--cores', '1',
-                '--configfile', 'media/blast_projects/3/snakefile_config',
-                '--directory', 'media/blast_projects/3/',
+                '--configfile', os.path.abspath(
+                    os.path.join(settings.BASE_DIR, 'media/blast_projects/3/snakefile_config')
+                ),
+                '--directory', os.path.abspath(os.path.join(settings.BASE_DIR, 'media/blast_projects/3/')),
             ],
             timeout=90,
             shell=False,
             logger=ANY,
             check=True,
             cleanup_exceptions=ANY,
+            env=expected_snakemake_environment(),
+        )
+
+    @override_settings(SUBPROCESS_TIME_LIMIT=90)
+    def test_execute_remote_reciprocal_snakemake_workflow_builds_absolute_command(self):
+        class Result:
+            returncode = 0
+
+        progress_recorder = FakeProgressRecorder()
+        external_tools = FakeExternalTools()
+
+        with patch('blast_project.tasks.run_external_command', return_value=Result()) as run_command, \
+                patch('blast_project.tasks.create_external_tools_after_snakemake_workflow_finishes'), \
+                patch('blast_project.tasks.ExternalTools') as external_tools_model:
+            external_tools_model.objects.get_external_tools_based_on_project_id.return_value = external_tools
+
+            returncode = execute_reciprocal_snakemake_workflow(
+                project_id=5,
+                working_dir='media/blast_projects/remote_searches/5/',
+                config_file='media/blast_projects/remote_searches/5/snakefile_config',
+                snakefile_dir='static/snakefiles/reciprocal_blast/remote_searches/Snakefile',
+                task_result_updater=lambda project_id, task_id: None,
+                task_id='task-789',
+                project_type='remote',
+                progress_recorder=progress_recorder,
+            )
+
+        self.assertEqual(0, returncode)
+        run_command.assert_called_once_with(
+            [
+                'snakemake',
+                '--snakefile', os.path.abspath(
+                    os.path.join(settings.BASE_DIR, 'static/snakefiles/reciprocal_blast/remote_searches/Snakefile')
+                ),
+                '--cores', '1',
+                '--configfile', os.path.abspath(
+                    os.path.join(settings.BASE_DIR, 'media/blast_projects/remote_searches/5/snakefile_config')
+                ),
+                '--directory', os.path.abspath(
+                    os.path.join(settings.BASE_DIR, 'media/blast_projects/remote_searches/5/')
+                ),
+            ],
+            timeout=90,
+            shell=False,
+            logger=ANY,
+            check=True,
+            cleanup_exceptions=ANY,
+            env=expected_snakemake_environment(),
         )
