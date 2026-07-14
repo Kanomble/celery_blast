@@ -1,0 +1,353 @@
+:root {
+    --cathi-page-max-width: 1600px;
+    --cathi-page-padding-x: clamp(0.75rem, 2vw, 1.5rem);
+    --cathi-page-padding-y: 1rem;
+    --cathi-space-1: 0.25rem;
+    --cathi-space-2: 0.5rem;
+    --cathi-space-3: 0.75rem;
+    --cathi-space-4: 1rem;
+    --cathi-space-5: 1.5rem;
+    --cathi-space-6: 2rem;
+    --cathi-radius-sm: 0.25rem;
+    --cathi-radius-md: 0.375rem;
+    --cathi-border-color: #000;
+    --cathi-panel-bg: linear-gradient(whitesmoke, #4ebadc);
+    --cathi-focus-color: #ffc107;
+    --cathi-focus-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.45);
+    --cathi-muted-text: #495057;
+    --cathi-table-header-bg: rgba(255, 255, 255, 0.75);
+}
+
+.cathi-page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--cathi-page-max-width);
+    margin-inline: auto;
+    padding: var(--cathi-page-padding-y) var(--cathi-page-padding-x);
+}
+
+.cathi-page *,
+.cathi-page *::before,
+.cathi-page *::after {
+    box-sizing: border-box;
+}
+
+.cathi-page > * + * {
+    margin-top: var(--cathi-space-5);
+}
+
+.cathi-page .container-fluid,
+.cathi-page .container {
+    padding-left: var(--cathi-page-padding-x);
+    padding-right: var(--cathi-page-padding-x);
+}
+
+.cathi-section {
+    margin-block: var(--cathi-space-5);
+}
+
+.cathi-stack > * + * {
+    margin-top: var(--cathi-space-4);
+}
+
+.cathi-page h1,
+.cathi-page h2,
+.cathi-page h3,
+.cathi-page h4,
+.cathi-page h5,
+.cathi-page h6 {
+    overflow-wrap: anywhere;
+}
+
+.cathi-page p,
+.cathi-page li {
+    line-height: 1.55;
+}
+
+.cathi-supporting-text,
+.cathi-page .text-muted {
+    color: var(--cathi-muted-text);
+}
+
+.dashboard_project_list_col,
+.transparent-box,
+#pageHeader,
+.cathi-panel,
+.cathi-card {
+    background: var(--cathi-panel-bg);
+    border: 1px solid var(--cathi-border-color);
+    border-radius: var(--cathi-radius-md);
+    padding: var(--cathi-space-4);
+    margin: var(--cathi-space-4);
+    overflow-x: auto;
+    overflow-y: auto;
+    position: relative;
+}
+
+.cathi-panel > :last-child,
+.cathi-card > :last-child,
+.dashboard_project_list_col > :last-child {
+    margin-bottom: 0;
+}
+
+.cathi-button-group,
+.dashboard_project_list_col .row.justify-content-md-center,
+.dashboard_project_list_col .row.justify-content-center {
+    row-gap: var(--cathi-space-3);
+}
+
+.cathi-dashboard-section,
+.cathi-dashboard-setup-state,
+.dashboard-help-section {
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+}
+
+.cathi-dashboard-setup-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.cathi-dashboard-text-center,
+.cathi-dashboard-actions,
+.cathi-dashboard-summary,
+.cathi-dashboard-help-controls,
+.dashboard-help-row,
+.dashboard-help-heading {
+    text-align: center;
+}
+
+.cathi-dashboard-intro-text {
+    font-size: 1rem;
+}
+
+.cathi-dashboard-error,
+.dashboard-help-copy {
+    font-size: 1.125rem;
+    text-align: left;
+}
+
+.cathi-dashboard-actions,
+.cathi-dashboard-help-controls {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.cathi-dashboard-action-card,
+.cathi-dashboard-summary-list > li {
+    overflow-wrap: anywhere;
+}
+
+.cathi-dashboard-button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cathi-space-2);
+    justify-content: center;
+}
+
+.cathi-dashboard-button-row .btn,
+.cathi-dashboard-help-controls .btn,
+.dashboard-help-section .btn {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.cathi-dashboard-summary-list {
+    margin-left: 0;
+    margin-right: 0;
+    row-gap: var(--cathi-space-3);
+    text-align: center;
+}
+
+.dashboard-help-section .container {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.dashboard-help-section .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.dashboard-help-heading {
+    font-family: "Courier New";
+    font-weight: bold;
+    color: black;
+    margin-bottom: var(--cathi-space-5);
+    text-size-adjust: auto;
+}
+
+.dashboard-help-subsection {
+    margin-top: var(--cathi-space-5);
+    margin-bottom: var(--cathi-space-4);
+}
+
+.dashboard-help-section img,
+.dashboard-help-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: var(--cathi-space-4) auto;
+}
+
+.dashboard-help-image--medium {
+    width: min(37.5rem, 100%);
+}
+
+.cathi-dashboard-section a,
+.dashboard-help-section a,
+.cathi-dashboard-section b,
+.dashboard-help-section b {
+    overflow-wrap: anywhere;
+}
+
+.btn,
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: var(--cathi-radius-sm);
+}
+
+.btn:focus,
+.btn:focus-visible,
+.nav-link:focus,
+.nav-link:focus-visible,
+.dropdown-item:focus,
+.dropdown-item:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid var(--cathi-focus-color);
+    outline-offset: 2px;
+    box-shadow: var(--cathi-focus-shadow);
+}
+
+.form-group {
+    margin-bottom: var(--cathi-space-4);
+}
+
+.form-group label,
+.form-check-label,
+.custom-control-label {
+    font-weight: 600;
+}
+
+.form-control,
+.form-control-file,
+.custom-select,
+select.form-control,
+textarea.form-control,
+.dataTables_filter input,
+.dataTables_length select {
+    max-width: 100%;
+    border-radius: var(--cathi-radius-sm);
+}
+
+.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus,
+.dataTables_filter input:focus,
+.dataTables_length select:focus {
+    border-color: var(--cathi-focus-color);
+}
+
+.alert,
+.cathi-status-message {
+    border-radius: var(--cathi-radius-md);
+    margin-block: var(--cathi-space-3);
+}
+
+.badge,
+.cathi-badge {
+    border-radius: var(--cathi-radius-sm);
+    font-weight: 600;
+}
+
+.table-responsive,
+.dataTables_wrapper {
+    margin-block: var(--cathi-space-3);
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.table th,
+.table td,
+.dataTable th,
+.dataTable td {
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+.table thead th,
+.dataTable thead th {
+    background: var(--cathi-table-header-bg);
+}
+
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    margin-block: var(--cathi-space-2);
+}
+
+.visually-hidden,
+.sr-only,
+.cathi-visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+@media (max-width: 767.98px) {
+    .cathi-page {
+        padding-left: var(--cathi-space-3);
+        padding-right: var(--cathi-space-3);
+    }
+
+    .dashboard_project_list_col,
+    .transparent-box,
+    #pageHeader,
+    .cathi-panel,
+    .cathi-card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .btn {
+        white-space: normal;
+    }
+
+    .cathi-dashboard-section,
+    .cathi-dashboard-setup-state,
+    .dashboard-help-section {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .cathi-dashboard-button-row,
+    .cathi-dashboard-help-controls {
+        align-items: stretch;
+    }
+
+    .cathi-dashboard-button-row .btn,
+    .cathi-dashboard-help-controls .btn {
+        width: 100%;
+    }
+}

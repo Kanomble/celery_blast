@@ -17,6 +17,186 @@ function displayDivElement(divElement) {
   }
 }
 
+function setDisclosureState(control, section, expanded) {
+    control.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    section.hidden = !expanded;
+    section.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+}
+
+function initializeDashboardHelpDisclosures(rootElement) {
+    var root = rootElement || document;
+    var controls = root.querySelectorAll('[data-dashboard-help-control][aria-controls]');
+
+    controls.forEach(function (control) {
+        var section = document.getElementById(control.getAttribute('aria-controls'));
+        if (!section) {
+            return;
+        }
+
+        setDisclosureState(control, section, false);
+        control.addEventListener('click', function () {
+            var isExpanded = control.getAttribute('aria-expanded') === 'true';
+            setDisclosureState(control, section, !isExpanded);
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    initializeDashboardHelpDisclosures(document);
+    initializeReciprocalProgressPollers(document);
+});
+
+function updateProgressPollerError(statusElement, message) {
+    if (statusElement) {
+        statusElement.textContent = message;
+    }
+}
+
+function parseProgressPayload(response) {
+    if (!response.ok) {
+        throw new Error('progress polling request failed');
+    }
+    return response.json();
+}
+
+function validateProgressPayload(data) {
+    if (!data || typeof data.progress === 'undefined' || data.progress === null) {
+        throw new Error('progress polling response missing progress');
+    }
+    return data;
+}
+
+function initializeReciprocalProgressPoller(container) {
+    if (!container || container.dataset.progressPollerInitialized === 'true') {
+        return;
+    }
+
+    var endpoint = container.getAttribute('data-progress-poll-url');
+    var progressBarId = container.getAttribute('data-progress-bar-id') || 'progress_bar';
+    var intervalMs = parseInt(container.getAttribute('data-progress-poll-interval'), 10) || 20000;
+    var statusSelector = container.getAttribute('data-progress-status-selector');
+    var progressBar = document.getElementById(progressBarId);
+    var statusElement = statusSelector ? document.querySelector(statusSelector) : progressBar;
+
+    if (!endpoint || !progressBar) {
+        return;
+    }
+
+    container.dataset.progressPollerInitialized = 'true';
+
+    var pollInterval;
+    function stopPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+    }
+
+    function handleProgressData(data) {
+        var progress = data.progress;
+        progressBar.style.width = String(progress) + '%';
+        progressBar.textContent = String(progress) + '%';
+
+        if (progress >= 100 || progress === 'ERROR') {
+            stopPolling();
+        }
+    }
+
+    function poll() {
+        fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+            .then(parseProgressPayload)
+            .then(validateProgressPayload)
+            .then(handleProgressData)
+            .catch(function () {
+                stopPolling();
+                updateProgressPollerError(statusElement, 'error polling progress data');
+            });
+    }
+
+    pollInterval = setInterval(poll, intervalMs);
+    poll();
+}
+
+function initializeReciprocalProgressPollers(rootElement) {
+    var root = rootElement || document;
+    var containers = root.querySelectorAll('[data-progress-poll-url][data-progress-bar-id]');
+
+    containers.forEach(function (container) {
+        initializeReciprocalProgressPoller(container);
+    });
+}
+
+function initializeReciprocalResultTable(tableId) {
+    var resultTable = document.getElementById(tableId || 'myTable');
+
+    if (!resultTable || !window.jQuery || !jQuery.fn || !jQuery.fn.DataTable) {
+        return;
+    }
+
+    if (jQuery.fn.DataTable.isDataTable(resultTable)) {
+        return;
+    }
+
+    resultTable.setAttribute('class', 'display');
+    jQuery(resultTable).DataTable(
+        {
+            dom: 'Bfrtip',
+            "lengthMenu": [10],
+            buttons: [
+                'copy',
+                'csv',
+                'selectAll',
+                'selectNone',
+                'selectRows'
+            ],
+            select: true,
+            "columns": [
+                {"data": "index"},
+                {"data": "Accession ID"},
+                {"data": "Organism"},
+                {"data": "Sequence Length"},
+                {"data": "Sequence Definition"},
+                {"data": "Features"},
+                {
+                    "data": "PFAM", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if (oData.PFAM) {
+                            jQuery(nTd).html("<a href='" + oData.PFAM + "'>" + oData.PFAM + "</a>");
+                        } else {
+                            jQuery(nTd).html("<p>no link available</p>");
+                        }
+                    }
+                },
+                {
+                    "data": "CDD", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if (oData.CDD) {
+                            jQuery(nTd).html("<a href='" + oData.CDD + "'>" + oData.CDD + "</a>");
+                        } else {
+                            jQuery(nTd).html("<p>no link available</p>");
+                        }
+                    }
+                },
+                {
+                    "data": "TIGR", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        if (oData.TIGR) {
+                            jQuery(nTd).html("<a href='" + oData.TIGR + "'>" + oData.TIGR + "</a>");
+                        } else {
+                            jQuery(nTd).html("<p>no link available</p>");
+                        }
+                    }
+                }
+            ],
+            "deferRender": true,
+        }
+    );
+}
+
 function loadRemoteOrLocal(project_type) {
     document.getElementById('project_creation_' + project_type).style.display = "block";
     if (project_type === 'remote') {

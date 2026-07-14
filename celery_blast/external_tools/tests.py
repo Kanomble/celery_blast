@@ -7,7 +7,9 @@ from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import ANY, mock_open, patch
 
-from django.test import SimpleTestCase
+from django.contrib.auth.models import AnonymousUser
+from django.template.loader import render_to_string
+from django.test import RequestFactory, SimpleTestCase
 
 from external_tools.shiptv_html import make_tree_drawable, patch_shiptv_html_file
 from external_tools.genbank_download_clinker_synteny import (
@@ -31,6 +33,80 @@ from external_tools.entrez_search_service import (
     build_pubmed_to_fasta_command,
     run_edirect_command,
 )
+
+
+class SyntenyQuerySequenceStub:
+    def __init__(self, accession_id):
+        self.query_accession_id = accession_id
+        self.query_accession_information = ''
+
+    def check_if_synteny_calculation_task_is_complete(self):
+        return 'PROGRESS'
+
+
+class SyntenyQuerySequenceCollectionStub:
+    def __init__(self, query_sequences):
+        self._query_sequences = query_sequences
+
+    def get_queryset(self):
+        return self._query_sequences
+
+
+class SyntenyExternalToolsStub:
+    def __init__(self, query_sequences):
+        self.query_sequences = SyntenyQuerySequenceCollectionStub(query_sequences)
+
+
+class SyntenyDetectionDashboardTemplateTests(SimpleTestCase):
+    def test_progress_controls_use_query_accession_id_consistently(self):
+        query_sequences = [
+            SyntenyQuerySequenceStub('WP_000001.1'),
+            SyntenyQuerySequenceStub('WP_000002.1'),
+        ]
+        request = RequestFactory().get('/external_tools/synteny/')
+        request.user = AnonymousUser()
+
+        html = render_to_string(
+            'external_tools/synteny_detection_dashboard.html',
+            {
+                'project_id': 7,
+                'remote_or_local': 'local',
+                'qseqids': SyntenyExternalToolsStub(query_sequences),
+            },
+            request=request,
+        )
+
+        self.assertNotIn('query_accession_Id', html)
+        for query_sequence in query_sequences:
+            accession_id = query_sequence.query_accession_id
+            expected_ids = [
+                f"synteny-calculation-progress-{accession_id}",
+                f"synteny-calculation-button-{accession_id}",
+                f"synteny-view-button-disabled-{accession_id}",
+                f"synteny-view-button-{accession_id}",
+                f"synteny-delete_button-disabled-{accession_id}",
+                f"synteny-delete_button-{accession_id}",
+            ]
+
+            for expected_id in expected_ids:
+                self.assertIn(expected_id, html)
+
+            self.assertIn(
+                f'document.getElementById("synteny-delete_button-disabled-{accession_id}")',
+                html,
+            )
+            self.assertIn(
+                f'document.getElementById("synteny-delete_button-{accession_id}")',
+                html,
+            )
+            self.assertEqual(
+                1,
+                html.count(f'id="synteny-delete_button-disabled-{accession_id}"'),
+            )
+            self.assertEqual(
+                1,
+                html.count(f'id="synteny-delete_button-{accession_id}"'),
+            )
 
 
 class EntrezSearchServiceCommandTests(SimpleTestCase):

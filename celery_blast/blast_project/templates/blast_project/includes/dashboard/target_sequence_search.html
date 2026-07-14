@@ -1,0 +1,49 @@
+{# Target Sequence Search help section for the dashboard. #}
+{% load static %}
+<section id="target_search" class="dashboard_project_list_col dashboard-help-section" aria-labelledby="target_search_heading">
+    <div class="container dashboard-help-content">
+        <h3 id="target_search_heading" class="col_header dashboard-help-heading"> Target Search - How can you obtain your target sequences? </h3>
+        <div class="row dashboard-help-row">
+            <p class="dashboard-help-copy">
+                CATHI integrates NCBIs <a target="_blank" href="https://www.ncbi.nlm.nih.gov/books/NBK179288/"> EDirect software </a>, which can be used for searching through various NCBI databases.
+                You can use this interface through CATHIs <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a>.
+                Most often you will be interested in searching for specific protein sequences that you can use within CATHIs reciprocal BLAST
+                or normal BLAST pipelines. For this you can do following:
+            </p>
+        </div>
+        <br>
+        <div class="dashboard-help-copy">
+             <ol>
+                 <li>Go to the <a target="_blank" href="{% url 'entrez_dashboard' %}">entrez search dashboard</a> </li>
+                <li>Specify the PROTEIN database</li>
+                 <li>Enter an ENTREZ search term e.g.: <b> c-di-GMP AND cyclase AND pseudomonas[ORGN] </b> </li>
+                <li>Click on submit</li>
+                <li>Wait until the search process is finished, this will be indicated automatically within the dashboard</li>
+                <li>Check the result table and select entries by clicking on the corresponding row</li>
+                <li>Click on the download button to download your selected sequences</li>
+                <li>All selected sequences will get downloaded and formatted into a FASTA file</li>
+                <li>Keep in mind, that you can just use target sequences derived from one particular proteome within the reciprocal BLAST pipeline</li>
+            </ol>
+        </div>
+        <br>
+
+        <div class="row dashboard-help-row">
+            <h4 class="col_header dashboard-help-heading"> Entrez Protein Search Results Example </h4>
+            <br>
+            <img class="dashboard-help-image" src="{% static '/images/entrez_protein_db_seach_results.PNG' %}" alt="Entrez protein search results table with selectable protein records">
+        </div>
+
+        <br>
+
+        <div class="row dashboard-help-row">
+            <p class="dashboard-help-copy">
+                An alternative approach is to search for paper entries within the PubMed database
+                and download the associated protein sequences. This can be done through the result page of the
+                PubMed entrez search result. On the top-right you can see a button: <b> Download All Associated
+                    Proteins </b>, by clicking this button CATHI will link all paper entries to the protein database.
+                In a subsequent step, CATHI will download the proteins as a FASTA file. This process can consume a lot of
+                time, due to the linking process but can yield interesting results.
+            </p>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,68 @@
+{# Database Management help section for the dashboard. #}
+{% load static %}
+<section id="database_management" class="dashboard_project_list_col dashboard-help-section" aria-labelledby="database_management_heading">
+    <h3 id="database_management_heading" class="col_header dashboard-help-heading">Database Management - How can you build local BLAST databases?</h3>
+    <h4 class="col_header dashboard-help-heading"><b>Downloading Proteome FASTA Files - BLAST Databases from RefSeq/GenBank</b></h4>
+
+    <div class="container dashboard-help-content">
+        <div class="row dashboard-help-row">
+            <p class="dashboard-help-copy">
+                There are two possibilities to create BLAST databases through CATHIs dashboards.
+                CATHI allows users to download and process GenBank or RefSeq genome entries directly from the NCBI FTP servers. After specifying the completeness level of the desired
+                genomes and the taxonomic entries that should reside in the database through a <a target="_blank" href="{% url 'refseq_transactions_dashboard' %}">dedicated interface</a> (see example image under this section),
+                potential database entries are first listed in an <b>unactive database</b> section, only after clicking the <b>Download Database</b> button, genome entries are downloaded and
+                subsequently formatted into BLAST databases. This enables users to review huge databases before a download process is triggered. The whole downloading and formatting process is
+                tracked within the  <a target="_blank" href="{% url 'refseq_transactions_dashboard' %}">remote database interface</a>.
+            </p>
+            <img class="dashboard-help-image" src="{% static '/images/remote_database_dashboard.PNG' %}" alt="Remote database dashboard listing candidate RefSeq and GenBank database entries">
+            <br>
+        </div>
+    </div>
+    <br>
+    <br>
+
+
+
+    <div class="container dashboard-help-content dashboard-help-subsection">
+        <h4 class="col_header dashboard-help-heading"> <b> Downloading Proteome FASTA Files from NCBIs RefSeq or GenBank FTP-Servers </b> </h4>
+        <br>
+        <img class="dashboard-help-image dashboard-help-image--medium" src="{% static '/images/local_concat_database_upload.PNG' %}" alt="Local database upload form for concatenated proteome FASTA files and metadata">
+        <p class="dashboard-help-copy">
+            Users can <a target="_blank" href="{% url 'upload_genomes' %}">upload</a> their own FASTA-formatted proteome files, either based on concatenation of all available FASTA files, in which case
+            users must also provide metadata information, or by uploading individual FASTA files in combination with a valid scientific taxonomic name.
+        </p>
+        <br>
+        <p class="dashboard-help-copy">
+            Choosing the first option allows users to upload a preformatted FASTA-file. E.g., image you have five proteomes, from five different organisms, you then
+            need to prepare a concatenated FASTA-file, for example with the <b>cat</b> command: <b>cat genome_1.fasta genome_2.fasta ... genome_5.fasta > concat.fasta</b>, then
+            you need to prepare four additional files: a file with the corresponding organism names separated by newlines, e.g. the scientific name for the genome_1.fasta file is
+            <i>Bacillus subtilis</i> and the scientific name for the genome_2.fasta file is <i>Escherichia coli</i>, then you need to specify those names within this file, additionally
+            you need to prepare the same for the completeness levels and for assembly accessions. If you do not know the completeness levels or the assembly accessions just upload a file
+            with arbitrary namings, e.g., for the completeness levels: <b>chromosome</b> and for the assembly accessions <b>assembly_1, assembly_2 ...</b> (also separated by line).
+        </p>
+    </div>
+
+    <div class="container dashboard-help-content dashboard-help-subsection">
+        <br>
+        <br>
+        <h4 class="col_header dashboard-help-heading"> <b> Monitoring BLAST database content through the database details dashboard </b></h4>
+
+        <div class="row dashboard-help-row">
+        <br>
+            <p class="dashboard-help-copy">
+              The advantage of using locally downloaded and formatted databases is that users have precise knowledge of the content of the BLAST database,
+                which is beneficial for analyzing the abundance of RBHs among various taxonomic clades.
+                For example, if users want to analyze the abundance of certain bacterial genes within the <i>Pseudomonadota</i> phylum,
+                they will likely encounter many homologous sequences for <i>Escherichia coli</i> simply because there are more sequences from <i>Escherichia coli</i> genomes compared to other members of the <i>Pseudomonadota</i> phylum.
+                With knowledge of the exact content of the search space, CATHI can correct this bias towards genomes with high sequence numbers. This also aids in selecting better settings for the reciprocal BLAST pipeline, such as extending the number of reported <b>num_alignments</b>.
+                <br>
+                <br>
+
+                However, users can also use remotely available databases, such as the reference sequence database, and by specifying a certain <b>entrez_query</b>,
+                they can omit searching for certain taxonomies or more precisely specify the searchable content.
+            </p>
+
+            <img class="dashboard-help-image" src="{% static '/images/database_details.PNG' %}" alt="Database details dashboard with taxonomy and assembly metadata for a BLAST database">
+        </div>
+    </div>
+</section>

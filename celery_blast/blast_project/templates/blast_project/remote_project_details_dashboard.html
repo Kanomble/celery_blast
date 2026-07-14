@@ -30,7 +30,7 @@
     <h4> What to do if an error occurs during Snakemake execution? </h4>
     <ul>
         <li> Monitor your current Snakemake run and check if the workflow has thrown an error or is still running. The progress is automatically updated every 30 seconds.</li>
-        <li> Have a look at the logfiles of this run: <a class="btn btn-info" target="_blank" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="local" %}">Examine Logs</a></li>
+        <li> Have a look at the logfiles of this run: <a class="btn btn-info" target="_blank" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="remote" %}">Examine Logs</a></li>
         <li> If an error occurred during Snakemake execution you might think about deleting this project and starting a new one with different query sequences, databases or BLAST settings. </li>
         <li> Check your entrez_query variable for correctness. </li>
     </ul>
@@ -38,218 +38,122 @@
 
 {% block content %}
     <div class="dashboard_project_list_col">
-
-        <h3  class="col_header" style="text-align: center"> Project Details and Execution Dashboard </h3>
-        <p style="font-size: medium; text-align: center">
-            {% if BlastProject.r_project_execution_task_result.status == 'SUCCESS' %}
-                Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
-            {% elif BlastProject.r_project_execution_task_result.status == 'FAILURE' %}
-                Re-Execute your Snakemake Run for this BLAST project or delete the project.
-            {% elif BlastProject.r_project_execution_task_result.status == 'PROGRESS' %}
-                Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
-            {% else %}
-                Execute your BLAST project by pressing the Execute Snakemake button.
-            {% endif %}
-        </p>
-
+        <h3 class="col_header" style="text-align: center"> Project Details and Execution Dashboard </h3>
+        {% include "blast_project/includes/project_details/status_message.html" with task_status=BlastProject.r_project_execution_snakemake_task.status %}
 
         <div class="table-responsive">
             <table class="table table-hover" id="blastProjectTable">
                 <thead>
                     <tr>
-                        <th>Project Title</th>
-                        <th>Database</th>
-                        <th>Timestamp</th>
-                        <th></th>
+                        <th scope="col">Project Title</th>
+                        <th scope="col">Database</th>
+                        <th scope="col">Timestamp</th>
+                        <th scope="col">Execution</th>
+                        <th scope="col">Logs</th>
+                        <th scope="col">Deletion</th>
                     </tr>
                 </thead>
                 <tbody id="blastProjectTableBody">
-                        <td>{{BlastProject.r_project_title}}</td>
+                    <tr>
+                        {% include "blast_project/includes/project_details/metadata_cells.html" with project_title=BlastProject.r_project_title project_id=BlastProject.id database_title=BlastProject.r_project_forward_database project_timestamp=BlastProject.r_timestamp %}
                         <td>
-                            <table>
-                                <tr>
-                                    <tr> <td>Title: {{BlastProject.r_project_forward_database}}</td></tr>
-
-                                </tr>
-                            </table>
-                        </td>
-
-                        <td>{{BlastProject.r_timestamp|date:'d.m.Y, h:m:s'}}</td>
-
-                        <td>
-                        {% if BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
-
-                            <button class="btn btn-primary disabled">
-                                Loading ...
-                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            </button>
-
+                            {% if BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
+                                <button class="btn btn-primary disabled">
+                                    Loading ...
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                </button>
                             {% else %}
-                            <form class="col"
-                                   action="{% url 'remote_project_execution' project_id=BlastProject.id%}"
-                                   method="POST">
-                                {% csrf_token %}
-                                <input type="submit" value="Execute Snakemake" class="btn btn-primary">
-                            </form>
-                        {% endif %}
-
-                        {% if BlastProject.r_project_execution_snakemake_task %}
-                            <td><a class="btn btn-info" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="remote" %}">Examine Logs</a></td>
-                        {% endif %}
-
-                        {% if BlastProject.r_project_execution_snakemake_task.status != 'POGRESS' %}
-                        <td>
-                            <form class="col"
-                                   action="{% url 'remote_project_deletion' project_id=BlastProject.id %}"
-                                   method="POST">
-                                {% csrf_token %}
-                                <input type="submit" value="Delete Blast Project" class="btn btn-danger">
-                            </form>
+                                <form class="col"
+                                      action="{% url 'remote_project_execution' project_id=BlastProject.id %}"
+                                      method="POST">
+                                    {% csrf_token %}
+                                    <input type="submit" value="Execute Snakemake" class="btn btn-primary">
+                                </form>
+                            {% endif %}
                         </td>
-                        {% endif %}
+                        <td>
+                            {% if BlastProject.r_project_execution_snakemake_task %}
+                                <a class="btn btn-info" href="{% url 'logfile_dashboard' project_id=BlastProject.id remote_or_local="remote" %}">Examine Logs</a>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if BlastProject.r_project_execution_snakemake_task.status != 'PROGRESS' %}
+                                <form class="col"
+                                      action="{% url 'remote_project_deletion' project_id=BlastProject.id %}"
+                                      method="POST">
+                                    {% csrf_token %}
+                                    <input type="submit" value="Delete Blast Project" class="btn btn-danger">
+                                </form>
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
-                        {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
-                            <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
-                            <td><a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id remote_or_local="remote" %}">MSA and Phylogeny</a></td>
-                            <td><a class="btn btn-dark" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id remote_or_local="remote" %}">CDD Domain Search</a> </td>
-                            <td><a class="btn btn-dark" href="{% url 'synteny_dashboard' project_id=BlastProject.id remote_or_local='remote' %}">Synteny Detection</a> </td>
-                            <td><a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id remote_or_local='remote' %}">Download Project</a> </td>
-                            <td></td>
-                        {% elif BlastProject.check_for_reciprocal_result_table == True %}
-                            <td><a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a></td>
-                            {% if BokehPlot %}
-                                <td class="col-md">
+                        <td colspan="6">
+                            {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
+                                <a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a>
+                                <a class="btn btn-dark" href="{% url 'external_project_informations' project_id=BlastProject.id remote_or_local="remote" %}">MSA and Phylogeny</a>
+                                <a class="btn btn-dark" href="{% url 'cdd_domain_search_dashboard' project_id=BlastProject.id remote_or_local="remote" %}">CDD Domain Search</a>
+                                <a class="btn btn-dark" href="{% url 'synteny_dashboard' project_id=BlastProject.id remote_or_local='remote' %}">Synteny Detection</a>
+                                <a class="btn btn-info" href="{% url 'download_archive' project_id=BlastProject.id remote_or_local='remote' %}">Download Project</a>
+                            {% elif BlastProject.check_for_reciprocal_result_table == True %}
+                                <a class="btn btn-dark" href="{% url 'remote_reciprocal_results' project_id=BlastProject.id %}">Reciprocal Results Table</a>
+                                {% if BokehPlot %}
                                     <a class="btn btn-dark" onclick="displayDivElement('interactive_bokeh_plot')" > Interactive Plot </a>
-                                </td>
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
+        {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
+            {% include "blast_project/includes/project_details/common_success_controls.html" %}
+            <div class="container">
+                <div class="row justify-content-md-center" style="text-align: center">
+                    <div class="col-md">
+                        <button class="btn btn-dark" onclick="displayDivElement('interactive_bokeh_plot')" > Interactive Plot </button>
+                    </div>
+
+                    {% if selection_task == 'SUCCESS' %}
+                        <div class="col-md">
+                            <a href="{% url 'view_selection_phylogeny' project_id=project_id remote_or_local='remote' %}" target="_blank">
+                                <button id="success_button" class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Phylogeny </button>
+                            </a>
+                        </div>
+                    {% elif selection_task == 'PROGRESS' %}
+                        <div class="col-md">
+                            <button class="btn btn-info" disabled>
+                                <span class="spinner-grow spinner-grow-sm"></span>
+                                <p><span class="progress-{{ project_id }}"></span></p>
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <br>
+        <br>
+
+        {% url 'ajax_call_to_remote_logfiles' project_id=BlastProject.id as progress_poll_url %}
+        {% include "blast_project/includes/project_details/progress_status.html" with task_status=BlastProject.r_project_execution_snakemake_task.status progress_poll_url=progress_poll_url %}
+    </div>
+
     {% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
-        <br>
-        <div class="container">
-            <div class="row justify-content-md-center" style="text-align: center">
-                <div class="col-md">
-                    <button class="btn btn-dark" onclick="displayDivElement('query_sequence_information')" > Query Sequence Information </button>
-                </div>
-                <div class="col-md">
-                    <button class="btn btn-dark" onclick="displayDivElement('reciprocal_result')"> Result Summary </button>
-                </div>
+        {% include "blast_project/includes/project_details/query_sequence_information.html" %}
 
-                <div class="col-md">
-                    <button class="btn btn-dark" onclick="displayDivElement('result_graphs')" > E-Value/Taxonomy Distribution </button>
-                </div>
-                <div class="col-md">
-                    <button class="btn btn-dark" onclick="displayDivElement('interactive_bokeh_plot')" > Interactive Plot </button>
-                </div>
+        {% include "blast_project/includes/project_details/reciprocal_result_summary.html" %}
 
-                {% if selection_task == 'SUCCESS' %}
-                <div class="col-md">
-                    <a href="{% url 'view_selection_phylogeny' project_id=project_id remote_or_local='remote' %}" target="_blank">
-                        <button id="success_button" class="btn btn-info" style="height: 80px;width: 130px; margin-right: 5px"> View Phylogeny </button>
-                    </a>
-                </div>
-                {% elif selection_task == 'PROGRESS' %}
-                <div class="col-md">
-                     <button class="btn btn-info" disabled>
-                        <span class="spinner-grow spinner-grow-sm"></span>
-                        <p><span class="progress-{{ project_id }}"></span></p>
-                    </button>
-                </div>
-                {% endif %}
-            </div>
+        <div class="dashboard_project_list_col" id="interactive_bokeh_plot" style="max-height: 50%;display: none">
+            {% include BokehPlot %}
         </div>
-    {% endif %}
 
-    <br>
-    <br>
-
-    {% if BlastProject.r_project_execution_snakemake_task.status == 'FAILURE' %}
-        <div class="alert alert-danger" style="text-align: center">
-            An error occurred during execution of the pipeline.
-        </div>
-        <div class="progress">
-            <div id="progress_bar"> 0% </div>
-        </div>
-    {% elif BlastProject.r_project_execution_snakemake_task.status == 'PROGRESS' %}
-        <div class="progress">
-            <div id="progress_bar"> 0% </div>
-        </div>
-    {% else %}
-        <div class="progress">
-            <div id="progress_bar"> 0% </div>
-        </div>
-    {% endif %}
-    </div>
-
-
-{% if BlastProject.r_project_execution_snakemake_task.status == 'SUCCESS' %}
-    <div class="dashboard_project_list_col" id="query_sequence_information" style="display: none">
-        <h2 style="text-align: center">Query Sequence Information</h2>
-        <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
-            Information is just available for valid accession ids (ids with sequences stored in the NCBI protein database). </p>
-        <br>
-        <div class="container-fluid">
-            {{ BlastProject.read_query_information_table | safe }}
-        </div>
-    </div>
-
-    <div class="dashboard_project_list_col" id="reciprocal_result" style="display:none">
-        <h2 style="text-align: center"> Reciprocal Result Summary </h2>
-        <table class="table table-striped table-bordered">
-            <tbody>
-                <tr>
-                    <th> Query Sequence </th>
-                    <th> Number of Reciprocal Best Hits (RBHs) </th>
-                </tr>
-                {% for key, value in BlastProject.read_reciprocal_information_table.items %}
-                    <tr>
-                        <td> {{ key }} </td>
-                        <td> {{ value }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="dashboard_project_list_col" id="interactive_bokeh_plot" style="max-height: 50%;display: none">
-        {% include BokehPlot %}
-    </div>
-
-    <div class="dashboard_project_list_col" id="result_graphs" style="display: none">
-        <h2 style="text-align: center"> Result Graphs </h2>
-        <p style="font-size: medium; text-align: center"> <strong> Amount of hits in database organisms: </strong> Number of inferred RBHs (x-axis) in different species (y-axis) for one particular query sequence.
-            <br>
-            E.g. y-value is four and x value is two: Four species, each with two RBHs. </p>
-        <p style="font-size: medium; text-align: center"><strong> E-Value distribution in target sequences: </strong>
-            Distribution of forward BLAST e-values for each query sequence. </p>
-        <br>
-        <div id="demo" class="carousel slide" data-ride="carousel">
-            <ul class="carousel-indicators">
-                <li data-target="#demo" data-slide-to="0" class="active"></li>
-                <li data-target="#demo" data-slide-to="1"></li>
-            </ul>
-            <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img src="/media/blast_projects/remote_projects/{{BlastProject.id}}/plot_amount_hits_of_target_taxon.png" alt="distribution of hits of target taxons" class="img-fluid" >
-            </div>
-            <div class="carousel-item">
-                <img src="/media/blast_projects/remote_projects/{{BlastProject.id}}/plot_evalue_distribution.png" alt="evalues" class="img-fluid" >
-            </div>
-
-            </div>
-            <a class="carousel-control-prev" href="#demo" data-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
-            </a>
-            <a class="carousel-control-next" href="#demo" data-slide="next">
-                <span class="carousel-control-next-icon"></span>
-            </a>
-        </div>
-    </div>
+        {% with project_id_text=BlastProject.id|stringformat:"s" %}
+            {% with amount_hits_image="/media/blast_projects/remote_projects/"|add:project_id_text|add:"/plot_amount_hits_of_target_taxon.png" evalue_distribution_image="/media/blast_projects/remote_projects/"|add:project_id_text|add:"/plot_evalue_distribution.png" %}
+                {% include "blast_project/includes/project_details/result_graphs.html" %}
+            {% endwith %}
+        {% endwith %}
     {% elif BokehPlot %}
         <div class="dashboard_project_list_col" id="interactive_bokeh_plot" style="max-height: 50%;display: none">
             {% include BokehPlot %}
@@ -262,97 +166,10 @@
 {% load static %}
 
 <script src="{% static 'javascript/load_ajax_table.js' %}"></script>
-<!-- ajax call for snakemake pipeline progress_bar -->
-<script>
-    (function() {
-        var status = $('.progress_bar'),
-        poll = function() {
-            jQuery.ajax({
-                url: "{% url 'ajax_call_to_remote_logfiles' project_id=BlastProject.id %}",
-                dataType: 'json',
-                type: 'get',
-                success: function(data) { // check if available
-                    if(data){
-                        var progress_bar = document.getElementById('progress_bar');
-                        var progress_container = document.getElementsByClassName('progress')[0];
-                        var progress = data.progress;
-                        progress_bar.style.width = String(progress) + "%";
-                        progress_bar.innerHTML = String(progress) + "%";
-                        if(data.progress >= 100){
-                            clearInterval(pollInterval); // optional: stop poll function
-                        } else if(data.progress == "ERROR"){
-                            clearInterval(pollInterval);
-                        }
-                    } else {
-                       clearInterval(pollInterval);
-                    }
-                 },
-                error: function() { // error logging
-                    status.text("error polling progress data")
-            }
-        });
-    },
-    pollInterval = setInterval(function() { // run function every 20000 ms
-        poll();
-      }, 20000);
-        poll(); // also run function on init
-    })();
-</script>
 
 <script>
     $(document).ready(function () {
-        var result_table = document.getElementById('myTable');
-        result_table.setAttribute("class", "display")
-        $('#myTable').DataTable(
-            {
-                dom: 'Bfrtip',
-                "lengthMenu": [10],
-                buttons: [
-                    'copy',
-                    'csv',
-                    'selectAll',
-                    'selectNone',
-                    'selectRows'
-                ],
-                select: true,
-                "columns": [
-                    {"data": "index"},
-                    {"data": "Accession ID"},
-                    {"data": "Organism"},
-                    {"data": "Sequence Length"},
-                    {"data": "Sequence Definition"},
-                    {"data": "Features"},
-                    {
-                        "data": "PFAM", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                            if (oData.PFAM) {
-                                $(nTd).html("<a href='" + oData.PFAM + "'>" + oData.PFAM + "</a>");
-                            } else {
-                                $(nTd).html("<p>no link available</p>");
-                            }
-                        }
-                    },
-                    {
-                        "data": "CDD", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                            if (oData.CDD) {
-                                $(nTd).html("<a href='" + oData.CDD + "'>" + oData.CDD + "</a>");
-                            } else {
-                                $(nTd).html("<p>no link available</p>");
-                            }
-                        }
-                    },
-                    {
-                        "data": "TIGR", fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                            if (oData.TIGR) {
-                                $(nTd).html("<a href='" + oData.TIGR + "'>" + oData.TIGR + "</a>");
-                            } else {
-                                $(nTd).html("<p>no link available</p>");
-                            }
-                        }
-                    }
-                ],
-                "deferRender": true,
-            }
-        );
+        initializeReciprocalResultTable('myTable');
     });
 </script>
 

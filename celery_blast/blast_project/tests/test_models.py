@@ -1,6 +1,6 @@
 from django.test import TestCase
 #this is the correct import
-from blast_project.models import BlastProject, BlastSettings
+from blast_project.models import BlastProject, BlastSettings, RemoteBlastProject
 from refseq_transactions.models import AssemblyLevels, BlastDatabase
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -65,6 +65,36 @@ class BlastProjectTestCase(TestCase):
             species_name_for_backward_blast = 'Curvibacter sp. AEP1-3'
         )
 
+        remote_fw_settings = BlastSettings.objects.create(
+            e_value=0.001,
+            word_size=3,
+            num_alignments=10000,
+            max_target_seqs=10000,
+            num_threads=1,
+            max_hsps=500
+        )
+
+        remote_bw_settings = BlastSettings.objects.create(
+            e_value=0.001,
+            word_size=3,
+            num_alignments=1,
+            max_target_seqs=1,
+            num_threads=1,
+            max_hsps=500
+        )
+
+        RemoteBlastProject.objects.create(
+            r_project_title='test remote project 1',
+            r_search_strategy='blastp',
+            r_project_query_sequences='lps_transport.faa',
+            r_project_user=user,
+            r_project_forward_settings=remote_fw_settings,
+            r_project_backward_settings=remote_bw_settings,
+            r_project_forward_database='nr',
+            r_project_backward_database=fw_and_bw_db,
+            r_species_name_for_backward_blast='Curvibacter sp. AEP1-3'
+        )
+
     def test_blast_database_model(self):
         blast_database = BlastDatabase.objects.get(database_name='Test Database 1')
         self.assertEqual('Test Database 1',blast_database.database_name)
@@ -88,6 +118,14 @@ class BlastProjectTestCase(TestCase):
     def test_blast_project_model(self):
         blast_project = BlastProject.objects.get(project_title='test project 1')
         self.assertEqual(blast_project.project_title,'test project 1')
+
+    def test_blast_project_missing_reciprocal_information_table_returns_empty_dict(self):
+        blast_project = BlastProject.objects.get(project_title='test project 1')
+        self.assertEqual(blast_project.read_reciprocal_information_table(filepath='testfiles/missing_blast_project/'), {})
+
+    def test_remote_blast_project_missing_reciprocal_information_table_returns_empty_dict(self):
+        blast_project = RemoteBlastProject.objects.get(r_project_title='test remote project 1')
+        self.assertEqual(blast_project.read_reciprocal_information_table(filepath='testfiles/missing_blast_project/'), {})
 
     def test_blast_project_query_sequence_file(self):
         blast_project = BlastProject.objects.get(project_title='test project 1')

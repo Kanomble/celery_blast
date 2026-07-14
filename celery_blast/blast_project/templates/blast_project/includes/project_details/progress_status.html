@@ -1,0 +1,15 @@
+{# Context: task_status and progress_poll_url. Preserves progress_bar ID and configures the static progress poller through data attributes. #}
+{% if task_status == 'FAILURE' %}
+    <div class="alert alert-danger" style="text-align: center">
+        Status: Failure. An error occurred during execution of the pipeline.
+    </div>
+{% elif task_status == 'PROGRESS' %}
+    <p class="text-center">Status: In progress.</p>
+{% endif %}
+<div class="progress"
+     data-progress-poll-url="{{ progress_poll_url }}"
+     data-progress-bar-id="progress_bar"
+     data-progress-status-selector=".progress_bar"
+     data-progress-poll-interval="20000">
+    <div id="progress_bar" class="progress_bar"> 0% </div>
+</div>

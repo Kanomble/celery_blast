@@ -1,0 +1,30 @@
+{# Context: amount_hits_image and evalue_distribution_image. Preserves result_graphs and demo IDs used by the existing carousel markup. #}
+<div class="dashboard_project_list_col" id="result_graphs" style="display: none">
+    <h2 style="text-align: center"> Result Graphs </h2>
+    <p style="font-size: medium; text-align: center"> <strong> Amount of hits in database organisms: </strong> Number of inferred RBHs (x-axis) in different species (y-axis) for one particular query sequence.
+        <br>
+        E.g. y-value is four and x value is two: Four species, each with two RBHs. </p>
+    <p style="font-size: medium; text-align: center"><strong> E-Value distribution in target sequences: </strong>
+        Distribution of forward BLAST e-values for each query sequence. </p>
+    <br>
+    <div id="demo" class="carousel slide" data-ride="carousel">
+        <ul class="carousel-indicators">
+            <li data-target="#demo" data-slide-to="0" class="active"></li>
+            <li data-target="#demo" data-slide-to="1"></li>
+        </ul>
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="{{ amount_hits_image }}" alt="distribution of hits of target taxons" class="img-fluid" >
+            </div>
+            <div class="carousel-item">
+                <img src="{{ evalue_distribution_image }}" alt="evalues" class="img-fluid" >
+            </div>
+        </div>
+        <a class="carousel-control-prev" href="#demo" data-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </a>
+        <a class="carousel-control-next" href="#demo" data-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </a>
+    </div>
+</div>

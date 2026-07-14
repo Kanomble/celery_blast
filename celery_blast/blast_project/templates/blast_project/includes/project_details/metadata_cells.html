@@ -1,0 +1,23 @@
+{# Context: project_title, project_id, database_title, optional database_entries, and project_timestamp. Renders shared metadata cells inside a table row. #}
+<td>
+    {{ project_title }}
+    <br>
+    <small>Project ID: {{ project_id }}</small>
+</td>
+<td>
+    <table class="table table-sm mb-0">
+        <tbody>
+            <tr>
+                <th scope="row">Title</th>
+                <td>{{ database_title }}</td>
+            </tr>
+            {% if database_entries %}
+                <tr>
+                    <th scope="row">Entries</th>
+                    <td>{{ database_entries }}</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</td>
+<td>{{ project_timestamp|date:'d.m.Y, h:m:s' }}</td>

@@ -59,82 +59,13 @@
     {% if ProjectCreationForm.errors %} onload="loadRemoteOrLocal('local')" {% endif %} {% endblock %}
 {% block content %}
 <div id="post_form_container">
-    <div class="dashboard_project_list_col">
-        <h2 style="text-align: center; font-family: 'Courier New'"> <b> Reciprocal BLAST Project Creation Setup </b> </h2>
-        <br>
-
-        <div id="input_field_information" style="display: none">
-            <ul class="list-group">
-                <li class="list-group-item">
-                    <b> Project Title </b> <br>
-                    <p style="text-align: left;font-size: medium"> Just enter a UNIQUE project title.
-                        This field is mandatory as it is needed for correct project assignment. </p>
-                </li>
-                <li class="list-group-item">
-                    <b> Query Sequences </b> <br>
-                    <p style="text-align: left;font-size: medium">Upload a query sequence fasta file. <br>
-                        Sequences in this file MUST derive from only ONE organism. <br>
-                        <br>
-                        Example target file content:
-                        <br>
-                        <br>
-                        >WP_087494701.1 lipopolysaccharide heptosyltransferase I [Curvibacter sp. AEP1-3]<br>
-                        MGATHPASCRIGGGFALKAPQKILIVKLSSLGDVVHTMPAVQDLRAAFPRARIDWVVERGFAPLVARCEG<br>
-                        VARVIPCDIRIWSKKPFAAATRAAWRSFKADLQQDAYDAVIDLQGLSKSALVAWLARTTPDGRRYAMANQ<br>
-                        TEGSGYEAPTRWVADTAIALEAHVHAVERGRLLCAKALGYTPADALRFGLVGQSKALSAPLPKHVGHADN<br>
-                        PFVPRKPLVALVHGTSRVDKEWPLEHWIALGRRLNDAGFGVSLPHAGARELATSQAIAAGLDEAWVLPAV<br>
-                        ALDVLTDTLAHCAGVVGVDSGVSHIAVALDLPHVQIYNFDTAWRTGPAALDARGKPARQCSVYAQPCPEV<br>
-                        ESVWSAWEALATPVLSR<br>
-                        >WP_087495532.1 lipopolysaccharide heptosyltransferase II [Curvibacter sp. AEP1-3]<br>
-                        MIKALVIAPQWIGDAVMTEPLLRRLAARGERITVAAVPWVAPVYRAMPQVAEVLVLPFARGGVQWAARRA<br>
-                        YAAALRGQFAKAYVCPNSLKSALIPFWAGIPERIGYTGELRFGMLNQRLPNPPEGSRPPMVAFYSALSGE<br>
-                        AGVDTDRPALQVAADAIAAVLAPRALHAQGFYVVAPGAEYGPAKRWPATHFAALVTRLDKPVLLLGSAKD<br>
-                        DAVCNEIAEAVNAVRPGHCANLAGRTSLDEAVALIAGAHAMVSNDSGLMHVAAAFGVPQVAIFGSSSPLH<br>
-                        TPPLNPAATVLWLKNDPSYQPPLDCAPCFKRDCPLGHTRCLNDITSDKVLSVL<br>
-                        <br>
-                        The sequence identifier (the genome from which you receive the sequences) have to reside in the backward database. <br>
-                        A careful design of query sequences is recommended as too much starting sequences can significantly increase the running time. </p>
-                </li>
-                <li class="list-group-item">
-                    <b> Protein Identifier </b>
-                    <p style="text-align: left;font-size: medium">
-                        If you dont want to upload a FASTA file containing your query sequences, you can list protein identifier
-                        separated by commas. E.g.: WP_087495532.1, WP_087494701.1
-                    </p>
-                </li>
-                <li class="list-group-item">
-                    <b> Forward BLAST database </b> <br>
-                    <p style="text-align: left;font-size: medium">
-                        This database is the "search space" for your provided query sequences. <br>
-                        This database is used for the initial BLAST, the forward BLAST. <br>
-                        All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta.
-                        Those hits are used as input for the second BLAST, the backward BLAST.
-                    </p>
-                </li>
-                <li class="list-group-item">
-                    <b> Backward BLAST database </b> <br>
-                    <p style="text-align: left;font-size: medium"> The organism or/and genome of the query sequences has to reside in this database.
-                        All hits of the forward BLAST are used as input for the backward BLAST, which uses this database.
-                        If those hits match the exact query sequence of the forward BLAST, reciprocal best hits (RBHs) are found.
-                        E.g., if you want to search RBHs for WP_087494701.1, WP_087494701.1 needs to reside in your backward BLAST database (you need
-                        to select a database containing the proteome of Curvibacter sp. AEP1-3). <br>
-                        This field gets validated by CATHI. If you receive an error message within this field, you may need to change the selected backward BLAST database
-                        to a database truly containing your query sequences. The best option is to search for proteins within one proteome, upload this proteome as
-                        a local BLAST database and use this database as the backward BLAST database.
-                    </p>
-                </li>
-                <li class="list-group-item">
-                    <b> Species name for the backward BLAST </b> <br>
-                    <p style="text-align: left;font-size: medium"> This is the scientific name of the organisms from which the query sequences were obtained.
-                        Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer RBHs.
-                        E.g., if you want to search RBHs for WP_087494701.1, which is a protein sequence of Curvibacter sp. AEP1-3, you need to enter Curvibacter sp. AEP1-3.
-                    </p>
-                </li>
-            </ul>
-            <br>
-        </div>
-        <button class="btn btn-dark" onclick="displayDivElement('input_field_information')" style="position: absolute;top: 10px; right: 10px;"> Input Field Info </button>
-    </div>
+    <section class="dashboard_project_list_col cathi-section cathi-dashboard-section cathi-dashboard-text-center" aria-labelledby="project_creation_heading">
+        <h1 id="project_creation_heading" class="col_header">Reciprocal BLAST Project Creation</h1>
+        <p class="cathi-supporting-text cathi-dashboard-intro-text">
+            Create a reciprocal BLAST pipeline project against local CATHI databases or remote NCBI BLAST databases.
+            Choose the project type first, then complete the matching submission form.
+        </p>
+    </section>
 
     {% if taxdb == True %}
         {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result.status != "SUCCESS" %}
@@ -144,33 +75,117 @@
             </div>
         {% else %}
 
-            <div class="text-center dashboard_project_list_col">
+            <section class="dashboard_project_list_col cathi-section cathi-dashboard-section cathi-dashboard-text-center" aria-labelledby="project_type_legend">
                 <form name="project_creation_menu" action="javascript:void(0)" id="one_way_project_creation_form">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input class="custom-control-input" type="radio" id="local" name="local_search_button" value="local"
-                               onchange="loadRemoteOrLocal(this.value)">
-                        <label class="custom-control-label" for="local">Search Against Available Local BLAST Databases</label>
-                    </div>
+                    <fieldset>
+                        <legend id="project_type_legend" class="col_header">Choose project type</legend>
+                        <p class="cathi-supporting-text">
+                            Local searches use BLAST databases already available in CATHI. Remote searches use NCBI BLAST databases.
+                        </p>
 
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input class="custom-control-input" type="radio" id="remote" name="remote_search_button" value="remote"
-                               onchange="loadRemoteOrLocal(this.value)">
-                        <label class="custom-control-label" for="remote">Search Against Available Remote BLAST Databases</label>
-                    </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input class="custom-control-input" type="radio" id="local" name="local_search_button" value="local"
+                                   onchange="loadRemoteOrLocal(this.value)">
+                            <label class="custom-control-label" for="local">Search Against Available Local BLAST Databases</label>
+                        </div>
+
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input class="custom-control-input" type="radio" id="remote" name="remote_search_button" value="remote"
+                                   onchange="loadRemoteOrLocal(this.value)">
+                            <label class="custom-control-label" for="remote">Search Against Available Remote BLAST Databases</label>
+                        </div>
+                    </fieldset>
                 </form>
-            </div>
+            </section>
 
-            <div class="dashboard_project_list_col" id="project_creation_local" style="display: none">
+            <section class="dashboard_project_list_col" id="project_creation_local" style="display: none" aria-labelledby="local_project_form_heading">
+                <h2 id="local_project_form_heading" class="col_header">Local reciprocal BLAST project</h2>
                 {% include "blast_project/form_project_creation.html" %}
                 <br>
-                <button class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
-            </div>
+                <button type="button" class="btn btn-dark" onclick="displayDivElement('advanced_settings')" >Advanced BLAST Settings </button>
+            </section>
 
-            <div class="dashboard_project_list_col" id="project_creation_remote" style="display: none">
+            <section class="dashboard_project_list_col" id="project_creation_remote" style="display: none" aria-labelledby="remote_project_form_heading">
+                <h2 id="remote_project_form_heading" class="col_header">Remote reciprocal BLAST project</h2>
                 {% include "blast_project/form_remote_project_creation.html" %}
                 <br>
-                <button class="btn btn-dark" onclick="displayDivElement('advanced_remote_settings')">Advanced BLAST Settings</button>
-            </div>
+                <button type="button" class="btn btn-dark" onclick="displayDivElement('advanced_remote_settings')">Advanced BLAST Settings</button>
+            </section>
+
+            <section class="dashboard_project_list_col cathi-section cathi-dashboard-section" aria-labelledby="input_field_information_heading">
+                <div id="input_field_information" style="display: none">
+                    <h2 id="input_field_information_heading" class="col_header cathi-dashboard-text-center">Input Field Information</h2>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <b> Project Title </b> <br>
+                            <p style="text-align: left;font-size: medium"> Just enter a UNIQUE project title.
+                                This field is mandatory as it is needed for correct project assignment. </p>
+                        </li>
+                        <li class="list-group-item">
+                            <b> Query Sequences </b> <br>
+                            <p style="text-align: left;font-size: medium">Upload a query sequence fasta file. <br>
+                                Sequences in this file MUST derive from only ONE organism. <br>
+                                <br>
+                                Example target file content:
+                                <br>
+                                <br>
+                                >WP_087494701.1 lipopolysaccharide heptosyltransferase I [Curvibacter sp. AEP1-3]<br>
+                                MGATHPASCRIGGGFALKAPQKILIVKLSSLGDVVHTMPAVQDLRAAFPRARIDWVVERGFAPLVARCEG<br>
+                                VARVIPCDIRIWSKKPFAAATRAAWRSFKADLQQDAYDAVIDLQGLSKSALVAWLARTTPDGRRYAMANQ<br>
+                                TEGSGYEAPTRWVADTAIALEAHVHAVERGRLLCAKALGYTPADALRFGLVGQSKALSAPLPKHVGHADN<br>
+                                PFVPRKPLVALVHGTSRVDKEWPLEHWIALGRRLNDAGFGVSLPHAGARELATSQAIAAGLDEAWVLPAV<br>
+                                ALDVLTDTLAHCAGVVGVDSGVSHIAVALDLPHVQIYNFDTAWRTGPAALDARGKPARQCSVYAQPCPEV<br>
+                                ESVWSAWEALATPVLSR<br>
+                                >WP_087495532.1 lipopolysaccharide heptosyltransferase II [Curvibacter sp. AEP1-3]<br>
+                                MIKALVIAPQWIGDAVMTEPLLRRLAARGERITVAAVPWVAPVYRAMPQVAEVLVLPFARGGVQWAARRA<br>
+                                YAAALRGQFAKAYVCPNSLKSALIPFWAGIPERIGYTGELRFGMLNQRLPNPPEGSRPPMVAFYSALSGE<br>
+                                AGVDTDRPALQVAADAIAAVLAPRALHAQGFYVVAPGAEYGPAKRWPATHFAALVTRLDKPVLLLGSAKD<br>
+                                DAVCNEIAEAVNAVRPGHCANLAGRTSLDEAVALIAGAHAMVSNDSGLMHVAAAFGVPQVAIFGSSSPLH<br>
+                                TPPLNPAATVLWLKNDPSYQPPLDCAPCFKRDCPLGHTRCLNDITSDKVLSVL<br>
+                                <br>
+                                The sequence identifier (the genome from which you receive the sequences) have to reside in the backward database. <br>
+                                A careful design of query sequences is recommended as too much starting sequences can significantly increase the running time. </p>
+                        </li>
+                        <li class="list-group-item">
+                            <b> Protein Identifier </b>
+                            <p style="text-align: left;font-size: medium">
+                                If you dont want to upload a FASTA file containing your query sequences, you can list protein identifier
+                                separated by commas. E.g.: WP_087495532.1, WP_087494701.1
+                            </p>
+                        </li>
+                        <li class="list-group-item">
+                            <b> Forward BLAST database </b> <br>
+                            <p style="text-align: left;font-size: medium">
+                                This database is the "search space" for your provided query sequences. <br>
+                                This database is used for the initial BLAST, the forward BLAST. <br>
+                                All hits are extracted and assembled in a new fasta file, named backward_query_sequences.fasta.
+                                Those hits are used as input for the second BLAST, the backward BLAST.
+                            </p>
+                        </li>
+                        <li class="list-group-item">
+                            <b> Backward BLAST database </b> <br>
+                            <p style="text-align: left;font-size: medium"> The organism or/and genome of the query sequences has to reside in this database.
+                                All hits of the forward BLAST are used as input for the backward BLAST, which uses this database.
+                                If those hits match the exact query sequence of the forward BLAST, reciprocal best hits (RBHs) are found.
+                                E.g., if you want to search RBHs for WP_087494701.1, WP_087494701.1 needs to reside in your backward BLAST database (you need
+                                to select a database containing the proteome of Curvibacter sp. AEP1-3). <br>
+                                This field gets validated by CATHI. If you receive an error message within this field, you may need to change the selected backward BLAST database
+                                to a database truly containing your query sequences. The best option is to search for proteins within one proteome, upload this proteome as
+                                a local BLAST database and use this database as the backward BLAST database.
+                            </p>
+                        </li>
+                        <li class="list-group-item">
+                            <b> Species name for the backward BLAST </b> <br>
+                            <p style="text-align: left;font-size: medium"> This is the scientific name of the organisms from which the query sequences were obtained.
+                                Check the backward BLAST database if you don't know the exact name of the organism from which you want to infer RBHs.
+                                E.g., if you want to search RBHs for WP_087494701.1, which is a protein sequence of Curvibacter sp. AEP1-3, you need to enter Curvibacter sp. AEP1-3.
+                            </p>
+                        </li>
+                    </ul>
+                    <br>
+                </div>
+                <button class="btn btn-dark" onclick="displayDivElement('input_field_information')"> Input Field Info </button>
+            </section>
 
         {% endif %}
     {% endif %}

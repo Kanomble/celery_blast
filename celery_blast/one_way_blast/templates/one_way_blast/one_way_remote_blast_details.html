@@ -239,10 +239,15 @@
                        clearInterval(pollInterval);
                     }
                  },
-                error: function() { // error logging
+                error: function(data) { // error logging
                     var progress_bar = document.getElementById("progress_bar");
+                    var error_message = "error polling progress data";
+                    if (data && data.responseJSON && data.responseJSON.error) {
+                        error_message = String(data.responseJSON.error);
+                    }
                     progress_bar.style.width = String(100) + "%";
-                    progress_bar.innerHTML = String(data.responseJSON.error);
+                    progress_bar.innerHTML = error_message;
+                    clearInterval(pollInterval);
             }
         });
     },

@@ -3,13 +3,13 @@ import os
 import pandas as pd
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.utils import timezone
 from django.db import IntegrityError, transaction
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from .access import project_owner_required
+from .access import get_owned_local_project_or_404, get_owned_remote_project_or_404, project_owner_required
 from .view_access_decorators import unauthenticated_user
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
     ProjectCreationForm, RemoteProjectCreationForm, BlastSettingsFormBackward, \
@@ -914,77 +914,96 @@ def delete_database_statistics(request, project_id):
 
 '''
 @login_required(login_url='login')
-@project_owner_required()
 def ajax_call_to_logfiles(request, project_id: int):
+    if request.method != "GET":
+        response = JsonResponse({"error": "GET method required"}, status=405)
+        response["Allow"] = "GET"
+        return response
+
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if not is_ajax:
+        return JsonResponse({"error": "AJAX request required"}, status=400)
+
     try:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        if is_ajax:
-            if request.method == "GET":
-                blast_project = get_project_by_id(project_id)
-                if blast_project.project_execution_snakemake_task.status != "SUCCESS":
-                    logfiles = blast_project.return_list_of_all_logfiles()
-                    logfile_table = read_task_logs_summary_table("local")
-                    logfile_table = logfile_table.loc[0:17, :]
-                    queries = []
-                    progress_without_subtasks = []
-                    for logfile in logfiles:
-                        if len(logfile.split("/")) == 2:
-                            query = logfile.split("/")[0]
-                            if query not in queries:
-                                queries.append(query)
-                            progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
+        blast_project = get_owned_local_project_or_404(request.user, project_id)
+    except Http404:
+        return JsonResponse({"error": "Project not found"}, status=404)
 
-                            if len(progress) == 1:
-                                progress_without_subtasks.append(progress[0])
-                        else:
-                            progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+    try:
+        task_result = blast_project.project_execution_snakemake_task
+        if task_result is None:
+            return JsonResponse({"error": "Project execution status is unavailable"}, status=409)
+        if task_result.status != "SUCCESS":
+            logfiles = blast_project.return_list_of_all_logfiles()
+            logfile_table = read_task_logs_summary_table("local")
+            logfile_table = logfile_table.loc[0:17, :]
+            queries = []
+            progress_without_subtasks = []
+            for logfile in logfiles:
+                if len(logfile.split("/")) == 2:
+                    query = logfile.split("/")[0]
+                    if query not in queries:
+                        queries.append(query)
+                    progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
 
-                            if len(progress) == 1:
-                                progress_without_subtasks.append(progress[0])
-                    progress_without_subtasks.sort()
-                    return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
-                elif blast_project.project_execution_snakemake_task.status == "SUCCESS":
-                    return JsonResponse({"progress": 100}, status=200)
-        return JsonResponse({"error": "POST not allowed"}, status=200)
-    except Exception as e:
-        return JsonResponse({"error": "{}".format(e)}, status=400)
+                    if len(progress) == 1:
+                        progress_without_subtasks.append(progress[0])
+                else:
+                    progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+
+                    if len(progress) == 1:
+                        progress_without_subtasks.append(progress[0])
+            progress_without_subtasks.sort()
+            return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+        return JsonResponse({"progress": 100}, status=200)
+    except Exception:
+        return JsonResponse({"error": "Unable to read progress"}, status=500)
 
 @login_required(login_url='login')
-@project_owner_required(remote_or_local='remote')
 def ajax_call_to_remote_logfiles(request, project_id: int):
+    if request.method != "GET":
+        response = JsonResponse({"error": "GET method required"}, status=405)
+        response["Allow"] = "GET"
+        return response
+
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if not is_ajax:
+        return JsonResponse({"error": "AJAX request required"}, status=400)
+
     try:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        if is_ajax:
-            if request.method == "GET":
-                blast_project = get_remote_project_by_id(project_id)
+        blast_project = get_owned_remote_project_or_404(request.user, project_id)
+    except Http404:
+        return JsonResponse({"error": "Project not found"}, status=404)
 
-                if blast_project.r_project_execution_snakemake_task.status != 'SUCCESS':
+    try:
+        task_result = blast_project.r_project_execution_snakemake_task
+        if task_result is None:
+            return JsonResponse({"error": "Project execution status is unavailable"}, status=409)
+        if task_result.status != 'SUCCESS':
 
-                    logfiles = blast_project.return_list_of_all_logfiles()
-                    logfile_table = read_task_logs_summary_table("remote")
-                    queries = []
-                    progress_without_subtasks = []
-                    for logfile in logfiles:
-                        if len(logfile.split("/")) == 2:
-                            query = logfile.split("/")[0]
-                            if query not in queries:
-                                queries.append(query)
-                            progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
+            logfiles = blast_project.return_list_of_all_logfiles()
+            logfile_table = read_task_logs_summary_table("remote")
+            queries = []
+            progress_without_subtasks = []
+            for logfile in logfiles:
+                if len(logfile.split("/")) == 2:
+                    query = logfile.split("/")[0]
+                    if query not in queries:
+                        queries.append(query)
+                    progress = logfile_table[logfile_table['logfile'] == query + "/" + logfile]['progress'].values
 
-                            if len(progress) == 1:
-                                progress_without_subtasks.append(progress[0])
-                        else:
-                            progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
+                    if len(progress) == 1:
+                        progress_without_subtasks.append(progress[0])
+                else:
+                    progress = logfile_table[logfile_table['logfile'] == logfile]['progress'].values
 
-                            if len(progress) == 1:
-                                progress_without_subtasks.append(progress[0])
-                    progress_without_subtasks.sort()
-                    return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
-                elif blast_project.r_project_execution_snakemake_task.status == 'SUCCESS':
-                    return  JsonResponse({"progress":100},status=200)
-        return JsonResponse({"error": "POST not allowed"}, status=200)
-    except Exception as e:
-        return JsonResponse({"error": "{}".format(e)}, status=400)
+                    if len(progress) == 1:
+                        progress_without_subtasks.append(progress[0])
+            progress_without_subtasks.sort()
+            return JsonResponse({"progress": max(progress_without_subtasks)}, status=200)
+        return JsonResponse({"progress": 100}, status=200)
+    except Exception:
+        return JsonResponse({"error": "Unable to read progress"}, status=500)
 
 '''get_domain_database_download_task_status
     

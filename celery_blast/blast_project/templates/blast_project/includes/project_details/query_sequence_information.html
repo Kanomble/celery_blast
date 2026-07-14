@@ -1,0 +1,10 @@
+{# Context: BlastProject exposing read_query_information_table. Preserves query_sequence_information ID. #}
+<div class="dashboard_project_list_col" id="query_sequence_information" style="display: none">
+    <h2 style="text-align: center">Query Sequence Information</h2>
+    <p style="font-size: medium; text-align: center"> This table combines information about your uploaded query sequences.
+        Information is just available for valid accession ids (ids with sequences stored in the NCBI protein database). </p>
+    <br>
+    <div class="container-fluid">
+        {{ BlastProject.read_query_information_table | safe }}
+    </div>
+</div>

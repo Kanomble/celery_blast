@@ -1,0 +1,103 @@
+{# Context: BlastSettingsBackwardForm with bw_e_value, bw_word_size, bw_num_alignments, bw_max_target_seqs, bw_num_threads, and bw_max_hsps fields/errors. #}
+<fieldset class="col">
+    <legend>Backward BLAST Settings</legend>
+
+    {% if BlastSettingsBackwardForm.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            <strong>{{ BlastSettingsBackwardForm.non_field_errors }}</strong>
+        </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label for="bw_e_value">BW E-Value <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               step="any"
+               id="bw_e_value"
+               name="bw_e_value"
+               value="{{ BlastSettingsBackwardForm.bw_e_value.value|default_if_none:'' }}"
+               aria-describedby="bw_e_value_help{% if BlastSettingsBackwardForm.bw_e_value.errors %} bw_e_value_errors{% endif %}"
+               {% if BlastSettingsBackwardForm.bw_e_value.errors %}aria-invalid="true"{% endif %}>
+        <small id="bw_e_value_help" class="form-text text-muted">E-value threshold for the backward BLAST search.</small>
+        {% if BlastSettingsBackwardForm.bw_e_value.errors %}
+            <div id="bw_e_value_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsBackwardForm.bw_e_value.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="bw_word_size">BW Word Size <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="bw_word_size"
+               name="bw_word_size"
+               value="{{ BlastSettingsBackwardForm.bw_word_size.value|default_if_none:'' }}"
+               {% if BlastSettingsBackwardForm.bw_word_size.errors %}aria-invalid="true" aria-describedby="bw_word_size_errors"{% endif %}>
+        {% if BlastSettingsBackwardForm.bw_word_size.errors %}
+            <div id="bw_word_size_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsBackwardForm.bw_word_size.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="bw_num_alignments">BW Num Alignments <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="bw_num_alignments"
+               name="bw_num_alignments"
+               value="{{ BlastSettingsBackwardForm.bw_num_alignments.value|default_if_none:'' }}"
+               {% if BlastSettingsBackwardForm.bw_num_alignments.errors %}aria-invalid="true" aria-describedby="bw_num_alignments_errors"{% endif %}>
+        {% if BlastSettingsBackwardForm.bw_num_alignments.errors %}
+            <div id="bw_num_alignments_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsBackwardForm.bw_num_alignments.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group" style="display: none">
+        <label for="bw_max_target_seqs">BW Max Target Seqs <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="bw_max_target_seqs"
+               name="bw_max_target_seqs"
+               value="{{ BlastSettingsBackwardForm.bw_max_target_seqs.value|default_if_none:'' }}"
+               {% if BlastSettingsBackwardForm.bw_max_target_seqs.errors %}aria-invalid="true" aria-describedby="bw_max_target_seqs_errors"{% endif %}>
+        {% if BlastSettingsBackwardForm.bw_max_target_seqs.errors %}
+            <div id="bw_max_target_seqs_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsBackwardForm.bw_max_target_seqs.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="bw_num_threads">BW Num Threads <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="bw_num_threads"
+               name="bw_num_threads"
+               value="{{ BlastSettingsBackwardForm.bw_num_threads.value|default_if_none:'' }}"
+               {% if BlastSettingsBackwardForm.bw_num_threads.errors %}aria-invalid="true" aria-describedby="bw_num_threads_errors"{% endif %}>
+        {% if BlastSettingsBackwardForm.bw_num_threads.errors %}
+            <div id="bw_num_threads_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsBackwardForm.bw_num_threads.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="bw_max_hsps">BW Max HSPs <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="bw_max_hsps"
+               name="bw_max_hsps"
+               value="{{ BlastSettingsBackwardForm.bw_max_hsps.value|default_if_none:'' }}"
+               {% if BlastSettingsBackwardForm.bw_max_hsps.errors %}aria-invalid="true" aria-describedby="bw_max_hsps_errors"{% endif %}>
+        {% if BlastSettingsBackwardForm.bw_max_hsps.errors %}
+            <div id="bw_max_hsps_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsBackwardForm.bw_max_hsps.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+</fieldset>

@@ -1,0 +1,51 @@
+{# Starting CATHI's Pipeline help section for the dashboard. #}
+{% load static %}
+<section id="project_creation" class="dashboard_project_list_col dashboard-help-section" aria-labelledby="project_creation_heading">
+    <h3 id="project_creation_heading" class="col_header dashboard-help-heading">How to get started?</h3>
+    <div class="container dashboard-help-content">
+        <div class="row dashboard-help-row">
+            <p class="dashboard-help-copy">
+                To get started with CATHI you first need to know what you want to analyze and what CATHI can offer.
+                In brief, with CATHI, users can analyze protein sequences derived from a particular organism.
+                CATHI can be used for normal BLAST analysis but the main computational pipeline was designed as a
+                reciprocal BLAST pipeline for the identification of putative orthologous protein sequences.
+                Check the <b>1. Overview</b> section to get a more precise understanding about what CATHI offers.
+
+                <br>
+                <br>
+                This help section focuses on creating reciprocal BLAST projects.
+                In order to execute a reciprocal BLAST users need to prepare a project through CATHI's <a href="{% url 'project_creation' %}">project creation</a> dashboard.
+                Projects can be based on local or on remotely available BLAST databases (s. help section: <b>3. Database Management</b>).
+                Query sequences must originate from only ONE proteome, thus from only ONE organism. E.g., if a user want to identify
+                orthologs of the cyanobacterial clock proteins KaiABC within other bacterial species, the user has to provide the query sequences from only
+                ONE particular cyanobacterium (e.g. from Synechocystis sp. PCC6803). The sequences have to reside in only ONE proteome file.
+                This proteome file has to reside within the backward BLAST database. If a user provides any wrong information or data input for a project, specific warnings are displayed
+                within the relevant input fields of the project creation procedure.
+                To facilitate this requirement CATHI offers an <a target="_blank" href="{% url 'entrez_dashboard' %}">Entrez Search Dashboard</a> (s. help section: <b>2. Target Sequence Search</b>).
+                Although within CATHI's <b>Database Detail</b> webpages, users can select specific proteomes for a download and formatting procedure.
+                <br>
+                <br>
+                Before setting up a project have a look on the <b>Input Field Info</b> displayed within the <a href="{% url 'project_creation' %}">project creation</a> dashboard.
+                By clicking this button, precise information for each input field are given. However keep reading for a more detailed description of the input fields.
+            </p>
+            <br>
+            <br>
+            <h4 class="col_header dashboard-help-heading"> What do I need for creating a reciprocal BLAST project</h4>
+            <br>
+            <p class="dashboard-help-copy">
+                The following section lists the minimum requirements for the implementation of a reciprocal BLAST project in CATHI.
+            </p>
+            <div class="dashboard-help-copy">
+                 <ol>
+                    <li> A unique project title</li>
+                    <li>Protein Query Sequences of ONE organism, either as a FASTA-file or as NCBI identifiers</li>
+                    <li>The exact scientific name of your organism of choice</li>
+                    <li>A forward BLAST database, either local or remote</li>
+                    <li>A <b>local</b> backward BLAST database where your query sequences and the corresponding organism reside</li>
+                </ol>
+            </div>
+
+            <img class="dashboard-help-image" src="{% static '/images/reciprocal_blast_project_creation.PNG' %}" alt="Reciprocal BLAST project creation form with query, database, and BLAST setting inputs">
+        </div>
+    </div>
+</section>

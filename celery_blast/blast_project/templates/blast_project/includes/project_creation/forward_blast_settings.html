@@ -1,0 +1,103 @@
+{# Context: BlastSettingsForwardForm with fw_e_value, fw_word_size, fw_num_alignments, fw_max_target_seqs, fw_num_threads, and fw_max_hsps fields/errors. #}
+<fieldset class="col">
+    <legend>Forward BLAST Settings</legend>
+
+    {% if BlastSettingsForwardForm.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            <strong>{{ BlastSettingsForwardForm.non_field_errors }}</strong>
+        </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label for="fw_e_value">FW E-Value <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               step="any"
+               id="fw_e_value"
+               name="fw_e_value"
+               value="{{ BlastSettingsForwardForm.fw_e_value.value|default_if_none:'' }}"
+               aria-describedby="fw_e_value_help{% if BlastSettingsForwardForm.fw_e_value.errors %} fw_e_value_errors{% endif %}"
+               {% if BlastSettingsForwardForm.fw_e_value.errors %}aria-invalid="true"{% endif %}>
+        <small id="fw_e_value_help" class="form-text text-muted">E-value threshold for the forward BLAST search.</small>
+        {% if BlastSettingsForwardForm.fw_e_value.errors %}
+            <div id="fw_e_value_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsForwardForm.fw_e_value.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="fw_word_size">FW Word Size <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="fw_word_size"
+               name="fw_word_size"
+               value="{{ BlastSettingsForwardForm.fw_word_size.value|default_if_none:'' }}"
+               {% if BlastSettingsForwardForm.fw_word_size.errors %}aria-invalid="true" aria-describedby="fw_word_size_errors"{% endif %}>
+        {% if BlastSettingsForwardForm.fw_word_size.errors %}
+            <div id="fw_word_size_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsForwardForm.fw_word_size.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="fw_num_alignments">FW Num Alignments <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="fw_num_alignments"
+               name="fw_num_alignments"
+               value="{{ BlastSettingsForwardForm.fw_num_alignments.value|default_if_none:'' }}"
+               {% if BlastSettingsForwardForm.fw_num_alignments.errors %}aria-invalid="true" aria-describedby="fw_num_alignments_errors"{% endif %}>
+        {% if BlastSettingsForwardForm.fw_num_alignments.errors %}
+            <div id="fw_num_alignments_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsForwardForm.fw_num_alignments.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group" style="display: none">
+        <label for="fw_max_target_seqs">FW Max Target Sequences <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="fw_max_target_seqs"
+               name="fw_max_target_seqs"
+               value="{{ BlastSettingsForwardForm.fw_max_target_seqs.value|default_if_none:'' }}"
+               {% if BlastSettingsForwardForm.fw_max_target_seqs.errors %}aria-invalid="true" aria-describedby="fw_max_target_seqs_errors"{% endif %}>
+        {% if BlastSettingsForwardForm.fw_max_target_seqs.errors %}
+            <div id="fw_max_target_seqs_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsForwardForm.fw_max_target_seqs.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="fw_num_threads">FW Num Threads <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="fw_num_threads"
+               name="fw_num_threads"
+               value="{{ BlastSettingsForwardForm.fw_num_threads.value|default_if_none:'' }}"
+               {% if BlastSettingsForwardForm.fw_num_threads.errors %}aria-invalid="true" aria-describedby="fw_num_threads_errors"{% endif %}>
+        {% if BlastSettingsForwardForm.fw_num_threads.errors %}
+            <div id="fw_num_threads_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsForwardForm.fw_num_threads.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label for="fw_max_hsps">FW Max HSPs <span class="badge badge-secondary">Required</span></label>
+        <input type="number"
+               class="form-control"
+               id="fw_max_hsps"
+               name="fw_max_hsps"
+               value="{{ BlastSettingsForwardForm.fw_max_hsps.value|default_if_none:'' }}"
+               {% if BlastSettingsForwardForm.fw_max_hsps.errors %}aria-invalid="true" aria-describedby="fw_max_hsps_errors"{% endif %}>
+        {% if BlastSettingsForwardForm.fw_max_hsps.errors %}
+            <div id="fw_max_hsps_errors" class="alert alert-danger" role="alert">
+                <strong>{{ BlastSettingsForwardForm.fw_max_hsps.errors }}</strong>
+            </div>
+        {% endif %}
+    </div>
+</fieldset>

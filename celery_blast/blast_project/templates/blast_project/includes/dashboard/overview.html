@@ -1,0 +1,141 @@
+{# Overview help section for the dashboard. #}
+{% load static %}
+<section id="overview" class="dashboard_project_list_col dashboard-help-section" aria-labelledby="overview_heading">
+    <div class="container dashboard-help-content">
+
+        <h3 id="overview_heading" class="col_header dashboard-help-heading"> Overview Section - What can you do with CATHI?  </h3>
+        <div class="row dashboard-help-row">
+            <p class="dashboard-help-copy">
+                CATHI can aid researchers in the identification of possible target sequences and to elucidate the
+                evolutionary background of those sequences by generating interactive result graphs and tables similar to the example plot
+                you can see in this short overview.
+            </p>
+
+            <br>
+            <br>
+
+            <p class="dashboard-help-copy">
+                Press the button to view an example interactive visualization.
+                Click on the button to view the example plot: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="interactive_bokeh_plot_example.html" %}">Interactive Result Visualization</a>
+                <br>
+            </p>
+
+            <p class="dashboard-help-copy">
+                <br>
+                In this interactive visualization, users can filter reciprocal best hits (RBHs) based on their taxonomic identity by selecting taxonomy
+                field names on the right selection menus. The result visualization provides a <b>Lasso-Tool</b> that users can apply to select specific RBHs.
+                In addition, you can select multiple query sequences, change the x- and y-axis attributes, download selected sequences or conduct a phylogenetic inference.
+                <br>
+            </p>
+
+             <p class="dashboard-help-copy">
+                CATHI automatically produces HTMLs for the MAFFT Multiple Sequence Alignments (MSAs) and for the FastTree2 Maximum-Likelihood phylogenetic inferences.
+                 There are some advanced options that users can select during project creation for limiting the RBHs that are used for the MSAs and phylogenetic inferences or for
+                 coloring the amino-acid identities within the MSAs. The resulting original MSAs are automatically trimmed by <a target="_blank" href="https://github.com/inab/trimal">trimAL</a>
+                 to reduce misplacement within the phylogeny, however, the original MSA files are provided within the result directories of projects.
+                 For an example MSA click on the following button: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="example_interactive_msa.html" %}">Example MSA</a>
+                 <br>
+                 For an example interactive phylogeny click on the following button: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="example_interactive_phylogeny.html" %}">Example Phylogeny</a>
+                <br>
+            </p>
+
+            <p class="dashboard-help-copy">
+                With CATHI users can calculate principal components based on protein domains of the inferred RBHs. This is done
+                through searching for conserved protein domains. For each RBH domain identitiy levels (in %) are written to a table, which
+                is subsequently used to calculate principal components.
+                Click on the button to view an example interacitve Protein-Domain-PCA plot: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="pca_bokeh_domain_plot.html" %}">Protein-Domain PCA Plot</a>
+                <br>
+            </p>
+
+            <p class="dashboard-help-copy">
+                As a post-processing step driven by the user, CATHI enables the identification of syntenic regions between inferred RBHs.
+                Therefore CATHI prepares a table with genome <b>Assembly Accessions</b> of your RBHs.
+                By selecting up to ten RBHs and their associated assembly accessions, users can explore the loci of the RBHs more closely.
+                Click on the button to view an example synteny of the KaiC locus, described in the CATHI tool paper: <a class="btn btn-dark" target="_blank" href="{% url 'view_example_html' example_html="clinker_result_plot.html" %}">Synteny Plot</a>
+                <br>
+            </p>
+        </div>
+
+        <p class="dashboard-help-copy">
+            Typically, a target sequence search also involves paper search.
+            With CATHI, you can utilize the E-Direct Software from NCBI, which enables searching in biological databases and in
+            the pubmed database, through the Entrez Search Dashboard page.
+            There, you can search for manuscripts within the PubMed database, download paper-associated protein sequences,
+            or simply view each entry on NCBI.
+            Furthermore, you can conveniently search and download protein sequences to serve as query sequences.
+        </p>
+
+        <br>
+        <br>
+
+        <p class="dashboard-help-copy">
+            CATHI's main aim is to conduct a reciprocal BLAST project using user-provided target sequences.
+            Therefore, users can create BLAST databases locally using the NCBI Database Dashboard or choose remotely available databases from NCBI.
+            The reciprocal BLAST project is a pipeline that comprises several tasks, starting with BLAST searches and concluding with the identification of conserved protein domains.
+        </p>
+        <br>
+        <div class="dashboard-help-copy">
+             <ol>
+                <li>Forward BLAST</li>
+                <li>Backward BLAST</li>
+                <li>Inference of Reciprocal Best Hits</li>
+                <li>Resulting Parsing and Taxonomy Inference</li>
+                <li>Generation of Interactive Tables and Graphs</li>
+                <li>Multiple Sequence Alignment</li>
+                <li>Trimming of Multiple Sequence Alignments</li>
+                <li>Phylogenetic Inference</li>
+                <li>Conserved Domain Inference</li>
+                 <li>Domain Architecture Visualization</li>
+                 <li>Motif/Site Descriptions</li>
+                 <li>Interactive Synteny Visualization</li>
+                 <li>Interactive RBH Visualization (see Example Plot)</li>
+                 <li>Database Statistics with local databases</li>
+            </ol>
+        </div>
+
+        <br>
+        <br>
+
+        <div class="row dashboard-help-row dashboard-help-subsection">
+         <h4 class="col_header dashboard-help-heading"> <b>Analysing reciprocal best hit sequences within CATHIs project details dashboard</b> </h4>
+            <br>
+            <p class="dashboard-help-copy">
+                The following image presents an example of a project details page, displaying the project's progress bar
+                (100%) and listing all result and post-processing options that users can evaluate or conduct. The pipeline monitoring process
+                is enabled through the progress bar and the possibility to examine special logfiles that are written by the pipeline tasks.
+                Users can view all available logfiles by clicking the <b>Examine Logs</b> button. A short <b>Result Summary</b> and <b>Query Sequence Information</b> is directly presented
+                within this Project Details dashboard. The whole project can be downloaded by clicking the <b>Download Project</b> button, which enables
+                a more precise post-processing on local machines.
+                <br>
+                <br>
+                Interactive result visualizations, presented within the above section, can be accessed by clicking the <b>Interactive Plot</b> button.
+                Protein-domain inferences, which include not only comprehensive result tables but also the aforementioned PCA based on conserved protein domains
+                and a visualization of the protein domains, can be accessed through the <b>CDD Domain Search</b> button.
+                <br>
+                <br>
+                The synteny calculation dashboard (<b>Synteny Detection</b>) and the multiple sequence alignments as well as the phylogenetic trees (<b>MSA and phylogeny</b>)
+                are accessed through the deticated buttons. A comprehensive overview of all inferred RBHs is presented by clicking the <b>Reciprocal Results Table</b> button.
+            </p>
+            <img class="dashboard-help-image" src="{% static '/images/reciprocal_blast_project_details_dashboard.PNG' %}" alt="Project details dashboard showing pipeline progress, result summaries, and post-processing options">
+            <p class="dashboard-help-copy">
+                With CATHI's Project Creation Dashboard users can easily create reciprocal and normal one-way-BLAST projects. Typically, you just need to select your desired
+            database and choose your query sequences, and for reciprocal BLAST projects you also have to specify the backward BLAST database in which the organism of your query sequences
+            resides. This also implies, that you can only search for RBHs of query sequences from ONE particular organism.
+                <br>
+                <br>
+                The <a target="_blank" href="{% url 'project_creation' %}">project creation dashboard</a>
+            has a help section for input fields, check those input field descriptions BEFORE you start your first project.
+                <br>
+                <br>
+                Users have two options, either they can search among previously downloaded or uploaded and formatted local databases
+                or they can use online available databases such as the reference sequence (RefSeq) database from NCBI. Using local databases
+                has the advantage of knowing the exact content of the databases, listed within the <b>Database Details</b> dashboards, which enables statistical inferences and comparisons based on the amount of particular organisms.
+                Database statistics of the inferred RBHs can be conducted through CATHIs
+                interactive result plots within the <b>Database Statistics Interface</b> for projects that are based on local databases.
+            </p>
+            <br>
+        </div>
+
+    </div>
+
+</section>

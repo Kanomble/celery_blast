@@ -349,6 +349,8 @@ class BlastProject(models.Model):
     def read_reciprocal_information_table(self, filepath=BLAST_PROJECT_DIR):
         try:
             reciprocal_result_info_path = filepath + "/" + str(self.id) + "/reciprocal_results_info.txt"
+            if not isfile(reciprocal_result_info_path):
+                return {}
             reciprocal_results_table = pd.read_table(reciprocal_result_info_path)
             reciprocal_results_table = reciprocal_results_table.set_index("qseqid")
             reciprocal_results_table = reciprocal_results_table.to_dict()
@@ -685,6 +687,8 @@ class RemoteBlastProject(models.Model):
     def read_reciprocal_information_table(self, filepath=REMOTE_BLAST_PROJECT_DIR):
         try:
             reciprocal_result_info_path = filepath + "/" + str(self.id) + "/reciprocal_results_info.txt"
+            if not isfile(reciprocal_result_info_path):
+                return {}
             reciprocal_results_table = pd.read_table(reciprocal_result_info_path)
             reciprocal_results_table = reciprocal_results_table.set_index("qseqid")
             reciprocal_results_table = reciprocal_results_table.to_dict()

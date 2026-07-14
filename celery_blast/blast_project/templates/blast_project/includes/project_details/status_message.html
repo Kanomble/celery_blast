@@ -1,0 +1,12 @@
+{# Context: task_status. Renders status text shared by local and remote reciprocal project detail pages. #}
+<p style="font-size: medium; text-align: center">
+    {% if task_status == 'SUCCESS' %}
+        Status: Success. Your BLAST Project finished successfully, check the result table and the genus graph for evaluating your results.
+    {% elif task_status == 'FAILURE' %}
+        Status: Failure. Re-Execute your Snakemake Run for this BLAST project or delete the project.
+    {% elif task_status == 'PROGRESS' %}
+        Status: In progress. Your BLAST analysis is still in progress, monitor your current Snakemake Run via Panoptes.
+    {% else %}
+        Status: Not started. Execute your BLAST project by pressing the Execute Snakemake button.
+    {% endif %}
+</p>
