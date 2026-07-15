@@ -105,11 +105,9 @@
                     </div>
                     <div class="col-sm">
                         {% if qseq.phylogenetic_tree_construction_task  and qseq.phylogenetic_tree_construction_task.status == 'SUCCESS' %}
-                            {% load static %}
-                            <a href="{% static '/images/result_images' %}/{{ project_id }}/{{ qseq.query_accession_id }}/target_sequences.html">
+                            <a href="{% url 'load_phylogenetic_tree' project_id=project_id query_sequence_id=qseq.query_accession_id remote_or_local=remote_or_local %}">
                                 <button class="btn btn-dark"> View Phylogeny</button>
                             </a>
-                            <!-- <iframe src="{% static '/images/result_images'%}/{{project_id}}/{{ qseq.query_accession_id }}/target_sequences.html"> </iframe> -->
                         {% endif %}
                     </div>
                     <br>

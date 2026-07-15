@@ -8,6 +8,7 @@ from math import ceil
 from Bio import Entrez
 
 sys.path.append(str(Path(__file__).resolve().parents[4]))
+from celery_blast.entrez_query import build_remote_blast_command, run_remote_blast_command
 from external_tools.shiptv_html import patch_shiptv_html_file
 
 #PIPELINE PREPARATION
@@ -84,30 +85,21 @@ rule forward_blast:
 
 				inter_blast_out = open("blast.table",'w')
 				for index, header in enumerate(query_dict.keys()):
-					if (params.entrez_query.strip() != "" and params.entrez_query.strip() != "all[organism]"):
-						entrez_query = params.entrez_query.strip()
-						cmd_string = "blastp" + " -db " + params.database + \
-									 " -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\"" \
-									 " -out " + "current_search_fw_blast.table" + \
-									 " -word_size " + str(params.word_size) + \
-									 " -evalue " + str(params.e_value) + \
-									 " -num_alignments " + str(params.num_alignments) + \
-									 " -query " + "temp_fw_seq_{}.faa".format(index) + \
-									 " -remote" + \
-									 " -entrez_query \"" + entrez_query + "\"" + " 2> {log.log_blastp}"
-					elif (params.entrez_query.strip() == "all[organism]" or params.entrez_query.strip() == ""):
-						cmd_string = "blastp" + " -db " + params.database + \
-									 " -outfmt \"6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen\"" \
-									 " -out " + "current_search_fw_blast.table" + \
-									 " -word_size " + str(params.word_size) + \
-									 " -evalue " + str(params.e_value) + \
-									 " -num_alignments " + str(params.num_alignments) + \
-									 " -query " + "temp_fw_seq_{}.faa".format(index) + \
-									 " -remote" + " 2> {log.log_blastp}"
-					logfile.write("INFO: cmd string for the forward blast:\n")
-					logfile.write("\tINFO: {}\n".format(cmd_string))
+					cmd_args = build_remote_blast_command(
+						search_strategy="blastp",
+						database=params.database,
+						outfmt="6 qseqid sseqid pident evalue bitscore qgi sgi sacc staxids sscinames scomnames stitle slen",
+						output_path="current_search_fw_blast.table",
+						word_size=params.word_size,
+						e_value=params.e_value,
+						num_alignments=params.num_alignments,
+						query_path="temp_fw_seq_{}.faa".format(index),
+						entrez_query=params.entrez_query,
+					)
+					logfile.write("INFO: command arguments for the forward blast:\n")
+					logfile.write("\tINFO: {!r}\n".format(cmd_args))
 					# BLAST search!
-					shell(cmd_string)
+					run_remote_blast_command(cmd_args, log.log_blastp)
 					with open("current_search_fw_blast.table",'r') as interfilename:
 						for line in interfilename.readlines():
 							inter_blast_out.write(line)

@@ -10,7 +10,7 @@ from celery_blast.celery import app
 from time import sleep
 from django.conf import settings
 
-@tag('special')
+@tag('special', 'external')
 class GenomeUploadViewsTestCase(TransactionTestCase):
     c = Client()
 
@@ -148,7 +148,7 @@ class GenomeUploadViewsTestCase(TransactionTestCase):
         self.assertTrue(200,response.status_code)
         self.assertTemplateUsed(response,'blast_project/success.html')
 
-@tag('database_statistics_task')
+@tag('database_statistics_task', 'external')
 class DatabaseStatisticsTransactionTestCase(TransactionTestCase):
     c = Client()
 

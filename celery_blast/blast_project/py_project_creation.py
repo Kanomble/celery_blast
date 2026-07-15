@@ -2,6 +2,7 @@ from .py_django_db_services import create_blast_settings_from_form,\
     create_project_from_form, create_remote_project_from_form
 from django.db import IntegrityError
 from celery_blast.settings import BLAST_PROJECT_DIR, REMOTE_BLAST_PROJECT_DIR
+from celery_blast.entrez_query import update_snakemake_config_entrez_query
 
 '''create_blast_project
 
@@ -65,14 +66,7 @@ def create_remote_blast_project(query_file_name, user, project_form,
 def update_snakemake_remote_configuration_with_entrez_query(project_id, entrez_query):
     try:
         project_dir = REMOTE_BLAST_PROJECT_DIR + str(project_id)
-        with open(project_dir + '/snakefile_config', 'r') as config:
-            lines = config.readlines()
-
-        with open(project_dir + "/snakefile_config", "w") as config:
-            for line in lines:
-                if "entrez_query" in str(line):
-                    line = "entrez_query: \"{}\"\n".format(entrez_query)
-                config.write(line)
+        update_snakemake_config_entrez_query(project_dir + '/snakefile_config', entrez_query)
 
     except Exception as e:
         raise IntegrityError(

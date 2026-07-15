@@ -2,8 +2,10 @@ from string import punctuation, ascii_letters
 
 from blast_project.py_biopython import fetch_protein_records
 from blast_project.py_django_db_services import get_all_succeeded_databases
+from celery_blast.entrez_query import EntrezQueryValidationError, validate_entrez_query
 from .py_django_db_services import check_if_one_way_project_title_exists
 from django import forms
+from django.core.exceptions import ValidationError
 
 
 # TODO documentation
@@ -179,6 +181,12 @@ class OneWayRemoteProjectCreationForm(forms.Form):
         super(OneWayRemoteProjectCreationForm, self).__init__(*args, **kwargs)
         self.fields['r_user_email'].charfield = user.email
         self.fields['r_user_email'].initial = user.email
+
+    def clean_r_entrez_query(self):
+        try:
+            return validate_entrez_query(self.cleaned_data.get('r_entrez_query', ''))
+        except EntrezQueryValidationError as e:
+            raise ValidationError(str(e))
 
     def clean(self):
         cleaned_data = super().clean()

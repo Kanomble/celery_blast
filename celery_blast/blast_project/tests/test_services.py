@@ -1,6 +1,7 @@
 from blast_project.py_services import check_if_taxdb_exists
-from django.test import TestCase
+from django.test import TestCase, tag
 
+@tag('biological')
 class PyServicesTestCase(TestCase):
     def test_check_if_taxdb_exists(self):
         bool = check_if_taxdb_exists()

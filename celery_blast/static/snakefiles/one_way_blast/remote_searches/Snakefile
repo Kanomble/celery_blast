@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[4]))
+from celery_blast.entrez_query import build_remote_blast_command, run_remote_blast_command
 from external_tools.shiptv_html import patch_shiptv_html_file
 
 QSEQIDS = []
@@ -31,29 +32,20 @@ rule blast:
 	input: queries=config['query_sequence']
 	output: results="blast_results.table"
 	params: word_size=config['word_size'], e_value=config['e_value'], num_alignments=config['num_alignments'], num_threads=config['num_threads'], database=config['blastdb'], entrez_query=config['entrez_query'], search_strategy=config['search_strategy']
+	log: blast_log="log/blast_remote.log"
 	run:
-		if(params.entrez_query != ""):
-			entrez_query = params.entrez_query
-			cmd_string = params.search_strategy + " -db "+params.database+\
-			" -outfmt \"6 qseqid sseqid pident evalue bitscore slen qgi sgi sacc staxids sscinames scomnames stitle\""\
-			" -out "+output.results+\
-			" -word_size "+str(params.word_size)+\
-			" -evalue "+str(params.e_value)+\
-			" -num_alignments "+str(params.num_alignments)+\
-			" -query "+input.queries+\
-			" -remote"+\
-			" -entrez_query \""+entrez_query+"\""
-			shell(cmd_string)
-		else:
-			cmd_string = params.search_strategy + " -db "+params.database+\
-			" -outfmt \"6 qseqid sseqid pident evalue bitscore slen qgi sgi sacc staxids sscinames scomnames stitle\""\
-			" -out "+output.results+\
-			" -word_size "+str(params.word_size)+\
-			" -evalue "+str(params.e_value)+\
-			" -num_alignments "+str(params.num_alignments)+\
-			" -query "+input.queries+\
-			" -remote"
-			shell(cmd_string)
+		cmd_args = build_remote_blast_command(
+			search_strategy=params.search_strategy,
+			database=params.database,
+			outfmt="6 qseqid sseqid pident evalue bitscore slen qgi sgi sacc staxids sscinames scomnames stitle",
+			output_path=output.results,
+			word_size=params.word_size,
+			e_value=params.e_value,
+			num_alignments=params.num_alignments,
+			query_path=input.queries,
+			entrez_query=params.entrez_query,
+		)
+		run_remote_blast_command(cmd_args, log.blast_log)
 
 #RULE 2
 rule blast_results_to_plots_and_html_table:

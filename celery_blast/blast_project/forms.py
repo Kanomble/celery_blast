@@ -7,6 +7,7 @@ from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node,
     check_if_protein_identifier_correspond_to_backward_taxid
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, \
     check_if_sequences_are_in_database, check_if_project_title_exists, check_if_database_title_exists, check_if_remote_project_title_exists
+from celery_blast.entrez_query import EntrezQueryValidationError, validate_entrez_query
 
 from string import punctuation, ascii_letters
 
@@ -510,6 +511,12 @@ class RemoteProjectCreationForm(forms.Form):
         super(RemoteProjectCreationForm, self).__init__(*args, **kwargs)
         self.fields['r_user_email'].charfield = user.email
         self.fields['r_user_email'].initial = user.email
+
+    def clean_r_entrez_query(self):
+        try:
+            return validate_entrez_query(self.cleaned_data.get('r_entrez_query', ''))
+        except EntrezQueryValidationError as e:
+            raise ValidationError(str(e))
 
     ''' Validation of user input.
 

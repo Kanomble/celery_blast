@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 #this is the correct import
 from blast_project.models import BlastProject, BlastSettings, RemoteBlastProject
 from refseq_transactions.models import AssemblyLevels, BlastDatabase
@@ -127,6 +127,7 @@ class BlastProjectTestCase(TestCase):
         blast_project = RemoteBlastProject.objects.get(r_project_title='test remote project 1')
         self.assertEqual(blast_project.read_reciprocal_information_table(filepath='testfiles/missing_blast_project/'), {})
 
+    @tag('biological')
     def test_blast_project_query_sequence_file(self):
         blast_project = BlastProject.objects.get(project_title='test project 1')
         self.assertEqual(blast_project.get_list_of_query_sequences(filepath='testfiles/blast_project/'),
@@ -139,6 +140,7 @@ class BlastProjectTestCase(TestCase):
                           'WP_087493790',
                           'WP_087493929'])
 
+    @tag('biological')
     def test_blast_project_write_sanekmake_config_file(self):
         blast_project = BlastProject.objects.get(project_title='test project 1')
 

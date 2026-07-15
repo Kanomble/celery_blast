@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+    env:
+      CATHI_ENV: ci
+      SECRET_KEY: ci-placeholder-secret-key-not-for-production
+      DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1 testserver"
+      CSRF_TRUSTED_ORIGINS: "http://localhost http://127.0.0.1"
+      SQL_ENGINE: django.db.backends.sqlite3
+      SQL_DATABASE: ${{ runner.temp }}/cathi-ci.sqlite3
+      SQL_USER: cathi_ci
+      SQL_PASSWORD: ci-placeholder-invalid-db-password
+      SQL_HOST: localhost
+      SQL_PORT: "5432"
+      DEFAULT_AUTO_FIELD: django.db.models.AutoField
+      STATIC_RESULT_IMAGES: static/images/result_images/
+      BLAST_PROJECT_DIR: media/blast_projects/
+      REMOTE_BLAST_PROJECT_DIR: media/blast_projects/remote_projects/
+      ONE_WAY_BLAST_PROJECT_DIR: media/one_way_blast/
+      BLAST_DATABASE_DIR: media/databases/
+      CDD_DIR: media/databases/CDD/
+      ESEARCH_OUTPUT: media/esearch_output/
+      CDD_DATABASE_URL: https://example.invalid/cdd.tar.gz
+      TAXDB_URL: https://example.invalid/taxdb.tar.gz
+      REFSEQ_ASSEMBLY_FILE: media/databases/refseq_summary_file/assembly_summary_refseq.txt
+      REFSEQ_URL: https://example.invalid/assembly_summary_refseq.txt
+      GENBANK_ASSEMBLY_FILE: media/databases/refseq_summary_file/assembly_summary_genbank.txt
+      GENBANK_URL: https://example.invalid/assembly_summary_genbank.txt
+      TAXONOMIC_NODES: media/taxonomic_node_files/
+      PROTECTED_MEDIA_ROOT: media
+      PROTECTED_MEDIA_USE_X_ACCEL: "False"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Scan tracked files for reusable secrets
+        run: python scripts/check_tracked_secrets.py
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Prepare isolated CI filesystem and placeholder Compose env
+        run: |
+          mkdir -p celery_blast/media/blast_projects/remote_projects
+          mkdir -p celery_blast/media/one_way_blast/remote_searches
+          mkdir -p celery_blast/media/databases/refseq_summary_file
+          mkdir -p celery_blast/media/esearch_output
+          mkdir -p celery_blast/media/taxonomic_node_files
+          cat > .env.dev <<'EOF'
+          DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 testserver
+          CSRF_TRUSTED_ORIGINS=http://localhost http://127.0.0.1
+          DEBUG=False
+          CATHI_ENV=ci
+          SECRET_KEY=ci-placeholder-secret-key-not-for-production
+          SQL_ENGINE=django.db.backends.sqlite3
+          SQL_DATABASE=/tmp/cathi-ci-compose.sqlite3
+          SQL_USER=cathi_ci
+          SQL_PASSWORD=ci-placeholder-invalid-db-password
+          SQL_HOST=localhost
+          SQL_PORT=5432
+          TZ=Europe/Berlin
+          DEFAULT_AUTO_FIELD=django.db.models.AutoField
+          FLOWER_BASIC_AUTH=ci-placeholder-invalid-flower-user:ci-placeholder-invalid-flower-password
+          JUPYTER_TOKEN=ci-placeholder-invalid-jupyter-token
+          EOF
+          cat > .env.prod <<'EOF'
+          DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 testserver
+          CSRF_TRUSTED_ORIGINS=http://localhost http://127.0.0.1
+          DEBUG=False
+          CATHI_ENV=ci
+          SECRET_KEY=ci-placeholder-secret-key-not-for-production
+          TZ=Europe/Berlin
+          G_TIMEOUT=100
+          G_WORKERS=1
+          G_THREADS=1
+          DEFAULT_AUTO_FIELD=django.db.models.AutoField
+          SQL_ENGINE=django.db.backends.sqlite3
+          SQL_DATABASE=/tmp/cathi-ci-compose.sqlite3
+          SQL_USER=cathi_ci
+          SQL_PASSWORD=ci-placeholder-invalid-db-password
+          SQL_HOST=localhost
+          SQL_PORT=5432
+          AMQP_HOST=rabbitmq
+          AMQP_ADMIN_HOST=rabbitmq
+          FLOWER_BASIC_AUTH=ci-placeholder-invalid-flower-user:ci-placeholder-invalid-flower-password
+          JUPYTER_TOKEN=ci-placeholder-invalid-jupyter-token
+          EOF
+          cat > .env.prod.db <<'EOF'
+          POSTGRES_USER=cathi_ci
+          POSTGRES_PASSWORD=ci-placeholder-invalid-postgres-password
+          POSTGRES_DB=cathi_ci
+          EOF
+
+      - name: Compose exposure policy
+        run: python scripts/check_compose_exposure.py
+
+      - name: Django system check
+        working-directory: celery_blast
+        run: python manage.py check
+
+      - name: Migration drift check
+        working-directory: celery_blast
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Safe Django tests
+        working-directory: celery_blast
+        run: python manage.py test --exclude-tag biological --exclude-tag external --exclude-tag docker --exclude-tag long
+
+      - name: Python dependency consistency
+        run: python -m pip check
+
+      - name: Compose configuration validation
+        run: docker compose config --quiet
+
+      - name: Production Compose configuration validation
+        run: docker compose -f docker-compose-production.yml config --quiet

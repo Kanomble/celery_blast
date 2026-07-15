@@ -4,10 +4,12 @@ from blast_project.views import failure_view, success_view
 # BLAST_PROJECT_DIR DEFAULT = 'media/one_way_blast/'
 from celery_blast.settings import ONE_WAY_BLAST_PROJECT_DIR
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, HttpResponse
 
+from blast_project.protected_media import serve_protected_project_file
 from .forms import OneWayProjectCreationForm, BlastSettingsForm, OneWayRemoteProjectCreationForm
+from .access import one_way_project_owner_required
 from .py_biopython import calculate_pfam_and_protein_links_from_one_way_queries
 from .py_django_db_services import get_one_way_project_by_id, get_one_way_remote_project_by_id
 from .py_project_creation import create_one_way_blast_project, create_one_way_remote_blast_project
@@ -96,9 +98,10 @@ def one_way_blast_project_creation_view(request):
 
 
 @login_required(login_url='login')
+@one_way_project_owner_required(remote=False)
 def one_way_project_details_view(request, project_id: int):
     try:
-        blast_project = get_one_way_project_by_id(project_id)
+        blast_project = request.owned_one_way_project
         context = {}
         if blast_project.project_execution_task_result:
             if blast_project.project_execution_task_result.status == 'FAILURE':
@@ -118,10 +121,11 @@ def one_way_project_details_view(request, project_id: int):
 
 
 @login_required(login_url='login')
+@one_way_project_owner_required(remote=True)
 def one_way_remote_project_details_view(request, project_id):
     try:
 
-        blast_project = get_one_way_remote_project_by_id(project_id)
+        blast_project = request.owned_one_way_project
         context = {}
         if blast_project.r_project_execution_task_result:
             if blast_project.r_project_execution_task_result.status == 'FAILURE':
@@ -140,6 +144,7 @@ def one_way_remote_project_details_view(request, project_id):
 
 
 @login_required(login_url='login')
+@one_way_project_owner_required(remote=False)
 def one_way_project_delete_view(request, project_id):
     try:
         delete_one_way_blast_project_and_associated_directories_by_id(project_id)
@@ -149,6 +154,7 @@ def one_way_project_delete_view(request, project_id):
 
 
 @login_required(login_url='login')
+@one_way_project_owner_required(remote=True)
 def one_way_remote_project_delete_view(request, project_id):
     try:
         delete_one_way_remote_blast_project_and_associated_directories_by_id(project_id)
@@ -158,6 +164,8 @@ def one_way_remote_project_delete_view(request, project_id):
 
 
 # TODO documentation
+@login_required(login_url='login')
+@one_way_project_owner_required()
 def ajax_one_way_wp_to_links(request, project_id, remote):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -173,6 +181,7 @@ def ajax_one_way_wp_to_links(request, project_id, remote):
 
 # TODO documentation
 @login_required(login_url='login')
+@one_way_project_owner_required(remote=False)
 def execute_one_way_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
@@ -185,6 +194,7 @@ def execute_one_way_blast_project_view(request, project_id):
 
 # TODO documentation
 @login_required(login_url='login')
+@one_way_project_owner_required(remote=True)
 def execute_one_way_remote_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
@@ -197,6 +207,7 @@ def execute_one_way_remote_blast_project_view(request, project_id):
 
 # TODO documentation
 @login_required(login_url='login')
+@one_way_project_owner_required()
 def load_one_way_result_html_table_view(request, project_id, remote):
     try:
         html_data = get_one_way_html_results(project_id, "blast_results.html", remote)
@@ -212,35 +223,20 @@ def load_one_way_result_html_table_view(request, project_id, remote):
 
 '''
 @login_required(login_url='login')
+@one_way_project_owner_required()
 def one_way_download_target_sequences(request, project_id, project_type, filename=''):
     try:
         if filename != '':
             if project_type == "one_way_blast":
-                filepath = '/blast/reciprocal_blast/' + ONE_WAY_BLAST_PROJECT_DIR + str(project_id) + '/' + filename
-                if isfile(filepath):
-                    with open(filepath, 'r') as download_file:
-                        content = [str(line) for line in download_file.readlines()]
-                        content = ''.join(content)
-                    response = HttpResponse(content, content_type="text/plain")
-                    response['Contnt-Disposition'] = "attachment; filename={}".format(filename)
-                else:
-                    raise FileNotFoundError
-
+                project_root = ONE_WAY_BLAST_PROJECT_DIR + str(project_id)
             elif project_type == 'remote_searches':
-                filepath = '/blast/reciprocal_blast/' + ONE_WAY_BLAST_PROJECT_DIR + project_type + '/' + str(
-                    project_id) + '/' + filename
-                if isfile(filepath):
-                    with open(filepath, 'r') as download_file:
-                        content = [str(line) for line in download_file.readlines()]
-                        content = ''.join(content)
-                    response = HttpResponse(content, content_type="text/plain")
-                    response['Contnt-Disposition'] = "attachment; filename={}".format(filename)
-                else:
-                    raise FileNotFoundError
+                project_root = ONE_WAY_BLAST_PROJECT_DIR + project_type + '/' + str(project_id)
             else:
                 raise Exception("There is no such project_type available!")
-            return response
+            return serve_protected_project_file(project_root, filename, as_attachment=True)
 
+    except Http404:
+        raise
     except Exception as e:
         return failure_view(request, e)
 
@@ -256,6 +252,8 @@ def one_way_download_target_sequences(request, project_id, project_type, filenam
         :type int
         
 '''
+@login_required(login_url='login')
+@one_way_project_owner_required()
 def ajax_call_to_snakemake_logfiles(request, project_id: int, remote: int):
     try:
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'

@@ -261,7 +261,7 @@ class ProjectCreationFormTestCase(TestCase):
         self.assertEqual(form.errors['species_name_for_backward_blast'],
         ["specified taxonomic node: ['80879'] does not reside in the selected BACKWARD database: Curvibacter sp. aep1-3 database"])
 
-    @tag('fast','form')
+    @tag('fast','form','biological')
     def test_project_form_is_not_valid_sequence_identifier_not_in_backward_db(self):
         #primary key of the referencing modelchoicefield object
         blast_database = get_all_succeeded_databases()[0]

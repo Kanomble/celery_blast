@@ -11,6 +11,7 @@ from blast_project.py_database_statistics import add_taxonomic_information_to_db
 from os.path import isfile
 from django.conf import settings
 
+@tag('biological')
 class DatabaseStatisticsTest(TestCase):
     def setUp(self) -> None:
         super().setUp()

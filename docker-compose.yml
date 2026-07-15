@@ -26,7 +26,7 @@ services:
       - ./tmp:/blast/reciprocal_blast/tmp
       - ./celery_blast:/blast/reciprocal_blast
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
   celery_worker:
     image: kanomble/rec_blast_base_image:3.0
@@ -60,7 +60,7 @@ services:
     volumes:
         - ./celery_blast:/blast/reciprocal_blast
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     restart: unless-stopped
 
   rabbitmq:
@@ -69,7 +69,7 @@ services:
     networks:
       - main
     ports:
-      - "5672:5672"
+      - "127.0.0.1:5672:5672"
     restart: on-failure
 
   postgres:
@@ -83,7 +83,7 @@ services:
     volumes:
       - ./data/postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
 networks:
   main:

@@ -12,14 +12,107 @@
 
 import os
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
+
+PLACEHOLDER_SECRET_TOKENS = (
+    "change-me",
+    "changeme",
+    "placeholder",
+    "not-for-production",
+    "not-a-real",
+    "invalid",
+    "example",
+    "django-insecure",
+)
+
+DEVELOPMENT_SECRET_DEFAULTS = {
+    "password",
+    "postgres",
+    "secret",
+    "secret-key",
+    "user",
+}
+
+
+def _is_blank(value):
+    return value is None or str(value).strip() == ""
+
+
+def _is_placeholder_secret(value):
+    if _is_blank(value):
+        return True
+    normalized = str(value).strip().lower()
+    return (
+        normalized in DEVELOPMENT_SECRET_DEFAULTS
+        or any(token in normalized for token in PLACEHOLDER_SECRET_TOKENS)
+    )
+
+
+def _read_secret_setting(name, default=None, required=False):
+    file_path = os.environ.get(f"{name}_FILE")
+    if file_path and file_path.strip():
+        try:
+            with open(file_path, encoding="utf-8") as secret_file:
+                value = secret_file.read().strip()
+        except OSError as exc:
+            raise ImproperlyConfigured(f"{name}_FILE could not be read") from exc
+    else:
+        value = config(name, default=default)
+
+    if required and _is_blank(value):
+        raise ImproperlyConfigured(f"{name} must be supplied")
+    return value
+
+
+def _is_production_environment(value):
+    return str(value).strip().lower() in {"prod", "production"}
+
+
+def _validate_production_configuration(
+    *,
+    cathi_env,
+    debug,
+    secret_key,
+    sql_engine,
+    sql_database,
+    sql_user,
+    sql_password,
+    sql_host,
+):
+    if not _is_production_environment(cathi_env):
+        return
+
+    errors = []
+    if debug:
+        errors.append("DEBUG must be false")
+    if _is_placeholder_secret(secret_key) or len(str(secret_key).strip()) < 32:
+        errors.append("SECRET_KEY must be a strong runtime secret")
+    if _is_placeholder_secret(sql_password):
+        errors.append("SQL_PASSWORD must be a non-placeholder runtime secret")
+    if _is_blank(sql_engine) or str(sql_engine).strip() == "django.db.backends.sqlite3":
+        errors.append("SQL_ENGINE must not use the development sqlite backend")
+    if _is_blank(sql_database) or os.path.basename(str(sql_database).strip()) == "db.sqlite3":
+        errors.append("SQL_DATABASE must not use the development sqlite database")
+    if _is_placeholder_secret(sql_user):
+        errors.append("SQL_USER must not use a development default")
+    if _is_blank(sql_host) or str(sql_host).strip().lower() in {"localhost", "127.0.0.1"}:
+        errors.append("SQL_HOST must not use a local development host")
+
+    if errors:
+        raise ImproperlyConfigured(
+            "Production secret configuration is invalid: " + "; ".join(errors)
+        )
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+CATHI_ENV = config("CATHI_ENV", default="development")
+SECRET_KEY = _read_secret_setting("SECRET_KEY", required=True)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
@@ -78,16 +171,34 @@ WSGI_APPLICATION = 'celery_blast.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+SQL_ENGINE = config('SQL_ENGINE', default="django.db.backends.sqlite3")
+SQL_DATABASE = config('SQL_DATABASE', default=BASE_DIR+'/db.sqlite3')
+SQL_USER = config('SQL_USER',default='user')
+SQL_PASSWORD = _read_secret_setting('SQL_PASSWORD', default='password')
+SQL_HOST = config('SQL_HOST',default='localhost')
+SQL_PORT = config('SQL_PORT',default='5432')
+
 DATABASES = {
     'default': {
-        'ENGINE': config('SQL_ENGINE', default="django.db.backends.sqlite3"),#'django.db.backends.postgresql_psycopg2',
-        'NAME': config('SQL_DATABASE', default=BASE_DIR+'/db.sqlite3'),#'postgres',
-        'USER': config('SQL_USER',default='user'),#'postgres',
-        'PASSWORD': config('SQL_PASSWORD', default='password'),#'postgres',
-        'HOST': config('SQL_HOST',default='localhost'),#'postgres',
-        'PORT': config('SQL_PORT',default='5432')#'5432',
+        'ENGINE': SQL_ENGINE,#'django.db.backends.postgresql_psycopg2',
+        'NAME': SQL_DATABASE,#'postgres',
+        'USER': SQL_USER,#'postgres',
+        'PASSWORD': SQL_PASSWORD,#'postgres',
+        'HOST': SQL_HOST,#'postgres',
+        'PORT': SQL_PORT#'5432',
     }
 }
+
+_validate_production_configuration(
+    cathi_env=CATHI_ENV,
+    debug=DEBUG,
+    secret_key=SECRET_KEY,
+    sql_engine=SQL_ENGINE,
+    sql_database=SQL_DATABASE,
+    sql_user=SQL_USER,
+    sql_password=SQL_PASSWORD,
+    sql_host=SQL_HOST,
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -127,6 +238,14 @@ STATIC_ROOT = '/blast/reciprocal_blast/assets'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/media/'
+PROTECTED_MEDIA_ROOT = config('PROTECTED_MEDIA_ROOT', default=os.path.join(BASE_DIR, 'media'))
+PROTECTED_MEDIA_INTERNAL_URL = config('PROTECTED_MEDIA_INTERNAL_URL', default='/_protected_media/')
+PROTECTED_MEDIA_USE_X_ACCEL = config('PROTECTED_MEDIA_USE_X_ACCEL', default=False, cast=bool)
+PROTECTED_MEDIA_X_ACCEL_SIZE_THRESHOLD = config(
+    'PROTECTED_MEDIA_X_ACCEL_SIZE_THRESHOLD',
+    default=1048576,
+    cast=int,
+)
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),

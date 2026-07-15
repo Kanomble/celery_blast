@@ -90,6 +90,37 @@ The application can get installed by submitting the command: `docker-compose up`
 Once installed, CATHI is accessible via: `http://127.0.0.1:1337/blast_project/` for the production environment
 and via: `http://127.0.0.1:8080/blast_project/` for the Django development server.
 
+### Verification baseline
+
+The supported Python version for repository-native checks is Python 3.8, matching the Miniconda runtime installed by the Dockerfile. Pull requests run a lightweight CI baseline that does not start the full production stack and does not download biological databases.
+
+Local equivalents of the CI commands:
+
+```` Bash
+python -m pip install -r requirements.txt
+cd celery_blast
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test --exclude-tag biological --exclude-tag external --exclude-tag docker --exclude-tag long
+cd ..
+python scripts/check_compose_exposure.py
+python -m pip check
+docker compose config --quiet
+docker compose -f docker-compose-production.yml config --quiet
+````
+
+Tests that require Docker, external services, large biological fixtures, or downloaded biological databases must be tagged with `docker`, `external`, or `biological` and are excluded from ordinary CI. Use placeholder environment values for local verification; production secrets must not be used in CI logs.
+
+Production publishes only the Nginx endpoint by default. Flower and Jupyter are opt-in administrative services in the `admin` Compose profile, bind to loopback when enabled, and require runtime credentials. See `docs/ADMIN_ACCESS.md` for VPN and SSH-tunnel access guidance.
+
+Current exclusions include database-statistics fixture tests, taxdb presence checks, hard-coded biological fixture path checks, and live Celery transaction tests. Run those tagged tests explicitly only in a prepared development or staging environment with the required small fixtures or services. The currently published runtime image may still fail `python -m pip check` until the dependency remediation task rebuilds it; fresh CI installs run `pip check` from `requirements.txt`.
+
+### Protected media
+
+Project uploads, workflow outputs, logs, archives, result tables, and generated result images are protected artifacts. They must be linked through Django routes that verify the owning project and resolve files beneath the approved project directory. Production Nginx denies direct `/media/...` requests and exposes only the internal `/_protected_media/` location for Django-authorized `X-Accel-Redirect` responses. Set `PROTECTED_MEDIA_USE_X_ACCEL=true`, `PROTECTED_MEDIA_ROOT=/blast/reciprocal_blast/media`, and `PROTECTED_MEDIA_INTERNAL_URL=/_protected_media/` when serving protected large files through Nginx.
+
+Remote BLAST Entrez queries are serialized with YAML-safe configuration updates and passed to BLAST as subprocess arguments, not shell text. Valid Entrez syntax may include spaces, brackets, parentheses, colons, quotes, Boolean operators, and Unicode text; control characters and line breaks are rejected with a validation error.
+
 <a name="CATHI Set-Up"></a>
 ### CATHI Set-Up
 Once you have installed CATHI you should see, that the containers within the Docker-Desktop application are listed green.
@@ -124,9 +155,10 @@ is saved within the `postgresql` database within the `django_celery_results_task
 The `flower` container can be used to monitor the `celery-worker`. The reciprocal BLAST pipeline and the normal 
 one-way BLAST pipelines are integrated into a Snakefile, which is used by the workflow management system `snakemake`.
 Customization of Snakefiles enables user defined post-processing. In addtion, a `jupyter-notebook` container is 
-integrated into the CATHI container network. Configuration is done within the `.env.prod` file. 
-All important environment variables are defined within this file 
-(e.g. the `DJANGO_ALLOWED_HOSTS` and the `SECRET_KEY` variables).
+integrated into the CATHI container network. Configuration is done with local, untracked env files
+created from `.env.dev.example`, `.env.prod.example`, and `.env.prod.db.example`.
+Set real runtime values before deployment; the example placeholders are intentionally invalid.
+Secret rotation guidance is documented in `docs/SECRET_ROTATION.md`.
 
 <a name="project_setup"></a>
 ## Project setup

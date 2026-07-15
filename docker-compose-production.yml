@@ -15,10 +15,16 @@ services:
      && gunicorn celery_blast.wsgi:application --bind 0.0.0.0:8000 --timeout 10000 --workers 4 --threads 2"
     container_name: cathi_web
     networks:
-      - main
+      - app
+      - data
     restart: unless-stopped
     env_file:
       - ./.env.prod
+    environment:
+      CATHI_ENV: production
+      PROTECTED_MEDIA_USE_X_ACCEL: "true"
+      PROTECTED_MEDIA_ROOT: /blast/reciprocal_blast/media
+      PROTECTED_MEDIA_INTERNAL_URL: /_protected_media/
     depends_on:
       - rabbitmq
       - postgres
@@ -28,21 +34,22 @@ services:
       - ./celery_blast:/blast/reciprocal_blast
     expose:
       - 8000
-    ports:
-      - "5860-5870:5860-5870"
 
   celery_worker:
     image: kanomble/rec_blast_base_image:3.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast worker -l INFO"
     env_file:
       - ./.env.prod
+    environment:
+      CATHI_ENV: production
     depends_on:
       - web
       - postgres
       - rabbitmq
       - nginx
     networks:
-      - main
+      - app
+      - data
     volumes:
       - ./data:/blast/reciprocal_blast/media
       - ./tmp:/blast/reciprocal_blast/tmp
@@ -51,27 +58,41 @@ services:
 
   jupyter_notebook:
     image: kanomble/rec_blast_base_image:3.0
-    command:  sh -c "cd media/ && jupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root"
+    profiles:
+      - admin
+    command: >
+      sh -c 'test -n "$$JUPYTER_TOKEN" || { echo "JUPYTER_TOKEN is required"; exit 1; };
+      cd media/ && jupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token="$$JUPYTER_TOKEN"'
     networks:
-      - main
+      - app
+      - data
     restart: unless-stopped
     env_file:
       - ./.env.prod
+    environment:
+      CATHI_ENV: production
     depends_on:
       - rabbitmq
       - postgres
     volumes:
       - ./data:/blast/reciprocal_blast/media
     ports:
-      - "8888:8888"
+      - "127.0.0.1:8888:8888"
 
   flower:
     image: kanomble/rec_blast_base_image:3.0
-    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast flower  --port=5555"
+    profiles:
+      - admin
+    command: >
+      sh -c 'test -n "$$FLOWER_BASIC_AUTH" || { echo "FLOWER_BASIC_AUTH is required"; exit 1; };
+      wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast flower --port=5555 --basic_auth="$$FLOWER_BASIC_AUTH"'
     networks:
-      - main
+      - app
+      - data
     env_file:
       - ./.env.prod
+    environment:
+      CATHI_ENV: production
     depends_on:
       - web
       - postgres
@@ -80,7 +101,7 @@ services:
     volumes:
         - ./celery_blast:/blast/reciprocal_blast
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     restart: unless-stopped
 
   nginx:
@@ -95,15 +116,14 @@ services:
     depends_on:
       - web
     networks:
-      - main
+      - edge
+      - app
 
   rabbitmq:
     hostname: rabbitmq
     image: kanomble/rec_blast_rabbitmq_image:1.1
     networks:
-      - main
-    ports:
-      - "5672:5672"
+      - data
     restart: on-failure
 
   postgres:
@@ -112,11 +132,12 @@ services:
     env_file:
       - ./.env.prod.db
     networks:
-      - main
+      - data
     restart: on-failure
     volumes:
       - ./data/postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 networks:
-  main:
+  edge:
+  app:
+  data:
+    internal: true

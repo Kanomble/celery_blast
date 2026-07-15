@@ -149,10 +149,10 @@
             {% include BokehPlot %}
         </div>
 
-        {% with project_id_text=BlastProject.id|stringformat:"s" %}
-            {% with amount_hits_image="/media/blast_projects/remote_projects/"|add:project_id_text|add:"/plot_amount_hits_of_target_taxon.png" evalue_distribution_image="/media/blast_projects/remote_projects/"|add:project_id_text|add:"/plot_evalue_distribution.png" %}
-                {% include "blast_project/includes/project_details/result_graphs.html" %}
-            {% endwith %}
+        {% url 'project_artifact' project_id=BlastProject.id remote_or_local='remote' relative_path='plot_amount_hits_of_target_taxon.png' as amount_hits_image %}
+        {% url 'project_artifact' project_id=BlastProject.id remote_or_local='remote' relative_path='plot_evalue_distribution.png' as evalue_distribution_image %}
+        {% with amount_hits_image=amount_hits_image evalue_distribution_image=evalue_distribution_image %}
+            {% include "blast_project/includes/project_details/result_graphs.html" %}
         {% endwith %}
     {% elif BokehPlot %}
         <div class="dashboard_project_list_col" id="interactive_bokeh_plot" style="max-height: 50%;display: none">

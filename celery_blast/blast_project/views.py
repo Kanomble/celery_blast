@@ -22,6 +22,7 @@ from .py_services import list_taxonomic_files, upload_file, check_if_file_exists
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
     read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id, \
     list_all_available_logfiles
+from .protected_media import serve_protected_project_file
 from .py_project_creation import create_blast_project, create_remote_blast_project
 from .py_database_statistics import get_database_statistics_task_status, delete_database_statistics_task_and_output, \
     transform_normalized_database_table_to_json, get_database_selection_task_status
@@ -40,6 +41,14 @@ from time import sleep
 # BLAST_PROJECT_DIR DEFAULT = 'media/blast_projects/'
 # BLAST_DATABASE_DIR DEFAULT = 'media/databases/'
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR, TAXONOMIC_NODES
+
+
+def _project_artifact_root(project_id, remote_or_local):
+    if remote_or_local == "local":
+        return os.path.join(BLAST_PROJECT_DIR, str(project_id))
+    if remote_or_local == "remote":
+        return os.path.join(REMOTE_BLAST_PROJECT_DIR, str(project_id))
+    raise Http404("File not found")
 
 '''setup_cathi_view
 
@@ -496,7 +505,7 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
 @project_owner_required()
 def load_reciprocal_result_html_table_view(request, project_id):
     try:
-        html_data = get_html_results(project_id, "reciprocal_results.html")
+        html_data = get_html_results(project_id, "reciprocal_results.html", html_result_path=BLAST_PROJECT_DIR)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
@@ -505,10 +514,18 @@ def load_reciprocal_result_html_table_view(request, project_id):
 @project_owner_required(remote_or_local='remote')
 def load_remote_reciprocal_result_html_table_view(request, project_id):
     try:
-        html_data = get_remote_html_results(project_id, "reciprocal_results.html")
+        html_data = get_remote_html_results(project_id, "reciprocal_results.html", html_result_path=REMOTE_BLAST_PROJECT_DIR)
         return HttpResponse(html_data)
     except Exception as e:
         return failure_view(request, e)
+
+
+@login_required(login_url='login')
+@project_owner_required()
+def protected_project_artifact_view(request, project_id: int, remote_or_local: str, relative_path: str):
+    project_root = _project_artifact_root(project_id, remote_or_local)
+    as_attachment = request.GET.get('download') == '1'
+    return serve_protected_project_file(project_root, relative_path, as_attachment=as_attachment)
 
 ''' create_taxonomic_file_view
 
@@ -1043,14 +1060,10 @@ def get_domain_database_download_task_status(request):
 @project_owner_required()
 def send_logfile_content_view(request, project_id: int, logfile: str) -> HttpResponse:
     try:
-        logfile_path = BLAST_PROJECT_DIR + str(project_id) + '/log/' + logfile + ".log"
-        if isfile(logfile_path):
-            with open(logfile_path, 'r') as lfile:
-                lines = lfile.readlines()
-
-            return HttpResponse(lines, content_type="text/plain")
-        else:
-            return HttpResponse("couldnt find logfile: {} ...".format(logfile_path), content_type="text/plain")
+        logfile_root = os.path.join(BLAST_PROJECT_DIR, str(project_id), 'log')
+        return serve_protected_project_file(logfile_root, logfile + ".log")
+    except Http404:
+        raise
     except Exception as e:
         return failure_view(request, e)
 
@@ -1233,22 +1246,12 @@ def examine_logfile_view(request, project_id:int, remote_or_local:str):
 @project_owner_required()
 def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
     try:
-        if remote_or_local == "local":
-            path_to_logfile = BLAST_PROJECT_DIR + str(project_id) + "/log/" + logfile
-        elif remote_or_local == "remote":
-            path_to_logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log/" + logfile
-        else:
-            raise Exception("[-] ERROR project is neither remote nor local ...")
-
-        if isfile(path_to_logfile):
-            with open(path_to_logfile, 'r') as lfile:
-                lines = lfile.readlines()
-
-            return HttpResponse(lines, content_type="text/plain")
-        else:
-            return HttpResponse("couldnt find logfile: {} ...".format(path_to_logfile), content_type="text/plain")
+        logfile_root = os.path.join(_project_artifact_root(project_id, remote_or_local), 'log')
+        return serve_protected_project_file(logfile_root, logfile)
+    except Http404:
+        raise
     except Exception as e:
-        return failure_view(e)
+        return failure_view(request, e)
 
 
 '''view_query_specific_logfile
@@ -1274,22 +1277,12 @@ def view_logfile(request, project_id:int, remote_or_local:str, logfile:str):
 @project_owner_required()
 def view_query_specific_logfile(request, project_id: int, remote_or_local: str, logfile: str, query:str):
     try:
-        if remote_or_local == "local":
-            path_to_logfile = BLAST_PROJECT_DIR + str(project_id) + "/log/" + query + "/" + logfile
-        elif remote_or_local == "remote":
-            path_to_logfile = REMOTE_BLAST_PROJECT_DIR + str(project_id) + "/log/" + query + "/" + logfile
-        else:
-            raise Exception("[-] ERROR project is neither remote nor local ...")
-
-        if isfile(path_to_logfile):
-            with open(path_to_logfile, 'r') as lfile:
-                lines = lfile.readlines()
-
-            return HttpResponse(lines, content_type="text/plain")
-        else:
-            return HttpResponse("couldnt find logfile: {} ...".format(path_to_logfile), content_type="text/plain")
+        logfile_root = os.path.join(_project_artifact_root(project_id, remote_or_local), 'log', query)
+        return serve_protected_project_file(logfile_root, logfile)
+    except Http404:
+        raise
     except Exception as e:
-        return failure_view(e)
+        return failure_view(request, e)
 
 '''view_example_html
 
