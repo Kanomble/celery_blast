@@ -5,7 +5,7 @@ from unittest.mock import ANY, patch
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 from django_celery_results.models import TaskResult
@@ -13,6 +13,7 @@ from django_celery_results.models import TaskResult
 from blast_project.models import BlastSettings
 from one_way_blast.models import OneWayBlastProject, OneWayRemoteBlastProject
 from one_way_blast.tasks import execute_snakemake_workflow
+from one_way_blast.views import _start_one_way_workflow
 from refseq_transactions.models import BlastDatabase
 
 
@@ -78,6 +79,52 @@ class OneWayTaskHelperTests(SimpleTestCase):
             logger=ANY,
             check=True,
             env=expected_snakemake_environment(),
+        )
+
+
+class OneWayWorkflowStartTests(TransactionTestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            'oneway-owner',
+            'oneway@example.test',
+            password='test',
+        )
+        self.settings = BlastSettings.objects.create(
+            e_value=0.001,
+            word_size=3,
+            num_alignments=100,
+            max_target_seqs=100,
+            num_threads=1,
+            max_hsps=100,
+        )
+        self.database = BlastDatabase.objects.create(
+            database_name='one-way workflow db',
+            database_description='test database',
+            assembly_entries=1,
+            path_to_database_file='testfiles/databases/workflow',
+        )
+        self.project = OneWayBlastProject.objects.create(
+            project_title='one-way workflow project',
+            project_query_sequences='query.faa',
+            project_user=self.user,
+            project_settings=self.settings,
+            project_database=self.database,
+        )
+
+    def test_one_way_start_reserves_pending_task_and_does_not_enqueue_duplicate(self):
+        with patch('one_way_blast.views.execute_one_way_blast_project.apply_async') as apply_async:
+            first = _start_one_way_workflow(self.project.id, self.user, remote=False)
+            second = _start_one_way_workflow(self.project.id, self.user, remote=False)
+
+        self.assertTrue(first)
+        self.assertFalse(second)
+        self.project.refresh_from_db()
+        self.assertEqual('PENDING', self.project.project_execution_task_result.status)
+        apply_async.assert_called_once()
+        self.assertEqual((self.project.id,), apply_async.call_args.kwargs['args'])
+        self.assertEqual(
+            self.project.project_execution_task_result.task_id,
+            apply_async.call_args.kwargs['task_id'],
         )
 
 

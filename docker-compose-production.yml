@@ -4,10 +4,9 @@ services:
 
   web:
     image: kanomble/rec_blast_base_image:3.0
-    deploy:
-      resources:
-        limits:
-          memory: 8G
+    cpus: "${WEB_CPUS:-2.0}"
+    mem_limit: "${WEB_MEM_LIMIT:-8g}"
+    pids_limit: "${WEB_PIDS_LIMIT:-512}"
 
     command:  sh -c "wait-for rabbitmq:5672 && wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
@@ -37,7 +36,7 @@ services:
 
   celery_worker:
     image: kanomble/rec_blast_base_image:3.0
-    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast worker -l INFO"
+    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast worker -l INFO -Q $${CELERY_WORKFLOW_QUEUE:-long_bio} --concurrency=$${CELERY_WORKFLOW_WORKER_CONCURRENCY:-1} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
     env_file:
       - ./.env.prod
     environment:
@@ -54,6 +53,55 @@ services:
       - ./data:/blast/reciprocal_blast/media
       - ./tmp:/blast/reciprocal_blast/tmp
       - ./celery_blast:/blast/reciprocal_blast
+    cpus: "${CELERY_WORKFLOW_CPUS:-1.0}"
+    mem_limit: "${CELERY_WORKFLOW_MEM_LIMIT:-4g}"
+    pids_limit: "${CELERY_WORKFLOW_PIDS_LIMIT:-256}"
+    restart: unless-stopped
+
+  celery_worker_interactive:
+    image: kanomble/rec_blast_base_image:3.0
+    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast worker -l INFO -Q $${CELERY_INTERACTIVE_QUEUE:-interactive} --concurrency=$${CELERY_INTERACTIVE_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1"
+    env_file:
+      - ./.env.prod
+    environment:
+      CATHI_ENV: production
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    networks:
+      - app
+      - data
+    volumes:
+      - ./data:/blast/reciprocal_blast/media
+      - ./tmp:/blast/reciprocal_blast/tmp
+      - ./celery_blast:/blast/reciprocal_blast
+    cpus: "${CELERY_INTERACTIVE_CPUS:-1.0}"
+    mem_limit: "${CELERY_INTERACTIVE_MEM_LIMIT:-2g}"
+    pids_limit: "${CELERY_INTERACTIVE_PIDS_LIMIT:-128}"
+    restart: unless-stopped
+
+  celery_worker_maintenance:
+    image: kanomble/rec_blast_base_image:3.0
+    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8000 -- celery -A celery_blast worker -l INFO -Q $${CELERY_MAINTENANCE_QUEUE:-maintenance} --concurrency=$${CELERY_MAINTENANCE_WORKER_CONCURRENCY:-1} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
+    env_file:
+      - ./.env.prod
+    environment:
+      CATHI_ENV: production
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    networks:
+      - app
+      - data
+    volumes:
+      - ./data:/blast/reciprocal_blast/media
+      - ./tmp:/blast/reciprocal_blast/tmp
+      - ./celery_blast:/blast/reciprocal_blast
+    cpus: "${CELERY_MAINTENANCE_CPUS:-1.0}"
+    mem_limit: "${CELERY_MAINTENANCE_MEM_LIMIT:-2g}"
+    pids_limit: "${CELERY_MAINTENANCE_PIDS_LIMIT:-128}"
     restart: unless-stopped
 
   jupyter_notebook:
@@ -78,6 +126,9 @@ services:
       - ./data:/blast/reciprocal_blast/media
     ports:
       - "127.0.0.1:8888:8888"
+    cpus: "${JUPYTER_CPUS:-1.0}"
+    mem_limit: "${JUPYTER_MEM_LIMIT:-2g}"
+    pids_limit: "${JUPYTER_PIDS_LIMIT:-128}"
 
   flower:
     image: kanomble/rec_blast_base_image:3.0
@@ -98,10 +149,15 @@ services:
       - postgres
       - rabbitmq
       - celery_worker
+      - celery_worker_interactive
+      - celery_worker_maintenance
     volumes:
         - ./celery_blast:/blast/reciprocal_blast
     ports:
       - "127.0.0.1:5555:5555"
+    cpus: "${FLOWER_CPUS:-0.5}"
+    mem_limit: "${FLOWER_MEM_LIMIT:-512m}"
+    pids_limit: "${FLOWER_PIDS_LIMIT:-128}"
     restart: unless-stopped
 
   nginx:
@@ -118,12 +174,18 @@ services:
     networks:
       - edge
       - app
+    cpus: "${NGINX_CPUS:-1.0}"
+    mem_limit: "${NGINX_MEM_LIMIT:-512m}"
+    pids_limit: "${NGINX_PIDS_LIMIT:-128}"
 
   rabbitmq:
     hostname: rabbitmq
     image: kanomble/rec_blast_rabbitmq_image:1.1
     networks:
       - data
+    cpus: "${RABBITMQ_CPUS:-1.0}"
+    mem_limit: "${RABBITMQ_MEM_LIMIT:-1g}"
+    pids_limit: "${RABBITMQ_PIDS_LIMIT:-256}"
     restart: on-failure
 
   postgres:
@@ -136,6 +198,9 @@ services:
     restart: on-failure
     volumes:
       - ./data/postgres_data:/var/lib/postgresql/data
+    cpus: "${POSTGRES_CPUS:-1.0}"
+    mem_limit: "${POSTGRES_MEM_LIMIT:-2g}"
+    pids_limit: "${POSTGRES_PIDS_LIMIT:-256}"
 networks:
   edge:
   app:

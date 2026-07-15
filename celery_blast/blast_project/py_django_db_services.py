@@ -8,6 +8,7 @@ from blast_project import py_biopython as pyb
 from .py_services import create_blastdatabase_directory, concatenate_genome_fasta_files_in_db_dir, upload_file
 from django_celery_results.models import TaskResult
 from django.db import IntegrityError, transaction
+from .workflow_execution import claim_workflow_execution
 from pandas import read_csv, Series
 from shutil import rmtree
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR
@@ -391,20 +392,14 @@ corresponding IDs and saves them back to the database.
 
 def update_blast_project_with_task_result_model(project_id, task_id):
     try:
-        blast_project = BlastProject.objects.get(id=project_id)
-        taskresult = TaskResult.objects.get(task_id=task_id)
-        blast_project.project_execution_snakemake_task = taskresult
-        blast_project.save()
+        return claim_workflow_execution(project_id, task_id, 'local')
     except Exception as e:
         raise IntegrityError(
             'problem during updating of blastproject model with task result instance exception : {}'.format(e))
 
 def update_remote_blast_project_with_task_result_model(project_id, task_id):
     try:
-        blast_project = RemoteBlastProject.objects.get(id=project_id)
-        taskresult = TaskResult.objects.get(task_id=task_id)
-        blast_project.r_project_execution_snakemake_task = taskresult
-        blast_project.save()
+        return claim_workflow_execution(project_id, task_id, 'remote')
     except Exception as e:
         raise IntegrityError(
             'problem during updating of remoteblastproject model with task result instance exception : {}'.format(e))

@@ -4,10 +4,9 @@ services:
 
   web:
     image: kanomble/rec_blast_base_image:3.0 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
-    deploy:
-      resources:
-        limits:
-          memory: 16G
+    cpus: "${WEB_CPUS:-2.0}"
+    mem_limit: "${WEB_MEM_LIMIT:-16g}"
+    pids_limit: "${WEB_PIDS_LIMIT:-512}"
     command:  sh -c "wait-for rabbitmq:5672 && wait-for postgres:5432
      && python manage.py makemigrations && python manage.py migrate
      && python manage.py runscript startup
@@ -30,7 +29,7 @@ services:
 
   celery_worker:
     image: kanomble/rec_blast_base_image:3.0
-    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO"
+    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO -Q $${CELERY_WORKFLOW_QUEUE:-long_bio} --concurrency=$${CELERY_WORKFLOW_WORKER_CONCURRENCY:-1} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
     env_file:
       - ./.env.dev
     depends_on:
@@ -43,6 +42,49 @@ services:
       - ./data:/blast/reciprocal_blast/media
       - ./tmp:/blast/reciprocal_blast/tmp
       - ./celery_blast:/blast/reciprocal_blast
+    cpus: "${CELERY_WORKFLOW_CPUS:-1.0}"
+    mem_limit: "${CELERY_WORKFLOW_MEM_LIMIT:-4g}"
+    pids_limit: "${CELERY_WORKFLOW_PIDS_LIMIT:-256}"
+    restart: unless-stopped
+
+  celery_worker_interactive:
+    image: kanomble/rec_blast_base_image:3.0
+    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO -Q $${CELERY_INTERACTIVE_QUEUE:-interactive} --concurrency=$${CELERY_INTERACTIVE_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1"
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    networks:
+      - main
+    volumes:
+      - ./data:/blast/reciprocal_blast/media
+      - ./tmp:/blast/reciprocal_blast/tmp
+      - ./celery_blast:/blast/reciprocal_blast
+    cpus: "${CELERY_INTERACTIVE_CPUS:-1.0}"
+    mem_limit: "${CELERY_INTERACTIVE_MEM_LIMIT:-2g}"
+    pids_limit: "${CELERY_INTERACTIVE_PIDS_LIMIT:-128}"
+    restart: unless-stopped
+
+  celery_worker_maintenance:
+    image: kanomble/rec_blast_base_image:3.0
+    command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO -Q $${CELERY_MAINTENANCE_QUEUE:-maintenance} --concurrency=$${CELERY_MAINTENANCE_WORKER_CONCURRENCY:-1} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - web
+      - postgres
+      - rabbitmq
+    networks:
+      - main
+    volumes:
+      - ./data:/blast/reciprocal_blast/media
+      - ./tmp:/blast/reciprocal_blast/tmp
+      - ./celery_blast:/blast/reciprocal_blast
+    cpus: "${CELERY_MAINTENANCE_CPUS:-1.0}"
+    mem_limit: "${CELERY_MAINTENANCE_MEM_LIMIT:-2g}"
+    pids_limit: "${CELERY_MAINTENANCE_PIDS_LIMIT:-128}"
     restart: unless-stopped
 
   flower:
@@ -57,10 +99,15 @@ services:
       - postgres
       - rabbitmq
       - celery_worker
+      - celery_worker_interactive
+      - celery_worker_maintenance
     volumes:
         - ./celery_blast:/blast/reciprocal_blast
     ports:
       - "127.0.0.1:5555:5555"
+    cpus: "${FLOWER_CPUS:-0.5}"
+    mem_limit: "${FLOWER_MEM_LIMIT:-512m}"
+    pids_limit: "${FLOWER_PIDS_LIMIT:-128}"
     restart: unless-stopped
 
   rabbitmq:
@@ -70,6 +117,9 @@ services:
       - main
     ports:
       - "127.0.0.1:5672:5672"
+    cpus: "${RABBITMQ_CPUS:-1.0}"
+    mem_limit: "${RABBITMQ_MEM_LIMIT:-1g}"
+    pids_limit: "${RABBITMQ_PIDS_LIMIT:-256}"
     restart: on-failure
 
   postgres:
@@ -84,6 +134,9 @@ services:
       - ./data/postgres_data:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5432:5432"
+    cpus: "${POSTGRES_CPUS:-1.0}"
+    mem_limit: "${POSTGRES_MEM_LIMIT:-2g}"
+    pids_limit: "${POSTGRES_PIDS_LIMIT:-256}"
 
 networks:
   main:

@@ -12,6 +12,7 @@ from django.db import transaction, IntegrityError
 from django_celery_results.models import TaskResult
 
 from .models import EntrezSearch
+from .access import get_owned_entrez_search_or_404
 
 
 XTRACT_FORMATS = {
@@ -397,16 +398,18 @@ def get_entrezsearch_object_with_entrezsearch_id(search_id: int) -> EntrezSearch
         :type int
 
 '''
-def delete_esearch_by_id(search_id: int) -> int:
+def delete_esearch_by_id(search_id: int, user=None) -> int:
     # deletes entrezsearch associated files and taskresult entries based on a search_id
     # returns 0 if it worked or 1 if it did not
+    if user is not None:
+        entrez_search = get_owned_entrez_search_or_404(user, search_id)
+    else:
+        entrez_search = EntrezSearch.objects.get(id=search_id)
+
     try:
         with transaction.atomic():
 
-            entrez_search = EntrezSearch.objects.get(id=search_id)
-            task_db_id = EntrezSearch.objects.values('search_task_result_id').filter(id=search_id)
-            task_db_id = task_db_id[0]['search_task_result_id']
-            task_db = TaskResult.objects.get(id=task_db_id)
+            task_db = entrez_search.search_task_result
             organism_db_file_name = ESEARCH_OUTPUT + str(search_id)
 
             if os.path.isdir(organism_db_file_name):
@@ -419,7 +422,8 @@ def delete_esearch_by_id(search_id: int) -> int:
                     if os.path.isfile(entrez_search.fasta_file_name):
                         os.remove(entrez_search.fasta_file_name)
                 entrez_search.delete()
-                task_db.delete()
+                if task_db is not None:
+                    task_db.delete()
 
                 return 0
             else:

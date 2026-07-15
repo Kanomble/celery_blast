@@ -7,6 +7,7 @@ from time import sleep
 import pandas as pd
 from blast_project.access import get_owned_project_or_404, project_owner_required
 from blast_project.py_services import get_html_results
+from blast_project.result_responses import generated_html_response
 from blast_project.views import failure_view
 from django.contrib.auth.decorators import login_required
 from django.core.handlers.wsgi import WSGIRequest
@@ -16,10 +17,10 @@ from django_celery_results.models import TaskResult
 from django.views.decorators.csrf import csrf_exempt
 from django.db import IntegrityError, transaction
 
-from .entrez_search_service import get_entrezsearch_object_with_entrezsearch_id, delete_esearch_by_id, \
-    download_selected_proteins
+from .access import get_owned_entrez_search_or_404, get_owned_query_sequence_or_404
+from .entrez_search_service import delete_esearch_by_id, download_selected_proteins
 from .forms import EntrezSearchForm, RpsBLASTSettingsForm
-from .models import ExternalTools, EntrezSearch, QuerySequences
+from .models import ExternalTools, EntrezSearch
 from .py_services import delete_cdd_search_output, check_if_cdd_search_can_get_executed, get_html_results, \
     read_query_sequence_rbh_table, get_rpsbproc_domain_dictionary
 from .tasks import execute_multiple_sequence_alignment, execute_phylogenetic_tree_building, \
@@ -140,7 +141,7 @@ def load_synteny_view(request: WSGIRequest, project_id: int, remote_or_local:str
             html_data = get_html_results(project_id, query_sequence_id + '/' + "clinker_result_plot.html", REMOTE_BLAST_PROJECT_DIR)
         else:
             html_data = "ERROR: project is neither local nor remote ...\n"
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -214,7 +215,7 @@ def load_phylogenetic_tree_view(request: WSGIRequest, project_id: int, query_seq
             raise Exception("project is neither local nor remote ...")
 
         html_data = get_html_results(project_id, query_sequence_id + '/' + "msa_phylo_sequences.html", html_result_path=html_result_path)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -243,7 +244,7 @@ def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str,
         else:
             raise Exception("project is neither local nor remote ...")
         html_data = get_html_results(project_id, query_sequence_id + '/' + "msa_phylo_sequences_trimmed.html", html_result_path=html_result_path)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -251,8 +252,8 @@ def load_msa_view(request: WSGIRequest, project_id: int, query_sequence_id: str,
 def view_downloaded_sequences(request: WSGIRequest, search_id: int):
     # creates a file download button to the search_details.html to download the result file of the download_proteins_from_entrez_search view
     # if the entrezsearch is within the protein or pubmed database
+    entrez_search = get_owned_entrez_search_or_404(request.user, search_id)
     try:
-        entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
         filepath = entrez_search.fasta_file_name
         if os.path.isfile(filepath):
             with open(filepath, 'r') as download_file:
@@ -271,6 +272,7 @@ def view_downloaded_sequences(request: WSGIRequest, search_id: int):
 @login_required(login_url='login')
 def view_downloaded_organism_sequences(request: WSGIRequest, search_id: int, organism_download: str):
     # creates a file download button to the search_details.html to download the result file of the download_protein_by_organisms_from_entrez_search view
+    get_owned_entrez_search_or_404(request.user, search_id)
     try:
         filepath = ESEARCH_OUTPUT + str(search_id) + "/" + str(organism_download) + ".faa"
         if os.path.isfile(filepath):
@@ -292,9 +294,9 @@ def search_detail_view(request: WSGIRequest, search_id: int):
     # get the edirect paper entry based on search_id (which is the id of the db object)
     # get paper content and fill context object
     # return template with context
+    entrez_search = get_owned_entrez_search_or_404(request.user, search_id)
     try:
         sleep(0.5)
-        entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
         context = {'EntrezSearch': entrez_search, 'HtmlTable': entrez_search.get_paper_content()}
         if entrez_search.database == 'protein':
 
@@ -334,7 +336,6 @@ def search_detail_view(request: WSGIRequest, search_id: int):
 
         return render(request, 'external_tools/search_details.html', context)
     except Exception as e:
-        e = str(e) + " TaskID: " + str(task_arg_str) + " Organism: " + organism
         return failure_view(request, e)
 
 
@@ -342,6 +343,7 @@ def search_detail_view(request: WSGIRequest, search_id: int):
 def download_proteins_from_entrez_search(request: WSGIRequest, search_id: int):
     # starts a task that downloads the associated protein sequences in the entrez search results page
     # if the entrezsearch is of the protein or pubmed database
+    get_owned_entrez_search_or_404(request.user, search_id)
     try:
         download_entrez_search_associated_protein_sequences.delay(search_id)
         return redirect('search_details', search_id=search_id)
@@ -352,6 +354,7 @@ def download_proteins_from_entrez_search(request: WSGIRequest, search_id: int):
 @login_required(login_url='login')
 def download_protein_by_organisms_from_entrez_search(request: WSGIRequest, search_id: int, organism_download: str):
     # starts a task that downloads the protein sequences in the entrez search results page of a chosen organism that is selected
+    get_owned_entrez_search_or_404(request.user, search_id)
     try:
         email = request.user.email
         download_organism_protein_sequences_task.delay(search_id, organism_download, email)
@@ -366,8 +369,9 @@ def download_protein_by_organisms_from_entrez_search(request: WSGIRequest, searc
 def delete_search_view(request: WSGIRequest, search_id: int):
     # delete edirectpaper file entry based on search_id
     # also deletes taskresult and entrezsearch db entry by search_id
+    get_owned_entrez_search_or_404(request.user, search_id)
     try:
-        retcode = delete_esearch_by_id(search_id)
+        retcode = delete_esearch_by_id(search_id, user=request.user)
         if retcode == 0:
 
             return redirect("entrez_dashboard")
@@ -489,47 +493,41 @@ def perform_fasttree_phylobuild(request, project_id, query_sequence_id, remote_o
 
 @login_required(login_url='login')
 def ajax_call_progress_phylo_task(request, query_sequence_id):
-    try:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        if is_ajax:
-            if request.method == "GET":
-                qseq = QuerySequences.objects.get(id=query_sequence_id)
-                progress = qseq.phylogenetic_tree_construction_task.status
-                return JsonResponse({"progress": progress})
-        else:
-            return JsonResponse({"progress": "No ajax request!"})
-    except Exception as e:
-        return failure_view(request, e)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if not is_ajax:
+        return JsonResponse({"progress": "No ajax request!"}, status=400)
+    if request.method != "GET":
+        return JsonResponse({"error": "GET requests are required"}, status=400)
+
+    qseq = get_owned_query_sequence_or_404(request.user, query_sequence_id)
+    progress = qseq.phylogenetic_tree_construction_task.status if qseq.phylogenetic_tree_construction_task else "NOTEXEC"
+    return JsonResponse({"progress": progress})
 
 
 @login_required(login_url='login')
 def ajax_call_progress_msa_task(request, query_sequence_id):
-    try:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        if is_ajax:
-            if request.method == "GET":
-                qseq = QuerySequences.objects.get(id=query_sequence_id)
-                progress = qseq.multiple_sequence_alignment_task.status
-                return JsonResponse({"progress": progress})
-        else:
-            return JsonResponse({"progress": "No ajax request!"})
-    except Exception as e:
-        return failure_view(request, e)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if not is_ajax:
+        return JsonResponse({"progress": "No ajax request!"}, status=400)
+    if request.method != "GET":
+        return JsonResponse({"error": "GET requests are required"}, status=400)
+
+    qseq = get_owned_query_sequence_or_404(request.user, query_sequence_id)
+    progress = qseq.multiple_sequence_alignment_task.status if qseq.multiple_sequence_alignment_task else "NOTEXEC"
+    return JsonResponse({"progress": progress})
 
 
 @login_required(login_url='login')
 def ajax_call_progress_entrezsearch_to_fasta(request, search_id: int):
-    try:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        if is_ajax:
-            if request.method == "GET":
-                entrez_search = get_entrezsearch_object_with_entrezsearch_id(search_id)
-                progress = entrez_search.download_task_result.status
-                return JsonResponse({"progress": progress})
-        else:
-            return JsonResponse({"progress": "No ajax request!"})
-    except Exception as e:
-        return failure_view(request, e)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if not is_ajax:
+        return JsonResponse({"progress": "No ajax request!"}, status=400)
+    if request.method != "GET":
+        return JsonResponse({"error": "GET requests are required"}, status=400)
+
+    entrez_search = get_owned_entrez_search_or_404(request.user, search_id)
+    progress = entrez_search.download_task_result.status if entrez_search.download_task_result else "NOTEXEC"
+    return JsonResponse({"progress": progress})
 
 
 # view for phylogenetic dashboard
@@ -611,7 +609,7 @@ def load_rpsbproc_domains_view(request:WSGIRequest, project_id:int, remote_or_lo
             raise Exception("[-] ERROR project is neither local nor remote ...")
 
         html_data = get_html_results(project_id, 'rpsbproc_query_domains.html', html_result_path=html_result_path)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -638,7 +636,7 @@ def load_all_cdd_domains_view(request:WSGIRequest, project_id: int, remote_or_lo
             raise Exception("[-] ERROR project is neither local nor remote ...")
 
         html_data = get_html_results(project_id,'query_domains.html', html_result_path=html_result_path)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -665,7 +663,7 @@ def load_rpsbproc_sites_view(request:WSGIRequest, project_id: int, remote_or_loc
             raise Exception("[-] ERROR project is neither local nor remote ...")
 
         html_data = get_html_results(project_id, 'rpsbproc_query_sites.html', html_result_path=html_result_path)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -726,7 +724,7 @@ def load_selection_constrained_phylogeny(request: WSGIRequest, project_id: int, 
         else:
             raise Exception("[-] ERROR project is neither local nor remote")
         html_data = get_html_results(project_id, query_id + '/' + "selection_sliced_domain_phylogeny.html", html_result_path=html_path)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -812,16 +810,15 @@ def get_selection_constrained_cdd_phylogeny_task_status(request:WSGIRequest, pro
 '''
 @login_required(login_url="login")
 def get_entrez_search_progress(request:WSGIRequest, search_id:int):
-    try:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        if is_ajax:
-            if request.method == "GET":
-                entrez_search = EntrezSearch.objects.get(id=search_id)
-                task_status = entrez_search.search_task_result.status
-                return JsonResponse({"data": task_status}, status=200)
-        return JsonResponse({"data": "ERROR"}, status=200)
-    except Exception as e:
-        return JsonResponse({"error": "{}".format(e)}, status=400)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if not is_ajax:
+        return JsonResponse({"data": "ERROR"}, status=400)
+    if request.method != "GET":
+        return JsonResponse({"error": "GET requests are required"}, status=400)
+
+    entrez_search = get_owned_entrez_search_or_404(request.user, search_id)
+    task_status = entrez_search.search_task_result.status if entrez_search.search_task_result else "NOTEXEC"
+    return JsonResponse({"data": task_status}, status=200)
 
 
 '''ajax_synteny_progress

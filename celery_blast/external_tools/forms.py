@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 '''
     EntrezSearchForm for the EntrezSearch model, which instances hold information 
@@ -18,7 +19,7 @@ class EntrezSearchForm(forms.Form):
 
     database = forms.ChoiceField(choices=DATABASES,
                                  initial=('protein', 'protein'))
-    number_records = forms.IntegerField(initial=100, min_value=1, max_value=10000)
+    number_records = forms.IntegerField(initial=100, min_value=1, max_value=settings.CATHI_MAX_ENTREZ_RECORDS)
 
 '''RpsBLASTSettingsForm
 
@@ -37,19 +38,19 @@ class RpsBLASTSettingsForm(forms.Form):
 
     rps_num_alignments = forms.IntegerField(
         label="RPSBLAST Number of possible alignment outputs",
-        initial=10000, min_value=1, max_value=50000)
+        initial=10000, min_value=1, max_value=settings.CATHI_MAX_NUM_ALIGNMENTS)
 
     rps_max_target_seqs = forms.IntegerField(
         label="RPSBLAST max_target_seqs of possible alignment description outputs",
-        initial=10000, min_value=1, max_value=50000)
+        initial=10000, min_value=1, max_value=settings.CATHI_MAX_TARGET_SEQS)
 
     rps_num_threads = forms.IntegerField(
         label="RPSBLAST Threads",
-        initial=1, min_value=1, max_value=16)
+        initial=1, min_value=1, max_value=settings.CATHI_EFFECTIVE_BLAST_THREADS)
 
     rps_max_hsps = forms.IntegerField(
         label='RPSBLAST max hsps',
-        initial=500, min_value=1, max_value=1000)
+        initial=500, min_value=1, max_value=settings.CATHI_MAX_HSPS)
 
     def __init__(self, query_sequences_rdy_for_cdd, *args, **kwargs):
         super(RpsBLASTSettingsForm, self).__init__(*args, **kwargs)

@@ -6,6 +6,7 @@ from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 
 from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
+from celery_blast.resource_governance import resource_budget_log_line, workflow_job_cores
 
 from .py_django_db_services import update_one_way_blast_project_with_task_result_model, \
     update_one_way_remote_blast_project_with_task_result_model
@@ -39,10 +40,11 @@ def execute_snakemake_workflow(project_id, working_dir, config_file, snakefile_d
         raise Exception('couldnt update blastproject with exception : {}'.format(e))
 
     logger.info('trying to start snakemake workflow')
+    logger.info(resource_budget_log_line())
     command = [
         'snakemake',
         '--snakefile', resolve_project_path(snakefile_dir),
-        '--cores', '1',
+        '--cores', str(workflow_job_cores()),
         '--configfile', resolve_project_path(config_file),
         '--directory', resolve_project_path(working_dir),
         '--keep-incomplete',

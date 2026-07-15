@@ -137,6 +137,7 @@ data/*
 .idea/*
 celery_blast/refseq_transactions/migrations/*
 celery_blast/blast_project/migrations/*
+!celery_blast/blast_project/migrations/0003_blastproject_project_workflow_execution_token_and_more.py
 celery_blast/one_way_blast/migrations/*
 celery_blast/external_tools/migrations/*
 celery_blast/static/images/result_images/*

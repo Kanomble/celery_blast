@@ -10,6 +10,17 @@ from os import mkdir, listdir
 
 import pandas as pd
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, REMOTE_BLAST_PROJECT_DIR
+from celery_blast.resource_governance import capped_blast_settings_values
+
+
+class WorkflowLifecycle(models.TextChoices):
+    STARTABLE = 'STARTABLE', 'Startable'
+    QUEUED = 'QUEUED', 'Queued'
+    RUNNING = 'RUNNING', 'Running'
+    RETRYING = 'RETRYING', 'Retrying'
+    SUCCESSFUL = 'SUCCESSFUL', 'Successful'
+    FAILED = 'FAILED', 'Failed'
+    CANCELLED = 'CANCELLED', 'Cancelled'
 
 
 # TODO USE THOSE paths for setting up the project directory and snakemake config file
@@ -42,13 +53,19 @@ class BlastSettings(models.Model):
     '''
 
     def values_as_fw_or_bw_dict(self, fwOrBw: str) -> dict:
+        capped_values = capped_blast_settings_values(
+            self.num_threads,
+            self.num_alignments,
+            max_target_seqs=self.max_target_seqs,
+            max_hsps=self.max_hsps,
+        )
         settings_dict = {
             fwOrBw + '_e_value': str(self.e_value),
             fwOrBw + '_word_size': str(self.word_size),
-            fwOrBw + '_num_threads': str(self.num_threads),
-            fwOrBw + '_num_alignments': str(self.num_alignments),
-            fwOrBw + '_max_target_seqs': str(self.max_target_seqs),
-            fwOrBw + '_max_hsps': str(self.max_hsps)
+            fwOrBw + '_num_threads': str(capped_values['num_threads']),
+            fwOrBw + '_num_alignments': str(capped_values['num_alignments']),
+            fwOrBw + '_max_target_seqs': str(capped_values['max_target_seqs']),
+            fwOrBw + '_max_hsps': str(capped_values['max_hsps'])
         }
         return settings_dict
 
@@ -62,12 +79,17 @@ class BlastSettings(models.Model):
     '''
 
     def get_values_as_dict(self):
+        capped_values = capped_blast_settings_values(
+            self.num_threads,
+            self.num_alignments,
+            max_hsps=self.max_hsps,
+        )
         settings_dict = {
             'e_value': str(self.e_value),
             'word_size': str(self.word_size),
-            'num_threads': str(self.num_threads),
-            'num_alignments': str(self.num_alignments),
-            'max_hsps': str(self.max_hsps)
+            'num_threads': str(capped_values['num_threads']),
+            'num_alignments': str(capped_values['num_alignments']),
+            'max_hsps': str(capped_values['max_hsps'])
         }
         return settings_dict
 
@@ -135,6 +157,22 @@ class BlastProject(models.Model):
         blank=True, null=True,
         related_name="project_execution_snakemake_task",
         verbose_name="django_celery_results taskresult model for this projects snakemake pipeline")
+
+    project_workflow_state = models.CharField(
+        max_length=20,
+        choices=WorkflowLifecycle.choices,
+        default=WorkflowLifecycle.STARTABLE,
+        db_index=True,
+        verbose_name="reciprocal workflow lifecycle state",
+    )
+
+    project_workflow_execution_token = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        db_index=True,
+        verbose_name="current reciprocal workflow execution token",
+    )
 
     project_database_statistics_task = models.OneToOneField(
         TaskResult,
@@ -471,6 +509,22 @@ class RemoteBlastProject(models.Model):
         blank=True, null=True,
         related_name="r_project_execution_snakemake_task",
         verbose_name="django_celery_results taskresult model for this projects snakemake pipeline")
+
+    r_project_workflow_state = models.CharField(
+        max_length=20,
+        choices=WorkflowLifecycle.choices,
+        default=WorkflowLifecycle.STARTABLE,
+        db_index=True,
+        verbose_name="remote reciprocal workflow lifecycle state",
+    )
+
+    r_project_workflow_execution_token = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        db_index=True,
+        verbose_name="current remote reciprocal workflow execution token",
+    )
 
     r_project_database_statistics_task = models.OneToOneField(
         TaskResult,

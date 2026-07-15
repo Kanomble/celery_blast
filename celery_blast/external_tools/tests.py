@@ -7,11 +7,17 @@ from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import ANY, mock_open, patch
 
+from django.contrib.auth.models import User
 from django.contrib.auth.models import AnonymousUser
+from django.conf import settings
+from django.urls import reverse
 from django.template.loader import render_to_string
-from django.test import RequestFactory, SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
+from django_celery_results.models import TaskResult
 
+from blast_project.models import BlastProject, BlastSettings
 from external_tools.shiptv_html import make_tree_drawable, patch_shiptv_html_file
+from external_tools.models import EntrezSearch, ExternalTools, QuerySequences
 from external_tools.genbank_download_clinker_synteny import (
     build_download_genbank_command,
     run_genbank_download_command,
@@ -33,6 +39,18 @@ from external_tools.entrez_search_service import (
     build_pubmed_to_fasta_command,
     run_edirect_command,
 )
+from refseq_transactions.models import BlastDatabase
+
+
+def create_blast_settings():
+    return BlastSettings.objects.create(
+        e_value=0.001,
+        word_size=3,
+        num_alignments=10,
+        max_target_seqs=10,
+        num_threads=1,
+        max_hsps=10,
+    )
 
 
 class SyntenyQuerySequenceStub:
@@ -107,6 +125,211 @@ class SyntenyDetectionDashboardTemplateTests(SimpleTestCase):
                 1,
                 html.count(f'id="synteny-delete_button-{accession_id}"'),
             )
+
+
+class ExternalToolObjectAuthorizationTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user('external-owner', password='test')
+        self.other_user = User.objects.create_user('external-other', password='test')
+        self.database = BlastDatabase.objects.create(
+            database_name='external auth database',
+            database_description='test database',
+            assembly_entries=1,
+            path_to_database_file='testfiles/databases/external-auth',
+        )
+        self.project = BlastProject.objects.create(
+            project_title='external auth project',
+            search_strategy='blastp',
+            project_query_sequences='query.faa',
+            project_user=self.owner,
+            project_forward_settings=create_blast_settings(),
+            project_backward_settings=create_blast_settings(),
+            project_forward_database=self.database,
+            project_backward_database=self.database,
+            species_name_for_backward_blast='Species',
+        )
+        self.external_tools = ExternalTools.objects.create(
+            associated_project=self.project,
+            remote_or_local='local',
+        )
+        self.msa_task = TaskResult.objects.create(task_id='owner-msa-task', status='PROGRESS')
+        self.phylo_task = TaskResult.objects.create(task_id='owner-phylo-task', status='SUCCESS')
+        self.search_task = TaskResult.objects.create(task_id='owner-search-task', status='PENDING')
+        self.download_task = TaskResult.objects.create(task_id='owner-download-task', status='STARTED')
+        self.query_sequence = QuerySequences.objects.create(
+            query_accession_id='WP_AUTH',
+            query_accession_information='owned query',
+            external_tool_for_query_sequence=self.external_tools,
+            multiple_sequence_alignment_task=self.msa_task,
+            phylogenetic_tree_construction_task=self.phylo_task,
+        )
+        self.entrez_search = EntrezSearch.objects.create(
+            database='protein',
+            entrez_user=self.owner,
+            entrez_query='kinase[Title]',
+            file_name='media/esearch_output/owner-search.tsv',
+            fasta_file_name='media/esearch_output/owner-search.faa',
+            search_task_result=self.search_task,
+            download_task_result=self.download_task,
+        )
+
+    def ajax_get(self, url, user):
+        self.client.force_login(user)
+        return self.client.get(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+    def assert_denied_without_state(self, response):
+        self.assertEqual(404, response.status_code)
+        body = response.content.decode(errors='ignore')
+        for leaked_value in (
+            'PROGRESS',
+            'SUCCESS',
+            'PENDING',
+            'STARTED',
+            'owner-msa-task',
+            'owner-phylo-task',
+            'owner-search-task',
+            'owner-download-task',
+            'owner-search.faa',
+        ):
+            self.assertNotIn(leaked_value, body)
+
+    def test_owner_can_access_query_sequence_progress(self):
+        msa_response = self.ajax_get(
+            reverse('ajax_call_progress_msa_task', kwargs={'query_sequence_id': self.query_sequence.id}),
+            self.owner,
+        )
+        phylo_response = self.ajax_get(
+            reverse('ajax_call_progress_phylogeny_task', kwargs={'query_sequence_id': self.query_sequence.id}),
+            self.owner,
+        )
+
+        self.assertEqual({'progress': 'PROGRESS'}, msa_response.json())
+        self.assertEqual({'progress': 'SUCCESS'}, phylo_response.json())
+
+    def test_other_user_cannot_access_query_sequence_progress(self):
+        msa_response = self.ajax_get(
+            reverse('ajax_call_progress_msa_task', kwargs={'query_sequence_id': self.query_sequence.id}),
+            self.other_user,
+        )
+        phylo_response = self.ajax_get(
+            reverse('ajax_call_progress_phylogeny_task', kwargs={'query_sequence_id': self.query_sequence.id}),
+            self.other_user,
+        )
+
+        self.assert_denied_without_state(msa_response)
+        self.assert_denied_without_state(phylo_response)
+
+    def test_owner_can_access_entrez_progress(self):
+        download_response = self.ajax_get(
+            reverse('ajax_call_progress_entrezsearch_to_fasta', kwargs={'search_id': self.entrez_search.id}),
+            self.owner,
+        )
+        search_response = self.ajax_get(
+            reverse('ajax_entrez_search_progress', kwargs={'search_id': self.entrez_search.id}),
+            self.owner,
+        )
+
+        self.assertEqual({'progress': 'STARTED'}, download_response.json())
+        self.assertEqual({'data': 'PENDING'}, search_response.json())
+
+    def test_other_user_cannot_access_entrez_progress_or_details(self):
+        download_response = self.ajax_get(
+            reverse('ajax_call_progress_entrezsearch_to_fasta', kwargs={'search_id': self.entrez_search.id}),
+            self.other_user,
+        )
+        search_progress_response = self.ajax_get(
+            reverse('ajax_entrez_search_progress', kwargs={'search_id': self.entrez_search.id}),
+            self.other_user,
+        )
+        details_response = self.client.get(
+            reverse('search_details', kwargs={'search_id': self.entrez_search.id})
+        )
+
+        self.assert_denied_without_state(download_response)
+        self.assert_denied_without_state(search_progress_response)
+        self.assert_denied_without_state(details_response)
+
+    def test_anonymous_progress_requests_are_rejected(self):
+        response = self.client.get(
+            reverse('ajax_call_progress_msa_task', kwargs={'query_sequence_id': self.query_sequence.id}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(302, response.status_code)
+        self.assertIn('/blast_project/login', response['Location'])
+
+    def test_neighboring_project_authorized_dashboard_still_works(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(
+            reverse(
+                'synteny_dashboard',
+                kwargs={'project_id': self.project.id, 'remote_or_local': 'local'},
+            )
+        )
+
+        self.assertEqual(200, response.status_code)
+
+    def test_owner_can_retrieve_generated_visualization_with_security_headers(self):
+        self.client.force_login(self.owner)
+        url = reverse(
+            'load_synteny',
+            kwargs={
+                'project_id': self.project.id,
+                'remote_or_local': 'local',
+                'query_sequence_id': 'WP_AUTH',
+            },
+        )
+
+        with patch('external_tools.views.get_html_results', return_value=['<script>renderPlot()</script>']):
+            response = self.client.get(url)
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, '<script>renderPlot()</script>', html=False)
+        self.assertEqual('nosniff', response['X-Content-Type-Options'])
+        self.assertIn('sandbox allow-scripts', response['Content-Security-Policy'])
+        self.assertNotIn('allow-same-origin', response['Content-Security-Policy'])
+
+    def test_other_user_cannot_retrieve_generated_visualization(self):
+        self.client.force_login(self.other_user)
+        url = reverse(
+            'load_synteny',
+            kwargs={
+                'project_id': self.project.id,
+                'remote_or_local': 'local',
+                'query_sequence_id': 'WP_AUTH',
+            },
+        )
+
+        with patch('external_tools.views.get_html_results', return_value=['owned generated html']) as get_html:
+            response = self.client.get(url)
+
+        self.assertEqual(404, response.status_code)
+        self.assertNotIn('owned generated html', response.content.decode(errors='ignore'))
+        get_html.assert_not_called()
+
+
+class EntrezSearchHtmlRenderingTests(SimpleTestCase):
+    def test_external_metadata_html_like_values_render_as_text(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            output_path = Path(tempdir) / 'protein.tsv'
+            output_path.write_text(
+                '12"><script>alert(2)</script>\t'
+                'Caption <b>bold</b>\t'
+                'Title <script>alert(1)</script>\t'
+                'Organism <img src=x onerror=alert(1)>\n',
+                encoding='utf-8',
+            )
+            search = EntrezSearch(database='protein', file_name=str(output_path))
+
+            html = search.get_paper_content()
+
+        self.assertNotIn('<script', html.lower())
+        self.assertNotIn('<img src=x onerror=alert(1)>', html)
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', html)
+        self.assertIn('Caption &lt;b&gt;bold&lt;/b&gt;', html)
+        self.assertIn('Organism &lt;img src=x onerror=alert(1)&gt;', html)
+        self.assertIn('https://www.ncbi.nlm.nih.gov/protein/12%22%3E%3Cscript%3Ealert%282%29%3C%2Fscript%3E', html)
 
 
 class EntrezSearchServiceCommandTests(SimpleTestCase):
@@ -246,7 +469,7 @@ class ExternalToolCommandTests(SimpleTestCase):
         self.assertEqual('/tmp/cdd', command[4])
         self.assertEqual('/tmp/domains.tsv', command[8])
         self.assertEqual('0.001', command[10])
-        self.assertEqual('4', command[12])
+        self.assertEqual(str(settings.CATHI_EFFECTIVE_BLAST_THREADS), command[12])
         self.assertEqual('2', command[14])
         self.assertEqual('100', command[16])
 

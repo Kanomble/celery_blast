@@ -9,11 +9,13 @@ from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
 from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
+from celery_blast.resource_governance import resource_budget_log_line, workflow_job_cores
 from .py_django_db_services import update_blast_project_with_task_result_model, \
     update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
     update_blast_project_with_database_statistics_task_result_model, get_all_blast_databases, \
     update_remote_blast_project_with_task_result_model
 from .py_database_statistics import calculate_database_statistics
+from .workflow_execution import finish_workflow_execution
 from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES, \
     CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR
 
@@ -40,18 +42,28 @@ def build_snakemake_environment():
 def execute_reciprocal_snakemake_workflow(project_id, working_dir, config_file, snakefile_dir, task_result_updater,
                                           task_id, project_type, progress_recorder):
     try:
-        task_result_updater(project_id, task_id)
+        claim_result = task_result_updater(project_id, task_id)
     except Exception as e:
         logger.warning('couldnt update blastproject with exception : {}'.format(e))
         raise Exception('couldnt update blastproject with exception : {}'.format(e))
+    if claim_result is False:
+        logger.warning(
+            'refusing stale or duplicate reciprocal workflow task_id={} for project_id={} project_type={}'.format(
+                task_id,
+                project_id,
+                project_type,
+            )
+        )
+        return 0
 
     logger.info('INFO:trying to start snakemake reciprocal BLAST workflow')
+    logger.info(resource_budget_log_line())
     progress_recorder.set_progress(25, 100, 'PROGRESS')
 
     command = [
         'snakemake',
         '--snakefile', resolve_project_path(snakefile_dir),
-        '--cores', '1',
+        '--cores', str(workflow_job_cores()),
         '--configfile', resolve_project_path(config_file),
         '--directory', resolve_project_path(working_dir),
     ]
@@ -66,11 +78,21 @@ def execute_reciprocal_snakemake_workflow(project_id, working_dir, config_file, 
             cleanup_exceptions=(SoftTimeLimitExceeded,),
             env=build_snakemake_environment(),
         )
-    except ExternalCommandError:
+    except (ExternalCommandError, ExternalCommandTimeout, SoftTimeLimitExceeded):
+        finish_workflow_execution(project_id, task_id, project_type, successful=False)
         progress_recorder.set_progress(0, 100, "FAILURE")
         raise
 
     progress_recorder.set_progress(100, 100, "SUCCESS")
+    if finish_workflow_execution(project_id, task_id, project_type, successful=True) is False:
+        logger.warning(
+            'not applying successful completion for stale reciprocal workflow task_id={} project_id={} project_type={}'.format(
+                task_id,
+                project_id,
+                project_type,
+            )
+        )
+        return result.returncode
     logger.info('INFO:creating external tools model')
     create_external_tools_after_snakemake_workflow_finishes(project_id, project_type)
     logger.info('INFO:update phylo and msa task with id of the reciprocal BLAST')
@@ -237,8 +259,9 @@ def write_species_taxids_into_file(taxonomic_node, taxids_filename):
 
 # TODO documentation
 @shared_task(bind=True)
-def execute_reciprocal_blast_project(self, project_id):
+def execute_reciprocal_blast_project(self, project_id, execution_token=None):
     try:
+        task_id = execution_token or str(self.request.id)
         snakemake_working_dir = BLAST_PROJECT_DIR + str(project_id) + '/'
         snakemake_config_file = BLAST_PROJECT_DIR + str(project_id) + '/snakefile_config'
         snakefile_dir = 'static/snakefiles/reciprocal_blast/Snakefile'
@@ -252,7 +275,7 @@ def execute_reciprocal_blast_project(self, project_id):
             snakemake_config_file,
             snakefile_dir,
             update_blast_project_with_task_result_model,
-            str(self.request.id),
+            task_id,
             'local',
             progress_recorder,
         )
@@ -266,8 +289,9 @@ def execute_reciprocal_blast_project(self, project_id):
         raise Exception('ERROR:exception occured during invokation of:\n\t reciprocal blast snakefile : {}'.format(e))
 
 @shared_task(bind=True)
-def execute_remote_reciprocal_blast_project(self, project_id):
+def execute_remote_reciprocal_blast_project(self, project_id, execution_token=None):
     try:
+        task_id = execution_token or str(self.request.id)
         snakemake_working_dir = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/'
         snakemake_config_file = REMOTE_BLAST_PROJECT_DIR + str(project_id) + '/snakefile_config'
         snakefile_dir = 'static/snakefiles/reciprocal_blast/remote_searches/Snakefile'
@@ -281,7 +305,7 @@ def execute_remote_reciprocal_blast_project(self, project_id):
             snakemake_config_file,
             snakefile_dir,
             update_remote_blast_project_with_task_result_model,
-            str(self.request.id),
+            task_id,
             'remote',
             progress_recorder,
         )

@@ -10,6 +10,7 @@ from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from celery_blast.processes import run_external_command
+from celery_blast.resource_governance import capped_blast_threads
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 
@@ -61,6 +62,7 @@ def build_cdd_extract_command(cdd_archive_path, download_directory):
 
 
 def build_rpsblast_command(path_to_query_file, path_to_cdd_db, output_path, rps_blast_task_data):
+    num_threads = capped_blast_threads(rps_blast_task_data['rps_num_threads'])
     return [
         'rpsblast',
         '-query', path_to_query_file,
@@ -68,7 +70,7 @@ def build_rpsblast_command(path_to_query_file, path_to_cdd_db, output_path, rps_
         '-outfmt', '6 qseqid qlen sacc slen qstart qend sstart send bitscore evalue pident',
         '-out', output_path,
         '-evalue', str(rps_blast_task_data['rps_e_value']),
-        '-num_threads', str(rps_blast_task_data['rps_num_threads']),
+        '-num_threads', str(num_threads),
         '-max_hsps', str(rps_blast_task_data['rps_max_hsps']),
         '-num_alignments', str(rps_blast_task_data['rps_num_alignments']),
     ]

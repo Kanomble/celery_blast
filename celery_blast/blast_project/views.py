@@ -10,14 +10,16 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .access import get_owned_local_project_or_404, get_owned_remote_project_or_404, project_owner_required
+from .result_responses import generated_html_response
 from .view_access_decorators import unauthenticated_user
 from .forms import CreateUserForm, CreateTaxonomicFileForm, UploadMultipleFilesGenomeForm, \
     ProjectCreationForm, RemoteProjectCreationForm, BlastSettingsFormBackward, \
     BlastSettingsFormForward, UploadGenomeForm, \
     CreateTaxonomicFileForMultipleScientificNames, SymBLASTProjectSettingsForm
-from .tasks import write_species_taxids_into_file, execute_reciprocal_blast_project, \
-    execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
-    calculate_database_statistics_task, execute_remote_reciprocal_blast_project
+from .tasks import write_species_taxids_into_file, execute_makeblastdb_with_uploaded_genomes, download_and_format_taxdb, \
+    calculate_database_statistics_task
+from .workflow_execution import start_reciprocal_workflow
+from celery_blast.resource_governance import WorkflowQuotaExceeded
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, get_remote_html_results, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
     read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id, \
@@ -458,19 +460,14 @@ def ajax_wp_to_links(request, project_id: int):
 def start_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
-            blast_project = get_project_by_id(project_id)
-            if blast_project.project_execution_snakemake_task:
-                if blast_project.project_execution_snakemake_task.status != 'FAILURE':
-                    execute_reciprocal_blast_project.delay(project_id)
-                    return redirect('project_details', project_id=project_id)
-                else:
-                    execute_reciprocal_blast_project.delay(project_id)
-            else:
-                execute_reciprocal_blast_project.delay(project_id)
+            start_reciprocal_workflow(project_id, remote=False)
         # sleep 1 second to enable correct progress handling
         sleep(1)
         return redirect('project_details', project_id=project_id)
     except Exception as e:
+        if isinstance(e, WorkflowQuotaExceeded):
+            messages.error(request, e.messages[0])
+            return redirect('project_details', project_id=project_id)
         return failure_view(request, e)
 
 @login_required(login_url='login')
@@ -478,19 +475,14 @@ def start_reciprocal_blast_project_view(request, project_id: int):
 def start_remote_reciprocal_blast_project_view(request, project_id: int):
     try:
         if request.method == 'POST':
-            blast_project = get_remote_project_by_id(project_id)
-            if blast_project.r_project_execution_snakemake_task:
-                if blast_project.r_project_execution_snakemake_task.status != 'FAILURE':
-                    execute_remote_reciprocal_blast_project.delay(project_id)
-                    return redirect('remote_project_details', project_id=project_id)
-                else:
-                    execute_remote_reciprocal_blast_project.delay(project_id)
-            else:
-                execute_remote_reciprocal_blast_project.delay(project_id)
+            start_reciprocal_workflow(project_id, remote=True)
         # sleep 1 second to enable correct progress handling
         sleep(1)
         return redirect('remote_project_details', project_id=project_id)
     except Exception as e:
+        if isinstance(e, WorkflowQuotaExceeded):
+            messages.error(request, e.messages[0])
+            return redirect('remote_project_details', project_id=project_id)
         return failure_view(request, e)
 
 '''load_reciprocal_result_html_table_view
@@ -506,7 +498,7 @@ def start_remote_reciprocal_blast_project_view(request, project_id: int):
 def load_reciprocal_result_html_table_view(request, project_id):
     try:
         html_data = get_html_results(project_id, "reciprocal_results.html", html_result_path=BLAST_PROJECT_DIR)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -515,7 +507,7 @@ def load_reciprocal_result_html_table_view(request, project_id):
 def load_remote_reciprocal_result_html_table_view(request, project_id):
     try:
         html_data = get_remote_html_results(project_id, "reciprocal_results.html", html_result_path=REMOTE_BLAST_PROJECT_DIR)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -1146,7 +1138,7 @@ def view_selection_phylogeny(request, project_id: int, remote_or_local:str):
         else:
             raise Exception("[-] ERROR project neither local nor remote")
         html_data = get_html_results(project_id, "selection_sliced_phylogeny.html", html_result_path=html_path)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 
@@ -1305,7 +1297,7 @@ def view_example_html(request, example_html:str):
             with open("blast_project/templates/blast_project/example_interactive_phylogeny.html") as html_file:
                 html_content = html_file.read()
             if html_content != "":
-                return HttpResponse(html_content)
+                return generated_html_response(html_content, interactive=True)
             else:
                 raise Exception("[-] Example Phylogeny Not Found ...")
     except Exception as e:

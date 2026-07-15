@@ -1,13 +1,19 @@
+import uuid
 from os.path import isfile
 
 from blast_project.views import failure_view, success_view
 # BLAST_PROJECT_DIR DEFAULT = 'media/one_way_blast/'
 from celery_blast.settings import ONE_WAY_BLAST_PROJECT_DIR
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, HttpResponse
+from django_celery_results.models import TaskResult
 
 from blast_project.protected_media import serve_protected_project_file
+from blast_project.result_responses import generated_html_response
+from celery_blast.resource_governance import ACTIVE_TASK_STATUSES, WorkflowQuotaExceeded, enforce_user_workflow_quota
 from .forms import OneWayProjectCreationForm, BlastSettingsForm, OneWayRemoteProjectCreationForm
 from .access import one_way_project_owner_required
 from .py_biopython import calculate_pfam_and_protein_links_from_one_way_queries
@@ -18,6 +24,36 @@ from .py_services import delete_one_way_blast_project_and_associated_directories
     read_snakemake_logfile, check_amount_of_blast_hits
 from .tasks import execute_one_way_blast_project, execute_one_way_remote_blast_project
 from time import sleep
+
+
+def _start_one_way_workflow(project_id, user, remote=False):
+    from .models import OneWayBlastProject, OneWayRemoteBlastProject
+
+    if remote:
+        model = OneWayRemoteBlastProject
+        task_field = 'r_project_execution_task_result'
+        owner_field = 'r_project_user'
+        task = execute_one_way_remote_blast_project
+    else:
+        model = OneWayBlastProject
+        task_field = 'project_execution_task_result'
+        owner_field = 'project_user'
+        task = execute_one_way_blast_project
+
+    with transaction.atomic():
+        project = model.objects.select_for_update().get(id=project_id, **{owner_field: user})
+        current_task = getattr(project, task_field)
+        if current_task is not None and current_task.status in ACTIVE_TASK_STATUSES:
+            return False
+
+        enforce_user_workflow_quota(user)
+
+        task_id = uuid.uuid4().hex
+        task_result = TaskResult.objects.create(task_id=task_id, status='PENDING')
+        setattr(project, task_field, task_result)
+        project.save(update_fields=[task_field])
+        transaction.on_commit(lambda: task.apply_async(args=(project_id,), task_id=task_id))
+        return True
 
 '''one_way_blast_project_creation_view
     
@@ -185,10 +221,13 @@ def ajax_one_way_wp_to_links(request, project_id, remote):
 def execute_one_way_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
-            execute_one_way_blast_project.delay(project_id)
+            _start_one_way_workflow(project_id, request.user, remote=False)
         sleep(1)
         return redirect('one_way_project_details', project_id=project_id)
     except Exception as e:
+        if isinstance(e, WorkflowQuotaExceeded):
+            messages.error(request, e.messages[0])
+            return redirect('one_way_project_details', project_id=project_id)
         return failure_view(request, e)
 
 
@@ -198,10 +237,13 @@ def execute_one_way_blast_project_view(request, project_id):
 def execute_one_way_remote_blast_project_view(request, project_id):
     try:
         if request.method == 'POST':
-            execute_one_way_remote_blast_project.delay(project_id)
+            _start_one_way_workflow(project_id, request.user, remote=True)
         sleep(1)
         return redirect('one_way_remote_project_details', project_id=project_id)
     except Exception as e:
+        if isinstance(e, WorkflowQuotaExceeded):
+            messages.error(request, e.messages[0])
+            return redirect('one_way_remote_project_details', project_id=project_id)
         return failure_view(request, e)
 
 
@@ -211,7 +253,7 @@ def execute_one_way_remote_blast_project_view(request, project_id):
 def load_one_way_result_html_table_view(request, project_id, remote):
     try:
         html_data = get_one_way_html_results(project_id, "blast_results.html", remote)
-        return HttpResponse(html_data)
+        return generated_html_response(html_data, interactive=True)
     except Exception as e:
         return failure_view(request, e)
 

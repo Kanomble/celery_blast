@@ -3,9 +3,11 @@ from string import punctuation, ascii_letters
 from blast_project.py_biopython import fetch_protein_records
 from blast_project.py_django_db_services import get_all_succeeded_databases
 from celery_blast.entrez_query import EntrezQueryValidationError, validate_entrez_query
+from celery_blast.resource_governance import validate_uploaded_file_size
 from .py_django_db_services import check_if_one_way_project_title_exists
 from django import forms
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 
 # TODO documentation
@@ -60,6 +62,7 @@ class OneWayProjectCreationForm(forms.Form):
 
         # query file was uploaded
         if query_file is not None:
+            validate_uploaded_file_size(query_file)
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
                 self.add_error('query_sequence_file', "{} - please upload only fasta files! - files with the ending: .faa or .fasta".format(query_file.name))
 
@@ -121,11 +124,14 @@ class BlastSettingsForm(forms.Form):
     word_size = forms.IntegerField(
         label="Word Size", initial=3)
     num_alignments = forms.IntegerField(
-        label="Number of possible alignment outputs", initial=10000)
+        label="Number of possible alignment outputs", initial=10000,
+        min_value=1, max_value=settings.CATHI_MAX_NUM_ALIGNMENTS)
     num_threads = forms.IntegerField(
-        label="Threads", initial=1)
+        label="Threads", initial=1,
+        min_value=1, max_value=settings.CATHI_EFFECTIVE_BLAST_THREADS)
     max_hsps = forms.IntegerField(
-        label='Max HSPS', initial=500
+        label='Max HSPS', initial=500,
+        min_value=1, max_value=settings.CATHI_MAX_HSPS
     )
 
 
@@ -206,6 +212,7 @@ class OneWayRemoteProjectCreationForm(forms.Form):
 
         # query file was uploaded
         if query_file != None:
+            validate_uploaded_file_size(query_file)
             if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
                 self.add_error('r_query_sequence_file', "{} - please upload only fasta files!".format(query_file.name))
 

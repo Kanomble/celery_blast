@@ -5,6 +5,8 @@ from refseq_transactions.models import AssemblyLevels, BlastDatabase
 from django.contrib.auth.models import User
 from django.utils import timezone
 import os
+from pathlib import Path
+import tempfile
 
 class BlastProjectTestCase(TestCase):
     def setUp(self):
@@ -126,6 +128,27 @@ class BlastProjectTestCase(TestCase):
     def test_remote_blast_project_missing_reciprocal_information_table_returns_empty_dict(self):
         blast_project = RemoteBlastProject.objects.get(r_project_title='test remote project 1')
         self.assertEqual(blast_project.read_reciprocal_information_table(filepath='testfiles/missing_blast_project/'), {})
+
+    def test_query_information_table_escapes_fasta_header_like_html(self):
+        blast_project = BlastProject.objects.get(project_title='test project 1')
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            project_dir = Path(tempdir) / str(blast_project.id)
+            project_dir.mkdir()
+            (project_dir / 'query_sequence_information.csv').write_text(
+                "Query\tFeatures\tDescription\n"
+                "WP_TEST\t['<b>domain</b>', '<script>alert(1)</script>']\t"
+                "header <img src=x onerror=alert(1)>\n",
+                encoding='utf-8',
+            )
+
+            html = blast_project.read_query_information_table(filepath=str(Path(tempdir)) + os.sep)
+
+        self.assertIn('&lt;b&gt;domain&lt;/b&gt;', html)
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', html)
+        self.assertIn('&lt;img src=x onerror=alert(1)&gt;', html)
+        self.assertNotIn('<script>alert(1)</script>', html)
+        self.assertNotIn('<img src=x onerror=alert(1)>', html)
 
     @tag('biological')
     def test_blast_project_query_sequence_file(self):

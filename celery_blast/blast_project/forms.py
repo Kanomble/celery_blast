@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node, get_list_of_species_taxid_by_name, \
@@ -8,6 +9,7 @@ from .py_biopython import get_species_taxid_by_name, check_given_taxonomic_node,
 from .py_django_db_services import get_all_succeeded_databases, get_database_by_id, check_if_taxid_is_in_database, \
     check_if_sequences_are_in_database, check_if_project_title_exists, check_if_database_title_exists, check_if_remote_project_title_exists
 from celery_blast.entrez_query import EntrezQueryValidationError, validate_entrez_query
+from celery_blast.resource_governance import validate_uploaded_file_size
 
 from string import punctuation, ascii_letters
 
@@ -234,6 +236,7 @@ class ProjectCreationForm(forms.Form):
 
             # query file was uploaded
             if query_file != None:
+                validate_uploaded_file_size(query_file)
                 if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True and query_file.name.endswith('.fa') != True:
                     self.add_error('query_sequence_file', "please upload only fasta files, your filename should end with .faa, .fa or .fasta")
 
@@ -352,13 +355,17 @@ class BlastSettingsFormForward(forms.Form):
     fw_word_size = forms.IntegerField(
         label="FW Word Size", initial=3)
     fw_num_alignments = forms.IntegerField(
-        label="FW Number of possible alignment outputs", initial=10000)
+        label="FW Number of possible alignment outputs", initial=10000,
+        min_value=1, max_value=settings.CATHI_MAX_NUM_ALIGNMENTS)
     fw_max_target_seqs = forms.IntegerField(
-        label="FW max_target_seqs of possible alignment description outputs", initial=10000)
+        label="FW max_target_seqs of possible alignment description outputs", initial=10000,
+        min_value=1, max_value=settings.CATHI_MAX_TARGET_SEQS)
     fw_num_threads = forms.IntegerField(
-        label="FW Threads", initial=1)
+        label="FW Threads", initial=1,
+        min_value=1, max_value=settings.CATHI_EFFECTIVE_BLAST_THREADS)
     fw_max_hsps = forms.IntegerField(
-        label='FW max hsps', initial=500
+        label='FW max hsps', initial=500,
+        min_value=1, max_value=settings.CATHI_MAX_HSPS
     )
 
 
@@ -376,13 +383,17 @@ class BlastSettingsFormBackward(forms.Form):
     bw_word_size = forms.IntegerField(
         label="BW Word Size", initial=3)
     bw_num_alignments = forms.IntegerField(
-        label="BW Number of possible alignment outputs", initial=1)
+        label="BW Number of possible alignment outputs", initial=1,
+        min_value=1, max_value=settings.CATHI_MAX_NUM_ALIGNMENTS)
     bw_max_target_seqs = forms.IntegerField(
-        label="BW max_target_seqs of possible alignment description outputs", initial=1)
+        label="BW max_target_seqs of possible alignment description outputs", initial=1,
+        min_value=1, max_value=settings.CATHI_MAX_TARGET_SEQS)
     bw_num_threads = forms.IntegerField(
-        label="BW Threads", initial=1)
+        label="BW Threads", initial=1,
+        min_value=1, max_value=settings.CATHI_EFFECTIVE_BLAST_THREADS)
     bw_max_hsps = forms.IntegerField(
-        label='BW max hsps', initial=500
+        label='BW max hsps', initial=500,
+        min_value=1, max_value=settings.CATHI_MAX_HSPS
     )
 
 '''SymBLASTProjectSettingsForm
@@ -396,7 +407,8 @@ class SymBLASTProjectSettingsForm(forms.Form):
         label="Bitscore threshold", initial=50
     )
     max_amount_of_rbh_for_msa_and_phylogeny = forms.IntegerField(
-        label="Maximum number of sequences to use for phylogenetic inference", initial=500
+        label="Maximum number of sequences to use for phylogenetic inference", initial=500,
+        min_value=1, max_value=settings.CATHI_MAX_RBHS_FOR_PHYLO
     )
     # documentation of trimal options: http://trimal.cgenomics.org/use_of_the_command_line_trimal_v1.2
     trimal_gt = forms.FloatField(
@@ -580,6 +592,7 @@ class RemoteProjectCreationForm(forms.Form):
 
             # query file was uploaded
             if query_file != None:
+                validate_uploaded_file_size(query_file)
                 if query_file.name.endswith('.faa') != True and query_file.name.endswith('.fasta') != True:
                     self.add_error('r_query_sequence_file', "please upload only fasta files!")
 
@@ -764,6 +777,16 @@ class UploadGenomeForm(forms.Form):
         assembly_level_file = cleaned_data['assembly_level_file']
         user_email = cleaned_data['user_email']
 
+        for uploaded_file in [
+            genome_fasta_file,
+            taxmap_file,
+            organism_file,
+            assembly_accessions_file,
+            assembly_level_file,
+        ]:
+            if uploaded_file is not None:
+                validate_uploaded_file_size(uploaded_file)
+
         if 'database_title' not in list(cleaned_data.keys()):
             self.add_error('database_title', "This field is required, set an appropriate database title!")
         else:
@@ -906,7 +929,9 @@ class UploadMultipleFilesGenomeForm(forms.Form):
 
                 elif file.name.split(".")[-1] in ["fasta", "faa", "fa"] == False:
                     self.add_error(field,
-                                   'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
+                                    'You have to upload a FASTA file, if you provide a valid FASTA file make sure to have a file ending with .faa, .fasta or .fa!')
+                else:
+                    validate_uploaded_file_size(file)
 
             elif "organism" in field:
                 if cleaned_data.get(field) == '':

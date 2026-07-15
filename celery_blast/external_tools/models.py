@@ -1,3 +1,6 @@
+from html import escape
+from urllib.parse import quote
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from blast_project.models import BlastProject, RemoteBlastProject
@@ -420,9 +423,21 @@ class EntrezSearch(models.Model):
     def get_paper_content(self):
         paper = self.get_pandas_table()
 
+        def escape_cell(value):
+            if pd.isna(value):
+                return ''
+            return escape(str(value), quote=True)
+
         def make_clickable(ncbi_id):
+            display_id = escape_cell(ncbi_id)
+            url_database = quote(str(self.database), safe='')
+            url_id = quote('' if pd.isna(ncbi_id) else str(ncbi_id), safe='')
             return '<a href="https://www.ncbi.nlm.nih.gov/{}/{}" rel="noopener noreferrer" target="_blank">{}</a>'.format(
-                self.database, ncbi_id, ncbi_id)
+                url_database, url_id, display_id)
+
+        for column in paper.columns:
+            if column != 'Id':
+                paper[column] = paper[column].map(escape_cell)
 
         paper = paper.style.format({'Id': make_clickable}) \
             .set_table_attributes('class="main_table table table-hover dataTable no-footer" style="width:100%"')

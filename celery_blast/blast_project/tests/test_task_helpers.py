@@ -171,6 +171,7 @@ class BlastProjectTaskHelperTests(SimpleTestCase):
             updated.append((project_id, task_id))
 
         with patch('blast_project.tasks.run_external_command', return_value=Result()) as run_command, \
+                patch('blast_project.tasks.finish_workflow_execution', return_value=True) as finish_workflow, \
                 patch('blast_project.tasks.create_external_tools_after_snakemake_workflow_finishes') as create_tools, \
                 patch('blast_project.tasks.ExternalTools') as external_tools_model:
             external_tools_model.objects.get_external_tools_based_on_project_id.return_value = external_tools
@@ -192,6 +193,7 @@ class BlastProjectTaskHelperTests(SimpleTestCase):
         self.assertEqual('task-456', external_tools.phylo_task_id)
         self.assertEqual([(25, 100, 'PROGRESS'), (100, 100, 'SUCCESS')], progress_recorder.progress_updates)
         create_tools.assert_called_once_with(3, 'local')
+        finish_workflow.assert_called_once_with(3, 'task-456', 'local', successful=True)
         run_command.assert_called_once_with(
             [
                 'snakemake',
@@ -221,6 +223,7 @@ class BlastProjectTaskHelperTests(SimpleTestCase):
         external_tools = FakeExternalTools()
 
         with patch('blast_project.tasks.run_external_command', return_value=Result()) as run_command, \
+                patch('blast_project.tasks.finish_workflow_execution', return_value=True), \
                 patch('blast_project.tasks.create_external_tools_after_snakemake_workflow_finishes'), \
                 patch('blast_project.tasks.ExternalTools') as external_tools_model:
             external_tools_model.objects.get_external_tools_based_on_project_id.return_value = external_tools
@@ -258,3 +261,24 @@ class BlastProjectTaskHelperTests(SimpleTestCase):
             cleanup_exceptions=ANY,
             env=expected_snakemake_environment(),
         )
+
+    def test_execute_reciprocal_snakemake_workflow_refuses_duplicate_delivery(self):
+        progress_recorder = FakeProgressRecorder()
+
+        with patch('blast_project.tasks.run_external_command') as run_command, \
+                patch('blast_project.tasks.finish_workflow_execution') as finish_workflow:
+            returncode = execute_reciprocal_snakemake_workflow(
+                project_id=3,
+                working_dir='media/blast_projects/3/',
+                config_file='media/blast_projects/3/snakefile_config',
+                snakefile_dir='static/snakefiles/reciprocal_blast/Snakefile',
+                task_result_updater=lambda project_id, task_id: False,
+                task_id='task-duplicate',
+                project_type='local',
+                progress_recorder=progress_recorder,
+            )
+
+        self.assertEqual(0, returncode)
+        self.assertEqual([], progress_recorder.progress_updates)
+        run_command.assert_not_called()
+        finish_workflow.assert_not_called()

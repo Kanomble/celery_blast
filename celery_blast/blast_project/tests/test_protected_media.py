@@ -33,6 +33,10 @@ class ProtectedProjectArtifactTests(TestCase):
         self.project_root = self.media_root / 'blast_projects' / '1'
         self.project_root.mkdir(parents=True)
         (self.project_root / 'result.txt').write_text('owned result', encoding='utf-8')
+        (self.project_root / 'result.html').write_text(
+            '<!doctype html><script>window.result = true;</script><p>owned html</p>',
+            encoding='utf-8',
+        )
         (self.project_root / 'plot_amount_hits_of_target_taxon.png').write_bytes(b'png-data')
 
         self.owner = User.objects.create_user('owner', password='test')
@@ -83,6 +87,18 @@ class ProtectedProjectArtifactTests(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(b'owned result', b''.join(response.streaming_content))
+
+    def test_authorized_html_artifact_uses_result_security_headers(self):
+        self.client.force_login(self.owner)
+
+        response = self.get_with_project_root(self.artifact_url('result.html'))
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual('nosniff', response['X-Content-Type-Options'])
+        self.assertEqual('DENY', response['X-Frame-Options'])
+        self.assertIn('sandbox allow-scripts', response['Content-Security-Policy'])
+        self.assertNotIn('allow-same-origin', response['Content-Security-Policy'])
+        self.assertIn(b'<script>window.result = true;</script>', b''.join(response.streaming_content))
 
     def test_other_user_cannot_retrieve_project_artifact(self):
         self.client.force_login(self.other_user)
@@ -141,6 +157,8 @@ class ProtectedProjectArtifactTests(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, '<p>results</p>', html=False)
+        self.assertEqual('nosniff', response['X-Content-Type-Options'])
+        self.assertIn('sandbox allow-scripts', response['Content-Security-Policy'])
 
     @override_settings(
         PROTECTED_MEDIA_USE_X_ACCEL=True,

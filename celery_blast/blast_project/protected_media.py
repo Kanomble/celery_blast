@@ -7,6 +7,16 @@ from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponse
 from django.utils.http import content_disposition_header
 
+from .result_responses import apply_result_security_headers, is_html_content_type
+
+
+def _apply_protected_file_headers(response, is_html):
+    if is_html:
+        apply_result_security_headers(response, interactive=True)
+    else:
+        response['X-Content-Type-Options'] = 'nosniff'
+    return response
+
 
 def absolute_project_path(path):
     path = Path(path)
@@ -75,6 +85,7 @@ def protected_file_response(file_path, as_attachment=False):
     content_type, encoding = mimetypes.guess_type(str(file_path))
     content_type = content_type or 'application/octet-stream'
     filename = file_path.name
+    is_html = is_html_content_type(content_type)
 
     use_x_accel = (
         settings.PROTECTED_MEDIA_USE_X_ACCEL
@@ -88,14 +99,17 @@ def protected_file_response(file_path, as_attachment=False):
             response['Content-Disposition'] = content_disposition_header(as_attachment, filename)
             if encoding:
                 response['Content-Encoding'] = encoding
+            _apply_protected_file_headers(response, is_html)
             return response
 
-    return FileResponse(
+    response = FileResponse(
         open(file_path, 'rb'),
         as_attachment=as_attachment,
         filename=filename,
         content_type=content_type,
     )
+    _apply_protected_file_headers(response, is_html)
+    return response
 
 
 def serve_protected_project_file(project_root, relative_path, as_attachment=False):

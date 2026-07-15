@@ -262,6 +262,53 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_TASK_SOFT_TIME_LIMIT = 345600  # 2 * 60min = 120min * 60sec = 7200sec
 CELERY_TASK_TIME_LIMIT = 345660
 SUBPROCESS_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT - 5
+CELERY_TASK_ACKS_LATE = config('CELERY_TASK_ACKS_LATE', default=True, cast=bool)
+CELERY_TASK_REJECT_ON_WORKER_LOST = config('CELERY_TASK_REJECT_ON_WORKER_LOST', default=True, cast=bool)
+CELERY_WORKER_PREFETCH_MULTIPLIER = config('CELERY_WORKER_PREFETCH_MULTIPLIER', default=1, cast=int)
+CELERY_TASK_DEFAULT_QUEUE = config('CELERY_INTERACTIVE_QUEUE', default='interactive')
+CELERY_INTERACTIVE_QUEUE = config('CELERY_INTERACTIVE_QUEUE', default='interactive')
+CELERY_WORKFLOW_QUEUE = config('CELERY_WORKFLOW_QUEUE', default='long_bio')
+CELERY_MAINTENANCE_QUEUE = config('CELERY_MAINTENANCE_QUEUE', default='maintenance')
+CELERY_TASK_ROUTES = {
+    'blast_project.tasks.execute_reciprocal_blast_project': {'queue': CELERY_WORKFLOW_QUEUE},
+    'blast_project.tasks.execute_remote_reciprocal_blast_project': {'queue': CELERY_WORKFLOW_QUEUE},
+    'one_way_blast.tasks.execute_one_way_blast_project': {'queue': CELERY_WORKFLOW_QUEUE},
+    'one_way_blast.tasks.execute_one_way_remote_blast_project': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.execute_multiple_sequence_alignment': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.execute_phylogenetic_tree_building': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.execute_multiple_sequence_alignment_for_all_query_sequences': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.execute_fasttree_phylobuild_for_all_query_sequences': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.cdd_domain_search_with_rbhs_task': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.execute_domain_multiple_sequence_alignment': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.execute_phylogenetic_tree_building_with_domains': {'queue': CELERY_WORKFLOW_QUEUE},
+    'external_tools.tasks.synteny_calculation_task': {'queue': CELERY_WORKFLOW_QUEUE},
+    'blast_project.tasks.execute_makeblastdb_with_uploaded_genomes': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'blast_project.tasks.download_and_format_taxdb': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'blast_project.tasks.download_and_decompress_cdd_database': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'blast_project.tasks.write_species_taxids_into_file': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'blast_project.tasks.calculate_database_statistics_task': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'external_tools.tasks.setup_cathi_download_cdd_refseq_genbank_assembly_files': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'external_tools.tasks.download_organism_protein_sequences_task': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'external_tools.tasks.download_entrez_search_associated_protein_sequences': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'external_tools.tasks.entrez_search_task': {'queue': CELERY_INTERACTIVE_QUEUE},
+    'refseq_transactions.tasks.download_refseq_assembly_summary': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'refseq_transactions.tasks.write_alias_file': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'refseq_transactions.tasks.format_blast_databases': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'refseq_transactions.tasks.create_chunks_of_databases': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'refseq_transactions.tasks.download_wget_ftp_paths': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'refseq_transactions.tasks.download_blast_databases_based_on_summary_file': {'queue': CELERY_MAINTENANCE_QUEUE},
+}
+
+CATHI_WORKFLOW_JOB_CORES = config('CATHI_WORKFLOW_JOB_CORES', default=1, cast=int)
+CATHI_MAX_BLAST_THREADS = config('CATHI_MAX_BLAST_THREADS', default=1, cast=int)
+CATHI_MAX_NUM_ALIGNMENTS = config('CATHI_MAX_NUM_ALIGNMENTS', default=10000, cast=int)
+CATHI_MAX_TARGET_SEQS = config('CATHI_MAX_TARGET_SEQS', default=10000, cast=int)
+CATHI_MAX_HSPS = config('CATHI_MAX_HSPS', default=500, cast=int)
+CATHI_MAX_RBHS_FOR_PHYLO = config('CATHI_MAX_RBHS_FOR_PHYLO', default=500, cast=int)
+CATHI_MAX_ENTREZ_RECORDS = config('CATHI_MAX_ENTREZ_RECORDS', default=10000, cast=int)
+CATHI_MAX_UPLOAD_BYTES = config('CATHI_MAX_UPLOAD_BYTES', default=100 * 1024 * 1024, cast=int)
+CATHI_MAX_ACTIVE_WORKFLOWS_PER_USER = config('CATHI_MAX_ACTIVE_WORKFLOWS_PER_USER', default=1, cast=int)
+CATHI_EFFECTIVE_BLAST_THREADS = max(1, min(CATHI_WORKFLOW_JOB_CORES, CATHI_MAX_BLAST_THREADS))
 
 '''
 # django setting.
@@ -275,8 +322,8 @@ CACHES = {
 #CSRF_TRUSTED_ORIGINS = ['https://*','https://*.127.0.0.1','http://*','http://*.127.0.0.1']
 
 DEFAULT_AUTO_FIELD=config('DEFAULT_AUTO_FIELD', default='django.db.models.AutoField')
-DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=5000000000, cast=int)
-FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=5000000000, cast=int)
+DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=CATHI_MAX_UPLOAD_BYTES, cast=int)
+FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=CATHI_MAX_UPLOAD_BYTES, cast=int)
 CELERY_RESULT_EXTENDED = True
 STATIC_RESULT_IMAGES = config('STATIC_RESULT_IMAGES')
 BLAST_PROJECT_DIR = config('BLAST_PROJECT_DIR')
