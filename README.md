@@ -97,7 +97,9 @@ The supported Python version for repository-native checks is Python 3.8, matchin
 Local equivalents of the CI commands:
 
 ```` Bash
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.lock.txt
+python scripts/check_dependency_locks.py
+python scripts/check_docker_build_hardening.py
 cd celery_blast
 python manage.py check
 python manage.py makemigrations --check --dry-run
@@ -105,6 +107,7 @@ python manage.py test --exclude-tag biological --exclude-tag external --exclude-
 cd ..
 python scripts/check_compose_exposure.py
 python -m pip check
+snakemake --version
 docker compose config --quiet
 docker compose -f docker-compose-production.yml config --quiet
 ````
@@ -113,7 +116,7 @@ Tests that require Docker, external services, large biological fixtures, or down
 
 Production publishes only the Nginx endpoint by default. Flower and Jupyter are opt-in administrative services in the `admin` Compose profile, bind to loopback when enabled, and require runtime credentials. See `docs/ADMIN_ACCESS.md` for VPN and SSH-tunnel access guidance.
 
-Current exclusions include database-statistics fixture tests, taxdb presence checks, hard-coded biological fixture path checks, and live Celery transaction tests. Run those tagged tests explicitly only in a prepared development or staging environment with the required small fixtures or services. The currently published runtime image may still fail `python -m pip check` until the dependency remediation task rebuilds it; fresh CI installs run `pip check` from `requirements.txt`.
+Current exclusions include database-statistics fixture tests, taxdb presence checks, hard-coded biological fixture path checks, and live Celery transaction tests. Run those tagged tests explicitly only in a prepared development or staging environment with the required small fixtures or services. Python dependencies are installed from `requirements.lock.txt`; Snakemake and Jupyter are installed from `environment.yml`. Dependency lock maintenance is documented in `docs/DEPENDENCIES.md`. Docker build hardening, supported architecture, remote artifact checksums, non-root runtime permissions, and SBOM output are documented in `docs/BUILD_HARDENING.md`.
 
 ### Protected media
 
@@ -130,7 +133,7 @@ Here is an example for the production environment:
 
 Next, you need to perform a last Set-Up step, therefore you need to download the Conserved-Domain-Database and 
 the RefSeq and GenBank assembly summary files. This can be done by clicking on the **Start CATHI Tool Set-Up Procedure** button, that appears
-on the home dashboard after registering and logging into CATHI.
+on the home dashboard after registering and logging into CATHI. Reference refreshes are staged and atomically activated; configure the expected SHA256 values for taxdb, CDD, RefSeq, and GenBank before running setup. See `docs/REFERENCE_DATA_REFRESH.md`.
 
 <a name="configuration_notes"></a>
 ## Advanced Installation
@@ -142,6 +145,7 @@ It is recommended to install the application with the remotely available images 
 
 It is possible to build the necessary images from the Dockerfile of this repository. You can change and adapt the dockerfile according to the software 
 tools you need, keep in mind to adapt the `docker-compose.yml` or the `docker-compose-production.yml` files if you want to use local Docker images of this tool.
+The Dockerfile installs Python packages from `requirements.lock.txt` and Conda-managed tools from `environment.yml`; do not use `conda update --all` for runtime rebuilds. The application image is currently supported for `linux/amd64` only because several upstream scientific tools are x86_64 Linux artifacts. The runtime user is UID/GID `10001:10001`, so bind-mounted `data` and `tmp` directories must be writable by that identity.
 
 Docker creates seven containers named: `celery_blast_X_1` where `X` is a synonym for 
 `nginx, worker, flower, web, postgres and rabbitmq`.

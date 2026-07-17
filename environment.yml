@@ -1,0 +1,15 @@
+name: cathi-runtime
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8.18
+  - conda=24.1.1
+  - pip=24.0
+  - snakemake=7.32.4
+  - notebook=7.1.0
+  - pyopenssl=24.0.0
+  - cryptography=42.0.5
+  - aioeasywebdav=2.4.0
+  - setuptools-scm=8.0.4

@@ -1,0 +1,25 @@
+# Direct Python dependencies used by CATHI application code, management
+# commands, tests, or runtime CLIs.
+#
+# Snakemake, Jupyter Notebook, aioeasywebdav, pyOpenSSL, cryptography, and
+# setuptools-scm are managed by environment.yml because they are Conda runtime
+# dependencies. The Python wget package is intentionally omitted; CATHI invokes
+# the wget executable and does not import the Python package.
+Django==4.2.10
+psycopg2-binary==2.9.9
+biopython==1.78
+celery==5.3.6
+django-celery-results==2.5.1
+flower==2.0.1
+celery-progress==0.3
+pandas==1.2.4
+matplotlib==3.7.5
+seaborn==0.12.0
+bokeh==2.4.3
+python-decouple==3.7
+gunicorn==20.1.0
+django-extensions==3.2.3
+scikit-learn==1.3.2
+shiptv==0.4.1
+clinker==0.0.27
+PyYAML==6.0.1

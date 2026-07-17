@@ -9,8 +9,10 @@ from external_tools.models import DomainDatabase
 from blast_project.py_services import check_domain_database_status
 
 from os.path import isfile, isdir
-from os import remove, getcwd
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, TAXDB_URL, CDD_DATABASE_URL
+from os import getcwd
+from pathlib import Path
+from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, TAXDB_URL, CDD_DATABASE_URL, TAXDB_SHA256
+from celery_blast.dataset_refresh import DatasetRefreshSpec, refresh_dataset
 from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
 
 
@@ -24,6 +26,21 @@ def build_startup_taxdb_extract_command(taxdb_archive_path, database_dir):
 
 def run_startup_command(command, timeout):
     return run_external_command(command, timeout=timeout, shell=False, check=True).returncode
+
+
+def startup_taxdb_refresh_spec():
+    return DatasetRefreshSpec(
+        name="taxdb",
+        source_url=TAXDB_URL,
+        public_root=Path(BLAST_DATABASE_DIR),
+        required_files=("taxdb.btd", "taxdb.bti"),
+        expected_sha256=TAXDB_SHA256,
+        archive_name="taxdb.tar.gz",
+        archive_type="tar.gz",
+        expose_as="files",
+        minimum_total_bytes=1,
+        timeout=600,
+    )
 
 
 def run():
@@ -61,25 +78,15 @@ def run():
 
     else:
         print("INFO:NO TAXONOMY DATABASE")
-        if isfile(BLAST_DATABASE_DIR + "taxdb.tar.gz"):
-            remove(BLAST_DATABASE_DIR + "taxdb.tar.gz")
-        if isfile(BLAST_DATABASE_DIR + "taxdb.tar"):
-            remove(BLAST_DATABASE_DIR + "taxdb.tar")
         print("INFO:STARTING TO DOWNLOAD TAXONOMY DATABASE")
 
         try:
-            taxdb_ftp_path = TAXDB_URL
             current_working_directory = getcwd()  # /blast/reciprocal_blast
-            path_to_taxdb_location = current_working_directory + "/" + BLAST_DATABASE_DIR
-            path_to_taxdb_location = path_to_taxdb_location  + 'taxdb.tar.gz'
+            print("INFO:TAXDB_URL: {}".format(TAXDB_URL))
+            print("INFO:WORKING_DIRECTORY: {}".format(current_working_directory))
 
-            print("INFO:TAXDB_URL: {}".format(taxdb_ftp_path))
-
-            run_startup_command(build_startup_taxdb_download_command(taxdb_ftp_path, path_to_taxdb_location), 600)
-            print("INFO:EXTRACTING TAXONOMY DB")
-            database_dir = "/blast/reciprocal_blast/"+BLAST_DATABASE_DIR
-            run_startup_command(build_startup_taxdb_extract_command(path_to_taxdb_location, database_dir), 1400)
-            print("INFO:DONE DOWNLOADING TAXONOMY DATABASE")
+            metadata = refresh_dataset(startup_taxdb_refresh_spec())
+            print("INFO:DONE DOWNLOADING TAXONOMY DATABASE version {}".format(metadata["version"]))
 
         except ExternalCommandTimeout as e:
             print("ERROR:TIMEOUT EXPIRED DURING DOWNLOAD OF TAXONOMY DATABASE: {}".format(e))

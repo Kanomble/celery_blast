@@ -2,6 +2,7 @@ import math
 import os
 from os import getcwd, mkdir, remove, chmod
 from os.path import isdir, isfile
+from pathlib import Path
 from subprocess import SubprocessError, TimeoutExpired
 
 import pandas as pd
@@ -10,7 +11,9 @@ from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
-from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE, GENBANK_URL
+from celery_blast.dataset_refresh import DatasetRefreshSpec, refresh_dataset
+from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE, GENBANK_URL, \
+    REFSEQ_ASSEMBLY_SHA256, GENBANK_ASSEMBLY_SHA256
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name, update_blast_database_table
@@ -93,6 +96,36 @@ def remove_file_if_exists(path):
         remove(path)
 
 
+def assembly_summary_refresh_spec(summary_file: str):
+    if summary_file == "RefSeq":
+        return DatasetRefreshSpec(
+            name="refseq-assembly-summary",
+            source_url=REFSEQ_URL,
+            public_root=Path(REFSEQ_ASSEMBLY_FILE),
+            required_files=("assembly_summary_refseq.txt",),
+            expected_sha256=REFSEQ_ASSEMBLY_SHA256,
+            archive_name="assembly_summary_refseq.txt",
+            archive_type="file",
+            expose_as="files",
+            minimum_total_bytes=1,
+            timeout=800,
+        )
+    if summary_file == "GenBank":
+        return DatasetRefreshSpec(
+            name="genbank-assembly-summary",
+            source_url=GENBANK_URL,
+            public_root=Path(GENBANK_ASSEMBLY_FILE),
+            required_files=("assembly_summary_genbank.txt",),
+            expected_sha256=GENBANK_ASSEMBLY_SHA256,
+            archive_name="assembly_summary_genbank.txt",
+            archive_type="file",
+            expose_as="files",
+            minimum_total_bytes=1,
+            timeout=800,
+        )
+    raise Exception("wrong summary_file selected: {}".format(summary_file))
+
+
 ''' download_refseq_assembly_summary_file
 
     This function downloads the current assembly_summary_refseq.txt file or the assembly_summary_genbank.txt file into 
@@ -110,71 +143,27 @@ def remove_file_if_exists(path):
 def download_refseq_assembly_summary(summary_file:str):
     try:
         current_working_directory = getcwd()  # /blast/reciprocal_blast
-        if summary_file == "RefSeq":
-            path_to_assembly_file_location = REFSEQ_ASSEMBLY_FILE
-            refseq_url = REFSEQ_URL
-
-        elif summary_file == "GenBank":
-            path_to_assembly_file_location = GENBANK_ASSEMBLY_FILE
-            refseq_url = GENBANK_URL
-        else:
-            logger.warning("wrong summary_file selected: {}".format(summary_file))
-            logger.warning("specify RefSeq or GenBank in the relevant form.html document ...")
-            raise Exception("wrong summary_file selected: {}".format(summary_file))
-        timeout = 800
+        spec = assembly_summary_refresh_spec(summary_file)
 
         logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
-                    .format(current_working_directory, path_to_assembly_file_location))
+                    .format(current_working_directory, spec.public_root))
 
-        if (isdir(path_to_assembly_file_location) == False):
-            logger.warning('path_to_assembly_file_location : {} does not exists, trying to create it with mkdir ...'.format(path_to_assembly_file_location))
-            mkdir(path_to_assembly_file_location)
+        logger.info('creating assembly summary refresh process')
+        logger.info("source_url: {}, dataset: {}".format(spec.source_url, spec.name))
+        metadata = refresh_dataset(spec)
 
-        path_to_assembly_file = ""
-        if summary_file == "RefSeq":
-            path_to_assembly_file = REFSEQ_ASSEMBLY_FILE + 'assembly_summary_refseq.txt'
-            refseq_url = REFSEQ_URL
-        elif summary_file == "GenBank":
-            path_to_assembly_file = GENBANK_ASSEMBLY_FILE + 'assembly_summary_genbank.txt'
-            refseq_url = GENBANK_URL
+        logger.info('download completed with dataset version {}'.format(metadata["version"]))
 
-        if (isfile(path_to_assembly_file)):
-            logger.warning('assembly_summary_refseq.txt/assembly_summary_genbank.txt exists deleting it in order to download a newer version')
-            remove(path_to_assembly_file)
-
-        # invoke curl program
-        logger.info('creating assembly summary download process')
-        logger.info("refseq_url: {}, path_to_assembly_file: {}".format(refseq_url, path_to_assembly_file))
-        returncode = run_download_assembly_summary_command(
-            build_download_assembly_summary_command(refseq_url, path_to_assembly_file),
-            timeout=timeout,
-        )
-
-        if (returncode != 0):
-            logger.warning('assembly summary download process resulted in an error!')
-            raise Exception('download command hasnt succeeded ...')
-
-        logger.info('returncode : {}'.format(returncode))
-
-        logger.info('download completed')
-
-        return returncode
+        return 0
 
     except SoftTimeLimitExceeded:
-        if 'path_to_assembly_file' in locals():
-            remove_file_if_exists(path_to_assembly_file)
         raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due to soft time limit")
 
     except ExternalCommandTimeout as e:
-        if 'path_to_assembly_file' in locals():
-            remove_file_if_exists(path_to_assembly_file)
-
         raise Exception(
             "ERROR couldn't download assembly_summary_refseq.txt file due process time limit : {}".format(e))
 
     except ExternalCommandError as e:
-        if 'path_to_assembly_file' in locals():
-            remove_file_if_exists(path_to_assembly_file)
         raise Exception(
             "ERROR couldn't download assembly_summary_refseq.txt file due process exception : {}".format(e))
 

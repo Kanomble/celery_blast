@@ -45,13 +45,19 @@ jobs:
         with:
           python-version: "3.8"
 
+      - name: Dependency lock consistency
+        run: python scripts/check_dependency_locks.py
+
+      - name: Docker build hardening policy
+        run: python scripts/check_docker_build_hardening.py
+
       - name: Scan tracked files for reusable secrets
         run: python scripts/check_tracked_secrets.py
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install -r requirements.lock.txt
 
       - name: Prepare isolated CI filesystem and placeholder Compose env
         run: |
@@ -128,3 +134,29 @@ jobs:
 
       - name: Production Compose configuration validation
         run: docker compose -f docker-compose-production.yml config --quiet
+
+  conda-runtime-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Conda runtime
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: cathi-runtime
+          environment-file: environment.yml
+          auto-activate-base: false
+          channel-priority: strict
+
+      - name: Dependency lock consistency
+        shell: bash -el {0}
+        run: python scripts/check_dependency_locks.py
+
+      - name: Snakemake import and version check
+        shell: bash -el {0}
+        run: |
+          python -c "import snakemake; assert snakemake.__version__ == '7.32.4', snakemake.__version__"
+          snakemake --version
+          python -m pip check

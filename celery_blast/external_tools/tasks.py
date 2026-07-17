@@ -28,6 +28,8 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DAT
 from os.path import isdir
 from os import listdir, mkdir, remove
 from refseq_transactions.tasks import download_refseq_assembly_summary
+from blast_project.tasks import cdd_refresh_spec
+from celery_blast.dataset_refresh import refresh_dataset
 # logger for celery worker instances
 logger = get_task_logger(__name__)
 
@@ -391,36 +393,11 @@ def setup_cathi_download_cdd_refseq_genbank_assembly_files(self):
         update_domain_database_task_result_model(domain_database_model.id, self.request.id)
 
 
-        cdd_path = BLAST_DATABASE_DIR + 'CDD/'
-        if isdir(cdd_path) == False:
-            logger.info("creating cdd directory in: {}".format(cdd_path))
-            mkdir(cdd_path)
-        else:
-            logger.info("cdd directory exists")
-
-        # cleaning up cdd directory
-        for file in listdir(cdd_path):
-            file_to_remove = cdd_path + file
-            remove(file_to_remove)
-
-        cdd_ftp_path = CDD_DATABASE_URL
-        path_to_cdd_location = BLAST_DATABASE_DIR
-        path_to_cdd_location = path_to_cdd_location + 'Cdd_LE.tar.gz'
-        download_directory = BLAST_DATABASE_DIR + 'CDD'
-        logger.info("downloading CDD into {}".format(download_directory))
-        returncode = run_external_tool_command(build_cdd_download_command(cdd_ftp_path, path_to_cdd_location), timeout=4000)
+        logger.info("refreshing CDD from {}".format(CDD_DATABASE_URL))
+        metadata = refresh_dataset(cdd_refresh_spec())
         progress_recorder.set_progress(70, 100, "PROGRESS")
-        if returncode != 0:
-            logger.warning("error during donwload of the cdd database")
-            raise Exception("CDD download command failed with return code: {}".format(returncode))
-        logger.info("successfully downloaded the cdd database")
-        returncode = run_external_tool_command(build_cdd_extract_command(path_to_cdd_location, download_directory), timeout=2000)
+        logger.info("successfully refreshed CDD version {}".format(metadata["version"]))
         progress_recorder.set_progress(80, 100, "PROGRESS")
-        if returncode != 0:
-            logger.warning("error during extraction of the cdd database")
-            raise Exception("CDD extraction command failed with return code: {}".format(returncode))
-        logger.info("successfully extracted the cdd database")
-        remove(path_to_cdd_location)
 
         domain_database_query_set = DomainDatabase.objects.all()
         domain_database_model = domain_database_query_set[0]

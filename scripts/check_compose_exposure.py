@@ -60,7 +60,7 @@ def check_production_default_exposure(config):
     assert_true(set(published) == {"nginx"}, "default production must publish only nginx")
     nginx_ports = published["nginx"]
     assert_true(len(nginx_ports) == 1, "nginx must publish exactly one host port")
-    assert_true(str(nginx_ports[0].get("target")) == "80", "nginx must publish container port 80")
+    assert_true(str(nginx_ports[0].get("target")) == "8080", "nginx must publish unprivileged container port 8080")
     assert_true(not ports_for(services["web"]), "web must not publish a direct host port")
     assert_true(not ports_for(services["postgres"]), "postgres must not publish a production host port")
     assert_true(not ports_for(services["rabbitmq"]), "rabbitmq must not publish a production host port")

@@ -2,6 +2,7 @@
 
 import os
 from subprocess import STDOUT as subSTDOUT, SubprocessError, TimeoutExpired
+from pathlib import Path
 from django.conf import settings
 from celery import shared_task
 from external_tools.models import ExternalTools
@@ -9,6 +10,7 @@ from celery.utils.log import get_task_logger
 from celery_progress.backend import ProgressRecorder
 from celery.exceptions import SoftTimeLimitExceeded
 from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
+from celery_blast.dataset_refresh import DatasetRefreshSpec, refresh_dataset
 from celery_blast.resource_governance import resource_budget_log_line, workflow_job_cores
 from .py_django_db_services import update_blast_project_with_task_result_model, \
     update_blast_database_with_task_result_model, create_external_tools_after_snakemake_workflow_finishes, \
@@ -17,7 +19,7 @@ from .py_django_db_services import update_blast_project_with_task_result_model, 
 from .py_database_statistics import calculate_database_statistics
 from .workflow_execution import finish_workflow_execution
 from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES, \
-    CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR
+    CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR, TAXDB_SHA256, CDD_DATABASE_SHA256
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -112,6 +114,36 @@ def run_database_setup_command(command, timeout):
         raise SubprocessError(e)
 
 
+def taxdb_refresh_spec():
+    return DatasetRefreshSpec(
+        name="taxdb",
+        source_url=TAXDB_URL,
+        public_root=Path(BLAST_DATABASE_DIR),
+        required_files=("taxdb.btd", "taxdb.bti"),
+        expected_sha256=TAXDB_SHA256,
+        archive_name="taxdb.tar.gz",
+        archive_type="tar.gz",
+        expose_as="files",
+        minimum_total_bytes=1,
+        timeout=600,
+    )
+
+
+def cdd_refresh_spec():
+    return DatasetRefreshSpec(
+        name="cdd",
+        source_url=CDD_DATABASE_URL,
+        public_root=Path(BLAST_DATABASE_DIR) / "CDD",
+        required_files=("Cdd",),
+        expected_sha256=CDD_DATABASE_SHA256,
+        archive_name="Cdd_LE.tar.gz",
+        archive_type="tar.gz",
+        expose_as="directory",
+        minimum_total_bytes=1,
+        timeout=4000,
+    )
+
+
 def build_makeblastdb_command(database_id, path_to_database, taxmap_file=None, taxonomic_node=None):
     if taxmap_file is not None:
         logger.info('INFO:execution with provided taxmap_file')
@@ -186,24 +218,12 @@ def run_species_taxids_command(command, stdout):
 @shared_task(bind=True)
 def download_and_format_taxdb(self):
     logger.info("INFO:NO TAXONOMY DATABASE")
-    if os.path.isfile(BLAST_DATABASE_DIR + "taxdb.tar.gz"):
-        os.remove(BLAST_DATABASE_DIR + "taxdb.tar.gz")
-    if os.path.isfile(BLAST_DATABASE_DIR + "taxdb.tar"):
-        os.remove(BLAST_DATABASE_DIR + "taxdb.tar")
     logger.info("INFO:STARTING TO DOWNLOAD TAXONOMY DATABASE")
 
     try:
-        taxdb_ftp_path = TAXDB_URL
-        path_to_taxdb_location = BLAST_DATABASE_DIR
-        path_to_taxdb_location = path_to_taxdb_location + 'taxdb.tar.gz'
-
-        returncode = run_database_setup_command(["wget", taxdb_ftp_path, "-q", "-O", path_to_taxdb_location], 600)
-        logger.info("INFO:TRYING TO DECOMPRESS THE TAXONOMY DATABASE")
-
-        returncode = run_database_setup_command(["tar", "-zxvf", path_to_taxdb_location, "-C", BLAST_DATABASE_DIR],
-                                                600)
-        logger.info("INFO:DONE")
-        return returncode
+        metadata = refresh_dataset(taxdb_refresh_spec())
+        logger.info("INFO:DONE refreshing taxonomy database version {}".format(metadata["version"]))
+        return 0
     except TimeoutExpired as e:
         logger.warning("ERROR:TIMEOUT EXPIRED DURING DOWNLOAD OF TAXONOMY DATABASE: {}".format(e))
         logger.info(
@@ -424,20 +444,9 @@ def download_and_decompress_cdd_database(self):
                 "INFO:trying to download CDD database from: {}".format(CDD_DATABASE_URL))
 
     try:
-        cdd_ftp_path = CDD_DATABASE_URL
-        if os.path.isdir(BLAST_DATABASE_DIR + "CDD/") == False:
-            os.mkdir(BLAST_DATABASE_DIR + "CDD/")
-        path_to_cdd_location = BLAST_DATABASE_DIR
-        path_to_cdd_location = path_to_cdd_location + 'Cdd_LE.tar.gz'
-        logger.info("INFO:DOWNLOADING CONSVERED DOMAIN DATABASE INTO {}".format(BLAST_DATABASE_DIR + "CDD/"))
-        returncode = run_database_setup_command(["wget", cdd_ftp_path, "-q", "-O", path_to_cdd_location], 3000)
-        logger.info("INFO:EXTRACTING CONSERVED DOMAIN DATABASE")
-
-        returncode = run_database_setup_command(
-            ["tar", "-zxvf", path_to_cdd_location, "-C", "/blast/reciprocal_blast/media/databases/CDD/"],
-            800)
-        os.remove(path_to_cdd_location)  # remove the zip of cdd database
-        logger.info("INFO:DONE DOWNLOADING CONSERVED DOMAIN DATABASE")
+        metadata = refresh_dataset(cdd_refresh_spec())
+        logger.info("INFO:DONE DOWNLOADING CONSERVED DOMAIN DATABASE version {}".format(metadata["version"]))
+        return 0
     except TimeoutExpired as e:
         logger.warning("ERROR:TIMEOUT EXPIRED DURING DOWNLOAD OF CONSERVED DOMAIN DATABASE: {}".format(e))
         logger.info(
