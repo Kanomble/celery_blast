@@ -16,6 +16,27 @@ from .py_services import refseq_file_exists, get_database_download_and_formattin
     genbank_file_exists
 from .tasks import download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
 
+
+def build_dashboard_context(user, refseq_database_form=None):
+    context = {}
+
+    if refseq_file_exists():
+        context['refseq_exists'] = True
+
+    if genbank_file_exists():
+        context['genbank_exists'] = True
+
+    if refseq_database_form is None:
+        refseq_database_form = RefseqDatabaseForm(user)
+
+    context['RefseqDatabaseForm'] = refseq_database_form
+    context['ActiveBlastDatabases'] = get_downloaded_databases()
+    context['DownloadInProgressBlastDatabases'] = get_databases_in_progress()
+    context['InactiveBlastDatabases'] = get_databases_without_tasks()
+    context['FailedDatabases'] = get_failed_tasks()
+    return context
+
+
 ''' dashboard
     
     dashboard for refseq databases, lists all available BLAST databases, 
@@ -28,26 +49,7 @@ from .tasks import download_refseq_assembly_summary, download_blast_databases_ba
 @login_required(login_url='login')
 def dashboard(request):
     try:
-        context = {}
-
-        if (refseq_file_exists()):
-            context['refseq_exists'] = True
-
-        if (genbank_file_exists()):
-            context['genbank_exists'] = True
-
-        refseq_database_form = RefseqDatabaseForm(request.user)
-        executed_databases = get_downloaded_databases()
-        not_executed_databases = get_databases_without_tasks()
-        download_in_progress_databases = get_databases_in_progress()
-        failed_databases = get_failed_tasks()
-
-        context['RefseqDatabaseForm'] = refseq_database_form
-        context['ActiveBlastDatabases'] = executed_databases
-        context['DownloadInProgressBlastDatabases'] = download_in_progress_databases
-        context['InactiveBlastDatabases'] = not_executed_databases
-        context['FailedDatabases'] = failed_databases
-
+        context = build_dashboard_context(request.user)
         return render(request, 'refseq_transactions/refseq_transactions_dashboard.html', context)
     except Exception as e:
         return failure_view(request, e)
@@ -118,18 +120,7 @@ def create_blast_database_model_and_directory(request):
 
             # validation error
             else:
-                if (refseq_file_exists()):
-                    context['refseq_exists'] = True
-
-                # user stays at the page because of validation errors
-                executed_databases = get_downloaded_databases()
-                not_executed_databases = get_databases_without_tasks()
-                download_in_progress_databases = get_databases_in_progress()
-
-                context['ActiveBlastDatabases'] = executed_databases
-                context['DownloadInProgressBlastDatabases'] = download_in_progress_databases
-                context['UnactiveBlastDatabases'] = not_executed_databases
-                context['RefseqDatabaseForm'] = refseq_database_form
+                context = build_dashboard_context(request.user, refseq_database_form)
 
             sleep(2)
             return render(request, 'refseq_transactions/refseq_transactions_dashboard.html', context)

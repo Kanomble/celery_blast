@@ -1,4 +1,5 @@
 from time import sleep
+from unittest.mock import patch
 
 from blast_project.models import BlastProject, BlastSettings
 # from blast_project.py_django_db_services import get_all_succeeded_databases
@@ -101,6 +102,31 @@ class RefseqTransactionsViewsTestCase(TestCase):
         response = self.c.get("/refseq_transactions/")
         self.assertEqual(200, response.status_code)
         self.assertTemplateUsed(response, 'refseq_transactions/refseq_transactions_dashboard.html')
+
+    @tag("refseq_transactions_views")
+    def test_invalid_metadata_post_keeps_metadata_form_when_summary_files_exist(self):
+        self.c.login(username='testuser', password='test')
+        post_dict = {
+            "database_name": "invalid metadata post",
+            "database_description": "missing database summary file",
+            "taxid_uploaded_file": "",
+            "taxid_text_field": "",
+        }
+
+        with patch('refseq_transactions.views.refseq_file_exists', return_value=True), \
+                patch('refseq_transactions.views.genbank_file_exists', return_value=True), \
+                patch('refseq_transactions.views.sleep', return_value=None):
+            response = self.c.post('/refseq_transactions/create_refseq_database_metadata', data=post_dict)
+
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, 'refseq_transactions/refseq_transactions_dashboard.html')
+        self.assertTrue(response.context['refseq_exists'])
+        self.assertTrue(response.context['genbank_exists'])
+        self.assertIn('InactiveBlastDatabases', response.context)
+        self.assertIn('FailedDatabases', response.context)
+        self.assertContains(response, 'id="post_form_container"', html=False)
+        self.assertContains(response, 'BLAST database Metadata')
+        self.assertContains(response, 'This field is required')
 
     @tag("refseq_transactions_views")
     def test_create_and_delete_blast_database_model_and_directory(self):
