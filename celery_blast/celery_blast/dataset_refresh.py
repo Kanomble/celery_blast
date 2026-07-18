@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import hashlib
 import json
 import os
 import shutil
@@ -38,7 +37,6 @@ class DatasetRefreshSpec:
     source_url: str
     public_root: Path
     required_files: tuple[str, ...]
-    expected_sha256: str
     archive_name: str
     archive_type: str = "tar.gz"
     expose_as: str = "files"
@@ -57,14 +55,6 @@ class DatasetRefreshSpec:
 def download_url(source_url: str, output_path: Path, timeout: int = 800) -> None:
     with urlopen(source_url, timeout=timeout) as response, output_path.open("wb") as output:
         shutil.copyfileobj(response, output)
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _metadata_now() -> str:
@@ -150,18 +140,6 @@ def _verify_required_files(extracted_root: Path, required_files: Iterable[str], 
         raise DatasetVerificationError("dataset did not meet minimum size sanity check")
 
 
-def _verify_checksum(spec: DatasetRefreshSpec, archive_path: Path) -> str:
-    expected = (spec.expected_sha256 or "").strip().lower()
-    if not expected:
-        raise DatasetVerificationError(f"{spec.name} refresh requires a configured SHA256 checksum")
-    if len(expected) != 64 or any(char not in "0123456789abcdef" for char in expected):
-        raise DatasetVerificationError(f"{spec.name} has an invalid SHA256 checksum setting")
-    actual = sha256_file(archive_path)
-    if actual != expected:
-        raise DatasetVerificationError(f"{spec.name} checksum mismatch: expected {expected}, got {actual}")
-    return actual
-
-
 def _replace_symlink(link_path: Path, target: Path) -> None:
     tmp_link = link_path.with_name(f".{link_path.name}.tmp-{uuid.uuid4().hex}")
     if target.is_absolute():
@@ -226,7 +204,6 @@ def refresh_dataset(spec: DatasetRefreshSpec, download: Optional[DownloadCallabl
             extracted_root.mkdir()
 
             download_func(spec.source_url, archive_path)
-            actual_sha256 = _verify_checksum(spec, archive_path)
 
             if spec.archive_type == "tar.gz":
                 _extract_tar_safely(archive_path, extracted_root)
@@ -243,7 +220,6 @@ def refresh_dataset(spec: DatasetRefreshSpec, download: Optional[DownloadCallabl
                 "dataset": spec.name,
                 "version": version_id,
                 "source": spec.source_url,
-                "checksum": f"sha256:{actual_sha256}",
                 "download_started_at": download_started,
                 "download_completed_at": _metadata_now(),
                 "activated_at": None,

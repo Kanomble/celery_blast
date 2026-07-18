@@ -12,8 +12,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
 from celery_blast.dataset_refresh import DatasetRefreshSpec, refresh_dataset
-from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE, GENBANK_URL, \
-    REFSEQ_ASSEMBLY_SHA256, GENBANK_ASSEMBLY_SHA256
+from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBLY_FILE, GENBANK_ASSEMBLY_FILE, GENBANK_URL
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name, update_blast_database_table
@@ -103,7 +102,6 @@ def assembly_summary_refresh_spec(summary_file: str):
             source_url=REFSEQ_URL,
             public_root=Path(REFSEQ_ASSEMBLY_FILE),
             required_files=("assembly_summary_refseq.txt",),
-            expected_sha256=REFSEQ_ASSEMBLY_SHA256,
             archive_name="assembly_summary_refseq.txt",
             archive_type="file",
             expose_as="files",
@@ -116,7 +114,6 @@ def assembly_summary_refresh_spec(summary_file: str):
             source_url=GENBANK_URL,
             public_root=Path(GENBANK_ASSEMBLY_FILE),
             required_files=("assembly_summary_genbank.txt",),
-            expected_sha256=GENBANK_ASSEMBLY_SHA256,
             archive_name="assembly_summary_genbank.txt",
             archive_type="file",
             expose_as="files",

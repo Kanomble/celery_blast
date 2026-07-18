@@ -11,7 +11,7 @@ from blast_project.py_services import check_domain_database_status
 from os.path import isfile, isdir
 from os import getcwd
 from pathlib import Path
-from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, TAXDB_URL, CDD_DATABASE_URL, TAXDB_SHA256
+from celery_blast.settings import BLAST_DATABASE_DIR, TAXDB_URL
 from celery_blast.dataset_refresh import DatasetRefreshSpec, refresh_dataset
 from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout, run_external_command
 
@@ -34,7 +34,6 @@ def startup_taxdb_refresh_spec():
         source_url=TAXDB_URL,
         public_root=Path(BLAST_DATABASE_DIR),
         required_files=("taxdb.btd", "taxdb.bti"),
-        expected_sha256=TAXDB_SHA256,
         archive_name="taxdb.tar.gz",
         archive_type="tar.gz",
         expose_as="files",

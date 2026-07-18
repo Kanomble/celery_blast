@@ -10,6 +10,7 @@ from celery_blast.processes import ExternalCommandError, ExternalCommandTimeout
 from blast_project.tasks import (
     build_makeblastdb_command,
     build_species_taxids_command,
+    cdd_refresh_spec,
     execute_reciprocal_snakemake_workflow,
     run_database_setup_command,
     run_makeblastdb_command,
@@ -48,6 +49,16 @@ def expected_snakemake_environment():
 
 
 class BlastProjectTaskHelperTests(SimpleTestCase):
+    def test_cdd_refresh_spec_requires_flat_cdd_alias_file(self):
+        with patch('blast_project.tasks.BLAST_DATABASE_DIR', 'media/databases/'), \
+                patch('blast_project.tasks.CDD_DATABASE_URL', 'https://example.test/Cdd_LE.tar.gz'):
+            spec = cdd_refresh_spec()
+
+        self.assertEqual('cdd', spec.name)
+        self.assertEqual('https://example.test/Cdd_LE.tar.gz', spec.source_url)
+        self.assertEqual(('Cdd.pal',), spec.required_files)
+        self.assertEqual('directory', spec.expose_as)
+
     def test_run_database_setup_command_delegates_to_runner(self):
         class Result:
             returncode = 0

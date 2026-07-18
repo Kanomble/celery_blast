@@ -16,6 +16,12 @@ from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DAT
 import zipfile
 import io
 
+
+def cdd_database_prefix_exists(cdd_db_path: str, prefix: str = "Cdd") -> bool:
+    if not isdir(cdd_db_path):
+        return False
+    return any(item == f"{prefix}.pal" or item.startswith(f"{prefix}.") for item in listdir(cdd_db_path))
+
 '''list_all_available_logfiles
     
     This functions uses the os module to get a list of all available logfiles for a certain reciprocal BLAST
@@ -376,17 +382,18 @@ def check_domain_database_status()->bool:
         cdd_db_path = BLAST_DATABASE_DIR + "CDD/"
         # testing domain database integrity
 
-        if isdir(cdd_db_path + 'Cdd/') :
+        if cdd_database_prefix_exists(cdd_db_path):
                 try:
-                    out = check_output(['blastdbcheck', '-db', cdd_db_path + 'Cdd'])
-                except Exception as e:
-                    out = str(e)
+                    check_output(['blastdbcheck', '-db', cdd_db_path + 'Cdd'])
+                    database_ok = True
+                except Exception:
+                    database_ok = False
 
                 returncode = False
                 # integrity test failed
                 domain_database_query_set = DomainDatabase.objects.all()
 
-                if 'No errors reported for 1 alias(es)' in str(out):
+                if database_ok:
                     if len(domain_database_query_set) != 1:
                         DomainDatabase.objects.all().delete()
                         domain_database_model = DomainDatabase(domain_database_loaded=True)

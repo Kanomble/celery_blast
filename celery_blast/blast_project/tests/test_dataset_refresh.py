@@ -16,7 +16,6 @@ from celery_blast.dataset_refresh import (
     active_pointer,
     dataset_refresh_lock,
     refresh_dataset,
-    sha256_file,
 )
 
 
@@ -46,13 +45,12 @@ def copy_download(source, destination):
 
 @unittest.skipUnless(symlink_supported(), "atomic dataset activation requires symlink support")
 class DatasetRefreshTests(SimpleTestCase):
-    def make_spec(self, root, archive, checksum=None):
+    def make_spec(self, root, archive):
         return DatasetRefreshSpec(
             name="taxdb",
             source_url=str(archive),
             public_root=Path(root) / "databases",
             required_files=("taxdb.btd", "taxdb.bti"),
-            expected_sha256=checksum or sha256_file(Path(archive)),
             archive_name="taxdb.tar.gz",
             archive_type="tar.gz",
             expose_as="files",
@@ -68,6 +66,7 @@ class DatasetRefreshTests(SimpleTestCase):
             metadata = refresh_dataset(spec, download=copy_download)
 
             self.assertEqual("taxdb", metadata["dataset"])
+            self.assertNotIn("checksum", metadata)
             self.assertEqual("new-btd", (spec.public_root / "taxdb.btd").read_text(encoding="utf-8"))
             self.assertTrue((active_pointer(spec) / ".cathi-dataset.json").is_file())
 
@@ -85,20 +84,6 @@ class DatasetRefreshTests(SimpleTestCase):
 
             with self.assertRaises(RuntimeError):
                 refresh_dataset(self.make_spec(tmpdir, new_archive), download=interrupted_download)
-
-            self.assertEqual("old-btd", (Path(tmpdir) / "databases" / "taxdb.btd").read_text(encoding="utf-8"))
-
-    def test_checksum_failure_leaves_old_version_active(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            old_archive = Path(tmpdir) / "old.tar.gz"
-            new_archive = Path(tmpdir) / "new.tar.gz"
-            make_tar(old_archive, {"taxdb.btd": b"old-btd", "taxdb.bti": b"old-bti"})
-            make_tar(new_archive, {"taxdb.btd": b"new-btd", "taxdb.bti": b"new-bti"})
-            refresh_dataset(self.make_spec(tmpdir, old_archive), download=copy_download)
-            bad_spec = self.make_spec(tmpdir, new_archive, checksum="0" * 64)
-
-            with self.assertRaises(DatasetVerificationError):
-                refresh_dataset(bad_spec, download=copy_download)
 
             self.assertEqual("old-btd", (Path(tmpdir) / "databases" / "taxdb.btd").read_text(encoding="utf-8"))
 
@@ -157,13 +142,12 @@ class DatasetRefreshTests(SimpleTestCase):
             public.mkdir(parents=True)
             (public / "old.txt").write_text("old-cdd", encoding="utf-8")
             archive = Path(tmpdir) / "cdd.tar.gz"
-            make_tar(archive, {"Cdd/Cdd.pal": b"new-cdd"})
+            make_tar(archive, {"Cdd.pal": b"new-cdd"})
             spec = DatasetRefreshSpec(
                 name="cdd",
                 source_url=str(archive),
                 public_root=public,
-                required_files=("Cdd",),
-                expected_sha256=sha256_file(archive),
+                required_files=("Cdd.pal",),
                 archive_name="Cdd_LE.tar.gz",
                 archive_type="tar.gz",
                 expose_as="directory",
@@ -172,7 +156,7 @@ class DatasetRefreshTests(SimpleTestCase):
 
             refresh_dataset(spec, download=copy_download)
 
-            self.assertEqual("new-cdd", (public / "Cdd" / "Cdd.pal").read_text(encoding="utf-8"))
+            self.assertEqual("new-cdd", (public / "Cdd.pal").read_text(encoding="utf-8"))
             legacy_dirs = list((Path(tmpdir) / "databases" / ".cathi_datasets" / "cdd" / "versions").glob("legacy-*"))
             self.assertTrue(any((legacy / "old.txt").read_text(encoding="utf-8") == "old-cdd" for legacy in legacy_dirs))
 

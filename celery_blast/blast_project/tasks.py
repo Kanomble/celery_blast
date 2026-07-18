@@ -19,7 +19,7 @@ from .py_django_db_services import update_blast_project_with_task_result_model, 
 from .py_database_statistics import calculate_database_statistics
 from .workflow_execution import finish_workflow_execution
 from celery_blast.settings import BLAST_DATABASE_DIR, BLAST_PROJECT_DIR, TAXDB_URL, TAXONOMIC_NODES, \
-    CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR, TAXDB_SHA256, CDD_DATABASE_SHA256
+    CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -120,7 +120,6 @@ def taxdb_refresh_spec():
         source_url=TAXDB_URL,
         public_root=Path(BLAST_DATABASE_DIR),
         required_files=("taxdb.btd", "taxdb.bti"),
-        expected_sha256=TAXDB_SHA256,
         archive_name="taxdb.tar.gz",
         archive_type="tar.gz",
         expose_as="files",
@@ -134,8 +133,7 @@ def cdd_refresh_spec():
         name="cdd",
         source_url=CDD_DATABASE_URL,
         public_root=Path(BLAST_DATABASE_DIR) / "CDD",
-        required_files=("Cdd",),
-        expected_sha256=CDD_DATABASE_SHA256,
+        required_files=("Cdd.pal",),
         archive_name="Cdd_LE.tar.gz",
         archive_type="tar.gz",
         expose_as="directory",

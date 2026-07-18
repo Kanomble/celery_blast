@@ -50,45 +50,104 @@ CATHI's integration into a docker container network streamlines its installation
 
 <a name="installation"></a>
 ## Installation
-<a name="installation_docker_desktop"></a>
-### Installation of docker-desktop
-The only requirement for installation is a local Docker-Desktop installation, which you can download under the following 
-link: [docker-desktop](https://www.docker.com/products/docker-desktop/). Make sure to create an account for Docker and to 
-be logged into Docker before you install CATHI.
 
-You may also need to configure Docker. Thus, it may require a lot of your RAM and processors. You can do this by adding
-a `.wslconfig` file in your `User` directory. For more information I recommend reading this [article](https://mrakelinggar.medium.com/set-up-configs-like-memory-limits-in-docker-for-windows-and-wsl2-80689997309c).
+CATHI is distributed as a Docker Compose application. The default installation path uses the published CATHI application,
+PostgreSQL, and RabbitMQ images. Building the application image locally is only needed for development or release work.
+
+<a name="installation_docker_desktop"></a>
+### Requirements
+
+- Docker Desktop or Docker Engine with the Compose v2 plugin (`docker compose`).
+- Git, or a ZIP download of this repository.
+- Enough local disk space for uploaded data, generated workflow outputs, BLAST databases, CDD data, and PostgreSQL data.
+- On Linux hosts, writable `data` and `tmp` directories for the container runtime user `10001:10001`.
+
+Docker Desktop can be downloaded from [docker.com](https://www.docker.com/products/docker-desktop/). On Windows with WSL2,
+large BLAST workflows may need higher Docker memory and CPU limits. One option is to create a `.wslconfig` file in your
+Windows user directory and restart Docker Desktop.
 
 ![wslconfig in user directory](./celery_blast/static/images/wslconfig.PNG)
 
-### UNIX setup 
-If you are working on a UNIX machine, you may need to enable file sharing. Therefore, open your docker-desktop
-application and switch to the Settings tab. Open the settings page and add the path to CATHI on the File Sharing tab in the 
-Resources section (see following image).
-<a name="installation_cathi"></a>
+On macOS or Linux installations that use Docker Desktop, ensure the CATHI repository path is shared with Docker.
 
 ![Docker File Sharing](./celery_blast/static/images/docker_file_sharing.png)
 
+<a name="installation_cathi"></a>
 ### Installation of CATHI
-Download and decompress this repository via the `Download ZIP` button of the `<> Code` tab or with `git clone git@github.com:Kanomble/celery_blast.git`.
-Open a terminal and use the `cd` command to point to the local version of the CATHI project repository (e.g., if you have downloaded and decompressed CATHI
-in the directory: `C:\Users\Test\Documents\CATHI`, open your powershell and execute the command `cd "C:\Users\Test\Documents\CATHI"`.
-Use the `ls` command to confirm that your terminal/powershell points to the correct directory, the output of `ls` should include following files and directories:
-`celery_blast  data  docker-compose-production.yml  docker-compose.yml  Dockerfile  LICENSE  nginx  README.md  requirements.txt  tmp`.
 
-```` Bash
+Clone or download the repository, then enter the repository root:
+
+```bash
 mkdir CATHI
 cd CATHI
 git clone git@github.com:Kanomble/celery_blast.git
 cd celery_blast
-docker compose -f docker-compose-production.yml up
-````
+```
 
-The application can get installed by submitting the command: `docker-compose up` for the development environment or by: 
-`docker-compose -f docker-compose-production.yml up` for the production environment.
+The repository root should contain files and directories such as `celery_blast`, `data`, `tmp`, `docker-compose.yml`,
+`docker-compose-production.yml`, `Dockerfile`, `nginx`, `requirements.lock.txt`, `environment.yml`, and `README.md`.
 
-Once installed, CATHI is accessible via: `http://127.0.0.1:1337/blast_project/` for the production environment
-and via: `http://127.0.0.1:8080/blast_project/` for the Django development server.
+Create local runtime environment files from the checked-in examples. The real `.env.*` files are intentionally untracked:
+
+```bash
+cp .env.dev.example .env.dev
+cp .env.prod.example .env.prod
+cp .env.prod.db.example .env.prod.db
+```
+
+On Windows PowerShell, use:
+
+```powershell
+Copy-Item .env.dev.example .env.dev
+Copy-Item .env.prod.example .env.prod
+Copy-Item .env.prod.db.example .env.prod.db
+```
+
+Before starting CATHI, edit the copied files:
+
+- Set matching database values in `.env.dev` or `.env.prod` and `.env.prod.db`.
+  `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD` must match `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
+- Replace `SECRET_KEY` with a real secret value.
+- For production, set `DJANGO_ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` to the deployed host name and HTTPS origin.
+- Configure the reference data URLs before running the CATHI setup procedure:
+  `TAXDB_URL`, `CDD_DATABASE_URL`, `REFSEQ_URL`, and `GENBANK_URL`.
+- Keep `.env.dev`, `.env.prod`, and `.env.prod.db` out of Git. Do not commit runtime secrets.
+
+On Linux hosts, prepare the writable runtime directories before starting the stack:
+
+```bash
+mkdir -p data tmp
+sudo chown -R 10001:10001 data tmp
+```
+
+For local development, start the Django development stack:
+
+```bash
+docker compose up
+```
+
+CATHI is then available at `http://127.0.0.1:8080/blast_project/`. Development Compose also binds PostgreSQL, RabbitMQ,
+and Flower to loopback-only ports for local debugging.
+
+For the production-style stack, start Nginx, Gunicorn/Django, Celery, PostgreSQL, and RabbitMQ:
+
+```bash
+docker compose -f docker-compose-production.yml up --build
+```
+
+CATHI is then available at `http://127.0.0.1:1337/blast_project/` unless the host port is changed in
+`docker-compose-production.yml`. Production Compose publishes only the Nginx endpoint by default. PostgreSQL, RabbitMQ,
+and Gunicorn/Django remain internal to the Compose networks.
+
+Optional administrative services are disabled in production by default. To enable Flower or Jupyter for a trusted
+maintenance session, first set `FLOWER_BASIC_AUTH` and `JUPYTER_TOKEN` in `.env.prod`, then run:
+
+```bash
+docker compose -f docker-compose-production.yml --profile admin up -d flower jupyter_notebook
+```
+
+Flower binds to `127.0.0.1:5555` and Jupyter binds to `127.0.0.1:8888`. Use VPN or SSH tunnels for remote
+administration. See `docs/ADMIN_ACCESS.md`.
 
 ### Verification baseline
 
@@ -126,29 +185,37 @@ Remote BLAST Entrez queries are serialized with YAML-safe configuration updates 
 
 <a name="CATHI Set-Up"></a>
 ### CATHI Set-Up
-Once you have installed CATHI you should see, that the containers within the Docker-Desktop application are listed green.
-Here is an example for the production environment:
+
+After CATHI starts, Docker Desktop or `docker compose ps` should show the web, worker, PostgreSQL, and RabbitMQ services
+as running. The production stack also includes Nginx.
 
 ![Docker Container Network](./celery_blast/static/images/docker_container_network.PNG)
 
-Next, you need to perform a last Set-Up step, therefore you need to download the Conserved-Domain-Database and 
-the RefSeq and GenBank assembly summary files. This can be done by clicking on the **Start CATHI Tool Set-Up Procedure** button, that appears
-on the home dashboard after registering and logging into CATHI. Reference refreshes are staged and atomically activated; configure the expected SHA256 values for taxdb, CDD, RefSeq, and GenBank before running setup. See `docs/REFERENCE_DATA_REFRESH.md`.
+Next, register and log in to CATHI, then click **Start CATHI Tool Set-Up Procedure** on the home dashboard. This downloads
+or refreshes the shared taxdb, Conserved Domain Database, RefSeq assembly summary, and GenBank assembly summary files.
+
+Reference refreshes are staged and atomically activated. If a downloaded archive is unreadable, unsafe, empty, or missing
+required files, the refresh fails and the previous active dataset remains in use. See `docs/REFERENCE_DATA_REFRESH.md`.
 
 <a name="configuration_notes"></a>
 ## Advanced Installation
 
-The docker client will pull remotely available images, including the base image for this application,
-an image for the PostgreSQL database and finally an image for the RabbitMQ message broker.
-Docker images are pulled from this [DockerHub](https://hub.docker.com/repository/docker/kanomble/rec_blast_base_image).
-It is recommended to install the application with the remotely available images and the `docker compose up` command. 
+CATHI uses published Docker images for the application, PostgreSQL, and RabbitMQ. The production Compose file builds the
+small Nginx image locally from `nginx/Dockerfile`.
 
-It is possible to build the necessary images from the Dockerfile of this repository. You can change and adapt the dockerfile according to the software 
-tools you need, keep in mind to adapt the `docker-compose.yml` or the `docker-compose-production.yml` files if you want to use local Docker images of this tool.
-The Dockerfile installs Python packages from `requirements.lock.txt` and Conda-managed tools from `environment.yml`; do not use `conda update --all` for runtime rebuilds. The application image is currently supported for `linux/amd64` only because several upstream scientific tools are x86_64 Linux artifacts. The runtime user is UID/GID `10001:10001`, so bind-mounted `data` and `tmp` directories must be writable by that identity.
+If you need to build or change the application image, update the Dockerfile and Compose image references deliberately.
+The Dockerfile installs Python packages from `requirements.lock.txt` and Conda-managed tools from `environment.yml`.
+Do not use `conda update --all` for runtime rebuilds. The application image is currently supported for `linux/amd64`
+only because several upstream scientific tools are x86_64 Linux artifacts.
 
-Docker creates seven containers named: `celery_blast_X_1` where `X` is a synonym for 
-`nginx, worker, flower, web, postgres and rabbitmq`.
+The Dockerfile verifies pinned remote artifacts and writes build metadata, including dependency versions and a scientific
+tools SBOM. Run the local policy checks in `docs/BUILD_HARDENING.md` before submitting Dockerfile, dependency, or remote
+artifact changes.
+
+The current Compose services include `web`, three Celery worker queues (`celery_worker`, `celery_worker_interactive`, and
+`celery_worker_maintenance`), `postgres`, `rabbitmq`, and, in production, `nginx`. Production-only admin services
+`flower` and `jupyter_notebook` run only when the `admin` profile is enabled.
+
 ### Notes on CATHI containers and possible configurations
 CATHI is a server site tool, by starting the container network, your local computer will be used as a web
 server. `Django` is the underlying web-framework and `gunicorn` serves as the WSGI HTTP Server. Both applications reside
@@ -280,7 +347,7 @@ an assembly accession file. Most of these files are not mandatory.
 ## Technical Details
 ### Docker
 All necessary software packages are deployed within docker container. Those containers are wrapped into a network
-using docker-compose.
+using Docker Compose.
 
 ### Django, Gunicorn and Nginx
 Django, Gunicorn, and Nginx are commonly used technologies for building and deploying web applications. 
