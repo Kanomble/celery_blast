@@ -85,7 +85,7 @@ def assert_conda_lock() -> None:
         "python": "3.8.18",
         "biopython": "1.78",
         "pandas": "2.0.3",
-        "matplotlib": "3.7.5",
+        "matplotlib": "3.7.3",
         "seaborn": "0.12.0",
         "bokeh": "2.4.3",
         "pyyaml": "6.0.2",

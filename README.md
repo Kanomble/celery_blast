@@ -175,7 +175,7 @@ Tests that require Docker, external services, large biological fixtures, or down
 
 Production publishes only the Nginx endpoint by default. Flower and Jupyter are opt-in administrative services in the `admin` Compose profile, bind to loopback when enabled, and require runtime credentials. See `docs/ADMIN_ACCESS.md` for VPN and SSH-tunnel access guidance.
 
-Current exclusions include database-statistics fixture tests, taxdb presence checks, hard-coded biological fixture path checks, and live Celery transaction tests. Run those tagged tests explicitly only in a prepared development or staging environment with the required small fixtures or services. Python dependencies are installed from `requirements.lock.txt`; Snakemake and Jupyter are installed from `environment.yml`. Dependency lock maintenance is documented in `docs/DEPENDENCIES.md`. Docker build hardening, supported architecture, remote artifact checksums, non-root runtime permissions, and SBOM output are documented in `docs/BUILD_HARDENING.md`.
+Current exclusions include database-statistics fixture tests, taxdb presence checks, hard-coded biological fixture path checks, and live Celery transaction tests. Run those tagged tests explicitly only in a prepared development or staging environment with the required small fixtures or services. Python dependencies are installed from `requirements.lock.txt`; Snakemake and Jupyter are installed from `environment.yml`. Dependency lock maintenance is documented in `docs/DEPENDENCIES.md`. Docker build policy, supported architecture, remote artifact downloads, and non-root runtime permissions are documented in `docs/BUILD_HARDENING.md`.
 
 ### Protected media
 
@@ -208,9 +208,9 @@ The Dockerfile installs Python packages from `requirements.lock.txt` and Conda-m
 Do not use `conda update --all` for runtime rebuilds. The application image is currently supported for `linux/amd64`
 only because several upstream scientific tools are x86_64 Linux artifacts.
 
-The Dockerfile verifies pinned remote artifacts and writes build metadata, including dependency versions and a scientific
-tools SBOM. Run the local policy checks in `docs/BUILD_HARDENING.md` before submitting Dockerfile, dependency, or remote
-artifact changes.
+The Dockerfile downloads reviewed HTTPS remote artifacts and writes build metadata, including dependency versions and
+principal tool versions. Run the local policy checks in `docs/BUILD_HARDENING.md` before submitting Dockerfile,
+dependency, or remote artifact changes.
 
 The current Compose services include `web`, three Celery worker queues (`celery_worker`, `celery_worker_interactive`, and
 `celery_worker_maintenance`), `postgres`, `rabbitmq`, and, in production, `nginx`. Production-only admin services
