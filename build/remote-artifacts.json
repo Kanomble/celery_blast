@@ -1,0 +1,175 @@
+{
+  "schema": "cathi.remote-artifacts.v1",
+  "supported_architectures": [
+    "linux/amd64"
+  ],
+  "base_images": [
+    {
+      "name": "ubuntu",
+      "reference": "ubuntu:focal@sha256:c664f8f86ed5a386b0a340d981b8f81714e21a8b9c73f658c4bea56aa179d54a",
+      "usage": "application build and runtime base",
+      "platform": "linux/amd64"
+    },
+    {
+      "name": "nginx",
+      "reference": "nginx:1.21-alpine@sha256:529db430e042ecef071f2e88267cee6da18f8ab44d66a0c44348886fdc2e60fc",
+      "usage": "production reverse proxy",
+      "platform": "linux/amd64"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "miniconda",
+      "name": "Miniconda3",
+      "version": "py38_4.9.2",
+      "type": "installer",
+      "url": "https://repo.anaconda.com/miniconda/Miniconda3-py38_4.9.2-Linux-x86_64.sh",
+      "sha256": "1314b90489f154602fd794accfc90446111514a5a72fe1f71ab83e07de9504a7",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "micromamba",
+      "name": "micromamba",
+      "version": "1.5.6-0",
+      "type": "conda-package",
+      "url": "https://conda.anaconda.org/conda-forge/linux-64/micromamba-1.5.6-0.tar.bz2",
+      "sha256": "efe462c7ffcae8b338c7dd7b168ce8d48cfc60b48ab991d02a035c3b8d73633c",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "ncbi-blast",
+      "name": "NCBI BLAST+",
+      "version": "2.11.0",
+      "type": "archive",
+      "url": "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.11.0/ncbi-blast-2.11.0+-x64-linux.tar.gz",
+      "sha256": "93454cbdf5ba6f541745f31155efd9ba48bc6249fe3659b0aeaea4af62e62b58",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "edirect",
+      "name": "NCBI EDirect",
+      "version": "content-pinned-2026-07-16",
+      "type": "archive",
+      "url": "https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz",
+      "sha256": "987db3477989d2b9c562ded4521e2554c1c673e4c2e3401e9596e08ece32778c",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "edirect-xtract-linux",
+      "name": "NCBI EDirect xtract",
+      "version": "content-pinned-2026-07-16",
+      "type": "binary-gzip",
+      "url": "https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/xtract.Linux.gz",
+      "sha256": "74492d23df44661e32d504cc6d893835c3afd872d6b78139c5e0d3aee1bfdf1d",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "edirect-rchive-linux",
+      "name": "NCBI EDirect rchive",
+      "version": "content-pinned-2026-07-16",
+      "type": "binary-gzip",
+      "url": "https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/rchive.Linux.gz",
+      "sha256": "727949bdce39ef265893300e2c7d9247410c21c980d32644e3aff452b86d0a01",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "edirect-transmute-linux",
+      "name": "NCBI EDirect transmute",
+      "version": "content-pinned-2026-07-16",
+      "type": "binary-gzip",
+      "url": "https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/transmute.Linux.gz",
+      "sha256": "9ef6654b7664a21f1d20cd248c874688286e9f239372641f1abf06d8c378fb80",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "wait-for",
+      "name": "eficode wait-for",
+      "version": "2.1.0",
+      "type": "script",
+      "url": "https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for",
+      "sha256": "46b07615b92400d67ad73cab1984021c6eccd9b62aec47b26c93c95d0b6049f5",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "trimal",
+      "name": "trimAl",
+      "version": "1.4.1",
+      "type": "source-archive",
+      "url": "https://github.com/inab/trimal/archive/refs/tags/v1.4.1.zip",
+      "sha256": "3747c3ba3bc930a97a4bcc095fe81238433ffda27a3d09dde6331a86f9b49a40",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "mview",
+      "name": "MView",
+      "version": "1.67",
+      "type": "archive",
+      "url": "https://downloads.sourceforge.net/project/bio-mview/bio-mview/mview-1.67/mview-1.67.tar.gz",
+      "sha256": "e5bac78960f8f6c091b2f7ea8a3c6075e9bea5a062391fd3e1e44fca14025e46",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "rpsbproc",
+      "name": "RpsbProc",
+      "version": "content-pinned-2026-07-16",
+      "type": "archive",
+      "url": "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/rpsbproc/RpsbProc-x64-linux.tar.gz",
+      "sha256": "eebcffcb629704241f0d8787f7eaf52998d4edc3fc646a2c4544d60892a265b8",
+      "principal_scientific_tool": true
+    },
+    {
+      "id": "cddid-tbl",
+      "name": "CDD cddid.tbl",
+      "version": "content-pinned-2026-07-16",
+      "type": "data-gzip",
+      "url": "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddid.tbl.gz",
+      "sha256": "852cb4c22f604b38f34c399c2fdad3d737fd15deaa5736c1a632249f0a6f6264",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "cdtrack",
+      "name": "CDD cdtrack.txt",
+      "version": "content-pinned-2026-07-16",
+      "type": "data",
+      "url": "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cdtrack.txt",
+      "sha256": "263046b8bc6bf4ce19db46913479b99f83914c2b7db0e6db6fb23139084cf828",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "family-superfamily-links",
+      "name": "CDD family_superfamily_links",
+      "version": "content-pinned-2026-07-16",
+      "type": "data",
+      "url": "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/family_superfamily_links",
+      "sha256": "780a29f2ae698131c719b9a8cade4bfe54390380b6a388240695299c09916e9b",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "cddannot",
+      "name": "CDD cddannot.dat",
+      "version": "content-pinned-2026-07-16",
+      "type": "data-gzip",
+      "url": "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddannot.dat.gz",
+      "sha256": "9b028a6847322188dad39f0ba854de9c38ca2e057a16705ee47ca0fae42258bd",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "cddannot-generic",
+      "name": "CDD cddannot_generic.dat",
+      "version": "content-pinned-2026-07-16",
+      "type": "data-gzip",
+      "url": "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/cddannot_generic.dat.gz",
+      "sha256": "97b15f39741293e155e0e95b49c70243cedb2b0b2ed59440c4f8f7287f134a13",
+      "principal_scientific_tool": false
+    },
+    {
+      "id": "bitscore-specific",
+      "name": "CDD bitscore_specific.txt",
+      "version": "content-pinned-2026-07-16",
+      "type": "data",
+      "url": "https://ftp.ncbi.nih.gov/pub/mmdb/cdd/bitscore_specific.txt",
+      "sha256": "bf24d622f8b127651ba1c4338965ff8fbe730281c70936f85cddeb13432a0939",
+      "principal_scientific_tool": false
+    }
+  ]
+}
