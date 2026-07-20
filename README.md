@@ -128,12 +128,11 @@ Before starting CATHI, edit the copied files:
 - Replace `SECRET_KEY` with a real secret value.
 - For production, set `DJANGO_ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` in `.env.prod` to the deployed host name and
   HTTPS origin.
-- Configure the required reference-data URLs before running the CATHI setup procedure. These values are intentionally
-  blank in the example files and must be set in `.env.dev` or `.env.prod`:
+- Review the reference-data URLs before running the CATHI setup procedure. The example files use NCBI HTTPS defaults;
+  change them in `.env.dev` or `.env.prod` if your installation needs another mirror or pinned source:
   `TAXDB_URL`, `CDD_DATABASE_URL`, `REFSEQ_URL`, and `GENBANK_URL`.
-- Prefer HTTPS URLs for large archives when the provider supports them. For example, the CDD archive should be served as
-  a readable `.tar.gz` file that contains `Cdd.pal`; the RefSeq and GenBank values should point to assembly summary text
-  files.
+- The CDD archive must be a readable `.tar.gz` file that contains `Cdd.pal`; the RefSeq and GenBank values should point
+  to assembly summary text files.
 - Keep `.env.dev`, `.env.prod`, and `.env.prod.db` out of Git. Do not commit runtime secrets.
 
 Environment files are read when containers are created. If you change `.env.dev`, `.env.prod`, or `.env.prod.db` after
@@ -274,7 +273,8 @@ one-way BLAST pipelines are integrated into a Snakefile, which is used by the wo
 Customization of Snakefiles enables user defined post-processing. In addition, a `jupyter-notebook` container is
 available through the optional admin Compose profile. Runtime configuration is done with local, untracked `.env.*` files
 created from `.env.dev.example`, `.env.prod.example`, and `.env.prod.db.example`.
-Set real runtime values before deployment; required reference-data URLs are intentionally blank in the example files.
+Set real runtime values before deployment; review the default reference-data URLs and change them if your deployment uses
+other mirrors or pinned artifacts.
 Secret rotation guidance is documented in `docs/SECRET_ROTATION.md`.
 
 <a name="project_setup"></a>
