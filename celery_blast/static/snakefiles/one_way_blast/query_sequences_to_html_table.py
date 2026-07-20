@@ -247,8 +247,7 @@ def create_pandas_df_and_html_table(proteins: list, protein_informations: dict, 
                                  'Features': features,
                                  'PFAM': pfam, 'CDD': cdd, 'TIGR': jvci}
 
-            row_to_add = pd.Series(values_to_add)
-            df = df.append(row_to_add, ignore_index=True)
+            df = pd.concat([df, pd.DataFrame([values_to_add])], ignore_index=True)
 
         pd.set_option('colheader_justify', 'left')
         html_string = '''

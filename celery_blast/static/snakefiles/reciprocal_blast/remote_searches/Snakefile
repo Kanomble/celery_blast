@@ -172,7 +172,7 @@ rule fw_result_processing:
 											 10: scientific_name,
 											 11: "artificially added RBH - not in FW database",
 											 12: len(queries[query])}
-						fw_results = fw_results.append(new_forward_entry,ignore_index=True)
+						fw_results = pd.concat([fw_results, pd.DataFrame([new_forward_entry])], ignore_index=True)
 
 				#writing gi file
 				with open(output[0],"w+") as out:

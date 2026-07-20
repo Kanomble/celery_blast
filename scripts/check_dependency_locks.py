@@ -84,6 +84,11 @@ def assert_conda_lock() -> None:
     required = {
         "python": "3.8.18",
         "biopython": "1.78",
+        "pandas": "2.0.3",
+        "matplotlib": "3.7.5",
+        "seaborn": "0.12.0",
+        "bokeh": "2.4.3",
+        "pyyaml": "6.0.2",
         "snakemake": "7.32.4",
         "notebook": "7.1.0",
         "pyopenssl": "24.0.0",
@@ -126,8 +131,10 @@ def assert_dockerfile_policy() -> None:
         fail("Dockerfile must run pip check after installing Python dependencies")
     if "micromamba create -y -p \"${CATHI_CONDA_ENV}\"" not in dockerfile:
         fail("Dockerfile must install Conda workflow tools into an isolated prefix")
-    if "from Bio import Entrez" not in dockerfile:
-        fail("Dockerfile must verify Biopython is importable from the Conda workflow prefix")
+    workflow_imports = ("from Bio import Entrez", "pandas", "matplotlib", "seaborn", "bokeh", "yaml")
+    for import_text in workflow_imports:
+        if import_text not in dockerfile:
+            fail(f"Dockerfile must verify {import_text} is importable from the Conda workflow prefix")
     if "/blast/conda-envs/cathi-runtime" not in dockerfile:
         fail("Dockerfile must document the Conda workflow tool prefix")
     if "build_metadata/dependency_versions.txt" not in dockerfile:

@@ -114,7 +114,7 @@ rule fw_result_processing:
 											 10: scientific_name,
 											 11: "artificially added RBH - not in FW database",
 											 12: len(queries[query])}
-						forward_df = forward_df.append(new_forward_entry,ignore_index=True)
+						forward_df = pd.concat([forward_df, pd.DataFrame([new_forward_entry])], ignore_index=True)
 				logfile.write("INFO:writing new forward dataframe to disc ...\n")
 				forward_df.to_csv(params.forward_dataframe, index=False, header=False, sep="\t")
 				logfile.write("DONE\n")
