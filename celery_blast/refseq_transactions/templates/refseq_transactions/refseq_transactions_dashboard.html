@@ -45,14 +45,22 @@
     <br>
     <div class="container-fluid" id="whole_dashboard">
 
-        <div class="row">
-            <div class="col" style="text-align: right">
-                {% include "refseq_transactions/form_genbank_assembly_summary.html" %}
+        {% if setup_running %}
+            <div class="dashboard_project_list_col" style="margin-bottom: 30px; text-align: center">
+                <p>
+                    CATHI setup is still running. RefSeq and GenBank assembly summary downloads are available after setup finishes.
+                </p>
             </div>
-            <div class="col" style="text-align: left">
-                {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
+        {% else %}
+            <div class="row">
+                <div class="col" style="text-align: right">
+                    {% include "refseq_transactions/form_genbank_assembly_summary.html" %}
+                </div>
+                <div class="col" style="text-align: left">
+                    {% include "refseq_transactions/form_refseq_assembly_summary.html" %}
+                </div>
             </div>
-        </div>
+        {% endif %}
 
         {% if refseq_exists and genbank_exists %}
             <div class="dashboard_project_list_col" style="margin-bottom: 30px;" id="post_form_container">

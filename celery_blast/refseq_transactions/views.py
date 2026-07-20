@@ -2,7 +2,9 @@
 import pandas as pd
 from blast_project.py_django_db_services import get_database_by_id
 from blast_project.py_services import delete_blastdb_and_associated_directories_by_id
+from blast_project.setup_state import cathi_setup_is_running
 from blast_project.views import failure_view
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
@@ -19,6 +21,7 @@ from .tasks import download_refseq_assembly_summary, download_blast_databases_ba
 
 def build_dashboard_context(user, refseq_database_form=None):
     context = {}
+    context['setup_running'] = cathi_setup_is_running()
 
     if refseq_file_exists():
         context['refseq_exists'] = True
@@ -62,6 +65,13 @@ def dashboard(request):
 @login_required(login_url='login')
 def update_ncbi_databases_view(request):
     try:
+        if cathi_setup_is_running():
+            messages.warning(
+                request,
+                'CATHI setup is still running. RefSeq and GenBank summary downloads are available after setup finishes.',
+            )
+            return redirect('refseq_transactions_dashboard')
+
         download_refseq_assembly_summary.delay('RefSeq')
         download_refseq_assembly_summary.delay('GenBank')
         return redirect('refseq_transactions_dashboard')
@@ -83,6 +93,13 @@ def update_ncbi_databases_view(request):
 @login_required(login_url='login')
 def download_refseq_assembly_summary_view(request, summary_file:str):
     try:
+        if cathi_setup_is_running():
+            messages.warning(
+                request,
+                'CATHI setup is still running. RefSeq and GenBank summary downloads are available after setup finishes.',
+            )
+            return redirect('refseq_transactions_dashboard')
+
         download_refseq_assembly_summary.delay(summary_file)
         return redirect('refseq_transactions_dashboard')
     except Exception as e:

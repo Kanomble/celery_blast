@@ -20,6 +20,7 @@ from .tasks import write_species_taxids_into_file, execute_makeblastdb_with_uplo
     calculate_database_statistics_task
 from .workflow_execution import start_reciprocal_workflow
 from celery_blast.resource_governance import WorkflowQuotaExceeded
+from .setup_state import get_cathi_setup_state
 from .py_services import list_taxonomic_files, upload_file, check_if_file_exists, get_remote_html_results, \
     delete_project_and_associated_directories_by_id, get_html_results, check_if_taxdb_exists, \
     read_task_logs_summary_table, download_project_directory, delete_domain_database, delete_remote_project_and_associated_directories_by_id, \
@@ -107,6 +108,7 @@ def dashboard_view(request):
     try:
         context = {}
         context['domain_database'] = get_domain_database_model()
+        context.update(get_cathi_setup_state())
 
         if request.method == 'GET':
             # get all projects and databases

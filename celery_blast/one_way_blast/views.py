@@ -13,6 +13,7 @@ from django_celery_results.models import TaskResult
 
 from blast_project.protected_media import serve_protected_project_file
 from blast_project.result_responses import generated_html_response
+from blast_project.setup_state import cathi_setup_is_running
 from celery_blast.resource_governance import ACTIVE_TASK_STATUSES, WorkflowQuotaExceeded, enforce_user_workflow_quota
 from .forms import OneWayProjectCreationForm, BlastSettingsForm, OneWayRemoteProjectCreationForm
 from .access import one_way_project_owner_required
@@ -68,6 +69,13 @@ def _start_one_way_workflow(project_id, user, remote=False):
 @login_required(login_url='login')
 def one_way_blast_project_creation_view(request):
     try:
+        if cathi_setup_is_running():
+            messages.warning(
+                request,
+                'CATHI setup is still running. One-way BLAST project creation is available after setup finishes.',
+            )
+            return redirect('blast_project_dashboard')
+
         if request.method == 'POST':
             if request.POST['project_type'] == 'local':
                 project_creation_form = OneWayProjectCreationForm(

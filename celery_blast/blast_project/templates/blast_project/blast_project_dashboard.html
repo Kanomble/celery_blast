@@ -21,13 +21,21 @@
     <br>
     <br>
     If you want to create a completely new project check out the project creation dashboards for <a target="_blank" href="{% url 'project_creation' %}"> Reciprocal Projects </a>
-    or for <a target="_blank" href="{% url 'one_way_project_creation' %}"> One-Way BLAST Projects </a>.
+    {% if setup_running %}
+        or wait until CATHI setup finishes before creating One-Way BLAST Projects.
+    {% else %}
+        or for <a target="_blank" href="{% url 'one_way_project_creation' %}"> One-Way BLAST Projects </a>.
+    {% endif %}
     <br>
     <br>
     Manage and view available local databases by viewing the
     <a href="{% url 'active_table_view' selected_table="databases" %}">Active Databases</a> table.
     If you want to create a new BLAST database from remotely available proteomes or upload custom proteomes for BLAST database creation,
-    visit the  <a target="_blank" href="{% url 'refseq_transactions_dashboard' %}"> RefSeq/GenBank Database</a> dashboard or the
+    {% if setup_running %}
+        wait until CATHI setup finishes before downloading RefSeq/GenBank summary files, or visit the
+    {% else %}
+        visit the  <a target="_blank" href="{% url 'refseq_transactions_dashboard' %}"> RefSeq/GenBank Database</a> dashboard or the
+    {% endif %}
     <a target="_blank" href="{% url 'upload_genomes' %}"> Upload Protein Databases</a> dashboard.
     <br>
     <br>
@@ -35,10 +43,19 @@
     <br>
     <a href="{% url 'project_creation' %}">Reciprocal BLAST pipeline project creation</a>
     <br>
-    <a href="{% url 'one_way_project_creation' %}">One-way BLAST project creation</a>
-    <br>
+    {% if setup_running %}
+        One-way BLAST project creation is available after CATHI setup finishes.
+        <br>
+    {% else %}
+        <a href="{% url 'one_way_project_creation' %}">One-way BLAST project creation</a>
+        <br>
+    {% endif %}
     BLAST Database creation:
-    <a href="{% url 'refseq_transactions_dashboard' %}">based on remotely available NCBI-Databases</a>
+    {% if setup_running %}
+        remote NCBI database setup is available after CATHI setup finishes
+    {% else %}
+        <a href="{% url 'refseq_transactions_dashboard' %}">based on remotely available NCBI-Databases</a>
+    {% endif %}
     or
     <a href="{% url 'upload_genomes'  %}">based on locally downloaded or uploaded protein fasta files</a>
     <br>
@@ -55,7 +72,7 @@
 {% if domain_database.domain_database_loaded == False or domain_database.domain_database_download_task_result.status != "SUCCESS" %}
     {% if domain_database.domain_database_download_task_result %}
 
-        {% if domain_database.domain_database_download_task_result.status == "PROGRESS" %}
+        {% if setup_running %}
             <div class="dashboard_project_list_col cathi-dashboard-setup-state" id="cdd_download_progress">
                 <button class="btn btn-dark" id="download_button" type="button" disabled>
                     <span class="spinner-grow spinner-grow-sm"></span>
