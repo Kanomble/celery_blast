@@ -87,7 +87,8 @@ cd celery_blast
 The repository root should contain files and directories such as `celery_blast`, `data`, `tmp`, `docker-compose.yml`,
 `docker-compose-production.yml`, `Dockerfile`, `nginx`, `requirements.lock.txt`, `environment.yml`, and `README.md`.
 
-Create local runtime environment files from the checked-in examples. The real `.env.*` files are intentionally untracked:
+Create local runtime environment files from the checked-in examples. The checked-in `.env.*.example` files are templates;
+edit the copied `.env.*` files for your machine or deployment. The real `.env.*` files are intentionally untracked:
 
 ```bash
 cp .env.dev.example .env.dev
@@ -109,8 +110,12 @@ Before starting CATHI, edit the copied files:
   `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD` must match `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
 - Replace `SECRET_KEY` with a real secret value.
 - For production, set `DJANGO_ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` to the deployed host name and HTTPS origin.
-- Configure the reference data URLs before running the CATHI setup procedure:
+- Configure the required reference-data URLs before running the CATHI setup procedure. These values are intentionally
+  blank in the example files and must be set in `.env.dev` or `.env.prod`:
   `TAXDB_URL`, `CDD_DATABASE_URL`, `REFSEQ_URL`, and `GENBANK_URL`.
+- Prefer HTTPS URLs for large archives when the provider supports them. For example, the CDD archive should be served as
+  a readable `.tar.gz` file that contains `Cdd.pal`; the RefSeq and GenBank values should point to assembly summary text
+  files.
 - Keep `.env.dev`, `.env.prod`, and `.env.prod.db` out of Git. Do not commit runtime secrets.
 
 On Linux hosts, prepare the writable runtime directories before starting the stack:
@@ -127,7 +132,12 @@ docker compose up
 ```
 
 CATHI is then available at `http://127.0.0.1:8080/blast_project/`. Development Compose also binds PostgreSQL, RabbitMQ,
-and Flower to loopback-only ports for local debugging.
+and Flower to loopback-only ports for local debugging. If you change `.env.dev` after the containers are running, recreate
+the affected services so Docker Compose reloads the environment:
+
+```bash
+docker compose up -d --force-recreate web celery_worker celery_worker_interactive celery_worker_maintenance
+```
 
 For the production-style stack, start Nginx, Gunicorn/Django, Celery, PostgreSQL, and RabbitMQ:
 
@@ -137,7 +147,8 @@ docker compose -f docker-compose-production.yml up --build
 
 CATHI is then available at `http://127.0.0.1:1337/blast_project/` unless the host port is changed in
 `docker-compose-production.yml`. Production Compose publishes only the Nginx endpoint by default. PostgreSQL, RabbitMQ,
-and Gunicorn/Django remain internal to the Compose networks.
+and Gunicorn/Django remain internal to the Compose networks. If you change `.env.prod` after startup, recreate the
+application and worker services with the same Compose file so they receive the new values.
 
 Optional administrative services are disabled in production by default. To enable Flower or Jupyter for a trusted
 maintenance session, first set `FLOWER_BASIC_AUTH` and `JUPYTER_TOKEN` in `.env.prod`, then run:
@@ -192,10 +203,11 @@ as running. The production stack also includes Nginx.
 ![Docker Container Network](./celery_blast/static/images/docker_container_network.PNG)
 
 Next, register and log in to CATHI, then click **Start CATHI Tool Set-Up Procedure** on the home dashboard. This downloads
-or refreshes the shared taxdb, Conserved Domain Database, RefSeq assembly summary, and GenBank assembly summary files.
+or refreshes the shared taxdb, Conserved Domain Database, RefSeq assembly summary, and GenBank assembly summary files from
+the URLs configured in `.env.dev` or `.env.prod`.
 
 Reference refreshes are staged and atomically activated. If a downloaded archive is unreadable, unsafe, empty, or missing
-required files, the refresh fails and the previous active dataset remains in use. See `docs/REFERENCE_DATA_REFRESH.md`.
+required files, the refresh fails and the previous active dataset remains in use.
 
 <a name="configuration_notes"></a>
 ## Advanced Installation
