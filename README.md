@@ -12,7 +12,7 @@ Thanks!
 
 # CATHI - An interactive platform for comparative genomics and homolog identification
 
-Symmetrical BLAST and target sequence search web interface with Django, Gunicorn, Ngninx, PostgreSQL, Celery, RabbitMQ, 
+Symmetrical BLAST and target sequence search web interface with Django, Gunicorn, Nginx, PostgreSQL, Celery, RabbitMQ, 
 E-Direct, BLAST, Snakemake and Miniconda.
 
 CATHI is a user-friendly bioinformatics tool that performs reciprocal BLAST searches, generates multiple sequence 
@@ -32,11 +32,11 @@ database using the RPS-BLAST tool.
 CATHI is highly sophisticated and powerful, offering a range of features and capabilities ideal for target sequence searches.
 It enables performing reciprocal and one-way BLAST searches within local and remote 
 databases, providing valuable insights into the evolutionary relationships and functional characteristics of sequences.
-CATHI's integration into a docker container network streamlines its installation process.
+CATHI's integration into a Docker container network streamlines its installation process.
 
 ## Content
 - [Installation](#installation)
-  - [Installation of docker-desktop](#installation_docker_desktop)
+  - [Requirements](#installation_requirements)
   - [Installation of CATHI](#installation_cathi)
   - [Advanced Installation](#configuration_notes)
 - [How To Use CATHI](#project_setup)
@@ -54,7 +54,7 @@ CATHI's integration into a docker container network streamlines its installation
 CATHI is distributed as a Docker Compose application. The default installation path uses the published CATHI application,
 PostgreSQL, and RabbitMQ images. Building the application image locally is only needed for development or release work.
 
-<a name="installation_docker_desktop"></a>
+<a name="installation_requirements"></a>
 ### Requirements
 
 - Docker Desktop or Docker Engine with the Compose v2 plugin (`docker compose`).
@@ -87,12 +87,15 @@ cd celery_blast
 The repository root should contain files and directories such as `celery_blast`, `data`, `tmp`, `docker-compose.yml`,
 `docker-compose-production.yml`, `Dockerfile`, `nginx`, `requirements.lock.txt`, `environment.yml`, and `README.md`.
 
-Create local runtime environment files from the checked-in examples. The checked-in `.env.*.example` files are templates;
-edit the copied `.env.*` files for your machine or deployment. The real `.env.*` files are intentionally untracked:
+#### 1. Create Runtime Environment Files
+
+The checked-in `.env.*.example` files are templates. Copy them once, then edit the copied files for your machine or
+deployment. The real `.env.*` files are intentionally untracked and must not be committed.
+
+For local development, CATHI needs `.env.dev` for the application services and `.env.prod.db` for PostgreSQL:
 
 ```bash
 cp .env.dev.example .env.dev
-cp .env.prod.example .env.prod
 cp .env.prod.db.example .env.prod.db
 ```
 
@@ -100,16 +103,31 @@ On Windows PowerShell, use:
 
 ```powershell
 Copy-Item .env.dev.example .env.dev
-Copy-Item .env.prod.example .env.prod
 Copy-Item .env.prod.db.example .env.prod.db
 ```
 
+For the production-style stack, also create `.env.prod`:
+
+```bash
+cp .env.prod.example .env.prod
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.prod.example .env.prod
+```
+
+#### 2. Edit Required Settings
+
 Before starting CATHI, edit the copied files:
 
-- Set matching database values in `.env.dev` or `.env.prod` and `.env.prod.db`.
-  `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD` must match `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
+- Set matching database values. In development, `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD` in `.env.dev` must match
+  `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` in `.env.prod.db`. In production, the matching application
+  values live in `.env.prod`.
 - Replace `SECRET_KEY` with a real secret value.
-- For production, set `DJANGO_ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` to the deployed host name and HTTPS origin.
+- For production, set `DJANGO_ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` in `.env.prod` to the deployed host name and
+  HTTPS origin.
 - Configure the required reference-data URLs before running the CATHI setup procedure. These values are intentionally
   blank in the example files and must be set in `.env.dev` or `.env.prod`:
   `TAXDB_URL`, `CDD_DATABASE_URL`, `REFSEQ_URL`, and `GENBANK_URL`.
@@ -118,6 +136,11 @@ Before starting CATHI, edit the copied files:
   files.
 - Keep `.env.dev`, `.env.prod`, and `.env.prod.db` out of Git. Do not commit runtime secrets.
 
+Environment files are read when containers are created. If you change `.env.dev`, `.env.prod`, or `.env.prod.db` after
+starting the stack, recreate the affected services so Docker Compose loads the new values.
+
+#### 3. Prepare Writable Directories
+
 On Linux hosts, prepare the writable runtime directories before starting the stack:
 
 ```bash
@@ -125,7 +148,12 @@ mkdir -p data tmp
 sudo chown -R 10001:10001 data tmp
 ```
 
-For local development, start the Django development stack:
+Docker Desktop on Windows and macOS usually handles these permissions through file sharing. Ensure the repository
+directory is shared with Docker Desktop before starting the stack.
+
+#### 4. Start Local Development
+
+Start the Django development stack:
 
 ```bash
 docker compose up
@@ -139,7 +167,9 @@ the affected services so Docker Compose reloads the environment:
 docker compose up -d --force-recreate web celery_worker celery_worker_interactive celery_worker_maintenance
 ```
 
-For the production-style stack, start Nginx, Gunicorn/Django, Celery, PostgreSQL, and RabbitMQ:
+#### 5. Start The Production-Style Stack
+
+Start Nginx, Gunicorn/Django, Celery, PostgreSQL, and RabbitMQ:
 
 ```bash
 docker compose -f docker-compose-production.yml up --build
@@ -149,6 +179,10 @@ CATHI is then available at `http://127.0.0.1:1337/blast_project/` unless the hos
 `docker-compose-production.yml`. Production Compose publishes only the Nginx endpoint by default. PostgreSQL, RabbitMQ,
 and Gunicorn/Django remain internal to the Compose networks. If you change `.env.prod` after startup, recreate the
 application and worker services with the same Compose file so they receive the new values.
+
+```bash
+docker compose -f docker-compose-production.yml up -d --force-recreate web celery_worker celery_worker_interactive celery_worker_maintenance
+```
 
 Optional administrative services are disabled in production by default. To enable Flower or Jupyter for a trusted
 maintenance session, first set `FLOWER_BASIC_AUTH` and `JUPYTER_TOKEN` in `.env.prod`, then run:
@@ -194,8 +228,8 @@ Project uploads, workflow outputs, logs, archives, result tables, and generated 
 
 Remote BLAST Entrez queries are serialized with YAML-safe configuration updates and passed to BLAST as subprocess arguments, not shell text. Valid Entrez syntax may include spaces, brackets, parentheses, colons, quotes, Boolean operators, and Unicode text; control characters and line breaks are rejected with a validation error.
 
-<a name="CATHI Set-Up"></a>
-### CATHI Set-Up
+<a name="cathi_setup"></a>
+### CATHI Setup
 
 After CATHI starts, Docker Desktop or `docker compose ps` should show the web, worker, PostgreSQL, and RabbitMQ services
 as running. The production stack also includes Nginx.
@@ -237,10 +271,10 @@ the message broker `rabbitmq` and passed to a queue, if a `celery-worker` is fre
 is saved within the `postgresql` database within the `django_celery_results_taskresult` table, which enables task monitoring.
 The `flower` container can be used to monitor the `celery-worker`. The reciprocal BLAST pipeline and the normal 
 one-way BLAST pipelines are integrated into a Snakefile, which is used by the workflow management system `snakemake`.
-Customization of Snakefiles enables user defined post-processing. In addtion, a `jupyter-notebook` container is 
-integrated into the CATHI container network. Configuration is done with local, untracked env files
+Customization of Snakefiles enables user defined post-processing. In addition, a `jupyter-notebook` container is
+available through the optional admin Compose profile. Runtime configuration is done with local, untracked `.env.*` files
 created from `.env.dev.example`, `.env.prod.example`, and `.env.prod.db.example`.
-Set real runtime values before deployment; the example placeholders are intentionally invalid.
+Set real runtime values before deployment; required reference-data URLs are intentionally blank in the example files.
 Secret rotation guidance is documented in `docs/SECRET_ROTATION.md`.
 
 <a name="project_setup"></a>
@@ -286,7 +320,7 @@ Further CATHI post-processing procedures outside the scope of this pipeline invo
    1. Conducting RPS-BLAST with a specified set of RBHs
    2. Conducting a principal component analysis (PCA) based on the percent identity of the inferred domains with respect to the query sequence domains
    3. Building an interactive bokeh plot with the first two principal components and the taxonomic information within the RBH result table
-   4. Refine the phylogeny by slecting RBHs directly from the PCA bokeh-plot to conduct a conserved-domain corrected phylogenetic inference
+   4. Refine the phylogeny by selecting RBHs directly from the PCA bokeh-plot to conduct a conserved-domain corrected phylogenetic inference
 4. Synteny analysis
    1. Select up to ten different RBHs for the inference of syntenic regions with the clinker tool
    2. The clinker result is an interactive HTML document that can be changed according to user needs
@@ -380,7 +414,7 @@ projects. The celery worker process is triggered in the `celery_worker` containe
 container. Accurate log-messages are displayed within the terminal window of the `celery_worker` container. Celery tasks are saved 
 in the `PostgreSQL` database by using the `TaskResult` model instance of the `django_celery_results` django application 
 (installed via the python package `django-celery-results`). Detailed information about Celery can be found on the official 
-[project documenation page](https://docs.celeryq.dev/en/stable/index.html).
+[project documentation page](https://docs.celeryq.dev/en/stable/index.html).
 
 ### Snakemake pipeline
 In order to enable reproducibility and an easy-to-use workflow execution, the workflow engine snakemake is used.
