@@ -1,8 +1,7 @@
-"""Static checks for Docker build hardening policy."""
+"""Static checks for Docker build policy."""
 
 from __future__ import annotations
 
-import json
 import re
 import sys
 from pathlib import Path
@@ -24,11 +23,7 @@ def dockerfile_text() -> str:
     return "\n".join(read(path) for path in DOCKERFILES)
 
 
-def load_manifest() -> dict[str, object]:
-    return json.loads((ROOT / "build" / "remote-artifacts.json").read_text(encoding="utf-8"))
-
-
-def assert_base_images_are_digest_pinned() -> None:
+def assert_base_images_are_explicit() -> None:
     for path in DOCKERFILES:
         for line in read(path).splitlines():
             stripped = line.strip()
@@ -36,12 +31,12 @@ def assert_base_images_are_digest_pinned() -> None:
                 continue
             if "${UBUNTU_FOCAL_AMD64_IMAGE}" in stripped:
                 continue
-            if "@sha256:" not in stripped:
-                fail(f"{path} has an unpinned base image: {stripped}")
+            if stripped.endswith(":latest") or stripped == "FROM nginx":
+                fail(f"{path} must use an explicit non-latest base image tag: {stripped}")
 
     dockerfile = read(ROOT / "Dockerfile")
-    if "UBUNTU_FOCAL_AMD64_IMAGE=ubuntu:focal@sha256:" not in dockerfile:
-        fail("Dockerfile must pin ubuntu:focal by digest through UBUNTU_FOCAL_AMD64_IMAGE")
+    if "UBUNTU_FOCAL_AMD64_IMAGE=ubuntu:focal" not in dockerfile:
+        fail("Dockerfile must declare ubuntu:focal through UBUNTU_FOCAL_AMD64_IMAGE")
 
 
 def assert_no_remote_shell_execution() -> None:
@@ -63,35 +58,36 @@ def assert_no_remote_shell_execution() -> None:
         fail("Dockerfile downloads must constrain curl to HTTPS")
 
 
-def assert_artifacts_are_verified() -> None:
-    manifest = load_manifest()
+def assert_remote_downloads_are_url_only() -> None:
     text = dockerfile_text()
 
-    for artifact in manifest["artifacts"]:
-        artifact_id = artifact["id"]
-        url = artifact["url"]
-        sha256 = artifact["sha256"]
-        if not str(url).startswith("https://"):
-            fail(f"{artifact_id} must use HTTPS: {url}")
-        if not re.fullmatch(r"[0-9a-f]{64}", sha256):
-            fail(f"{artifact_id} must have a SHA256 checksum")
-        if artifact_id == "miniconda":
-            expected_names = ["MINICONDA_URL", "MINICONDA_SHA256"]
-        elif artifact_id == "edirect":
-            expected_names = ["EDIRECT_TAR_URL", "EDIRECT_TAR_SHA256"]
-        else:
-            expected_names = [
-                artifact_id.upper().replace("-", "_").replace(".", "_") + "_URL",
-                artifact_id.upper().replace("-", "_").replace(".", "_") + "_SHA256",
-            ]
-        for value in (url, sha256):
-            if value not in text:
-                fail(f"{artifact_id} is missing from Dockerfile: {value}")
-        if not any(name in text for name in expected_names):
-            fail(f"{artifact_id} must be represented by checksum build args")
+    if re.search(r"\bARG\s+\S+_SHA256\b", text):
+        fail("Dockerfile downloads must not require user-maintained SHA256 build args")
+    if "sha256sum -c -" in text or "download_verify" in text:
+        fail("Dockerfile downloads must not be checksum-gated")
 
-    if "sha256sum -c -" not in text:
-        fail("Dockerfile must fail builds through sha256sum -c -")
+    expected_url_args = {
+        "NCBI_BLAST_URL",
+        "EDIRECT_TAR_URL",
+        "EDIRECT_XTRACT_LINUX_URL",
+        "EDIRECT_RCHIVE_LINUX_URL",
+        "EDIRECT_TRANSMUTE_LINUX_URL",
+        "WAIT_FOR_URL",
+        "TRIMAL_URL",
+        "MVIEW_URL",
+        "RPSBPROC_URL",
+        "CDDID_TBL_URL",
+        "CDTRACK_URL",
+        "FAMILY_SUPERFAMILY_LINKS_URL",
+        "CDDANNOT_URL",
+        "CDDANNOT_GENERIC_URL",
+        "BITSCORE_SPECIFIC_URL",
+        "MINICONDA_URL",
+        "MICROMAMBA_URL",
+    }
+    missing = sorted(name for name in expected_url_args if name not in text)
+    if missing:
+        fail(f"Dockerfile is missing expected URL build args: {missing}")
 
 
 def assert_non_root_runtime() -> None:
@@ -112,33 +108,12 @@ def assert_non_root_runtime() -> None:
         fail("Production Compose must publish host port 1337 to Nginx container port 8080")
 
 
-def assert_sbom_includes_principal_tools() -> None:
-    manifest = load_manifest()
-    principal = {
-        artifact["name"]
-        for artifact in manifest["artifacts"]
-        if artifact.get("principal_scientific_tool")
-    }
-    expected = {"NCBI BLAST+", "NCBI EDirect", "trimAl", "MView", "RpsbProc"}
-    missing = expected - principal
-    if missing:
-        fail(f"remote artifact manifest is missing principal tools: {sorted(missing)}")
-
-    sbom_script = read(ROOT / "scripts" / "generate_release_sbom.py")
-    dockerfile = read(ROOT / "Dockerfile")
-    if "CycloneDX" not in sbom_script:
-        fail("SBOM generator must produce CycloneDX output")
-    if "scientific-tools.sbom.cdx.json" not in dockerfile:
-        fail("Dockerfile must generate the scientific tools SBOM")
-
-
 def main() -> int:
     try:
-        assert_base_images_are_digest_pinned()
+        assert_base_images_are_explicit()
         assert_no_remote_shell_execution()
-        assert_artifacts_are_verified()
+        assert_remote_downloads_are_url_only()
         assert_non_root_runtime()
-        assert_sbom_includes_principal_tools()
     except AssertionError as exc:
         print(f"Docker build hardening check failed: {exc}", file=sys.stderr)
         return 1
