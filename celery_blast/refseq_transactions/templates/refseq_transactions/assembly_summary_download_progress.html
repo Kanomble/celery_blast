@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %} {{ summary_file }} Assembly Summary Download {% endblock %}
+
+{% block page_title %} {{ summary_file }} Assembly Summary Download {% endblock %}
+
+{% block infoheader %} Downloading {{ summary_file }} Assembly Summary {% endblock %}
+
+{% block page_description %}
+    CATHI is downloading and activating the {{ summary_file }} assembly summary file. This page redirects to the BLAST
+    database dashboard after the download finishes.
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard_project_list_col" style="text-align: center">
+        <p id="assembly_summary_download_status">Waiting for worker.</p>
+        <div class="progress">
+            <div id="progress_bar" class="progress_bar" style="width: 5%">5%</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        (function () {
+            var progressUrl = "{{ progress_url }}";
+            var redirectUrl = "{{ redirect_url }}";
+            var progressBar = document.getElementById("progress_bar");
+            var status = document.getElementById("assembly_summary_download_status");
+            var pollInterval;
+
+            function setProgress(progress, description) {
+                progressBar.style.width = String(progress) + "%";
+                progressBar.textContent = String(progress) + "%";
+                status.textContent = description || "";
+            }
+
+            function stopPolling() {
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+            }
+
+            function poll() {
+                fetch(progressUrl, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    credentials: "same-origin"
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error("progress request failed");
+                        }
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (data.failed || data.progress === "ERROR") {
+                            stopPolling();
+                            setProgress(100, "Download failed. Returning to dashboard.");
+                            window.setTimeout(function () {
+                                window.location.href = redirectUrl;
+                            }, 1500);
+                            return;
+                        }
+
+                        setProgress(data.progress, data.description || data.status);
+
+                        if (data.complete || data.progress >= 100) {
+                            stopPolling();
+                            window.location.href = redirectUrl;
+                        }
+                    })
+                    .catch(function () {
+                        stopPolling();
+                        status.textContent = "Error polling progress data.";
+                    });
+            }
+
+            pollInterval = setInterval(poll, 3000);
+            poll();
+        })();
+    </script>
+{% endblock %}

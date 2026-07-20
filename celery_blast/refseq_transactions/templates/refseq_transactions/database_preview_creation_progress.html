@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %} BLAST Database Preview Creation {% endblock %}
+
+{% block page_title %} BLAST Database Preview Creation {% endblock %}
+
+{% block infoheader %} Creating BLAST Database Preview {% endblock %}
+
+{% block page_description %}
+    CATHI is filtering the assembly summary file and creating the database preview table. This page redirects to the
+    BLAST database dashboard after the preview is ready.
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard_project_list_col" style="text-align: center">
+        <p id="database_preview_creation_status">Waiting for worker.</p>
+        <div class="progress">
+            <div id="progress_bar" class="progress_bar" style="width: 5%">5%</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        (function () {
+            var progressUrl = "{{ progress_url }}";
+            var redirectUrl = "{{ redirect_url }}";
+            var progressBar = document.getElementById("progress_bar");
+            var status = document.getElementById("database_preview_creation_status");
+            var pollInterval;
+            var visualProgress = 5;
+
+            function setProgress(progress, description) {
+                if (progress === "ERROR") {
+                    progress = 100;
+                }
+                visualProgress = Math.max(visualProgress, parseInt(progress, 10) || 0);
+                progressBar.style.width = String(visualProgress) + "%";
+                progressBar.textContent = String(visualProgress) + "%";
+                status.textContent = description || "";
+            }
+
+            function tickProgress() {
+                if (visualProgress < 90) {
+                    visualProgress += 1;
+                    progressBar.style.width = String(visualProgress) + "%";
+                    progressBar.textContent = String(visualProgress) + "%";
+                }
+            }
+
+            function stopPolling() {
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+            }
+
+            function poll() {
+                fetch(progressUrl, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    credentials: "same-origin"
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error("progress request failed");
+                        }
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (data.failed || data.progress === "ERROR") {
+                            stopPolling();
+                            setProgress(100, "Preview creation failed. Returning to dashboard.");
+                            window.setTimeout(function () {
+                                window.location.href = redirectUrl;
+                            }, 1500);
+                            return;
+                        }
+
+                        setProgress(data.progress, data.description || data.status);
+
+                        if (data.complete || data.progress >= 100) {
+                            stopPolling();
+                            window.location.href = redirectUrl;
+                        }
+                    })
+                    .catch(function () {
+                        stopPolling();
+                        status.textContent = "Error polling progress data.";
+                    });
+            }
+
+            pollInterval = setInterval(function () {
+                tickProgress();
+                poll();
+            }, 3000);
+            poll();
+        })();
+    </script>
+{% endblock %}
