@@ -181,8 +181,18 @@ services:
   rabbitmq:
     hostname: rabbitmq
     image: kanomble/rec_blast_rabbitmq_image:1.1
+    env_file:
+      - ./.env.prod
+    command: >
+      sh -c ': "$${RABBITMQ_CONSUMER_TIMEOUT_MS:=346000000}";
+      case "$$RABBITMQ_CONSUMER_TIMEOUT_MS" in *[!0-9]*|"") echo "RABBITMQ_CONSUMER_TIMEOUT_MS must be an integer millisecond value"; exit 1;; esac;
+      sed "s/{{RABBITMQ_CONSUMER_TIMEOUT_MS}}/$$RABBITMQ_CONSUMER_TIMEOUT_MS/g" /etc/rabbitmq/rabbitmq.conf.template > /tmp/rabbitmq.conf;
+      export RABBITMQ_CONFIG_FILE=/tmp/rabbitmq;
+      exec rabbitmq-server'
     networks:
       - data
+    volumes:
+      - ./rabbitmq/rabbitmq.conf.template:/etc/rabbitmq/rabbitmq.conf.template:ro
     cpus: "${RABBITMQ_CPUS:-1.0}"
     mem_limit: "${RABBITMQ_MEM_LIMIT:-1g}"
     pids_limit: "${RABBITMQ_PIDS_LIMIT:-256}"

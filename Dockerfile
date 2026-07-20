@@ -164,6 +164,7 @@ RUN mkdir -p /blast/reciprocal_blast
 COPY environment.yml environment-linux-64.lock.yml /blast/reciprocal_blast/
 RUN micromamba create -y -p "${CATHI_CONDA_ENV}" -f /blast/reciprocal_blast/environment.yml --strict-channel-priority && \
     "${CATHI_CONDA_ENV}/bin/python" -m pip check && \
+    "${CATHI_CONDA_ENV}/bin/python" -c "from Bio import Entrez; print('Biopython import ok')" && \
     "${CATHI_CONDA_ENV}/bin/snakemake" --version && \
     micromamba clean -afy && \
     conda clean -afy

@@ -115,3 +115,5 @@ class ResourceGovernanceTests(SimpleTestCase):
             self.assertIn('cpus:', content)
             self.assertIn('mem_limit:', content)
             self.assertIn('pids_limit:', content)
+            self.assertIn('RABBITMQ_CONSUMER_TIMEOUT_MS', content)
+            self.assertIn('rabbitmq.conf.template', content)

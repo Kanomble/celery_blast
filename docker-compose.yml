@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   web:
-    image: kanomble/rec_blast_base_image:4.0 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
+    image: kanomble/rec_blast_base_image:5.0 #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for > wait-for && chmod u+x wait-for &&
     cpus: "${WEB_CPUS:-2.0}"
     mem_limit: "${WEB_MEM_LIMIT:-16g}"
     pids_limit: "${WEB_PIDS_LIMIT:-512}"
@@ -28,7 +28,7 @@ services:
       - "127.0.0.1:8080:8080"
 
   celery_worker:
-    image: kanomble/rec_blast_base_image:4.0
+    image: kanomble/rec_blast_base_image:5.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO -Q $${CELERY_WORKFLOW_QUEUE:-long_bio} --concurrency=$${CELERY_WORKFLOW_WORKER_CONCURRENCY:-1} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
     env_file:
       - ./.env.dev
@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
 
   celery_worker_interactive:
-    image: kanomble/rec_blast_base_image:4.0
+    image: kanomble/rec_blast_base_image:5.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO -Q $${CELERY_INTERACTIVE_QUEUE:-interactive} --concurrency=$${CELERY_INTERACTIVE_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1"
     env_file:
       - ./.env.dev
@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
 
   celery_worker_maintenance:
-    image: kanomble/rec_blast_base_image:4.0
+    image: kanomble/rec_blast_base_image:5.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast worker -l INFO -Q $${CELERY_MAINTENANCE_QUEUE:-maintenance} --concurrency=$${CELERY_MAINTENANCE_WORKER_CONCURRENCY:-1} --prefetch-multiplier=$${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}"
     env_file:
       - ./.env.dev
@@ -88,7 +88,7 @@ services:
     restart: unless-stopped
 
   flower:
-    image: kanomble/rec_blast_base_image:4.0
+    image: kanomble/rec_blast_base_image:5.0
     command: sh -c "wait-for rabbitmq:5672 && wait-for web:8080 -- celery -A celery_blast flower --port=5555"
     networks:
       - main
@@ -113,8 +113,18 @@ services:
   rabbitmq:
     hostname: rabbitmq
     image: kanomble/rec_blast_rabbitmq_image:1.1
+    env_file:
+      - ./.env.dev
+    command: >
+      sh -c ': "$${RABBITMQ_CONSUMER_TIMEOUT_MS:=346000000}";
+      case "$$RABBITMQ_CONSUMER_TIMEOUT_MS" in *[!0-9]*|"") echo "RABBITMQ_CONSUMER_TIMEOUT_MS must be an integer millisecond value"; exit 1;; esac;
+      sed "s/{{RABBITMQ_CONSUMER_TIMEOUT_MS}}/$$RABBITMQ_CONSUMER_TIMEOUT_MS/g" /etc/rabbitmq/rabbitmq.conf.template > /tmp/rabbitmq.conf;
+      export RABBITMQ_CONFIG_FILE=/tmp/rabbitmq;
+      exec rabbitmq-server'
     networks:
       - main
+    volumes:
+      - ./rabbitmq/rabbitmq.conf.template:/etc/rabbitmq/rabbitmq.conf.template:ro
     ports:
       - "127.0.0.1:5672:5672"
     cpus: "${RABBITMQ_CPUS:-1.0}"

@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def compose_config(*args):
-    command = ["docker", "compose", *args, "config", "--format", "json"]
+    command = ["docker", "compose", *args, "config", "--no-env-resolution", "--format", "json"]
     result = subprocess.run(
         command,
         cwd=ROOT,
@@ -111,16 +111,43 @@ def check_development_loopback(config):
         )
 
 
+def check_rabbitmq_consumer_timeout(config):
+    rabbitmq = config["services"]["rabbitmq"]
+    command = command_text(rabbitmq)
+    volumes = rabbitmq.get("volumes") or []
+    env_files = rabbitmq.get("env_file") or []
+    env = rabbitmq.get("environment") or {}
+
+    assert_true(
+        "RABBITMQ_CONSUMER_TIMEOUT_MS" in command,
+        "rabbitmq must generate consumer_timeout from RABBITMQ_CONSUMER_TIMEOUT_MS",
+    )
+    assert_true(
+        "RABBITMQ_CONFIG_FILE=/tmp/rabbitmq" in command,
+        "rabbitmq must start with the generated RabbitMQ config file",
+    )
+    assert_true(
+        any("rabbitmq.conf.template" in str(volume) for volume in volumes),
+        "rabbitmq must mount the consumer timeout config template",
+    )
+    assert_true(
+        env_files or "RABBITMQ_CONSUMER_TIMEOUT_MS" in env,
+        "rabbitmq must receive RABBITMQ_CONSUMER_TIMEOUT_MS from env config",
+    )
+
+
 def main():
     try:
         production = compose_config("-f", "docker-compose-production.yml")
         production_admin = compose_config("-f", "docker-compose-production.yml", "--profile", "admin")
         check_production_default_exposure(production)
         check_service_reachability(production)
+        check_rabbitmq_consumer_timeout(production)
         check_admin_services(production_admin)
 
         development = compose_config("-f", "docker-compose.yml")
         check_development_loopback(development)
+        check_rabbitmq_consumer_timeout(development)
     except AssertionError as exc:
         print(f"Compose exposure check failed: {exc}")
         return 1
