@@ -205,18 +205,21 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
         else:
             data_selection = data_selection[data_selection['qseqid'] == unique_qseqids[0]]
 
-        taxcount_df = pd.DataFrame(data_selection.staxids.value_counts())
-        taxcount_df['value'] = taxcount_df['staxids']
-        taxcount_df['staxids'] = taxcount_df.index
-        taxcount_df.index = pd.Index(range(len(taxcount_df)))
+        taxcount_df = (
+            data_selection['staxids']
+            .value_counts()
+            .rename_axis('staxids')
+            .reset_index(name='value')
+        )
         taxid_to_taxonomic_unit = lambda taxid: \
             data_selection[data_selection.staxids == taxid][taxonomic_unit].unique()[0]
         taxcount_df[taxonomic_unit] = taxcount_df.staxids.apply(taxid_to_taxonomic_unit)
-        taxcount_df = pd.DataFrame(taxcount_df[taxonomic_unit].value_counts())
-
-        taxcount_df.columns = ['value']
-        taxcount_df[taxonomic_unit] = taxcount_df.index
-        taxcount_df.index = range(len(taxcount_df))
+        taxcount_df = (
+            taxcount_df[taxonomic_unit]
+            .value_counts()
+            .rename_axis(taxonomic_unit)
+            .reset_index(name='value')
+        )
 
         return data_selection, taxcount_df
     except Exception as e:

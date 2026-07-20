@@ -94,19 +94,26 @@ with open(snakemake.log['log'], 'w') as logfile:
                                     taxid.append(record[i]['TaxId'])
                             else:
                                 taxid.append(record[i]['TaxId'])
-                            for j in record[i]['LineageEx']:
-                                if j['Rank'] == 'genus':
-                                    genus.append(j['ScientificName'])
-                                if j['Rank'] == 'superfamily':
-                                    superfamily.append(j['ScientificName'])
-                                if j['Rank'] == 'family':
-                                    family.append(j['ScientificName'])
-                                if j['Rank'] == 'order':
-                                    order.append(j['ScientificName'])
-                                if j['Rank'] == 'class':
-                                    classt.append(j['ScientificName'])
-                                if j['Rank'] == 'phylum':
-                                    phylum.append(j['ScientificName'])
+                            for j in record[i].get('LineageEx', []):
+                                rank = j.get('Rank')
+                                scientific_name = j.get('ScientificName', 'unknown')
+                                if rank is None:
+                                    logfile.write(
+                                        "\t\tWARNING:malformed lineage entry without Rank for taxid {}; omitting entry\n".format(
+                                            taxid[-1]))
+                                    continue
+                                if rank == 'genus':
+                                    genus.append(scientific_name)
+                                if rank == 'superfamily':
+                                    superfamily.append(scientific_name)
+                                if rank == 'family':
+                                    family.append(scientific_name)
+                                if rank == 'order':
+                                    order.append(scientific_name)
+                                if rank == 'class':
+                                    classt.append(scientific_name)
+                                if rank == 'phylum':
+                                    phylum.append(scientific_name)
 
                             if (len(taxonomy) != len(genus)):
                                 genus.append('unknown')
