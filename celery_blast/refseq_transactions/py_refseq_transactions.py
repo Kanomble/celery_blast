@@ -14,6 +14,11 @@ from .py_services import write_pandas_table_to_project_dir, transform_data_table
     filter_duplicates_by_ftp_path
 from celery_blast.settings import REFSEQ_ASSEMBLY_FILE, TAXONOMIC_NODES, BLAST_DATABASE_DIR
 
+
+class CleanedDataFormAdapter:
+    def __init__(self, cleaned_data):
+        self.cleaned_data = cleaned_data
+
 ''' 
 transactions with models (manager)
 '''
@@ -187,6 +192,10 @@ def create_blastdatabase_table_and_directory(valid_blastdatabase_form):
         return 0
     except Exception as e:
         raise IntegrityError('couldnt create blastdatabase : {}'.format(e))
+
+
+def create_blastdatabase_table_and_directory_from_cleaned_data(cleaned_data: dict):
+    return create_blastdatabase_table_and_directory(CleanedDataFormAdapter(cleaned_data))
 
 
 ''' read_current_assembly_summary_with_pandas

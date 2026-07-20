@@ -129,6 +129,86 @@ class RefseqTransactionsViewsTestCase(TestCase):
         self.assertContains(response, 'This field is required')
 
     @tag("refseq_transactions_views")
+    def test_summary_download_redirects_to_progress_page(self):
+        self.c.login(username='testuser', password='test')
+
+        class Result:
+            id = 'summary-download-task'
+
+        with patch('refseq_transactions.views.download_refseq_assembly_summary.delay', return_value=Result()) as delay:
+            response = self.c.post('/refseq_transactions/RefSeq/download_refseq_assembly_summary')
+
+        delay.assert_called_once_with('RefSeq')
+        self.assertRedirects(
+            response,
+            '/refseq_transactions/RefSeq/summary-download-task/assembly_summary_download_progress',
+            status_code=302,
+            target_status_code=200,
+            fetch_redirect_response=True,
+        )
+
+    @tag("refseq_transactions_views")
+    def test_summary_download_progress_ajax_reports_success(self):
+        self.c.login(username='testuser', password='test')
+        TaskResult.objects.create(
+            task_id='summary-success',
+            status='SUCCESS',
+            result='{"progress": {"percent": 100, "description": "SUCCESS"}}',
+        )
+
+        response = self.c.get('/refseq_transactions/summary-success/assembly_summary_download_progress_ajax')
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(100, response.json()['progress'])
+        self.assertTrue(response.json()['complete'])
+
+    @tag("refseq_transactions_views")
+    def test_database_preview_creation_redirects_to_progress_page(self):
+        self.c.login(username='testuser', password='test')
+
+        class Result:
+            id = 'database-preview-task'
+
+        post_dict = {
+            "assembly_levels": ["Complete Genome", "Chromosome"],
+            "database_summary_file": "RefSeq",
+            "database_name": "database preview async",
+            "database_description": "database preview async test",
+            "taxid_uploaded_file": "",
+            "taxid_text_field": "",
+            "user_email": "test_email@email.com",
+        }
+
+        with patch('refseq_transactions.views.create_blast_database_preview.delay', return_value=Result()) as delay, \
+                patch('refseq_transactions.forms.check_if_database_title_exists', return_value=False):
+            response = self.c.post('/refseq_transactions/create_refseq_database_metadata', data=post_dict)
+
+        delay.assert_called_once()
+        self.assertEqual('database preview async', delay.call_args.args[0]['database_name'])
+        self.assertRedirects(
+            response,
+            '/refseq_transactions/database-preview-task/database_preview_creation_progress',
+            status_code=302,
+            target_status_code=200,
+            fetch_redirect_response=True,
+        )
+
+    @tag("refseq_transactions_views")
+    def test_database_preview_creation_progress_ajax_reports_success(self):
+        self.c.login(username='testuser', password='test')
+        TaskResult.objects.create(
+            task_id='database-preview-success',
+            status='SUCCESS',
+            result='7',
+        )
+
+        response = self.c.get('/refseq_transactions/database-preview-success/database_preview_creation_progress_ajax')
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(100, response.json()['progress'])
+        self.assertTrue(response.json()['complete'])
+
+    @tag("refseq_transactions_views")
     def test_create_and_delete_blast_database_model_and_directory(self):
         self.c.login(username='testuser', password='test')
         post_dict = {'assembly_levels': ["Complete Genome", "Chromosome"],

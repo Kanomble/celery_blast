@@ -1,5 +1,4 @@
-<form action="{% url 'download_refseq_assembly_summary' summary_file="RefSeq" %}" method="post"
-      onsubmit="showLoader('loading_div','whole_dashboard')">
+<form action="{% url 'download_refseq_assembly_summary' summary_file="RefSeq" %}" method="post">
     {% csrf_token %}
     <div class="form-group">
 

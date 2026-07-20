@@ -292,6 +292,7 @@ CELERY_TASK_ROUTES = {
     'external_tools.tasks.download_entrez_search_associated_protein_sequences': {'queue': CELERY_MAINTENANCE_QUEUE},
     'external_tools.tasks.entrez_search_task': {'queue': CELERY_INTERACTIVE_QUEUE},
     'refseq_transactions.tasks.download_refseq_assembly_summary': {'queue': CELERY_MAINTENANCE_QUEUE},
+    'refseq_transactions.tasks.create_blast_database_preview': {'queue': CELERY_MAINTENANCE_QUEUE},
     'refseq_transactions.tasks.write_alias_file': {'queue': CELERY_MAINTENANCE_QUEUE},
     'refseq_transactions.tasks.format_blast_databases': {'queue': CELERY_MAINTENANCE_QUEUE},
     'refseq_transactions.tasks.create_chunks_of_databases': {'queue': CELERY_MAINTENANCE_QUEUE},

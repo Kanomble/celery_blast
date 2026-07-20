@@ -16,6 +16,7 @@ from celery_blast.settings import BLAST_DATABASE_DIR, REFSEQ_URL, REFSEQ_ASSEMBL
 from celery_progress.backend import ProgressRecorder
 from django.conf import settings
 from .py_services import get_ftp_paths_and_taxids_from_summary_file, get_bdb_summary_table_name, update_blast_database_table
+from .py_refseq_transactions import create_blastdatabase_table_and_directory_from_cleaned_data
 
 # logger for celery worker instances
 logger = get_task_logger(__name__)
@@ -136,9 +137,11 @@ def assembly_summary_refresh_spec(summary_file: str):
     :returns returncode of Popen
         :type str
 '''
-@shared_task()
-def download_refseq_assembly_summary(summary_file:str):
+@shared_task(bind=True)
+def download_refseq_assembly_summary(self, summary_file:str):
     try:
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(5, 100, "starting download")
         current_working_directory = getcwd()  # /blast/reciprocal_blast
         spec = assembly_summary_refresh_spec(summary_file)
 
@@ -147,9 +150,12 @@ def download_refseq_assembly_summary(summary_file:str):
 
         logger.info('creating assembly summary refresh process')
         logger.info("source_url: {}, dataset: {}".format(spec.source_url, spec.name))
+        progress_recorder.set_progress(20, 100, "downloading {}".format(summary_file))
         metadata = refresh_dataset(spec)
+        progress_recorder.set_progress(95, 100, "activating {}".format(summary_file))
 
         logger.info('download completed with dataset version {}'.format(metadata["version"]))
+        progress_recorder.set_progress(100, 100, "SUCCESS")
 
         return 0
 
@@ -166,6 +172,21 @@ def download_refseq_assembly_summary(summary_file:str):
 
     except Exception as e:
         raise Exception("couldn't download assembly_summary_refseq.txt file : {}".format(e))
+
+
+@shared_task(bind=True)
+def create_blast_database_preview(self, cleaned_form_data: dict):
+    try:
+        progress_recorder = ProgressRecorder(self)
+        progress_recorder.set_progress(5, 100, "starting database preview")
+        progress_recorder.set_progress(20, 100, "filtering assembly summary")
+
+        database_id = create_blastdatabase_table_and_directory_from_cleaned_data(cleaned_form_data)
+
+        progress_recorder.set_progress(100, 100, "SUCCESS")
+        return database_id
+    except Exception as e:
+        raise Exception("couldn't create BLAST database preview: {}".format(e))
 
 
 f'''write_alias_file

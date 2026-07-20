@@ -1,22 +1,78 @@
 # MAIN VIEWS REFSEQ TRANSACTIONS FOR BLAT DATABASES
+import json
+
 import pandas as pd
 from blast_project.py_django_db_services import get_database_by_id
-from blast_project.py_services import delete_blastdb_and_associated_directories_by_id
+from blast_project.py_services import delete_blastdb_and_associated_directories_by_id, upload_file
 from blast_project.setup_state import cathi_setup_is_running
 from blast_project.views import failure_view
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django_celery_results.models import TaskResult
 from time import sleep
 from .forms import RefseqDatabaseForm
 from .py_refseq_transactions import get_downloaded_databases, get_databases_in_progress, \
-    get_databases_without_tasks, create_blastdatabase_table_and_directory, \
-    read_database_table_by_database_id_and_return_json, get_failed_tasks, create_blastdb_dir_and_table_based_on_user_selection
+    get_databases_without_tasks, read_database_table_by_database_id_and_return_json, get_failed_tasks, \
+    create_blastdb_dir_and_table_based_on_user_selection
 from .py_services import refseq_file_exists, get_database_download_and_formatting_task_result_progress, \
     genbank_file_exists
-from .tasks import download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
+from .tasks import create_blast_database_preview, download_refseq_assembly_summary, download_blast_databases_based_on_summary_file
+from celery_blast.settings import TAXONOMIC_NODES
+
+
+SUMMARY_DOWNLOAD_PROGRESS = {
+    'PENDING': 5,
+    'STARTED': 10,
+    'PROGRESS': 50,
+    'RETRY': 50,
+    'SUCCESS': 100,
+    'FAILURE': 'ERROR',
+}
+
+PREVIEW_CREATION_PROGRESS = {
+    'PENDING': 5,
+    'STARTED': 10,
+    'PROGRESS': 50,
+    'RETRY': 50,
+    'SUCCESS': 100,
+    'FAILURE': 'ERROR',
+}
+
+
+def _summary_download_progress_from_result(task_result):
+    return _task_progress_from_result(task_result, SUMMARY_DOWNLOAD_PROGRESS)
+
+
+def _task_progress_from_result(task_result, default_progress):
+    progress = default_progress.get(task_result.status, 0)
+    description = task_result.status
+
+    if task_result.result:
+        try:
+            payload = json.loads(task_result.result)
+            progress_payload = payload.get('progress', {})
+            progress = progress_payload.get('percent', progress)
+            description = progress_payload.get('description', description)
+        except (TypeError, ValueError, AttributeError):
+            pass
+
+    return progress, description
+
+
+def _serializable_refseq_form_data(form):
+    cleaned_data = dict(form.cleaned_data)
+    taxid_file = cleaned_data.get('taxid_file')
+    if taxid_file:
+        taxid_file_path = TAXONOMIC_NODES + taxid_file.name
+        upload_file(taxid_file, taxid_file_path)
+        cleaned_data['taxid_file'] = None
+        cleaned_data['taxid_uploaded_file'] = taxid_file.name
+
+    return cleaned_data
 
 
 def build_dashboard_context(user, refseq_database_form=None):
@@ -100,10 +156,53 @@ def download_refseq_assembly_summary_view(request, summary_file:str):
             )
             return redirect('refseq_transactions_dashboard')
 
-        download_refseq_assembly_summary.delay(summary_file)
-        return redirect('refseq_transactions_dashboard')
+        task = download_refseq_assembly_summary.delay(summary_file)
+        return redirect(
+            'assembly_summary_download_progress',
+            summary_file=summary_file,
+            task_id=task.id,
+        )
     except Exception as e:
         return failure_view(request, e)
+
+
+@login_required(login_url='login')
+def assembly_summary_download_progress_view(request, summary_file: str, task_id: str):
+    if summary_file not in {'RefSeq', 'GenBank'}:
+        raise Http404("Unknown assembly summary file")
+
+    context = {
+        'summary_file': summary_file,
+        'task_id': task_id,
+        'progress_url': reverse(
+            'assembly_summary_download_progress_ajax',
+            kwargs={'task_id': task_id},
+        ),
+        'redirect_url': reverse('refseq_transactions_dashboard'),
+    }
+    return render(request, 'refseq_transactions/assembly_summary_download_progress.html', context)
+
+
+@login_required(login_url='login')
+def assembly_summary_download_progress_ajax(request, task_id: str):
+    try:
+        task_result = TaskResult.objects.get(task_id=task_id)
+        progress, description = _summary_download_progress_from_result(task_result)
+        return JsonResponse({
+            'progress': progress,
+            'status': task_result.status,
+            'description': description,
+            'complete': task_result.status == 'SUCCESS',
+            'failed': task_result.status == 'FAILURE',
+        })
+    except TaskResult.DoesNotExist:
+        return JsonResponse({
+            'progress': SUMMARY_DOWNLOAD_PROGRESS['PENDING'],
+            'status': 'PENDING',
+            'description': 'waiting for worker',
+            'complete': False,
+            'failed': False,
+        })
 
 
 ''' create_blast_database_model_and_directory
@@ -132,8 +231,12 @@ def create_blast_database_model_and_directory(request):
             refseq_database_form = RefseqDatabaseForm(request.user, request.POST, request.FILES)
             # validate form
             if refseq_database_form.is_valid():
-                create_blastdatabase_table_and_directory(refseq_database_form)
-                return redirect('refseq_transactions_dashboard')
+                cleaned_form_data = _serializable_refseq_form_data(refseq_database_form)
+                task = create_blast_database_preview.delay(cleaned_form_data)
+                return redirect(
+                    'database_preview_creation_progress',
+                    task_id=task.id,
+                )
 
             # validation error
             else:
@@ -147,6 +250,41 @@ def create_blast_database_model_and_directory(request):
                                 "error creating blast database model and directory, there is no GET request for this view ...")
     except Exception as e:
         return failure_view(request, e)
+
+
+@login_required(login_url='login')
+def database_preview_creation_progress_view(request, task_id: str):
+    context = {
+        'task_id': task_id,
+        'progress_url': reverse(
+            'database_preview_creation_progress_ajax',
+            kwargs={'task_id': task_id},
+        ),
+        'redirect_url': reverse('refseq_transactions_dashboard'),
+    }
+    return render(request, 'refseq_transactions/database_preview_creation_progress.html', context)
+
+
+@login_required(login_url='login')
+def database_preview_creation_progress_ajax(request, task_id: str):
+    try:
+        task_result = TaskResult.objects.get(task_id=task_id)
+        progress, description = _task_progress_from_result(task_result, PREVIEW_CREATION_PROGRESS)
+        return JsonResponse({
+            'progress': progress,
+            'status': task_result.status,
+            'description': description,
+            'complete': task_result.status == 'SUCCESS',
+            'failed': task_result.status == 'FAILURE',
+        })
+    except TaskResult.DoesNotExist:
+        return JsonResponse({
+            'progress': PREVIEW_CREATION_PROGRESS['PENDING'],
+            'status': 'PENDING',
+            'description': 'waiting for worker',
+            'complete': False,
+            'failed': False,
+        })
 
 
 ''' delete_blast_database_model_and_directory
