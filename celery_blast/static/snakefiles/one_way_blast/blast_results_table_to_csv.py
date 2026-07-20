@@ -98,20 +98,24 @@ def add_taxonomic_information_to_result_dataframe(result_data):
             query_info.append(queries[query])
             taxonomy.append(result_record[i]['ScientificName'])
             # lineageEx = 'linex,'
-            for j in result_record[i]['LineageEx']:
+            for j in result_record[i].get('LineageEx', []):
                 # lineageEx += ','+str(j)
-                if j['Rank'] == 'genus':
-                    genus.append(j['ScientificName'])
-                if j['Rank'] == 'superfamily':
-                    superfamily.append(j['ScientificName'])
-                if j['Rank'] == 'family':
-                    family.append(j['ScientificName'])
-                if j['Rank'] == 'order':
-                    order.append(j['ScientificName'])
-                if j['Rank'] == 'class':
-                    classt.append(j['ScientificName'])
-                if j['Rank'] == 'phylum':
-                    phylum.append(j['ScientificName'])
+                rank = j.get('Rank')
+                scientific_name = j.get('ScientificName', 'unknown')
+                if rank is None:
+                    continue
+                if rank == 'genus':
+                    genus.append(scientific_name)
+                if rank == 'superfamily':
+                    superfamily.append(scientific_name)
+                if rank == 'family':
+                    family.append(scientific_name)
+                if rank == 'order':
+                    order.append(scientific_name)
+                if rank == 'class':
+                    classt.append(scientific_name)
+                if rank == 'phylum':
+                    phylum.append(scientific_name)
 
             # lineageExList.append(lineageEx)
             if (len(taxonomy) != len(genus)):

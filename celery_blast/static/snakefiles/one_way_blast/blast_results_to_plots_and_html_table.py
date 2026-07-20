@@ -162,18 +162,21 @@ def create_initial_bokeh_data_selection(result_data: pd.DataFrame, taxonomic_uni
         else:
             data_selection = data_selection[data_selection['qseqid'] == unique_qseqids[0]]
 
-        taxcount_df = pd.DataFrame(data_selection.staxids.value_counts())
-        taxcount_df['value'] = taxcount_df['staxids']
-        taxcount_df['staxids'] = taxcount_df.index
-        taxcount_df.index = pd.Index(range(len(taxcount_df)))
+        taxcount_df = (
+            data_selection['staxids']
+            .value_counts()
+            .rename_axis('staxids')
+            .reset_index(name='value')
+        )
         taxid_to_taxonomic_unit = lambda taxid: \
-        data_selection[data_selection.staxids == taxid][taxonomic_unit].unique()[0]
+            data_selection[data_selection.staxids == taxid][taxonomic_unit].unique()[0]
         taxcount_df[taxonomic_unit] = taxcount_df.staxids.apply(taxid_to_taxonomic_unit)
-        taxcount_df = pd.DataFrame(taxcount_df[taxonomic_unit].value_counts())
-
-        taxcount_df.columns = ['value']
-        taxcount_df[taxonomic_unit] = taxcount_df.index
-        taxcount_df.index = range(len(taxcount_df))
+        taxcount_df = (
+            taxcount_df[taxonomic_unit]
+            .value_counts()
+            .rename_axis(taxonomic_unit)
+            .reset_index(name='value')
+        )
 
         return data_selection, taxcount_df
     except Exception as e:
@@ -691,19 +694,26 @@ def add_taxonomic_information_to_db(user_email:str,log,taxids:list)->pd.DataFram
                         else:
                             taxid.append(record[i]['TaxId'])
 
-                        for j in record[i]['LineageEx']:
-                            if j['Rank'] == 'genus':
-                                genus.append(j['ScientificName'])
-                            if j['Rank'] == 'superfamily':
-                                superfamily.append(j['ScientificName'])
-                            if j['Rank'] == 'family':
-                                family.append(j['ScientificName'])
-                            if j['Rank'] == 'order':
-                                order.append(j['ScientificName'])
-                            if j['Rank'] == 'class':
-                                classt.append(j['ScientificName'])
-                            if j['Rank'] == 'phylum':
-                                phylum.append(j['ScientificName'])
+                        for j in record[i].get('LineageEx', []):
+                            rank = j.get('Rank')
+                            scientific_name = j.get('ScientificName', 'unknown')
+                            if rank is None:
+                                log.write(
+                                    "\tWARNING: malformed lineage entry without Rank for taxid {}; omitting entry\n".format(
+                                        taxid[-1]))
+                                continue
+                            if rank == 'genus':
+                                genus.append(scientific_name)
+                            if rank == 'superfamily':
+                                superfamily.append(scientific_name)
+                            if rank == 'family':
+                                family.append(scientific_name)
+                            if rank == 'order':
+                                order.append(scientific_name)
+                            if rank == 'class':
+                                classt.append(scientific_name)
+                            if rank == 'phylum':
+                                phylum.append(scientific_name)
 
                         if (len(taxonomy) != len(genus)):
                             genus.append('unknown')
