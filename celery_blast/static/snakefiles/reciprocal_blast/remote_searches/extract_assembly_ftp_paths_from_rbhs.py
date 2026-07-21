@@ -6,9 +6,9 @@ from typing import TextIO
 
 def set_protein_assembly_file(ftp_path:str)->str:
     try:
-        if type(ftp_path) == str:
-            protein_genome = ftp_path.split('/')[-1:][0]
-            protein_genome = ftp_path + '/' + str(protein_genome) + '_protein.faa.gz'
+        if isinstance(ftp_path, str) and ftp_path:
+            protein_genome = ftp_path.rstrip('/').split('/')[-1:][0]
+            protein_genome = ftp_path.rstrip('/') + '/' + str(protein_genome) + '_protein.faa.gz'
             return protein_genome
         else:
             return ftp_path
@@ -34,18 +34,20 @@ def read_assembly(summary_file_path:str, assemblies:list)->pd.DataFrame:
     try:
         # skipping the first line with .readline()
         # --> second line resides the header information for the assembly summary file
-        with open(summary_file_path, 'r') as rfile:
-            line = rfile.readline()
-            line = rfile.readline()
-            header = line.replace('#', '').replace(" ", '').rstrip().split("\t")
+        with open(summary_file_path, 'r', encoding='utf-8') as rfile:
+            rfile.readline()
+            header = rfile.readline().lstrip('#').rstrip('\n').split("\t")
 
-        assembly_table = pd.read_table(summary_file_path, skiprows=[0, 1], header=None,
-                                     dtype={20: str,  # 20 excluded from refseq
-                                            5: str,  # 5 taxid
-                                            6: str,  # 6 species taxid
-                                            'ftp_path': str})
-        assembly_table.columns = header
-        assembly_table = assembly_table.astype({"taxid": str})
+        assembly_table = pd.read_table(
+            summary_file_path,
+            sep="\t",
+            skiprows=2,
+            header=None,
+            names=header,
+            dtype=str,
+            keep_default_na=False,
+            on_bad_lines='skip',
+        )
 
         # extract necessary data fields: assembly number, names, taxids and the correct ftp_filepath for downloading with gzip
         assembly_table = assembly_table[
