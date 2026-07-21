@@ -43,7 +43,7 @@ services:
       - ./tmp:/blast/reciprocal_blast/tmp
       - ./celery_blast:/blast/reciprocal_blast
     cpus: "${CELERY_WORKFLOW_CPUS:-1.0}"
-    mem_limit: "${CELERY_WORKFLOW_MEM_LIMIT:-4g}"
+    mem_limit: "${CELERY_WORKFLOW_MEM_LIMIT:-16g}"
     pids_limit: "${CELERY_WORKFLOW_PIDS_LIMIT:-256}"
     restart: unless-stopped
 
@@ -63,7 +63,7 @@ services:
       - ./tmp:/blast/reciprocal_blast/tmp
       - ./celery_blast:/blast/reciprocal_blast
     cpus: "${CELERY_INTERACTIVE_CPUS:-1.0}"
-    mem_limit: "${CELERY_INTERACTIVE_MEM_LIMIT:-2g}"
+    mem_limit: "${CELERY_INTERACTIVE_MEM_LIMIT:-8g}"
     pids_limit: "${CELERY_INTERACTIVE_PIDS_LIMIT:-128}"
     restart: unless-stopped
 
@@ -83,7 +83,7 @@ services:
       - ./tmp:/blast/reciprocal_blast/tmp
       - ./celery_blast:/blast/reciprocal_blast
     cpus: "${CELERY_MAINTENANCE_CPUS:-1.0}"
-    mem_limit: "${CELERY_MAINTENANCE_MEM_LIMIT:-2g}"
+    mem_limit: "${CELERY_MAINTENANCE_MEM_LIMIT:-8g}"
     pids_limit: "${CELERY_MAINTENANCE_PIDS_LIMIT:-128}"
     restart: unless-stopped
 
