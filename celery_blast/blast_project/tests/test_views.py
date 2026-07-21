@@ -198,18 +198,22 @@ class BlastProjectViewsTestCase(TestCase):
     def test_dashboard_view_get(self):
         self.c.login(username='testuser',password='test')
         project = BlastProject.objects.get(project_title='test project 1')
+        remote_project = self._create_remote_project()
         response = self.c.get('/blast_project/')
         self.assertEqual(200,response.status_code)
         self.assertTemplateUsed(response,'blast_project/blast_project_dashboard.html')
         #response.context['blast_projects'] is a django.db.models.query.QuerySet class
         self.assertEqual(response.context['blast_projects'][0],
                          project)
+        self.assertEqual(response.context['RemoteBlastProjects'][0],
+                         remote_project)
         self.assertEqual(response.context['ActiveBlastDatabases'][0],
                          project.project_forward_database)
 
     @tag('fast', 'view')
     def test_dashboard_complete_state_has_refactored_information_hierarchy(self):
         self._set_domain_database_state(loaded=True, status='SUCCESS')
+        self._create_remote_project()
 
         response = self._get_logged_in_dashboard()
 
@@ -223,6 +227,7 @@ class BlastProjectViewsTestCase(TestCase):
         self.assertContains(response, 'Create a reciprocal BLAST project')
         self.assertContains(response, 'id="dashboard_workflows"', html=False)
         self.assertContains(response, 'id="dashboard_project_summary"', html=False)
+        self.assertContains(response, 'Remote reciprocal projects')
         self.assertContains(response, 'id="dashboard_help"', html=False)
 
         html = response.content.decode()

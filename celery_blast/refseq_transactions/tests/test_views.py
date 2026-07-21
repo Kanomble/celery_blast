@@ -146,6 +146,12 @@ class RefseqTransactionsViewsTestCase(TestCase):
             target_status_code=200,
             fetch_redirect_response=True,
         )
+        progress_response = self.c.get(
+            '/refseq_transactions/RefSeq/summary-download-task/assembly_summary_download_progress'
+        )
+        self.assertContains(progress_response, 'Downloading RefSeq Assembly Summary')
+        self.assertContains(progress_response, 'Task ID: summary-download-task')
+        self.assertNotContains(progress_response, 'Welcome!')
 
     @tag("refseq_transactions_views")
     def test_summary_download_progress_ajax_reports_success(self):
@@ -192,6 +198,12 @@ class RefseqTransactionsViewsTestCase(TestCase):
             target_status_code=200,
             fetch_redirect_response=True,
         )
+        progress_response = self.c.get(
+            '/refseq_transactions/database-preview-task/database_preview_creation_progress'
+        )
+        self.assertContains(progress_response, 'Creating BLAST Database Preview')
+        self.assertContains(progress_response, 'Task ID: database-preview-task')
+        self.assertNotContains(progress_response, 'Welcome!')
 
     @tag("refseq_transactions_views")
     def test_database_preview_creation_progress_ajax_reports_success(self):

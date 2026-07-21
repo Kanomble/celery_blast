@@ -113,11 +113,13 @@ def dashboard_view(request):
         if request.method == 'GET':
             # get all projects and databases
             users_blast_projects = get_users_blast_projects(request.user.id)
+            users_remote_blast_projects = get_users_remote_blast_projects(request.user.id)
             available_blast_databases = get_downloaded_databases()
             one_way_blast_projects = get_users_one_way_blast_projects(request.user.id)
             one_way_remote_blast_projects = get_users_one_way_remote_blast_projects(request.user.id)
 
             context['blast_projects'] = users_blast_projects
+            context['RemoteBlastProjects'] = users_remote_blast_projects
             context['ActiveBlastDatabases'] = available_blast_databases
             context['OneWayBlastProjects'] = one_way_blast_projects
             context['OneWayRemoteBlastProjects'] = one_way_remote_blast_projects

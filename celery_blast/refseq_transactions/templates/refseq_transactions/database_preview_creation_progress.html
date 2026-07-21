@@ -4,6 +4,8 @@
 
 {% block page_title %} BLAST Database Preview Creation {% endblock %}
 
+{% block page_header %} Creating BLAST Database Preview {% endblock %}
+
 {% block infoheader %} Creating BLAST Database Preview {% endblock %}
 
 {% block page_description %}
@@ -13,6 +15,11 @@
 
 {% block content %}
     <div class="dashboard_project_list_col" style="text-align: center">
+        <h3 class="col_header">BLAST database preview job</h3>
+        <p>
+            The background worker is filtering the selected assembly summary and preparing the database metadata table.
+        </p>
+        <p class="text-muted">Task ID: {{ task_id }}</p>
         <p id="database_preview_creation_status">Waiting for worker.</p>
         <div class="progress">
             <div id="progress_bar" class="progress_bar" style="width: 5%">5%</div>

@@ -4,6 +4,8 @@
 
 {% block page_title %} {{ summary_file }} Assembly Summary Download {% endblock %}
 
+{% block page_header %} Downloading {{ summary_file }} Assembly Summary {% endblock %}
+
 {% block infoheader %} Downloading {{ summary_file }} Assembly Summary {% endblock %}
 
 {% block page_description %}
@@ -13,6 +15,12 @@
 
 {% block content %}
     <div class="dashboard_project_list_col" style="text-align: center">
+        <h3 class="col_header">{{ summary_file }} reference data update</h3>
+        <p>
+            The background worker is refreshing the {{ summary_file }} assembly summary used for BLAST database
+            preview creation.
+        </p>
+        <p class="text-muted">Task ID: {{ task_id }}</p>
         <p id="assembly_summary_download_status">Waiting for worker.</p>
         <div class="progress">
             <div id="progress_bar" class="progress_bar" style="width: 5%">5%</div>

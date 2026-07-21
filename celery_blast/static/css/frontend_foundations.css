@@ -12,8 +12,8 @@
     --cathi-radius-md: 0.375rem;
     --cathi-border-color: #000;
     --cathi-panel-bg: linear-gradient(whitesmoke, #4ebadc);
-    --cathi-focus-color: #ffc107;
-    --cathi-focus-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.45);
+    --cathi-focus-color: #0d6efd;
+    --cathi-focus-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.35);
     --cathi-muted-text: #495057;
     --cathi-table-header-bg: rgba(255, 255, 255, 0.75);
 }
