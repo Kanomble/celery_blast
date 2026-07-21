@@ -4,3 +4,7 @@
 ./data/*
 ./.github/*
 ./.idea/*
+.env
+.env.*
+!.env.example
+!.env.*.example

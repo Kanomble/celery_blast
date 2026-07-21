@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  verification:
+  docker-verification:
     runs-on: ubuntu-latest
     env:
       CATHI_ENV: ci
@@ -35,6 +35,9 @@ jobs:
       TAXONOMIC_NODES: media/taxonomic_node_files/
       PROTECTED_MEDIA_ROOT: media
       PROTECTED_MEDIA_USE_X_ACCEL: "False"
+      CATHI_CI_IMAGE: cathi-ci-app:${{ github.sha }}
+      COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
+      COMPOSE_PROJECT_NAME: cathi-ci-${{ github.run_id }}
 
     steps:
       - name: Check out repository
@@ -54,34 +57,66 @@ jobs:
       - name: Scan tracked files for reusable secrets
         run: python scripts/check_tracked_secrets.py
 
-      - name: Install Python dependencies
+      - name: Create CI Compose override
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.lock.txt
+          cat > docker-compose.ci.yml <<EOF
+          services:
+            web:
+              build:
+                context: .
+                dockerfile: Dockerfile
+                args:
+                  CATHI_DEPENDENCY_LOCK_REVISION: ${{ github.sha }}
+              image: ${CATHI_CI_IMAGE}
+            ci_postgres:
+              image: postgres:16
+              env_file:
+                - ./.env.prod.db
+              networks:
+                - main
+          EOF
 
       - name: Prepare isolated CI filesystem and placeholder Compose env
         run: |
-          mkdir -p celery_blast/media/blast_projects/remote_projects
-          mkdir -p celery_blast/media/one_way_blast/remote_searches
-          mkdir -p celery_blast/media/databases/refseq_summary_file
-          mkdir -p celery_blast/media/esearch_output
-          mkdir -p celery_blast/media/taxonomic_node_files
+          mkdir -p data/blast_projects/remote_projects
+          mkdir -p data/one_way_blast/remote_searches
+          mkdir -p data/databases/refseq_summary_file
+          mkdir -p data/esearch_output
+          mkdir -p data/taxonomic_node_files
+          mkdir -p tmp
           cat > .env.dev <<'EOF'
           DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 testserver
           CSRF_TRUSTED_ORIGINS=http://localhost http://127.0.0.1
           DEBUG=False
           CATHI_ENV=ci
           SECRET_KEY=ci-placeholder-secret-key-not-for-production
-          SQL_ENGINE=django.db.backends.sqlite3
-          SQL_DATABASE=/tmp/cathi-ci-compose.sqlite3
+          SQL_ENGINE=django.db.backends.postgresql_psycopg2
+          SQL_DATABASE=cathi_ci
           SQL_USER=cathi_ci
           SQL_PASSWORD=ci-placeholder-invalid-db-password
-          SQL_HOST=localhost
+          SQL_HOST=ci_postgres
           SQL_PORT=5432
           TZ=Europe/Berlin
           DEFAULT_AUTO_FIELD=django.db.models.AutoField
+          STATIC_RESULT_IMAGES=static/images/result_images/
+          BLAST_PROJECT_DIR=media/blast_projects/
+          REMOTE_BLAST_PROJECT_DIR=media/blast_projects/remote_projects/
+          ONE_WAY_BLAST_PROJECT_DIR=media/one_way_blast/
+          BLAST_DATABASE_DIR=media/databases/
+          CDD_DIR=media/databases/CDD/
+          ESEARCH_OUTPUT=media/esearch_output/
+          CDD_DATABASE_URL=https://example.invalid/cdd.tar.gz
+          TAXDB_URL=https://example.invalid/taxdb.tar.gz
+          REFSEQ_ASSEMBLY_FILE=media/databases/refseq_summary_file/assembly_summary_refseq.txt
+          REFSEQ_URL=https://example.invalid/assembly_summary_refseq.txt
+          GENBANK_ASSEMBLY_FILE=media/databases/refseq_summary_file/assembly_summary_genbank.txt
+          GENBANK_URL=https://example.invalid/assembly_summary_genbank.txt
+          TAXONOMIC_NODES=media/taxonomic_node_files/
+          PROTECTED_MEDIA_ROOT=media
+          PROTECTED_MEDIA_USE_X_ACCEL=False
           FLOWER_BASIC_AUTH=ci-placeholder-invalid-flower-user:ci-placeholder-invalid-flower-password
           JUPYTER_TOKEN=ci-placeholder-invalid-jupyter-token
+          RABBITMQ_CONSUMER_TIMEOUT_MS=346000000
           EOF
           cat > .env.prod <<'EOF'
           DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 testserver
@@ -102,32 +137,38 @@ jobs:
           SQL_PORT=5432
           AMQP_HOST=rabbitmq
           AMQP_ADMIN_HOST=rabbitmq
+          STATIC_RESULT_IMAGES=static/images/result_images/
+          BLAST_PROJECT_DIR=media/blast_projects/
+          REMOTE_BLAST_PROJECT_DIR=media/blast_projects/remote_projects/
+          ONE_WAY_BLAST_PROJECT_DIR=media/one_way_blast/
+          BLAST_DATABASE_DIR=media/databases/
+          CDD_DIR=media/databases/CDD/
+          ESEARCH_OUTPUT=media/esearch_output/
+          CDD_DATABASE_URL=https://example.invalid/cdd.tar.gz
+          TAXDB_URL=https://example.invalid/taxdb.tar.gz
+          REFSEQ_ASSEMBLY_FILE=media/databases/refseq_summary_file/assembly_summary_refseq.txt
+          REFSEQ_URL=https://example.invalid/assembly_summary_refseq.txt
+          GENBANK_ASSEMBLY_FILE=media/databases/refseq_summary_file/assembly_summary_genbank.txt
+          GENBANK_URL=https://example.invalid/assembly_summary_genbank.txt
+          TAXONOMIC_NODES=media/taxonomic_node_files/
+          PROTECTED_MEDIA_ROOT=media
+          PROTECTED_MEDIA_USE_X_ACCEL=False
           FLOWER_BASIC_AUTH=ci-placeholder-invalid-flower-user:ci-placeholder-invalid-flower-password
           JUPYTER_TOKEN=ci-placeholder-invalid-jupyter-token
+          RABBITMQ_CONSUMER_TIMEOUT_MS=346000000
           EOF
           cat > .env.prod.db <<'EOF'
           POSTGRES_USER=cathi_ci
-          POSTGRES_PASSWORD=ci-placeholder-invalid-postgres-password
+          POSTGRES_PASSWORD=ci-placeholder-invalid-db-password
           POSTGRES_DB=cathi_ci
+          TZ=Europe/Berlin
           EOF
+
+      - name: Build application image
+        run: docker compose build web
 
       - name: Compose exposure policy
         run: python scripts/check_compose_exposure.py
-
-      - name: Django system check
-        working-directory: celery_blast
-        run: python manage.py check
-
-      - name: Migration drift check
-        working-directory: celery_blast
-        run: python manage.py makemigrations --check --dry-run
-
-      - name: Safe Django tests
-        working-directory: celery_blast
-        run: python manage.py test --exclude-tag biological --exclude-tag external --exclude-tag docker --exclude-tag long
-
-      - name: Python dependency consistency
-        run: python -m pip check
 
       - name: Compose configuration validation
         run: docker compose config --quiet
@@ -135,28 +176,31 @@ jobs:
       - name: Production Compose configuration validation
         run: docker compose -f docker-compose-production.yml config --quiet
 
-  conda-runtime-smoke:
-    runs-on: ubuntu-latest
+      - name: Start database service for Django checks
+        run: docker compose up -d ci_postgres
 
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Conda runtime
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          activate-environment: cathi-runtime
-          environment-file: environment.yml
-          auto-activate-base: false
-          channel-priority: strict
-
-      - name: Dependency lock consistency
-        shell: bash -el {0}
-        run: python scripts/check_dependency_locks.py
-
-      - name: Snakemake import and version check
-        shell: bash -el {0}
+      - name: Django system check in built container
         run: |
-          python -c "import snakemake; assert snakemake.__version__ == '7.32.4', snakemake.__version__"
-          snakemake --version
-          python -m pip check
+          docker run --rm --network "${COMPOSE_PROJECT_NAME}_main" --env-file .env.dev "${CATHI_CI_IMAGE}" sh -c \
+            "wait-for ci_postgres:5432 && python manage.py check"
+
+      - name: Safe Django tests in built container
+        run: |
+          docker run --rm --network "${COMPOSE_PROJECT_NAME}_main" --env-file .env.dev "${CATHI_CI_IMAGE}" sh -c \
+            "wait-for ci_postgres:5432 && python manage.py makemigrations && python manage.py test --exclude-tag biological --exclude-tag external --exclude-tag docker --exclude-tag long"
+
+      - name: Python dependency consistency in built container
+        run: docker run --rm --env-file .env.dev "${CATHI_CI_IMAGE}" python -m pip check
+
+      - name: Conda runtime smoke in built container
+        run: |
+          docker run --rm --env-file .env.dev "${CATHI_CI_IMAGE}" /blast/conda-envs/cathi-runtime/bin/python -c "import snakemake; assert snakemake.__version__ == '7.32.4', snakemake.__version__"
+          docker run --rm --env-file .env.dev "${CATHI_CI_IMAGE}" /blast/conda-envs/cathi-runtime/bin/snakemake --version
+          docker run --rm --env-file .env.dev "${CATHI_CI_IMAGE}" /blast/conda-envs/cathi-runtime/bin/python -m pip check
+
+      - name: Cleanup CI containers and temporary files
+        if: always()
+        run: |
+          docker compose down -v --remove-orphans || true
+          docker image rm "${CATHI_CI_IMAGE}" || true
+          rm -f .env.dev .env.prod .env.prod.db docker-compose.ci.yml
