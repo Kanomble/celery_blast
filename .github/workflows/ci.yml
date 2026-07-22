@@ -13,7 +13,7 @@ jobs:
       DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1 testserver"
       CSRF_TRUSTED_ORIGINS: "http://localhost http://127.0.0.1"
       SQL_ENGINE: django.db.backends.sqlite3
-      SQL_DATABASE: ${{ runner.temp }}/cathi-ci.sqlite3
+      SQL_DATABASE: ${{ github.workspace }}/tmp/cathi-ci.sqlite3
       SQL_USER: cathi_ci
       SQL_PASSWORD: ci-placeholder-invalid-db-password
       SQL_HOST: localhost

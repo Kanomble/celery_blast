@@ -1,0 +1,19 @@
+# ~/.codex/config.toml
+
+# Allow normal editing and commands inside the currently opened project.
+sandbox_mode = "workspace-write"
+
+# Never interrupt with approval dialogs.
+# Operations outside the allowed sandbox will fail instead of prompting.
+approval_policy = "never"
+
+# Keep shell execution more predictable.
+allow_login_shell = false
+
+# Cached search is available without granting spawned commands
+# unrestricted internet access.
+web_search = "cached"
+
+[sandbox_workspace_write]
+# Commands and scripts cannot access the network.
+network_access = false
