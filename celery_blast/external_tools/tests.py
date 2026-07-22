@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from html.parser import HTMLParser
 from pathlib import Path
-from unittest.mock import ANY, mock_open, patch
+from unittest.mock import ANY, call, mock_open, patch
 
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AnonymousUser
@@ -17,7 +17,7 @@ from django_celery_results.models import TaskResult
 
 from blast_project.models import BlastProject, BlastSettings
 from external_tools.shiptv_html import make_tree_drawable, patch_shiptv_html_file
-from external_tools.models import EntrezSearch, ExternalTools, QuerySequences
+from external_tools.models import DomainDatabase, EntrezSearch, ExternalTools, QuerySequences
 from external_tools.genbank_download_clinker_synteny import (
     build_download_genbank_command,
     run_genbank_download_command,
@@ -31,6 +31,7 @@ from external_tools.tasks import (
     build_rpsblast_command,
     build_shiptv_command,
     run_external_tool_command,
+    setup_cathi_download_cdd_refseq_genbank_assembly_files,
 )
 from external_tools.entrez_search_service import (
     build_efetch_fasta_from_input_command,
@@ -307,6 +308,27 @@ class ExternalToolObjectAuthorizationTests(TestCase):
         self.assertEqual(404, response.status_code)
         self.assertNotIn('owned generated html', response.content.decode(errors='ignore'))
         get_html.assert_not_called()
+
+
+class ExternalToolStartupTaskTests(TestCase):
+    def test_setup_cathi_refreshes_assembly_summaries_without_invoking_nested_celery_task(self):
+        TaskResult.objects.create(task_id='setup-task-id', status='STARTED')
+        setup_cathi_download_cdd_refseq_genbank_assembly_files.push_request(id='setup-task-id')
+
+        try:
+            with patch('external_tools.tasks.refresh_dataset', return_value={'version': 'cdd-test-version'}), \
+                    patch('external_tools.tasks.refresh_assembly_summary', return_value=0) as refresh_summary:
+                setup_cathi_download_cdd_refseq_genbank_assembly_files.run()
+        finally:
+            setup_cathi_download_cdd_refseq_genbank_assembly_files.pop_request()
+
+        self.assertEqual(
+            [call('RefSeq'), call('GenBank')],
+            refresh_summary.call_args_list,
+        )
+        domain_database = DomainDatabase.objects.get()
+        self.assertTrue(domain_database.domain_database_loaded)
+        self.assertEqual('setup-task-id', domain_database.domain_database_download_task_result.task_id)
 
 
 class EntrezSearchHtmlRenderingTests(SimpleTestCase):

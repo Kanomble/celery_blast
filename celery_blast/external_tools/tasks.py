@@ -27,7 +27,7 @@ from .shiptv_html import patch_shiptv_html_file
 from celery_blast.settings import BLAST_PROJECT_DIR, BLAST_DATABASE_DIR, CDD_DATABASE_URL, REMOTE_BLAST_PROJECT_DIR
 from os.path import isdir
 from os import listdir, mkdir, remove
-from refseq_transactions.tasks import download_refseq_assembly_summary
+from refseq_transactions.tasks import refresh_assembly_summary
 from blast_project.tasks import cdd_refresh_spec
 from celery_blast.dataset_refresh import refresh_dataset
 # logger for celery worker instances
@@ -385,9 +385,11 @@ def setup_cathi_download_cdd_refseq_genbank_assembly_files(self):
         if len(domain_database_query_set) != 1:
             DomainDatabase.objects.all().delete()
             domain_database_model = DomainDatabase(domain_database_loaded=False)
+            domain_database_model.save()
         else:
             domain_database_model = domain_database_query_set[0]
             domain_database_model.domain_database_loaded = False
+            domain_database_model.save()
 
         logger.info("trying to update domaindatabase model instance: {}".format(domain_database_model))
         update_domain_database_task_result_model(domain_database_model.id, self.request.id)
@@ -405,8 +407,10 @@ def setup_cathi_download_cdd_refseq_genbank_assembly_files(self):
         domain_database_model.save()
 
         try:
-            download_refseq_assembly_summary("RefSeq")
-            download_refseq_assembly_summary("GenBank")
+            refresh_assembly_summary("RefSeq")
+            progress_recorder.set_progress(90, 100, "PROGRESS")
+            refresh_assembly_summary("GenBank")
+            progress_recorder.set_progress(100, 100, "SUCCESS")
         except Exception as e:
             logger.warning("error during download of the RefSeq and/or GenBank assembly summary files.")
             raise Exception("[-] ERROR during download of RefSeq and/or GenBank summary files with exception: {}.".format(e))

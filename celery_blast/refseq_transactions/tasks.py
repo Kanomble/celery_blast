@@ -124,6 +124,33 @@ def assembly_summary_refresh_spec(summary_file: str):
     raise Exception("wrong summary_file selected: {}".format(summary_file))
 
 
+def refresh_assembly_summary(summary_file: str, progress_recorder=None):
+    if progress_recorder is not None:
+        progress_recorder.set_progress(5, 100, "starting download")
+
+    current_working_directory = getcwd()  # /blast/reciprocal_blast
+    spec = assembly_summary_refresh_spec(summary_file)
+
+    logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
+                .format(current_working_directory, spec.public_root))
+
+    logger.info('creating assembly summary refresh process')
+    logger.info("source_url: {}, dataset: {}".format(spec.source_url, spec.name))
+    if progress_recorder is not None:
+        progress_recorder.set_progress(20, 100, "downloading {}".format(summary_file))
+
+    metadata = refresh_dataset(spec)
+
+    if progress_recorder is not None:
+        progress_recorder.set_progress(95, 100, "activating {}".format(summary_file))
+
+    logger.info('download completed with dataset version {}'.format(metadata["version"]))
+    if progress_recorder is not None:
+        progress_recorder.set_progress(100, 100, "SUCCESS")
+
+    return 0
+
+
 ''' download_refseq_assembly_summary_file
 
     This function downloads the current assembly_summary_refseq.txt file or the assembly_summary_genbank.txt file into 
@@ -141,23 +168,7 @@ def assembly_summary_refresh_spec(summary_file: str):
 def download_refseq_assembly_summary(self, summary_file:str):
     try:
         progress_recorder = ProgressRecorder(self)
-        progress_recorder.set_progress(5, 100, "starting download")
-        current_working_directory = getcwd()  # /blast/reciprocal_blast
-        spec = assembly_summary_refresh_spec(summary_file)
-
-        logger.info('setup filepath parameter:\n\t cwd : {} \n\t path_to_assembly_file_location : {}'
-                    .format(current_working_directory, spec.public_root))
-
-        logger.info('creating assembly summary refresh process')
-        logger.info("source_url: {}, dataset: {}".format(spec.source_url, spec.name))
-        progress_recorder.set_progress(20, 100, "downloading {}".format(summary_file))
-        metadata = refresh_dataset(spec)
-        progress_recorder.set_progress(95, 100, "activating {}".format(summary_file))
-
-        logger.info('download completed with dataset version {}'.format(metadata["version"]))
-        progress_recorder.set_progress(100, 100, "SUCCESS")
-
-        return 0
+        return refresh_assembly_summary(summary_file, progress_recorder)
 
     except SoftTimeLimitExceeded:
         raise Exception("ERROR couldn't download assembly_summary_refseq.txt file due to soft time limit")

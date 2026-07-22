@@ -10,6 +10,7 @@ from refseq_transactions.tasks import (
     build_format_blast_database_command,
     download_wget_ftp_paths,
     format_blast_databases,
+    refresh_assembly_summary,
     run_download_assembly_summary_command,
     run_download_and_gunzip_command,
     run_format_blast_database_command,
@@ -97,6 +98,30 @@ class RefseqTaskHelperTests(SimpleTestCase):
             logger=ANY,
             check=True,
             cleanup_exceptions=ANY,
+        )
+
+    def test_refresh_assembly_summary_runs_without_progress_recorder(self):
+        with patch('refseq_transactions.tasks.refresh_dataset', return_value={'version': 'test-version'}) as refresh:
+            returncode = refresh_assembly_summary('RefSeq')
+
+        self.assertEqual(0, returncode)
+        refresh.assert_called_once_with(ANY)
+
+    def test_refresh_assembly_summary_updates_optional_progress_recorder(self):
+        progress_recorder = FakeProgressRecorder()
+
+        with patch('refseq_transactions.tasks.refresh_dataset', return_value={'version': 'test-version'}):
+            returncode = refresh_assembly_summary('GenBank', progress_recorder)
+
+        self.assertEqual(0, returncode)
+        self.assertEqual(
+            [
+                (5, 100, 'starting download'),
+                (20, 100, 'downloading GenBank'),
+                (95, 100, 'activating GenBank'),
+                (100, 100, 'SUCCESS'),
+            ],
+            progress_recorder.progress_updates,
         )
 
     def test_build_format_blast_database_command(self):

@@ -6,8 +6,8 @@ from .models import BlastProject, RemoteBlastProject
 from refseq_transactions.models import BlastDatabase
 from external_tools.models import DomainDatabase
 
-from os.path import isdir, isfile, join, relpath
-from os import mkdir, listdir, remove, rmdir, walk
+from os.path import isdir, isfile, islink, join, relpath
+from os import mkdir, listdir, remove, walk
 from subprocess import check_output
 from shutil import rmtree, make_archive
 from wsgiref.util import FileWrapper
@@ -21,6 +21,13 @@ def cdd_database_prefix_exists(cdd_db_path: str, prefix: str = "Cdd") -> bool:
     if not isdir(cdd_db_path):
         return False
     return any(item == f"{prefix}.pal" or item.startswith(f"{prefix}.") for item in listdir(cdd_db_path))
+
+
+def delete_path_if_present(path: str):
+    if isdir(path) and not islink(path):
+        rmtree(path)
+    elif isfile(path) or islink(path):
+        remove(path)
 
 '''list_all_available_logfiles
     
@@ -437,13 +444,9 @@ def check_domain_database_status()->bool:
 '''
 def delete_domain_database():
     try:
-        cdd_db_path = BLAST_DATABASE_DIR + "CDD/"
+        cdd_db_path = BLAST_DATABASE_DIR + "CDD"
 
-        if isdir(cdd_db_path):
-            for file in listdir(cdd_db_path):
-                file_to_remove = cdd_db_path + file
-                remove(file_to_remove)
-            rmdir(cdd_db_path)
+        delete_path_if_present(cdd_db_path)
 
         DomainDatabase.objects.all().delete()
         domain_database_model = DomainDatabase(domain_database_loaded=False)
